@@ -1,0 +1,52 @@
+AS=ca65
+LD=ld65
+AR=ar65
+
+MLCa:=$(words $(MAKEFILE_LIST))
+MLCb:=$(shell echo "$(MLCa) - 1" | bc)
+
+# CALLER - path to Makefile that included this .defs file
+CALLER_MAKE=$(realpath $(lastword $(wordlist 1,$(MLCb),$(MAKEFILE_LIST))))
+
+# TOP - the directory containing the .defs file
+TOP:=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
+
+# INC - global includes folder
+INC:=$(TOP)/includes
+
+OSINCS:=$(wildcard $(INC)/*.inc)
+
+# SCRIPTS - global scripts folder
+SCRIPTS:=$(TOP)/../scripts
+
+# RELDIR - directory "difference" between TOP and CALLER directory
+RELDIR:=$(shell realpath --relative-to=$(TOP) $(shell dirname $(CALLER_MAKE)))
+
+# BUILD_TOP topmost build path - may be overridden
+BUILD_TOP?=$(TOP)/../build
+
+# current build folder
+BUILD=$(BUILD_TOP)/$(RELDIR)
+
+# SSDS - folder where SSDS should be built
+SSDS?=$(BUILD_TOP)/ssds
+
+x:=$(shell mkdir -p $(SSDS))
+x:=$(shell mkdir -p $(BUILD))
+
+# DEPLOY_TOP - the deploy target will extract .ssd files to subfolders of this folder
+DEPLOY_TOP?=~/hostfs_test
+
+# make blit lib
+BLIT_LIB_MAKE=$(MAKE) -C $(TOP)/blitlib
+BLIT_LIB=$(BUILD_TOP)/blitlib/blitlib.lib
+BLIT_LIB_INC=$(TOP)/blitlib
+BLIT_LIB_INCS=$(wildcard $(TOP)/blitlib/*.inc)
+
+# common target names
+TOPTARGETS:= all clean deploy ssd
+
+all:
+
+$(BLIT_LIB):
+	$(BLIT_LIB_MAKE)
