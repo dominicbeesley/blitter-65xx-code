@@ -1,3 +1,4 @@
+/*
 MIT License
 
 Copyright (c) 2023 Dossytronics
@@ -20,3 +21,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
+
+#ifndef _TILE_MAP_H
+#define _TILE_MAP_H
+
+extern unsigned char get_tile_at(unsigned char layer, unsigned char x, unsigned char y);
+extern void draw_front(unsigned char flags);
+extern void draw_front_nosave(unsigned char flags);
+extern void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, unsigned char colourB);
+extern unsigned colcheck_at(signed new_x, signed new_y);
+
+extern void draw_map(void *addr);
+
+
+#endif

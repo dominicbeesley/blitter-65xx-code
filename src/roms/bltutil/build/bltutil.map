@@ -1,0 +1,535 @@
+Modules list:
+-------------
+bltutil_romheader.o:
+    CODE              Offs=000000  Size=0001F2  Align=00001  Fill=0000
+    RODATA            Offs=000000  Size=00024A  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+    CODE_ROMHEADER    Offs=000000  Size=00003D  Align=00001  Fill=0000
+bltutil.o:
+    CODE              Offs=0001F2  Size=000A3C  Align=00001  Fill=0000
+    RODATA            Offs=00024A  Size=0001FE  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+bltutil_flashutils.o:
+    CODE              Offs=000C2E  Size=000091  Align=00001  Fill=0000
+    RODATA            Offs=000448  Size=000000  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+    CODE_FLASH        Offs=000000  Size=0001F1  Align=00001  Fill=0000
+bltutil_utils.o:
+    CODE              Offs=000CBF  Size=000390  Align=00001  Fill=0000
+    RODATA            Offs=000448  Size=000011  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+bltutil_noice.o:
+    CODE              Offs=00104F  Size=000079  Align=00001  Fill=0000
+    RODATA            Offs=000459  Size=000033  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+    BSS_NOICE         Offs=000000  Size=0000A3  Align=00001  Fill=0000
+    CODE_NOICE        Offs=000000  Size=0003B5  Align=00001  Fill=0000
+    CODE_READMEM      Offs=000000  Size=000015  Align=00001  Fill=0000
+    CODE_WRITEMEM     Offs=000000  Size=00002E  Align=00001  Fill=0000
+    VEC_NOICE         Offs=000000  Size=000006  Align=00001  Fill=0000
+bltutil_jimstuff.o:
+    CODE              Offs=0010C8  Size=0001C2  Align=00001  Fill=0000
+    RODATA            Offs=00048C  Size=000000  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+bltutil_sound.o:
+    CODE              Offs=00128A  Size=0006DA  Align=00001  Fill=0000
+    RODATA            Offs=00048C  Size=0000BA  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+bltutil_heap.o:
+    CODE              Offs=001964  Size=0004E1  Align=00001  Fill=0000
+    RODATA            Offs=000546  Size=000060  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+bltutil_sound_irq.o:
+    CODE              Offs=001E45  Size=00030A  Align=00001  Fill=0000
+    RODATA            Offs=0005A6  Size=000000  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+bltutil_cfg.o:
+    CODE              Offs=00214F  Size=000437  Align=00001  Fill=0000
+    RODATA            Offs=0005A6  Size=000175  Align=00001  Fill=0000
+    BSS               Offs=000000  Size=000000  Align=00001  Fill=0000
+    DATA              Offs=000000  Size=000000  Align=00001  Fill=0000
+    ZEROPAGE          Offs=000000  Size=000000  Align=00001  Fill=0000
+    NULL              Offs=000000  Size=000000  Align=00001  Fill=0000
+
+
+Segment list:
+-------------
+Name                   Start     End    Size  Align
+----------------------------------------------------
+BSS                   000000  000000  000000  00001
+DATA                  000000  000000  000000  00001
+NULL                  000000  000000  000000  00001
+ZEROPAGE              000070  000070  000000  00001
+CODE_READMEM          000100  000114  000015  00001
+CODE_WRITEMEM         000100  00012D  00002E  00001
+CODE_FLASH            002000  0021F0  0001F1  00001
+CODE_ROMHEADER        008000  00803C  00003D  00001
+CODE                  00803D  00A5C2  002586  00001
+RODATA                00A5C3  00ACDD  00071B  00001
+BSS_NOICE             00C000  00C0A2  0000A3  00001
+CODE_NOICE            00F000  00F3B4  0003B5  00001
+VEC_NOICE             00FFFA  00FFFF  000006  00001
+
+
+Exports list by name:
+---------------------
+BounceErrorOffStack       008CFC RLA    CheckBlitterPresent       00914C RLA    
+CheckBlitterPresentBrk    009105 RLA    CheckESC                  009050 RLA    
+CheckEitherPresentBrk     009141 RLA    CheckPaulaPresent         009147 RLA    
+Copyright                 008027 RLA    FlashCmdA                 00208F RLA    
+FlashCmdAWT               002060 RLA    FlashEraseROM             0021BD RLA    
+FlashReset                0021A6 RLA    FlashReset_Q              008CDE RLA    
+Flash_SRLOAD              0020FB RLA    ParseHex                  008E9E RLA    
+ParseHexAlpha             008ED2  LA    ParseHexDone              008EE4  LA    
+ParseHexErr               008EDF  LA    ParseHexLp                008EAD  LA    
+ParseHexShAd              008EC9  LA    PopAcc                    008FD9 RLA    
+Print2Spc                 008D22 RLA    PrintA                    008D27 RLA    
+PrintBytesAndK            008DD3 RLA    PrintCommaSpace           008D1A RLA    
+PrintDec                  008D55  LA    PrintHexA                 008D2D RLA    
+PrintHexNybA              008D3C RLA    PrintHexXY                008D4A RLA    
+PrintImmed                008D7A RLA    PrintMsgXYThenHexNyb      008D6F RLA    
+PrintNL                   008D2A RLA    PrintPTR                  008DC4 RLA    
+PrintSizeK                008DE5 RLA    PrintSpc                  008D25 RLA    
+PrintXY                   008DAE RLA    PromptNo                  008E1A  LA    
+PromptRTS                 008E2F  LA    PromptYN                  008E03 RLA    
+PromptYes                 008E25  LA    PushAcc                   008FAD RLA    
+REMV_internal_CLV         009836 RLA    REMV_internal_SEV         009831 RLA    
+ServiceOut                00806F RLA    ServiceOutA0              008075 RLA    
+SkipSpacesPTR             008E53 RLA    StackAllocX               008EEA RLA    
+StackFree                 008F19 RLA    ToUpper                   008E5E RLA    
+WaitKey                   008E30  LA    _LECA2                    009FE0 RLA    
+_SOUND_IRQ                009E85 RLA    __CODE_FLASH_LOAD__       00ACDE RLA    
+__CODE_FLASH_RUN__        002000 RLA    __CODE_FLASH_SIZE__       0001F1  EA    
+__CODE_READMEM_LOAD__     00F3E3 RLA    __CODE_READMEM_RUN__      000100  LA    
+__CODE_READMEM_SIZE__     000015  EA    __CODE_WRITEMEM_LOAD__    00F3B5 RLA    
+__CODE_WRITEMEM_RUN__     000100 RLA    __CODE_WRITEMEM_SIZE__    00002E  EA    
+__RAM_TRANS_FL_FILEOFFS__ 004000  EA    __RAM_TRANS_FL_LAST__     0021F1 RLA    
+__RAM_TRANS_FL_SIZE__     000500  EA    __RAM_TRANS_FL_START__    002000 RLA    
+__ZP_FILEOFFS__           000000  EA    __ZP_LAST__               000070  LA    
+__ZP_SIZE__               000020  EA    __ZP_START__              000070  LA    
+ackEscape                 009054  LA    addAAcc                   008F71  LA    
+allocfreexy               0095D1  LA    asl4Acc                   008F5D  LA    
+brkBadCommand             009067 RLA    brkBlitterNotPresent      00910B  LA    
+brkEraseFailed            0021AE RLA    brkInvalidArgument        009077 RLA    
+cfgGetAPILevel            00A25A  LA    cfgGetRomMap              00A18C RLA    
+cfgGetStringY             00A266  LA    cfgPrintStringY           00A28C  LA    
+cfgPrintVersionBoot       00A1ED RLA    cmdBLLoad                 008A90 RLA    
+cmdBLSave                 008B75 RLA    cmdBLTurbo                008370 RLA    
+cmdHeapInfo               009D3D RLA    cmdInfo                   00A373 RLA    
+cmdNoIce                  0090AC RLA    cmdNoIce_BRK              0090F7 RLA    
+cmdRoms                   00856B RLA    cmdSRCOPY                 0087CF RLA    
+cmdSRERASE                008715 RLA    cmdSRLOAD                 00828F RLA    
+cmdSRNUKE                 00885A RLA    cmdSRNUKE_lang            00883C RLA    
+cmdSRNUKE_reboot          008949 RLA    cmdSound                  0092E3 RLA    
+cmdSoundSamClear          00994F RLA    cmdSoundSamLoad           009436 RLA    
+cmdSoundSamMap            0098D7 RLA    cmdXMdump                 008953 RLA    
+crc16                     00900B RLA    crc16_cl                  009025  LA    
+crc16_lp                  009016  LA    div10Acc                  008F85  LA    
+heap_OSWORD_bltutil       009A33 RLA    heap_init                 0099A1 RLA    
+inkey_clear               00902E RLA    isAcc0                    008FA4 RLA    
+jimCheckEitherSelected    009275  LA    jimClaimDev               0091D4 RLA    
+jimPageChipset            009293 RLA    jimPageSamTbl             0092A0 RLA    
+jimPageSoundWorkspace     0092AD RLA    jimPageVersion            0092BA RLA    
+jimPageWorkspace          009286 RLA    jimReleaseDev             00923E  LA    
+jimReleaseDev_err         009217 RLA    jimSetDEV_A               009151 RLA    
+jimSetDEV_blitter         00914C RLA    jimSetDEV_either          009162 RLA    
+jimSetDEV_either_stack_old 00916B RLA    jimSetDEV_paula           009147  LA    
+jimUnStackDev             009198 RLA    noice_init                00908C RLA    
+parseONOFF                008E69 RLA    parseONOFF_ON             008E9A  LA    
+parseONOFF_ck             008E8F  LA    pitch2period              0096F9 RLA    
+printCPU                  00A295  LA    printHardCPU              00A292  LA    
+romRead                   002001 RLA    romWrite                  002006 RLA    
+romWriteInit              008C6B RLA    sound_OSWORD_SOUND        00961E RLA    
+sound_boot                0092C7 RLA    sound_irq                 0098C1 RLA    
+strCmdBLTurbo             00A6ED RLA    str_Dossy                 008030 RLA    
+zeroAcc                   008F50 RLA    
+
+
+Exports list by value:
+----------------------
+__ZP_FILEOFFS__           000000  EA    __CODE_READMEM_SIZE__     000015  EA    
+__ZP_SIZE__               000020  EA    __CODE_WRITEMEM_SIZE__    00002E  EA    
+__ZP_LAST__               000070  LA    __ZP_START__              000070  LA    
+__CODE_READMEM_RUN__      000100  LA    __CODE_WRITEMEM_RUN__     000100 RLA    
+__CODE_FLASH_SIZE__       0001F1  EA    __RAM_TRANS_FL_SIZE__     000500  EA    
+__CODE_FLASH_RUN__        002000 RLA    __RAM_TRANS_FL_START__    002000 RLA    
+romRead                   002001 RLA    romWrite                  002006 RLA    
+FlashCmdAWT               002060 RLA    FlashCmdA                 00208F RLA    
+Flash_SRLOAD              0020FB RLA    FlashReset                0021A6 RLA    
+brkEraseFailed            0021AE RLA    FlashEraseROM             0021BD RLA    
+__RAM_TRANS_FL_LAST__     0021F1 RLA    __RAM_TRANS_FL_FILEOFFS__ 004000  EA    
+Copyright                 008027 RLA    str_Dossy                 008030 RLA    
+ServiceOut                00806F RLA    ServiceOutA0              008075 RLA    
+cmdSRLOAD                 00828F RLA    cmdBLTurbo                008370 RLA    
+cmdRoms                   00856B RLA    cmdSRERASE                008715 RLA    
+cmdSRCOPY                 0087CF RLA    cmdSRNUKE_lang            00883C RLA    
+cmdSRNUKE                 00885A RLA    cmdSRNUKE_reboot          008949 RLA    
+cmdXMdump                 008953 RLA    cmdBLLoad                 008A90 RLA    
+cmdBLSave                 008B75 RLA    romWriteInit              008C6B RLA    
+FlashReset_Q              008CDE RLA    BounceErrorOffStack       008CFC RLA    
+PrintCommaSpace           008D1A RLA    Print2Spc                 008D22 RLA    
+PrintSpc                  008D25 RLA    PrintA                    008D27 RLA    
+PrintNL                   008D2A RLA    PrintHexA                 008D2D RLA    
+PrintHexNybA              008D3C RLA    PrintHexXY                008D4A RLA    
+PrintDec                  008D55  LA    PrintMsgXYThenHexNyb      008D6F RLA    
+PrintImmed                008D7A RLA    PrintXY                   008DAE RLA    
+PrintPTR                  008DC4 RLA    PrintBytesAndK            008DD3 RLA    
+PrintSizeK                008DE5 RLA    PromptYN                  008E03 RLA    
+PromptNo                  008E1A  LA    PromptYes                 008E25  LA    
+PromptRTS                 008E2F  LA    WaitKey                   008E30  LA    
+SkipSpacesPTR             008E53 RLA    ToUpper                   008E5E RLA    
+parseONOFF                008E69 RLA    parseONOFF_ck             008E8F  LA    
+parseONOFF_ON             008E9A  LA    ParseHex                  008E9E RLA    
+ParseHexLp                008EAD  LA    ParseHexShAd              008EC9  LA    
+ParseHexAlpha             008ED2  LA    ParseHexErr               008EDF  LA    
+ParseHexDone              008EE4  LA    StackAllocX               008EEA RLA    
+StackFree                 008F19 RLA    zeroAcc                   008F50 RLA    
+asl4Acc                   008F5D  LA    addAAcc                   008F71  LA    
+div10Acc                  008F85  LA    isAcc0                    008FA4 RLA    
+PushAcc                   008FAD RLA    PopAcc                    008FD9 RLA    
+crc16                     00900B RLA    crc16_lp                  009016  LA    
+crc16_cl                  009025  LA    inkey_clear               00902E RLA    
+CheckESC                  009050 RLA    ackEscape                 009054  LA    
+brkBadCommand             009067 RLA    brkInvalidArgument        009077 RLA    
+noice_init                00908C RLA    cmdNoIce                  0090AC RLA    
+cmdNoIce_BRK              0090F7 RLA    CheckBlitterPresentBrk    009105 RLA    
+brkBlitterNotPresent      00910B  LA    CheckEitherPresentBrk     009141 RLA    
+CheckPaulaPresent         009147 RLA    jimSetDEV_paula           009147  LA    
+CheckBlitterPresent       00914C RLA    jimSetDEV_blitter         00914C RLA    
+jimSetDEV_A               009151 RLA    jimSetDEV_either          009162 RLA    
+jimSetDEV_either_stack_old 00916B RLA    jimUnStackDev             009198 RLA    
+jimClaimDev               0091D4 RLA    jimReleaseDev_err         009217 RLA    
+jimReleaseDev             00923E  LA    jimCheckEitherSelected    009275  LA    
+jimPageWorkspace          009286 RLA    jimPageChipset            009293 RLA    
+jimPageSamTbl             0092A0 RLA    jimPageSoundWorkspace     0092AD RLA    
+jimPageVersion            0092BA RLA    sound_boot                0092C7 RLA    
+cmdSound                  0092E3 RLA    cmdSoundSamLoad           009436 RLA    
+allocfreexy               0095D1  LA    sound_OSWORD_SOUND        00961E RLA    
+pitch2period              0096F9 RLA    REMV_internal_SEV         009831 RLA    
+REMV_internal_CLV         009836 RLA    sound_irq                 0098C1 RLA    
+cmdSoundSamMap            0098D7 RLA    cmdSoundSamClear          00994F RLA    
+heap_init                 0099A1 RLA    heap_OSWORD_bltutil       009A33 RLA    
+cmdHeapInfo               009D3D RLA    _SOUND_IRQ                009E85 RLA    
+_LECA2                    009FE0 RLA    cfgGetRomMap              00A18C RLA    
+cfgPrintVersionBoot       00A1ED RLA    cfgGetAPILevel            00A25A  LA    
+cfgGetStringY             00A266  LA    cfgPrintStringY           00A28C  LA    
+printHardCPU              00A292  LA    printCPU                  00A295  LA    
+cmdInfo                   00A373 RLA    strCmdBLTurbo             00A6ED RLA    
+__CODE_FLASH_LOAD__       00ACDE RLA    __CODE_WRITEMEM_LOAD__    00F3B5 RLA    
+__CODE_READMEM_LOAD__     00F3E3 RLA    
+
+
+Imports list:
+-------------
+BounceErrorOffStack (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(3)
+    bltutil_sound.o           bltutil_utils.inc(3)
+    bltutil_jimstuff.o        bltutil_utils.inc(3)
+    bltutil_noice.o           bltutil_utils.inc(3)
+    bltutil_flashutils.o      bltutil_utils.inc(3)
+    bltutil.o                 bltutil_utils.inc(3)
+CheckBlitterPresent (bltutil_jimstuff.o):
+    bltutil.o                 bltutil_jimstuff.inc(1)
+    bltutil_romheader.o       bltutil_jimstuff.inc(1)
+CheckBlitterPresentBrk (bltutil_jimstuff.o):
+    bltutil_noice.o           bltutil_jimstuff.inc(3)
+    bltutil.o                 bltutil_jimstuff.inc(3)
+CheckESC (bltutil_utils.o):
+    bltutil.o                 bltutil_utils.inc(52)
+CheckEitherPresentBrk (bltutil_jimstuff.o):
+    bltutil_heap.o            bltutil_jimstuff.inc(4)
+    bltutil_sound.o           bltutil_jimstuff.inc(4)
+CheckPaulaPresent (bltutil_jimstuff.o):
+    bltutil_romheader.o       bltutil_jimstuff.inc(2)
+Copyright (bltutil_romheader.o):
+    bltutil.o                 bltutil_romheader.inc(2)
+FlashCmdA (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(9)
+FlashCmdAWT (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(5)
+FlashEraseROM (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(3)
+FlashReset (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(2)
+FlashReset_Q (bltutil_flashutils.o):
+    bltutil_romheader.o       bltutil_flashutils.inc(1)
+Flash_SRLOAD (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(11)
+ParseHex (bltutil_utils.o):
+    bltutil_sound.o           bltutil_utils.inc(31)
+    bltutil.o                 bltutil_utils.inc(31)
+ParseHexAlpha (bltutil_utils.o):
+ParseHexDone (bltutil_utils.o):
+ParseHexErr (bltutil_utils.o):
+ParseHexLp (bltutil_utils.o):
+ParseHexShAd (bltutil_utils.o):
+PopAcc (bltutil_utils.o):
+    bltutil_heap.o            bltutil_utils.inc(43)
+    bltutil.o                 bltutil_utils.inc(43)
+Print2Spc (bltutil_utils.o):
+    bltutil.o                 bltutil_utils.inc(5)
+PrintA (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(7)
+    bltutil.o                 bltutil_utils.inc(7)
+PrintBytesAndK (bltutil_utils.o):
+    bltutil_heap.o            bltutil_utils.inc(22)
+PrintCommaSpace (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(4)
+PrintDec (bltutil_utils.o):
+PrintHexA (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(9)
+    bltutil_heap.o            bltutil_utils.inc(9)
+    bltutil_sound.o           bltutil_utils.inc(9)
+    bltutil.o                 bltutil_utils.inc(9)
+PrintHexNybA (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(10)
+    bltutil.o                 bltutil_utils.inc(10)
+PrintHexXY (bltutil_utils.o):
+    bltutil_heap.o            bltutil_utils.inc(11)
+PrintImmed (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(15)
+    bltutil.o                 bltutil_utils.inc(15)
+PrintMsgXYThenHexNyb (bltutil_utils.o):
+    bltutil_sound.o           bltutil_utils.inc(12)
+    bltutil.o                 bltutil_utils.inc(12)
+PrintNL (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(8)
+    bltutil.o                 bltutil_utils.inc(8)
+    bltutil_romheader.o       bltutil_utils.inc(8)
+PrintPTR (bltutil_utils.o):
+    bltutil.o                 bltutil_utils.inc(14)
+    bltutil_romheader.o       bltutil_utils.inc(14)
+PrintSizeK (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(23)
+PrintSpc (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(6)
+    bltutil_heap.o            bltutil_utils.inc(6)
+    bltutil.o                 bltutil_utils.inc(6)
+    bltutil_romheader.o       bltutil_utils.inc(6)
+PrintXY (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(13)
+    bltutil_heap.o            bltutil_utils.inc(13)
+    bltutil_sound.o           bltutil_utils.inc(13)
+    bltutil_noice.o           bltutil_utils.inc(13)
+    bltutil.o                 bltutil_utils.inc(13)
+    bltutil_romheader.o       bltutil_utils.inc(13)
+PromptNo (bltutil_utils.o):
+PromptRTS (bltutil_utils.o):
+PromptYN (bltutil_utils.o):
+    bltutil.o                 bltutil_utils.inc(16)
+PromptYes (bltutil_utils.o):
+PushAcc (bltutil_utils.o):
+    bltutil_heap.o            bltutil_utils.inc(42)
+    bltutil.o                 bltutil_utils.inc(42)
+REMV_internal_CLV (bltutil_sound.o):
+    bltutil_sound_irq.o       bltutil_sound_irq.asm(14)
+REMV_internal_SEV (bltutil_sound.o):
+    bltutil_sound_irq.o       bltutil_sound_irq.asm(13)
+ServiceOut (bltutil_romheader.o):
+    bltutil_sound.o           bltutil_romheader.inc(4)
+ServiceOutA0 (bltutil_romheader.o):
+    bltutil_heap.o            bltutil_romheader.inc(5)
+    bltutil_sound.o           bltutil_romheader.inc(5)
+SkipSpacesPTR (bltutil_utils.o):
+    bltutil_heap.o            bltutil_utils.inc(26)
+    bltutil_sound.o           bltutil_utils.inc(26)
+    bltutil.o                 bltutil_utils.inc(26)
+    bltutil_romheader.o       bltutil_utils.inc(26)
+StackAllocX (bltutil_utils.o):
+    bltutil_sound.o           bltutil_utils.inc(44)
+StackFree (bltutil_utils.o):
+    bltutil_sound.o           bltutil_utils.inc(45)
+ToUpper (bltutil_utils.o):
+    bltutil_heap.o            bltutil_utils.inc(27)
+    bltutil.o                 bltutil_utils.inc(27)
+    bltutil_romheader.o       bltutil_utils.inc(27)
+WaitKey (bltutil_utils.o):
+_LECA2 (bltutil_sound_irq.o):
+    bltutil_sound.o           bltutil_sound.asm(22)
+_SOUND_IRQ (bltutil_sound_irq.o):
+    bltutil_sound.o           bltutil_sound.asm(1181)
+__CODE_FLASH_LOAD__ ([linker generated]):
+    bltutil_flashutils.o      bltutil_flashutils.asm(6)
+__CODE_FLASH_RUN__ ([linker generated]):
+    bltutil_flashutils.o      bltutil_flashutils.asm(7)
+__CODE_FLASH_SIZE__ ([linker generated]):
+__CODE_READMEM_LOAD__ ([linker generated]):
+    bltutil_noice.o           bltutil_noice.asm(11)
+__CODE_READMEM_RUN__ ([linker generated]):
+__CODE_READMEM_SIZE__ ([linker generated]):
+__CODE_WRITEMEM_LOAD__ ([linker generated]):
+    bltutil_noice.o           bltutil_noice.asm(9)
+__CODE_WRITEMEM_RUN__ ([linker generated]):
+    bltutil_noice.o           bltutil_noice.asm(8)
+__CODE_WRITEMEM_SIZE__ ([linker generated]):
+__RAM_TRANS_FL_FILEOFFS__ ([linker generated]):
+__RAM_TRANS_FL_LAST__ ([linker generated]):
+    bltutil_flashutils.o      bltutil_flashutils.asm(9)
+__RAM_TRANS_FL_SIZE__ ([linker generated]):
+__RAM_TRANS_FL_START__ ([linker generated]):
+    bltutil_flashutils.o      bltutil_flashutils.asm(8)
+__ZP_FILEOFFS__ ([linker generated]):
+__ZP_LAST__ ([linker generated]):
+__ZP_SIZE__ ([linker generated]):
+__ZP_START__ ([linker generated]):
+ackEscape (bltutil_utils.o):
+addAAcc (bltutil_utils.o):
+allocfreexy (bltutil_sound.o):
+asl4Acc (bltutil_utils.o):
+brkBadCommand (bltutil_utils.o):
+    bltutil_sound.o           bltutil_utils.inc(54)
+    bltutil_noice.o           bltutil_utils.inc(54)
+    bltutil.o                 bltutil_utils.inc(54)
+brkBlitterNotPresent (bltutil_jimstuff.o):
+brkEraseFailed (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(6)
+brkInvalidArgument (bltutil_utils.o):
+    bltutil.o                 bltutil_utils.inc(55)
+cfgGetAPILevel (bltutil_cfg.o):
+cfgGetRomMap (bltutil_cfg.o):
+    bltutil_heap.o            bltutil_cfg.inc(2)
+cfgGetStringY (bltutil_cfg.o):
+cfgPrintStringY (bltutil_cfg.o):
+cfgPrintVersionBoot (bltutil_cfg.o):
+    bltutil_romheader.o       bltutil_cfg.inc(3)
+cmdBLLoad (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(25)
+cmdBLSave (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(26)
+cmdBLTurbo (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(16)
+cmdHeapInfo (bltutil_heap.o):
+    bltutil_romheader.o       bltutil_heap.inc(3)
+cmdInfo (bltutil_cfg.o):
+    bltutil_romheader.o       bltutil_cfg.inc(6)
+cmdNoIce (bltutil_noice.o):
+    bltutil_romheader.o       bltutil_noice.inc(4)
+cmdNoIce_BRK (bltutil_noice.o):
+    bltutil_romheader.o       bltutil_noice.inc(5)
+cmdRoms (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(24)
+cmdSRCOPY (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(23)
+cmdSRERASE (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(22)
+cmdSRLOAD (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(18)
+cmdSRNUKE (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(19)
+cmdSRNUKE_lang (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(21)
+cmdSRNUKE_reboot (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(20)
+cmdSound (bltutil_sound.o):
+    bltutil_romheader.o       bltutil_sound.inc(2)
+cmdSoundSamClear (bltutil_sound.o):
+    bltutil_romheader.o       bltutil_sound.inc(9)
+cmdSoundSamLoad (bltutil_sound.o):
+    bltutil_romheader.o       bltutil_sound.inc(5)
+cmdSoundSamMap (bltutil_sound.o):
+    bltutil_romheader.o       bltutil_sound.inc(8)
+cmdXMdump (bltutil.o):
+    bltutil_romheader.o       bltutil_romheader.asm(17)
+crc16 (bltutil_utils.o):
+    bltutil.o                 bltutil_utils.inc(46)
+crc16_cl (bltutil_utils.o):
+crc16_lp (bltutil_utils.o):
+div10Acc (bltutil_utils.o):
+heap_OSWORD_bltutil (bltutil_heap.o):
+    bltutil_romheader.o       bltutil_heap.inc(2)
+heap_init (bltutil_heap.o):
+    bltutil_romheader.o       bltutil_heap.inc(1)
+inkey_clear (bltutil_utils.o):
+    bltutil.o                 bltutil_utils.inc(50)
+isAcc0 (bltutil_utils.o):
+    bltutil_sound.o           bltutil_utils.inc(41)
+jimCheckEitherSelected (bltutil_jimstuff.o):
+jimClaimDev (bltutil_jimstuff.o):
+    bltutil_romheader.o       bltutil_jimstuff.inc(12)
+jimPageChipset (bltutil_jimstuff.o):
+    bltutil_sound_irq.o       bltutil_jimstuff.inc(14)
+    bltutil_sound.o           bltutil_jimstuff.inc(14)
+jimPageSamTbl (bltutil_jimstuff.o):
+    bltutil_sound_irq.o       bltutil_jimstuff.inc(19)
+    bltutil_sound.o           bltutil_jimstuff.inc(19)
+jimPageSoundWorkspace (bltutil_jimstuff.o):
+    bltutil_sound_irq.o       bltutil_jimstuff.inc(20)
+    bltutil_sound.o           bltutil_jimstuff.inc(20)
+jimPageVersion (bltutil_jimstuff.o):
+    bltutil_cfg.o             bltutil_jimstuff.inc(15)
+jimPageWorkspace (bltutil_jimstuff.o):
+    bltutil_heap.o            bltutil_jimstuff.inc(13)
+jimReleaseDev (bltutil_jimstuff.o):
+jimReleaseDev_err (bltutil_jimstuff.o):
+    bltutil_utils.o           bltutil_jimstuff.inc(11)
+jimSetDEV_A (bltutil_jimstuff.o):
+    bltutil.o                 bltutil_jimstuff.inc(10)
+jimSetDEV_blitter (bltutil_jimstuff.o):
+    bltutil.o                 bltutil_jimstuff.inc(7)
+jimSetDEV_either (bltutil_jimstuff.o):
+    bltutil_cfg.o             bltutil_jimstuff.inc(9)
+    bltutil_heap.o            bltutil_jimstuff.inc(9)
+    bltutil_sound.o           bltutil_jimstuff.inc(9)
+    bltutil.o                 bltutil_jimstuff.inc(9)
+jimSetDEV_either_stack_old (bltutil_jimstuff.o):
+    bltutil_sound.o           bltutil_jimstuff.inc(17)
+jimSetDEV_paula (bltutil_jimstuff.o):
+jimUnStackDev (bltutil_jimstuff.o):
+    bltutil_sound.o           bltutil_jimstuff.inc(18)
+noice_init (bltutil_noice.o):
+    bltutil_romheader.o       bltutil_noice.inc(3)
+parseONOFF (bltutil_utils.o):
+    bltutil_noice.o           bltutil_utils.inc(28)
+parseONOFF_ON (bltutil_utils.o):
+parseONOFF_ck (bltutil_utils.o):
+pitch2period (bltutil_sound.o):
+    bltutil_sound_irq.o       bltutil_sound_irq.asm(12)
+printCPU (bltutil_cfg.o):
+printHardCPU (bltutil_cfg.o):
+romRead (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(7)
+romWrite (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(8)
+romWriteInit (bltutil_flashutils.o):
+    bltutil.o                 bltutil_flashutils.inc(4)
+sound_OSWORD_SOUND (bltutil_sound.o):
+    bltutil_romheader.o       bltutil_sound.inc(4)
+sound_boot (bltutil_sound.o):
+    bltutil_romheader.o       bltutil_sound.inc(6)
+sound_irq (bltutil_sound.o):
+    bltutil_romheader.o       bltutil_sound.inc(3)
+strCmdBLTurbo (bltutil_romheader.o):
+    bltutil.o                 bltutil_romheader.inc(3)
+str_Dossy (bltutil_romheader.o):
+    bltutil_cfg.o             bltutil_cfg.asm(110)
+zeroAcc (bltutil_utils.o):
+    bltutil_cfg.o             bltutil_utils.inc(37)
+    bltutil_sound.o           bltutil_utils.inc(37)
+

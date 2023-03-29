@@ -1,0 +1,26 @@
+
+
+PAULA_SSD=paula.ssd
+
+SUBDIRS=modplay
+PAULA_OBJS=modplay/modplay.bin
+
+.PHONY: all $(SUBDIRS)
+
+all:: $(SUBDIRS) $(PAULA_OBJS) $(PAULA_SSD)
+clean:: $(SUBDIRS)
+	-rm $(PAULA_SSD)
+
+$(SUBDIRS):
+	$(MAKE) -C $@ $(MAKECMDGOALS)
+
+modplay/modplay.bin:
+	make -C modplay all
+
+
+
+$(PAULA_SSD):	$(PAULA_OBJS) $(wildcard paula_files/.*)
+	dfs form -80 $(PAULA_SSD)
+	dfs title $(PAULA_SSD) "1mpaula"
+	dfs add $(PAULA_SSD) $(addsuffix .inf, $(PAULA_OBJS))
+	dfs add $(PAULA_SSD) paula_files/*.inf

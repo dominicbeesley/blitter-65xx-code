@@ -1,3 +1,4 @@
+/*
 MIT License
 
 Copyright (c) 2023 Dossytronics
@@ -20,3 +21,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
+
+void brk_bounce(unsigned char errno, const char *errmsg)
+{
+	char *ptr = (char *)0x100;
+	*ptr++='\0';
+	*ptr++=errno;
+	while (*ptr++=*errmsg++);
+	asm("	jmp $100");
+}

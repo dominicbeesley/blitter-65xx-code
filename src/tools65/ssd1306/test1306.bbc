@@ -1,0 +1,41 @@
+
+MODE7
+?&EE=&D1:?&FCFF=&D1:?&FCFE=&FC:?&FCFD=&FE:REM setup i2c blitter dev
+
+PROCcmd(&AE):REM DISP OFF
+PROCcmd(&D5):REM Clock div
+PROCcmd(&80)
+PROCcmd(&A8):PROCcmd(31):REM multiplex
+PROCcmd(&D3):PROCcmd(0):REM no offset
+PROCcmd(&40):REM line #0
+PROCcmd(&8D):PROCcmd(&14):REM charge pump
+PROCcmd(&20):PROCcmd(0):REM memory mode
+PROCcmd(&A1):REM seg remap
+PROCcmd(&C8):REM COMSCANDEC
+PROCcmd(&DA):PROCcmd(&2):REM com pins
+PROCcmd(&81):PROCcmd(&1F):REM contrast
+PROCcmd(&D9):PROCcmd(&F1):REM precharge
+PROCcmd(&DB):PROCcmd(&40):REM comdetext
+PROCcmd(&A4):REM display resume
+PROCcmd(&A6):REM normal display
+PROCcmd(&2E):REM deactiveate scroll
+PROCcmd(&AF):REM display on
+
+A%=&C000+RND(10)*8
+
+PROCcmd(&21):PROCcmd(0):PROCcmd(127):REM column address
+PROCcmd(&22):PROCcmd(0):PROCcmd(7):REM page address/end
+
+?&FDD1=&78:?&FDD0=&82:REPEAT:S%=?&FDD0:UNTIL(S%AND&80)=0
+?&FDD1=&40:?&FDD0=&80:REPEAT:S%=?&FDD0:UNTIL(S%AND&80)=0
+FOR I%=0TO128*7:
+?&FDD1=A%?I%:?&FDD0=&80:REPEAT:S%=?&FDD0:UNTIL(S%AND&80)=0
+NEXT
+:
+END
+:
+DEFPROCcmd(A%):LOCALS%
+?&FDD1=&78:?&FDD0=&82:REPEAT:S%=?&FDD0:UNTIL(S%AND&80)=0
+?&FDD1=0:?&FDD0=&80:REPEAT:S%=?&FDD0:UNTIL(S%AND&80)=0
+?&FDD1=A%:?&FDD0=&84:REPEAT:S%=?&FDD0:UNTIL(S%AND&80)=0
+ENDPROC

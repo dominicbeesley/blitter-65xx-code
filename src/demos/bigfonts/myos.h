@@ -1,3 +1,4 @@
+/*
 MIT License
 
 Copyright (c) 2023 Dossytronics
@@ -20,3 +21,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
+
+#ifndef _MYOS_H_
+#define _MYOS_H_
+
+//all return X
+extern unsigned char my_os_byteAXY(unsigned char A, unsigned char X, unsigned char Y);
+extern unsigned char my_os_byteAX(unsigned char A, unsigned char X);
+extern unsigned char my_os_byteA(unsigned char A);
+
+
+#endif

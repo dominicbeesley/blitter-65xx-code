@@ -1,3 +1,4 @@
+/*
 MIT License
 
 Copyright (c) 2023 Dossytronics
@@ -20,3 +21,25 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
+
+#ifndef _MYOS_H_
+#define _MYOS_H_
+
+extern void my_os_byteAXY(unsigned char A, unsigned char X, unsigned char Y);
+extern void my_os_byteAX(unsigned char A, unsigned char X);
+extern void my_os_byteA(unsigned char A);
+
+extern unsigned char my_os_byteAXYretX(unsigned char A, unsigned char X, unsigned char Y);
+
+extern unsigned char my_os_find_open(unsigned char A, const char *ptr);
+extern void my_os_find_close(unsigned Y);
+
+extern long my_os_gbpb_read (unsigned char file, unsigned char const *data, long size);
+
+extern void my_os_brk(unsigned char n, const char *s);
+
+
+
+
+#endif

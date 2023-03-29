@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<tile-cutter>
+<!-- directories are relative to build directory -->
+<palette file="..\build\main.pal">
+	<ent>#6b1a48</ent>
+	<ent>#316693</ent>
+	<ent>#4f84ab</ent>
+	<ent>#6da1c2</ent>
+	<ent>#84b9d5</ent>
+	<ent>#96c8e2</ent>
+	<ent>#aadff3</ent>
+	<ent>#0cff00</ent>
+
+	<ent>#800000</ent>
+	<ent>#FF0000</ent>
+	<ent>#00FF00</ent>
+	<ent>#FFFF00</ent>
+	<ent>#0000FF</ent>
+	<ent>#FF00FF</ent>
+	<ent>#00FFFF</ent>
+	<ent>#FFFFFF</ent>
+
+
+</palette><!-- note paths are relative to build location -->
+<dest file="..\build\font.til" size-x="16" size-y="32" mask="n">
+	<source file="..\src-gra\big_font_parts_mo2_g2.png" />
+	<!-- walking down -->
+	<move x="0" y="0"/>
+	<cut x="10" y="5" dir="rd"/>
+</dest>
+<dest file="..\build\owl.til" size-x="17" size-y="42" mask="n">
+	<source file="..\src-gra\owl_mo2.png" />
+	<!-- walking down -->
+	<move x="0" y="0"/>
+	<cut x="1" y="1" dir="rd"/>
+</dest>
+</tile-cutter>

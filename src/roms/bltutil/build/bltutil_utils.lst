@@ -1,0 +1,1964 @@
+ca65 V2.18 - Git edfda72a
+Main file   : bltutil_utils.asm
+Current file: bltutil_utils.asm
+
+000000r 1               
+000000r 1               		.include "mosrom.inc"
+000000r 2               	.IFNDEF __MOSROM_INC__
+000000r 2               __MOSROM_INC__:
+000000r 2               
+000000r 2               ;; taken from 6809 version and edited down - these data should be used with care
+000000r 2               
+000000r 2               mos_MACHINE_TYPE_BYTE			:= $63
+000000r 2               
+000000r 2               ;; Address of MOS ROM base
+000000r 2               MOSROMBASE				:= $C000
+000000r 2               
+000000r 2               
+000000r 2               FSCV_CODE_OSCLI_UK			:= $03
+000000r 2               
+000000r 2               
+000000r 2               zp_lang					:= $0000
+000000r 2               zp_eco					:= $0090
+000000r 2               zp_nmi					:= $00A0
+000000r 2               L00A9					:= $00A9
+000000r 2               zp_fs_s					:= $00B0
+000000r 2               zp_fs_w					:= $00C0
+000000r 2               zp_vdu_status				:= $00D0	; VDU Status as read by OSBYTE &75
+000000r 2               zp_vdu_grpixmask			:= $00D1	; Graphics pixel mask
+000000r 2               zp_vdu_txtcolourOR			:= $00D2	; Text colour OR mask
+000000r 2               zp_vdu_txtcolourEOR			:= $00D3	; Text colour EOR mask
+000000r 2               zp_vdu_gracolourOR			:= $00D4	; Graphics colour OR mask
+000000r 2               zp_vdu_gracolourEOR			:= $00D5	; Graphics colour EOR mask
+000000r 2               zp_vdu_gra_char_cell			:= $00D6	; Graphics character cell
+000000r 2               zp_vdu_top_scanline			:= $00D8	; Top scan line
+000000r 2               zp_vdu_wksp				:= $00DA	; Temporary workspace
+000000r 2               ;;;;removed !zp_rom_mul			:= $00E0	; BBC, Electron: Row multiplication
+000000r 2               zp_cfs_w				:= $00E2
+000000r 2               zp_opt_val				:= $00E3	; DB? check
+000000r 2               zp_mos_GSREAD_quoteflag			:= $00E4	; GSREAD quote flag
+000000r 2               zp_mos_GSREAD_characc			:= $00E5	; GSREAD character accumulator
+000000r 2               zp_mos_OS_wksp				:= $00E6	; General OS workspace
+000000r 2               zp_mos_autorep_countdown		:= $00E7	; Auto repeat countdown timer
+000000r 2               zp_mos_input_buf			:= $00E8	; Input buffer pointer for OSWORD 0
+000000r 2               zp_mos_rs423timeout			:= $00EA	; RS423 timeout counter, unused if no RS423
+000000r 2               zp_mos_cfs_critical			:= $00EB	; CFS/RFS 'critical' flag
+000000r 2               zp_mos_keynumlast			:= $00EC	; Internal key number (last)
+000000r 2               zp_mos_keynumfirst			:= $00ED	; Internal key number (first)
+000000r 2               zp_mos_jimdevsave			:= $00EE	; Internal key number of character to be ignored by OSBYTE &79, also the 1MHz bus paging register
+000000r 2               zp_mos_OSBW_A				:= $00EF	; OSBYTE/OSWORD A reg value
+000000r 2               ;;;;
+000000r 2               zp_mos_OSBW_X				:= $00F0	; OSBYTE/OSWORD X reg value
+000000r 2               zp_mos_OSBW_Y				:= $00F1	; OSBYTE/OSWORD Y reg value
+000000r 2               
+000000r 2               zp_mos_txtptr				:= $00F2	; OS Text pointer (eg star commands and filenames)
+000000r 2               zp_mos_curROM				:= $00F4	; Currently selected ROM
+000000r 2               zp_mos_curPHROM				:= $00F5	; Current PHROM or RFS ROM number or OSRDSC/OSWRSC number
+000000r 2               zp_mos_genPTR				:= $00F6	; PHROM/RFSROM/OSRDSC/OSWRSC pointer
+000000r 2               zp_mos_X				:= $00F8	; BBC, Electron: Unused, Master: Soft key expansion pointer
+000000r 2               zp_mos_OS_wksp2				:= $00FA	; General OS workspace, used by buffer access code in interrupts
+000000r 2               zp_mos_INT_A				:= $00FC	; Interrupt Temp A reg store
+000000r 2               zp_mos_error_ptr			:= $00FD	; Error message pointer, initially set to language version string
+000000r 2               zp_mos_ESC_flag				:= $00FF	; Escape flag (bit 7)
+000000r 2               
+000000r 2               stack					:= $0100
+000000r 2               STACKTOP				:= $0200
+000000r 2               
+000000r 2               sysvar_OSVARADDR			:= $0236	; fx166/7 &A6/7 Address of OS variables
+000000r 2               sysvar_ROMPTRTAB			:= $0238	; fx168/9 &A8/9 Address of ROM pointer table
+000000r 2               sysvar_ROMINFOTAB			:= $023A	; fx170/1 &AA/B Address of ROM info table
+000000r 2               sysvar_KEYB_ADDRTRANS			:= $023C	; fx172/3 &AC/D Address of key translation table
+000000r 2               sysvar_ADDRVDUVARS			:= $023E	; fx174/5 &AE/F Address of VDU variables
+000000r 2               sysvar_CFSTOCTR				:= $0240	; fx176	  &B0	CFS timeout counter, decremented every frame flyback
+000000r 2               sysvar_CURINSTREAM			:= $0241	; fx177	  &B1	Currently selected input stream set with FX2
+000000r 2               sysvar_KEYB_SEMAPHORE			:= $0242	; fx178	  &B2	BBC, Master: Keyboard semaphore
+000000r 2               sysvar_PRI_OSHWM			:= $0243	; fx179	  &B3	Primary OSHWM
+000000r 2               sysvar_CUR_OSHWM			:= $0244	; fx180	  &B4	Current OSHWM
+000000r 2               sysvar_RS423_MODE			:= $0245	; fx181	  &B5	RS423 mode
+000000r 2               sysvar_EXPLODESTATUS			:= $0246	; fx182	  &B6	BBC, Electron: Character definition explosion status
+000000r 2               sysvar_CFSRFS_SWITCH			:= $0247	; fx183	  &B7	CFS/RFS switch
+000000r 2               sysvar_VIDPROC_CTL_COPY			:= $0248	; fx184	  &B8	BBC, Master: RAM copy of VIDPROC control register
+000000r 2               sysvar_VIDPROC_PAL_COPY			:= $0249	; fx185	  &B9	BBC, Master: RAM copy of VIDPROC palette register
+000000r 2               sysvar_ROMNO_ATBREAK			:= $024A	; fx186	  &BA	ROM active last BRK
+000000r 2               sysvar_ROMNO_BASIC			:= $024B	; fx187	  &BB	BASIC ROM number
+000000r 2               sysvar_ADC_CUR				:= $024C	; fx188	  &BC	Current ADC Channel
+000000r 2               sysvar_ADC_MAX				:= $024D	; fx189	  &BD	Maximum ADC Channel number
+000000r 2               sysvar_ADC_ACCURACY			:= $024E	; fx190	  &BE	ADC conversion type/accuracy
+000000r 2               sysvar_RS423_USEFLAG			:= $024F	; fx191	  &BF	RS423 use flag
+000000r 2               sysvar_RS423_CTL_COPY			:= $0250	; fx192	  &C0	RAM copy of RS423 control register
+000000r 2               sysvar_FLASH_CTDOWN			:= $0251	; fx193	  &C1	Flashing colour countdown timer
+000000r 2               sysvar_FLASH_SPACE_PERIOD		:= $0252	; fx194	  &C2	Flashing colour space period count set by FX9
+000000r 2               sysvar_FLASH_MARK_PERIOD		:= $0253	; fx195	  &C3	Flashing colour mark period count set by FX10
+000000r 2               sysvar_KEYB_AUTOREP_DELAY		:= $0254	; fx196	  &C4	Keyboard auto-repeat delay set by FX11
+000000r 2               sysvar_KEYB_AUTOREP_PERIOD		:= $0255	; fx197	  &C5	Keyboard auto-repeat period set by FX12
+000000r 2               sysvar_EXEC_FILE			:= $0256	; fx198	  &C6	*EXEC file
+000000r 2               sysvar_SPOOL_FILE			:= $0257	; fx199	  &C7	*SPOOL file handle
+000000r 2               sysvar_BREAK_EFFECT			:= $0258	; fx200	  &C8	ESCAPE, BREAK effect
+000000r 2               sysvar_KEYB_DISABLE			:= $0259	; fx201	  &C9	Keyboard disable
+000000r 2               sysvar_KEYB_STATUS			:= $025A	; fx202	  &CA	Keyboard status byte
+000000r 2               							;Bit 7  =1 shift enabled
+000000r 2               							;Bit 6  =1 control pressed
+000000r 2               							;bit 5  =0 shift lock
+000000r 2               							;Bit 4  =0 Caps lock
+000000r 2               							;Bit 3  =1 shift pressed
+000000r 2               
+000000r 2               sysvar_RS423_BUF_EXT			:= $025B	; fx203	  &CB	BBC, Master: Serial input buffer extent
+000000r 2               sysvar_RS423_SUPPRESS			:= $025C	; fx204	  &CC	BBC, Master: Serial input supression flag
+000000r 2               sysvar_RS423CASS_SELECT			:= $025D	; fx205	  &CD	BBC, Master: Serial/cassette selection flag
+000000r 2               sysvar_ECO_OSBW_INTERCEPT		:= $025E	; fx206	  &CE	Econet OSBYTE/OSWORD intercept flag
+000000r 2               sysvar_ECO_OSRDCH_INTERCEPT		:= $025F	; fx207	  &CF	Econet OSRDCH intercept flag
+000000r 2               sysvar_ECO_OSWRCH_INTERCEPT		:= $0260	; fx208	  &D0	Econet OSWRCH intercept flag
+000000r 2               sysvar_SPEECH_SUPPRESS			:= $0261	; fx209	  &D1	Speech suppression status
+000000r 2               sysvar_SOUND_SUPPRESS			:= $0262	; fx210	  &D2	Sound suppression status
+000000r 2               sysvar_BELL_CH				:= $0263	; fx211	  &D3	BELL channel number
+000000r 2               sysvar_BELL_ENV				:= $0264	; fx212	  &D4	BELL envelope number/amplitude
+000000r 2               sysvar_BELL_FREQ			:= $0265	; fx213	  &D5	BELL frequency
+000000r 2               sysvar_BELL_DUR				:= $0266	; fx214	  &D6	BELL duration
+000000r 2               sysvar_STARTUP_DISPOPT			:= $0267	; fx215	  &D7	Startup display and BOOT error options
+000000r 2               sysvar_KEYB_SOFTKEY_LENGTH		:= $0268	; fx216	  &D8	Soft key string length
+000000r 2               sysvar_SCREENLINES_SINCE_PAGE		:= $0269	; fx217	  &D9	Screen lines since last page
+000000r 2               sysvar_VDU_Q_LEN			:= $026A	; fx218	  &DA	256-number of items in VDU queue
+000000r 2               sysvar_KEYB_TAB_CHAR			:= $026B	; fx219	  &DB	BBC, Master: TAB key character
+000000r 2               sysvar_KEYB_ESC_CHAR			:= $026C	; fx220	  &DC	ESCAPE character
+000000r 2               sysvar_KEYB_C0CF_INSERT_INT		:= $026D	; fx221	  &DD	Char &C0-&CF buffer insert interpretation
+000000r 2               sysvar_KEYB_D0DF_INSERT_INT		:= $026E	; fx222	  &DE	Char &D0-&DF buffer insert interpretation
+000000r 2               sysvar_KEYB_E0EF_INSERT_INT		:= $026F	; fx223	  &DF	Char &E0-&EF buffer insert interpretation
+000000r 2               sysvar_KEYB_F0FF_INSERT_INT		:= $0270	; fx224	  &E0	Char &F0-&FF buffer insert interpretation
+000000r 2               sysvar_KEYB_808F_INSERT_INT		:= $0271	; fx225	  &E1	Char &80-&8F buffer insert interpretation (FKey)
+000000r 2               sysvar_KEYB_909F_INSERT_INT		:= $0272	; fx226	  &E2	Char &90-&9F buffer insert interpretation (Sh+FKey)
+000000r 2               sysvar_KEYB_A0AF_INSERT_INT		:= $0273	; fx227	  &E3	Char &A0-&AF buffer insert interpretation (Ct+FKey)
+000000r 2               sysvar_KEYB_B0BF_INSERT_INT		:= $0274	; fx228	  &E4	Char &B0-&BF buffer insert interpretation (Ct+Sh+FKey)
+000000r 2               sysvar_KEYB_ESC_ACTION			:= $0275	; fx229	  &E5	ESCAPE key action
+000000r 2               sysvar_KEYB_ESC_EFFECT			:= $0276	; fx230	  &E6	ESCAPE effects
+000000r 2               sysvar_USERVIA_IRQ_MASK_CPY		:= $0277	; fx231	  &E7	User 6522 VIA IRQ mask
+000000r 2               sysvar_ACIA_IRQ_MASK_CPY		:= $0278	; fx232	  &E8	6850 ACIA IRQ bit mask
+000000r 2               sysvar_SYSVIA_IRQ_MASK_CPY		:= $0279	; fx233	  &E9	System 6522 VIA IRQ mask
+000000r 2               sysvar_TUBE_PRESENT			:= $027A	; fx234	  &EA	Tube presence flag
+000000r 2               sysvar_SPEECH_PRESENT			:= $027B	; fx235	  &EB	Speech processor presence flag
+000000r 2               sysvar_OUTSTREAM_DEST			:= $027C	; fx236	  &EC	Output stream character destination, set with FX3
+000000r 2               sysvar_KEY_CURSORSTAT			:= $027D	; fx237	  &ED	Cursor key status, set with FX4
+000000r 2               sysvar_FX238				:= $027E	; fx238	  &EE	BBC, Electron: unused
+000000r 2               sysvar_FX239				:= $027F	; fx239	  &EF	unused
+000000r 2               sysvar_COUNTRY				:= $0280	; fx240	  &F0	Country code
+000000r 2               sysvar_USERFLAG				:= $0281	; fx241	  &F1	User flag location, set with FX1
+000000r 2               sysvar_SERPROC_CTL_CPY			:= $0282	; fx242	  &F2	BBC, Master: RAM copy of SERPROC control register
+000000r 2               sysvar_TIMER_SWITCH			:= $0283	; fx243	  &F3	Timer switch state
+000000r 2               sysvar_KEYB_SOFT_CONSISTANCY		:= $0284	; fx244	  &F4	Soft key consistancy flag
+000000r 2               sysvar_PRINT_DEST			:= $0285	; fx245	  &F5	Printer destination, set with FX5
+000000r 2               sysvar_PRINT_IGNORE			:= $0286	; fx246	  &F6	Printer ignore character, set with FX6
+000000r 2               sysvar_BREAK_VECTOR_JMP			:= $0287	; fx247	  &F7	Break Intercept Vector JMP
+000000r 2               sysvar_BREAK_VECTOR_LOW			:= $0288	; fx248	  &F8	Break Intercept Vector address low byte
+000000r 2               sysvar_BREAK_VECTOR_HIGH		:= $0289	; fx249	  &F9	Break Intercept Vector address high byte
+000000r 2               sysvar_SHADOW1				:= $028A	; fx250	  &FA	BBC, Electron: unused, unless shadow screen present
+000000r 2               sysvar_SHADOW2				:= $028B	; fx251	  &FB	BBC, Electron: unused, unless shadow screen present
+000000r 2               sysvar_CUR_LANG				:= $028C	; fx252	  &FC	Current language ROM
+000000r 2               sysvar_BREAK_LAST_TYPE			:= $028D	; fx253	  &FD	Last BREAK type
+000000r 2               sysvar_RAM_AVAIL			:= $028E	; fx254	  &FE	BBC: Available RAM
+000000r 2               sysvar_STARTUP_OPT			:= $028F	; fx255	  &FF	Startup options
+000000r 2               oswksp_VDU_VERTADJ			:= $0290	; VDU vertical adjust, *TV first parameter
+000000r 2               oswksp_VDU_INTERLACE			:= $0291	; Interlace toggle flag, *TV second parameter
+000000r 2               oswksp_TIME				:= $0292	; TIME value 1, high byte...low byte
+000000r 2               oswksp_TIME2				:= $0297	; TIME value 2, high byte...low byte
+000000r 2               oswksp_OSWORD3_CTDOWN			:= $029C	; OSWORD 3/4 Countdown interval timer value
+000000r 2               oswksp_ROMTYPE_TAB			:= $02A1	; Paged ROM type table
+000000r 2               oswksp_INKEY_CTDOWN			:= $02B1	; INKEY countdown timer
+000000r 2               oswksp_OSWORD0_LINE_LEN			:= $02B3	; OSWORD 0 maximum line length
+000000r 2               oswksp_OSWORD0_MIN_CH			:= $02B4	; OSWORD 0 minimum character
+000000r 2               oswksp_OSWORD0_MAX_CH			:= $02B5	; OSWORD 0 maximum character
+000000r 2               adc_CH1_LOW				:= $02B6	; Channel 1 ADC value low
+000000r 2               adc_CH2_LOW				:= $02B7	; Channel 2 ADC value low
+000000r 2               adc_CH3_LOW				:= $02B8	; Channel 3 ADC value low
+000000r 2               adc_CH4_LOW				:= $02B9	; Channel 4 ADC value low
+000000r 2               adc_CH1_HI				:= $02BA	; Channel 1 ADC value high
+000000r 2               adc_CH2_HI				:= $02BB	; Channel 2 ADC value high
+000000r 2               adc_CH3_HI				:= $02BC	; Channel 3 ADC value high
+000000r 2               adc_CH4_HI				:= $02BD	; Channel 4 ADC value high
+000000r 2               adc_CH_LAST				:= $02BE	; Last ADC channel converted
+000000r 2               mosvar_EVENT_ENABLE			:= $02BF	; MOS Event enable flags
+000000r 2               mosvar_SOFTKEY_PTR			:= $02C9	; Soft key expansion pointer
+000000r 2               mosvar_KEYB_AUTOREPEAT_COUNT		:= $02CA	; First auto repeat count
+000000r 2               mosvar_KEYB_TWOKEY_ROLLOVER		:= $02CB	; Two key rollover workspace
+000000r 2               mosvar_SOUND_SEMAPHORE			:= $02CE	; Sound semaphore
+000000r 2               mosbuf_buf_busy				:= $02CF	; Buffer busy flags
+000000r 2               mosbuf_buf_start			:= $02D8	; Buffer start indexes
+000000r 2               mosbuf_buf_end				:= $02E1	; Buffer end indexes
+000000r 2               cfsrfs_BLK_SIZE				:= $02EA	; Block size
+000000r 2               cfsrfs_BLK_FLAG				:= $02EC	; Block flag
+000000r 2               cfsrfs_LAST_CHA				:= $02ED	; Last input character
+000000r 2               osfile_ctlblk				:= $02EE	; OSFILE control blocks for *LOAD, *SAVE, *CREATE and *DELETE.
+000000r 2               vduvars_start				:= $0300
+000000r 2               vduvar_GRA_WINDOW			:= $0300
+000000r 2               vduvar_GRA_WINDOW_LEFT			:= $0300	; Current graphics window left column in pixels
+000000r 2               vduvar_GRA_WINDOW_BOTTOM		:= $0302	; Current graphics window bottom row in pixels
+000000r 2               vduvar_GRA_WINDOW_RIGHT			:= $0304	; Current graphics window right column in pixels
+000000r 2               vduvar_GRA_WINDOW_TOP			:= $0306	; Current graphics window top row in pixels
+000000r 2               vduvar_TXT_WINDOW_LEFT			:= $0308	; Current text window left hand column
+000000r 2               vduvar_TXT_WINDOW_BOTTOM		:= $0309	; Current text window bottom row
+000000r 2               vduvar_TXT_WINDOW_RIGHT			:= $030A	; Current text window right hand column
+000000r 2               vduvar_TXT_WINDOW_TOP			:= $030B	; Current text window top column
+000000r 2               vduvar_GRA_ORG_EXT			:= $030C	; Current graphics origin in external coordinates
+000000r 2               vduvar_GRA_CUR_EXT			:= $0310	; Current graphics cursor in external coordinates
+000000r 2               vduvar_GRA_CUR_INT_OLD			:= $0314	; Old graphics cursor in external coordinates
+000000r 2               vduvar_TXT_CUR_X			:= $0318	; Current text cursor X
+000000r 2               vduvar_TXT_CUR_Y			:= $0319	; Current text cursor Y
+000000r 2               vduvar_GRA_CUR_CELL_LINE		:= $031A	; Line within current graphics cell of graphics cursor
+000000r 2               vduvar_VDU_Q_START			:= $031B
+000000r 2               vduvar_VDU_Q_END			:= $0324	; end of VDU Q (well 1 after!)
+000000r 2               vduvar_GRA_CUR_INT			:= $0324	; Current graphics cursor in internal coordinates
+000000r 2               vduvar_TEMP_8				:= $0328	; Bitmap read from screen by OSBYTE 135, various coordinate routines
+000000r 2               vduvar_GRA_WKSP				:= $0330	; Graphics workspace
+000000r 2               vduvar_6845_CURSOR_ADDR			:= $034A	; Text cursor address for 6845
+000000r 2               vduvar_TXT_WINDOW_WIDTH_BYTES		:= $034C	; Text window width in bytes
+000000r 2               vduvar_SCREEN_BOTTOM_HIGH		:= $034E	; High byte of bottom of screen memory
+000000r 2               vduvar_BYTES_PER_CHAR			:= $034F	; Bytes per character for current mode
+000000r 2               vduvar_6845_SCREEN_START		:= $0350	; Screen display start address for 6845
+000000r 2               vduvar_BYTES_PER_ROW			:= $0352	; Bytes per screen row
+000000r 2               vduvar_SCREEN_SIZE_HIGH			:= $0354	; Screen memory size high byte
+000000r 2               vduvar_MODE				:= $0355	; Current screen mode
+000000r 2               vduvar_MODE_SIZE			:= $0356	; Memory map type: 0 - 20K, 1 - 16K, 2 - 10K, 3 - 8K, 4 - 1K
+000000r 2               vduvar_TXT_FORE				:= $0357	; Foreground text colour
+000000r 2               vduvar_TXT_BACK				:= $0358	; Background text colour
+000000r 2               vduvar_GRA_FORE				:= $0359	; Foreground graphics colour
+000000r 2               vduvar_GRA_BACK				:= $035A	; Background graphics colour
+000000r 2               vduvar_GRA_PLOT_FORE			:= $035B	; Foreground plot mode
+000000r 2               vduvar_GRA_PLOT_BACK			:= $035C	; Background plot mode
+000000r 2               vduvar_VDU_VEC_JMP			:= $035D	; General VDU jump vector
+000000r 2               vduvar_CUR_START_PREV			:= $035F	; Cursor start register previous setting
+000000r 2               vduvar_COL_COUNT_MINUS1			:= $0360	; Number logical colours -1
+000000r 2               vduvar_PIXELS_PER_BYTE_MINUS1		:= $0361	; Pixels per byte -1 (zero if text only mode)
+000000r 2               vduvar_LEFTMOST_PIX_MASK		:= $0362	; Leftmost pixel colour mask
+000000r 2               vduvar_RIGHTMOST_PIX_MASK		:= $0363	; Rightmost pixel colour mask
+000000r 2               vduvar_TEXT_IN_CUR_X			:= $0364	; Text input cursor X
+000000r 2               vduvar_TEXT_IN_CUR_Y			:= $0365	; Text input cursor Y
+000000r 2               vduvar_MO7_CUR_CHAR			:= $0366	; Teletext output cursor character
+000000r 2               vduvar_EXPLODE_FLAGS			:= $0367	; Font explosion flags, b1=224-255 in RAM, b7=32-63 in RAM
+000000r 2               vduvar_FONT_LOC32_63			:= $0368	; Font location, characters 32-63
+000000r 2               vduvar_FONT_LOC64_95			:= $0369	; Font location, characters 64-95
+000000r 2               vduvar_FONT_LOC96_127			:= $036A	; Font location, characters 96-127
+000000r 2               vduvar_FONT_LOC128_159			:= $036B	; Font location, characters 128-159
+000000r 2               vduvar_FONT_LOC160_191			:= $036C	; Font location, characters 160-191
+000000r 2               vduvar_FONT_LOC192_223			:= $036D	; Font location, characters 192-223
+000000r 2               vduvar_FONT_LOC224_255			:= $036E	; Font location, characters 224-255
+000000r 2               vduvar_PALLETTE				:= $036F	; Palette for colours 0 to 15
+000000r 2               
+000000r 2               fsvar_seq_block_gap			:= $03D1
+000000r 2               
+000000r 2               ;********************************************************
+000000r 2               ;*           B U F F E R   A D D R E S S E S            *
+000000r 2               ;********************************************************
+000000r 2               
+000000r 2               BUFFER_KEYB_START			:= $03E0
+000000r 2               BUFFER_KEYB_END				:= $03FF
+000000r 2               BUFFER_SERI_START			:= $0A00
+000000r 2               BUFFER_SERI_END				:= $0AFF
+000000r 2               BUFFER_SERO_START			:= $0900
+000000r 2               BUFFER_SERO_END				:= $09BF
+000000r 2               BUFFER_LPT_START			:= $0880
+000000r 2               BUFFER_LPT_END				:= $08BF
+000000r 2               BUFFER_SND0_START			:= $0840
+000000r 2               BUFFER_SND0_END				:= $084F
+000000r 2               BUFFER_SND1_START			:= $0850
+000000r 2               BUFFER_SND1_END				:= $085F
+000000r 2               BUFFER_SND2_START			:= $0860
+000000r 2               BUFFER_SND2_END				:= $086F
+000000r 2               BUFFER_SND3_START			:= $0870
+000000r 2               BUFFER_SND3_END				:= $087F
+000000r 2               BUFFER_SPCH_START			:= $09C0
+000000r 2               BUFFER_SPCH_END				:= $09FF
+000000r 2               
+000000r 2               
+000000r 2               snd_unused1				:= $800	; Unused
+000000r 2               snd_q_occupied				:= $804	; Sound queue occupancy flag
+000000r 2               snd_amplitude				:= $808	; Current amplitude
+000000r 2               snd_amplitude_phase_count		:= $80C	; Number of amplitude phases processed
+000000r 2               snd_abs_pitch				:= $810	; Absolute pitch value
+000000r 2               snd_pitch_phase_count			:= $814	; Number of pitch phases processed
+000000r 2               snd_steps_left				:= $818	; Number of steps to process
+000000r 2               snd_duration_ctr			:= $81C	; Duration
+000000r 2               snd_duration_mul			:= $820	; Interval multiplier
+000000r 2               snd_env_no				:= $824	; Envelope number/auto repeat parameter
+000000r 2               snd_length_left				:= $828	; Length of remaining note interval
+000000r 2               snd_sync_hold_parm			:= $82C	; Sync hold parameter
+000000r 2               snd_chip_pitch				:= $830	; Sound chip current pitch setting
+000000r 2               snd_pitch_deviation			:= $834	; Pitch deviation
+000000r 2               snd_num_chans_sync			:= $838	; Number of channels required for sync
+000000r 2               snd_cur_amp_step			:= $839	; Current amplitude step
+000000r 2               snd_cur_target_amplitude		:= $83A	; Current target amplitude
+000000r 2               snd_num_chans_hold_sync			:= $83B	; Number of channels on hold for sync
+000000r 2               
+000000r 2               snd_parm_wksp				:= $83C	; Sound parameter calculation workspace
+000000r 2               snd_low_parm				:= $83D	; Low order frequency parameter as sent to the sound generator
+000000r 2               snd_high_parm				:= $83E	; High order frequency parameter as sent to the sound generator
+000000r 2               snd_tempx				:= $83F
+000000r 2               
+000000r 2               snd_envelope_defs			:= $8C0
+000000r 2               snd_envelope_STEP			:= $8C0
+000000r 2               snd_envelope_PI1			:= $8C1
+000000r 2               snd_envelope_PI2			:= $8C2
+000000r 2               snd_envelope_PI3			:= $8C3
+000000r 2               snd_envelope_PN1			:= $8C4
+000000r 2               snd_envelope_PN2			:= $8C5
+000000r 2               snd_envelope_PN3			:= $8C6
+000000r 2               snd_envelope_AA				:= $8C7
+000000r 2               snd_envelope_AD				:= $8C8
+000000r 2               snd_envelope_AS				:= $8C9
+000000r 2               snd_envelope_AR				:= $8CA
+000000r 2               snd_envelope_ALA			:= $8CB
+000000r 2               snd_envelope_ALD			:= $8CC
+000000r 2               
+000000r 2               
+000000r 2               
+000000r 2               soft_keys_start				:= $B00
+000000r 2               
+000000r 2               vec_nmi					:= $0D00
+000000r 2               
+000000r 2               swrom_wksp_tab				:= $0DF0
+000000r 2               
+000000r 2               	.ENDIF
+000000r 2               
+000000r 1               		.include "oslib.inc"
+000000r 2               ;	OS Entry points
+000000r 2               
+000000r 2               GSINIT					:=	$FFC2
+000000r 2               GSREAD					:=	$FFC5
+000000r 2               OSRDCH_NV				:=	$FFC8
+000000r 2               OSWRCH_NV				:=	$FFCB
+000000r 2               OSFIND					:=	$FFCE
+000000r 2               OSGBPB					:=	$FFD1
+000000r 2               OSBPUT					:=	$FFD4
+000000r 2               OSBGET					:=	$FFD7
+000000r 2               OSARGS					:=	$FFDA
+000000r 2               OSFILE					:=	$FFDD
+000000r 2               OSRDCH					:=	$FFE0
+000000r 2               OSASCI					:=	$FFE3
+000000r 2               OSNEWL					:=	$FFE7
+000000r 2               OSWRCR					:=	$FFEC
+000000r 2               OSWRCH					:=	$FFEE
+000000r 2               OSWORD					:=	$FFF1
+000000r 2               OSBYTE					:=	$FFF4
+000000r 2               OSCLI					:=	$FFF7
+000000r 2               
+000000r 2               PRSTRING				:=	$FF9B
+000000r 2               CLICOM					:=	$FFB9
+000000r 2               ERRJMP					:=	$FFBC
+000000r 2               OSINIT					:=	$FFBF
+000000r 2               SCANHEX					:=	$FFA1
+000000r 2               OSQUIT					:=	$FFA7
+000000r 2               PRHEX					:=	$FFAA
+000000r 2               PR2HEX					:=	$FFAD
+000000r 2               USERINT					:=	$FFB0
+000000r 2               PRTEXT					:=	$FFB3
+000000r 2               
+000000r 2               OSRDRM					:=	$FFB9
+000000r 2               OSEVEN					:=	$FFBF
+000000r 2               RAWVDU					:=	$FFCB
+000000r 2               
+000000r 2               DEBUGPRINTNEWL				:=	$FF8C
+000000r 2               DEBUGPRINTHEX				:=	$FF8F
+000000r 2               DEBUGPRINTA				:=	$FF92
+000000r 2               DEBUGPRINTX				:=	$FF95
+000000r 2               
+000000r 2               ;	OS Constants
+000000r 2               
+000000r 2               ERR_FILE_NOT_FOUND			:= 214
+000000r 2               
+000000r 2               OSFILE_LOAD				:= $FF
+000000r 2               OSFILE_SAVE				:= $00
+000000r 2               OSFILE_SET_LOAD				:= $02
+000000r 2               OSFILE_CAT				:= $05
+000000r 2               OSFILE_OFS_FILENAME			:= $00
+000000r 2               OSFILE_OFS_LOAD				:= $02
+000000r 2               OSFILE_OFS_EXEC				:= $06
+000000r 2               OSFILE_OFS_LEN				:= $0A
+000000r 2               OSFILE_OFS_START			:= $0A
+000000r 2               OSFILE_OFS_ATTR				:= $0E
+000000r 2               OSFILE_OFS_END				:= $0E
+000000r 2               OSFILE_TYPE_NOTFOUND			:= $00
+000000r 2               OSFILE_TYPE_FILE			:= $01
+000000r 2               OSFILE_TYPE_DIRECTORY			:= $02
+000000r 2               
+000000r 2               
+000000r 2               OSFIND_CLOSE				:= $00
+000000r 2               OSFIND_OPENIN				:= $40
+000000r 2               OSFIND_OPENOUT				:= $80
+000000r 2               OSFIND_OPENUP				:= $C0
+000000r 2               
+000000r 2               OSWORD_SOUND				:= $07
+000000r 2               OSWORD_ENVELOPE				:= $08
+000000r 2               
+000000r 2               OSARGS_cmdtail				:= $01
+000000r 2               OSARGS_EXT				:= $02
+000000r 2               
+000000r 2               OSGBPB_WRITE_PTR			:=	$00
+000000r 2               OSGBPB_WRITE_NOPTR			:=	$02
+000000r 2               OSGBPB_READ_PTR				:=	$03
+000000r 2               OSGBPB_READ_NOPTR			:=	$04
+000000r 2               OSGBPB_READ_TITLE			:=	$05
+000000r 2               OSGBPB_READ_DIR				:=	$06
+000000r 2               OSGBPB_READ_LIB				:=	$07
+000000r 2               OSGBPB_GET_DIRENT			:=	$08
+000000r 2               
+000000r 2               
+000000r 2               SERVICE_0_NOP				:=	$0
+000000r 2               SERVICE_1_ABSWKSP_REQ			:=	$1
+000000r 2               SERVICE_2_RELWKSP_REQ			:=	$2
+000000r 2               SERVICE_3_AUTOBOOT			:=	$3
+000000r 2               SERVICE_4_UKCMD				:=	$4
+000000r 2               SERVICE_5_UKINT				:=	$5
+000000r 2               SERVICE_6_BRK				:=	$6
+000000r 2               SERVICE_7_UKOSBYTE			:=	$7
+000000r 2               SERVICE_7_UKOSWORD			:=	$8
+000000r 2               SERVICE_9_HELP				:=	$9
+000000r 2               SERVICE_A_ABSWKSP_CLAIM			:=	$A
+000000r 2               SERVICE_B_NMI_RELEASE			:=	$B
+000000r 2               SERVICE_C_NMI_CLAIM			:=	$C
+000000r 2               SERVICE_D_ROMFS_INIT			:=	$D
+000000r 2               SERVICE_E_ROMFS_GETB			:=	$E
+000000r 2               SERVICE_F_FSVEC_CLAIMED			:=	$F
+000000r 2               SERVICE_10_SPOOL_CLOSE			:=	$10
+000000r 2               SERVICE_11_FONT_BANG			:=	$11
+000000r 2               SERVICE_12_INITFS			:=	$12
+000000r 2               SERVICE_13_SERIAL_CHAR			:=	$13
+000000r 2               SERVICE_14_PRINT_CHAR			:=	$14
+000000r 2               SERVICE_15_100Hz			:=	$15
+000000r 2               SERVICE_25_FSINFO			:=	$25
+000000r 2               
+000000r 2               FSCV_6_NewFS				:=	$06
+000000r 2               
+000000r 2               ; OS Vectors
+000000r 2               
+000000r 2               USERV					:=	$0200	; User vector, called by *LINE, *CODE, OSWORD >=&E0
+000000r 2               BRKV					:=	$0202	; The BRK vector
+000000r 2               IRQ1V					:=	$0204	; Main interrupt vector
+000000r 2               IRQ2V					:=	$0206	; Secondary interrupt vector
+000000r 2               CLIV					:=	$0208	; Command Line Interpreter vector
+000000r 2               BYTEV					:=	$020A	; OSBYTE (*FX) calls
+000000r 2               WORDV					:=	$020C	; OSWORD calls
+000000r 2               WRCHV					:=	$020E	; Send character to current output stream
+000000r 2               RDCHV					:=	$0210	; Wait for a character from current input stream
+000000r 2               FILEV					:=	$0212	; Operate on a whole file, eg loading/saving/delete/etc
+000000r 2               ARGSV					:=	$0214	; Read/Write arguments on an open file
+000000r 2               BGETV					:=	$0216	; Read a byte from an open file
+000000r 2               BPUTV					:=	$0218	; Write a byte to an open file
+000000r 2               GBPBV					:=	$021A	; Read/Write block of data from/to open file or device
+000000r 2               FINDV					:=	$021C	; Open or close a file
+000000r 2               FSCV					:=	$021E	; Various filing system control calls
+000000r 2               EVNTV					:=	$0220	; Event handler
+000000r 2               UPTV					:=	$0222	; User Print vector
+000000r 2               NETV					:=	$0224	; Network Print vector
+000000r 2               VDUV					:=	$0226	; Unrecognised VDU commands
+000000r 2               KEYV					:=	$0228	; Read the keyboard
+000000r 2               INSV					:=	$022A	; Insert characters into a buffer
+000000r 2               REMV					:=	$022C	; Remove characters from a buffer
+000000r 2               CNPV					:=	$022E	; Count or Purge a buffer
+000000r 2               ;;IND1V					:=	$0230	; Spare
+000000r 2               SWI9V					:=	$0230	; SWI instruction vector - do not use except for debugging
+000000r 2               ;;IND2V					:=	$0232	; Spare
+000000r 2               SW29V					:=	$0232	; SWI2 vector, may be used by applications, though not recommnded
+000000r 2               ;;IND3V					:=	$0234	; Spare
+000000r 2               NMI9V					:=	$0234	; NMI vector - do not use except for debugging
+000000r 2               
+000000r 2               ; OS Extended Vectors Marker addresses
+000000r 2               
+000000r 2               EXTVEC_ENTER_USERV			:=	$FF00	; User vector, called by *LINE, *CODE, OSWORD >=&E0
+000000r 2               EXTVEC_ENTER_BRKV			:=	$FF03	; The BRK vector
+000000r 2               EXTVEC_ENTER_IRQ1V			:=	$FF06	; Main interrupt vector
+000000r 2               EXTVEC_ENTER_IRQ2V			:=	$FF09	; Secondary interrupt vector
+000000r 2               EXTVEC_ENTER_CLIV			:=	$FF0C	; Command Line Interpreter vector
+000000r 2               EXTVEC_ENTER_BYTEV			:=	$FF0F	; OSBYTE (*FX) calls
+000000r 2               EXTVEC_ENTER_WORDV			:=	$FF12	; OSWORD calls
+000000r 2               EXTVEC_ENTER_WRCHV			:=	$FF15	; Send character to current output stream
+000000r 2               EXTVEC_ENTER_RDCHV			:=	$FF18	; Wait for a character from current input stream
+000000r 2               EXTVEC_ENTER_FILEV			:=	$FF1B	; Operate on a whole file, eg loading/saving/delete/etc
+000000r 2               EXTVEC_ENTER_ARGSV			:=	$FF1E	; Read/Write arguments on an open file
+000000r 2               EXTVEC_ENTER_BGETV			:=	$FF21	; Read a byte from an open file
+000000r 2               EXTVEC_ENTER_BPUTV			:=	$FF24	; Write a byte to an open file
+000000r 2               EXTVEC_ENTER_GBPBV			:=	$FF27	; Read/Write block of data from/to open file or device
+000000r 2               EXTVEC_ENTER_FINDV			:=	$FF2A	; Open or close a file
+000000r 2               EXTVEC_ENTER_FSCV			:=	$FF2D	; Various filing system control calls
+000000r 2               EXTVEC_ENTER_EVNTV			:=	$FF30	; Event handler
+000000r 2               EXTVEC_ENTER_UPTV			:=	$FF33	; User Print vector
+000000r 2               EXTVEC_ENTER_NETV			:=	$FF36	; Network Print vector
+000000r 2               EXTVEC_ENTER_VDUV			:=	$FF39	; Unrecognised VDU commands
+000000r 2               EXTVEC_ENTER_KEYV			:=	$FF3C	; Read the keyboard
+000000r 2               EXTVEC_ENTER_INSV			:=	$FF3F	; Insert characters into a buffer
+000000r 2               EXTVEC_ENTER_REMV			:=	$FF42	; Remove characters from a buffer
+000000r 2               EXTVEC_ENTER_CNPV			:=	$FF45	; Count or Purge a buffer
+000000r 2               EXTVEC_ENTER_IND1V			:=	$FF48	; Spare
+000000r 2               EXTVEC_ENTER_IND2V			:=	$FF4B	; Spare
+000000r 2               EXTVEC_ENTER_IND3V			:=	$FF4E	; Spare
+000000r 2               
+000000r 2               EXT_USERV				:=	$0D9F	; User vector, called by *LINE, *CODE, OSWORD >=&E0
+000000r 2               EXT_BRKV				:=	$0DA2	; The BRK vector
+000000r 2               EXT_IRQ1V				:=	$0DA5	; Main interrupt vector
+000000r 2               EXT_IRQ2V				:=	$0DA8	; Secondary interrupt vector
+000000r 2               EXT_CLIV				:=	$0DAB	; Command Line Interpreter vector
+000000r 2               EXT_BYTEV				:=	$0DAE	; OSBYTE (*FX) calls
+000000r 2               EXT_WORDV				:=	$0DB1	; OSWORD calls
+000000r 2               EXT_WRCHV				:=	$0DB4	; Send character to current output stream
+000000r 2               EXT_RDCHV				:=	$0DB7	; Wait for a character from current input stream
+000000r 2               EXT_FILEV				:=	$0DBA	; Operate on a whole file, eg loading/saving/delete/etc
+000000r 2               EXT_ARGSV				:=	$0DBD	; Read/Write arguments on an open file
+000000r 2               EXT_BGETV				:=	$0DC0	; Read a byte from an open file
+000000r 2               EXT_BPUTV				:=	$0DC3	; Write a byte to an open file
+000000r 2               EXT_GBPBV				:=	$0DC6	; Read/Write block of data from/to open file or device
+000000r 2               EXT_FINDV				:=	$0DC9	; Open or close a file
+000000r 2               EXT_FSCV				:=	$0DCC	; Various filing system control calls
+000000r 2               EXT_EVNTV				:=	$0DCF	; Event handler
+000000r 2               EXT_UPTV				:=	$0DD2	; User Print vector
+000000r 2               EXT_NETV				:=	$0DD5	; Network Print vector
+000000r 2               EXT_VDUV				:=	$0DD8	; Unrecognised VDU commands
+000000r 2               EXT_KEYV				:=	$0DDB	; Read the keyboard
+000000r 2               EXT_INSV				:=	$0DDE	; Insert characters into a buffer
+000000r 2               EXT_REMV				:=	$0DE1	; Remove characters from a buffer
+000000r 2               EXT_CNPV				:=	$0DE4	; Count or Purge a buffer
+000000r 2               EXT_IND1V				:=	$0DE7	; Spare
+000000r 2               EXT_IND2V				:=	$0DEA	; Spare
+000000r 2               EXT_IND3V				:=	$0DED	; Spare
+000000r 2               
+000000r 2               EVENT_NUM_4_VSYNC			:= 	4
+000000r 2               
+000000r 2               OSBYTE_0_HOST_OS			:=	0
+000000r 2               OSBYTE_13_DISABLE_EVENT			:=	13
+000000r 2               OSBYTE_14_ENABLE_EVENT			:=	14
+000000r 2               OSBYTE_15_FLUSH_INPUT			:=	15
+000000r 2               OSBYTE_21_FLUSH_BUFFER			:=	21
+000000r 2               OSBYTE_108_WRITE_SHADOW_STATE		:=	108
+000000r 2               OSBYTE_119_CLOSE_SPOOL_AND_EXEC		:=	119
+000000r 2               OSBYTE_126_ESCAPE_ACK			:=	126
+000000r 2               OSBYTE_129_INKEY			:=	129
+000000r 2               OSBYTE_135_GET_MODE			:=	135
+000000r 2               OSBYTE_142_SERVICE_CALL			:=	143
+000000r 2               OSBYTE_156_SERIAL_STATE			:=	156
+000000r 2               OSBYTE_160_READ_VDU_VARIABLE		:=	160
+000000r 2               OSBYTE_168_READ_ROM_POINTER_TABLE	:=	168
+000000r 2               OSBYTE_171_ROMTAB			:=	170
+000000r 2               OSBYTE_232_VAR_IRQ_MASK_SERIAL		:=	232
+000000r 2               OSBYTE_234_VAR_TUBE			:=	234
+000000r 2               OSBYTE_253_VAR_LAST_RESET		:=	253
+000000r 2               
+000000r 2               vduvar_ix_GRA_WINDOW			:= $00
+000000r 2               vduvar_ix_GRA_WINDOW_LEFT		:= $00	; Current graphics window left column in pixels
+000000r 2               vduvar_ix_GRA_WINDOW_BOTTOM		:= $02	; Current graphics window bottom row in pixels
+000000r 2               vduvar_ix_GRA_WINDOW_RIGHT		:= $04	; Current graphics window right column in pixels
+000000r 2               vduvar_ix_GRA_WINDOW_TOP		:= $06	; Current graphics window top row in pixels
+000000r 2               vduvar_ix_TXT_WINDOW_LEFT		:= $08	; Current text window left hand column
+000000r 2               vduvar_ix_TXT_WINDOW_BOTTOM		:= $09	; Current text window bottom row
+000000r 2               vduvar_ix_TXT_WINDOW_RIGHT		:= $0A	; Current text window right hand column
+000000r 2               vduvar_ix_TXT_WINDOW_TOP		:= $0B	; Current text window top column
+000000r 2               vduvar_ix_GRA_ORG_EXT			:= $0C	; Current graphics origin in external coordinates
+000000r 2               vduvar_ix_GRA_CUR_EXT			:= $10	; Current graphics cursor in external coordinates
+000000r 2               vduvar_ix_GRA_CUR_INT_OLD		:= $14	; Old graphics cursor in external coordinates
+000000r 2               vduvar_ix_TXT_CUR_X			:= $18	; Current text cursor X
+000000r 2               vduvar_ix_TXT_CUR_Y			:= $19	; Current text cursor Y
+000000r 2               vduvar_ix_GRA_CUR_CELL_LINE		:= $1A	; Line within current graphics cell of graphics cursor
+000000r 2               vduvar_ix_VDU_Q_START			:= $1B
+000000r 2               vduvar_ix_VDU_Q_END			:= $24	; end of VDU Q (well 1 after!)
+000000r 2               vduvar_ix_GRA_CUR_INT			:= $24	; Current graphics cursor in internal coordinates
+000000r 2               vduvar_ix_TEMP_8			:= $28	; Bitmap read from screen by OSBYTE 135, various coordinate routines
+000000r 2               vduvar_ix_GRA_WKSP			:= $30	; Graphics workspace
+000000r 2               vduvar_ix_6845_CURSOR_ADDR		:= $4A	; Text cursor address for 6845
+000000r 2               vduvar_ix_TXT_WINDOW_WIDTH_BYTES	:= $4C	; Text window width in bytes
+000000r 2               vduvar_ix_SCREEN_BOTTOM_HIGH		:= $4E	; High byte of bottom of screen memory
+000000r 2               vduvar_ix_BYTES_PER_CHAR		:= $4F	; Bytes per character for current mode
+000000r 2               vduvar_ix_6845_SCREEN_START		:= $50	; Screen display start address for 6845
+000000r 2               vduvar_ix_BYTES_PER_ROW			:= $52	; Bytes per screen row
+000000r 2               vduvar_ix_SCREEN_SIZE_HIGH		:= $54	; Screen memory size high byte
+000000r 2               vduvar_ix_MODE				:= $55	; Current screen mode
+000000r 2               vduvar_ix_MODE_SIZE			:= $56	; Memory map type: 0 - 20K, 1 - 16K, 2 - 10K, 3 - 8K, 4 - 1K
+000000r 2               vduvar_ix_TXT_FORE			:= $57	; Foreground text colour
+000000r 2               vduvar_ix_TXT_BACK			:= $58	; Background text colour
+000000r 2               vduvar_ix_GRA_FORE			:= $59	; Foreground graphics colour
+000000r 2               vduvar_ix_GRA_BACK			:= $5A	; Background graphics colour
+000000r 2               vduvar_ix_GRA_PLOT_FORE			:= $5B	; Foreground plot mode
+000000r 2               vduvar_ix_GRA_PLOT_BACK			:= $5C	; Background plot mode
+000000r 2               vduvar_ix_VDU_VEC_JMP			:= $5D	; General VDU jump vector
+000000r 2               vduvar_ix_CUR_START_PREV		:= $5F	; Cursor start register previous setting
+000000r 2               vduvar_ix_COL_COUNT_MINUS1		:= $60	; Number logical colours -1
+000000r 2               vduvar_ix_PIXELS_PER_BYTE_MINUS1	:= $61	; Pixels per byte -1 (zero if text only mode)
+000000r 2               vduvar_ix_LEFTMOST_PIX_MASK		:= $62	; Leftmost pixel colour mask
+000000r 2               vduvar_ix_RIGHTMOST_PIX_MASK		:= $63	; Rightmost pixel colour mask
+000000r 2               vduvar_ix_TEXT_IN_CUR_X			:= $64	; Text input cursor X
+000000r 2               vduvar_ix_TEXT_IN_CUR_Y			:= $65	; Text input cursor Y
+000000r 2               vduvar_ix_MO7_CUR_CHAR			:= $66	; Teletext output cursor character
+000000r 2               vduvar_ix_EXPLODE_FLAGS			:= $67	; Font explosion flags, b1=224-255 in RAM, b7=32-63 in RAM
+000000r 2               vduvar_ix_FONT_LOC32_63			:= $68	; Font location, characters 32-63
+000000r 2               vduvar_ix_FONT_LOC64_95			:= $69	; Font location, characters 64-95
+000000r 2               vduvar_ix_FONT_LOC96_127		:= $6A	; Font location, characters 96-127
+000000r 2               vduvar_ix_FONT_LOC128_159		:= $6B	; Font location, characters 128-159
+000000r 2               vduvar_ix_FONT_LOC160_191		:= $6C	; Font location, characters 160-191
+000000r 2               vduvar_ix_FONT_LOC192_223		:= $6D	; Font location, characters 192-223
+000000r 2               vduvar_ix_FONT_LOC224_255		:= $6E	; Font location, characters 224-255
+000000r 2               vduvar_ix_PALLETTE			:= $6F	; Palette for colours 0 to 15
+000000r 2               
+000000r 1               
+000000r 1               		.include "bltutil.inc"
+000000r 2               		.include "hardware.inc"
+000000r 3               	.IFNDEF __HARDWARE_INC__
+000000r 3               __HARDWARE_INC__:
+000000r 3               
+000000r 3               
+000000r 3               sheila_MEM_CTL			:= $FE31
+000000r 3               BITS_MEM_CTL_SWMOS		:= $01
+000000r 3               BITS_MEM_CTL_SWMOS_DEBUG	:= $04
+000000r 3               BITS_MEM_CTL_SWMOS_DEBUG_EN	:= $08
+000000r 3               BITS_MEM_CTL_FLEX		:= $10
+000000r 3               BITS_MEM_CTL_SWMOS_DEBUG_5C	:= $40
+000000r 3               BITS_MEM_CTL_SWMOS_DEBUG_ACT	:= $80
+000000r 3               sheila_MEM_DEBUG_SAVE		:= $FE32
+000000r 3               
+000000r 3               sheila_MEM_TURBO2		:= $FE36
+000000r 3               BITS_MEM_TURBO2_THROTTLE	:= $80
+000000r 3               
+000000r 3               sheila_MEM_LOMEMTURBO		:= $FE37
+000000r 3               
+000000r 3               
+000000r 3               sheila_ACIA_CTL		:=	$FE08
+000000r 3               ACIA_RDRF		:=	$01
+000000r 3               ACIA_TDRE		:=	$02
+000000r 3               
+000000r 3               sheila_ACIA_DATA	:=	$FE09
+000000r 3               sheila_SERIAL_ULA	:=	$FE10
+000000r 3               
+000000r 3               
+000000r 3               ; BLTCON is written in two passes with top bit clear i.e. not BLTCON_ACT_ACT
+000000r 3               ; the exec flags are first set
+000000r 3               ; then with top bit set the active flag, bit mode and cell flags are set
+000000r 3               ; BLTCON/ACT byte flags
+000000r 3               
+000000r 3               BLITCON_ACT_ACT			:=	$80		; always set when setting act constants/execing
+000000r 3               BLITCON_ACT_CELL		:=	$40		; cell addressing used i.e. move one byte left adds 8 to address
+000000r 3               							; moving one line down either adds 1 byte or STRIDE depending on whether
+000000r 3               							; line crosses an 8 line boundary
+000000r 3               BLITCON_ACT_MODE_1BBP		:=	$00		; 1 bit per pixel mapping 2 colours
+000000r 3               BLITCON_ACT_MODE_2BBP		:=	$10		; 2 bit per pixel mapping 4 colours
+000000r 3               BLITCON_ACT_MODE_4BBP		:=	$20		; 4 bit per pixel mapping 16 colours
+000000r 3               BLITCON_ACT_MODE_8BBP		:=	$30		; 8 bit per pixel mapping 256 colours
+000000r 3               BLITCON_ACT_LINE		:=	$08		; draw a line
+000000r 3               BLITCON_ACT_COLLISION		:=	$04		; gets reset for any non-zero D data (even in EXEC_D is clear)
+000000r 3               BLITCON_ACT_WRAP		:=	$02		; wrap C/D addresses to fit between min/max
+000000r 3               
+000000r 3               BLITCON_LINE_MAJOR_UPnRIGHT	:=	$10		; line draw major axis is up
+000000r 3               BLITCON_LINE_MINOR_CCW		:=	$20		; minor axis is CCW to MAJOR i.e.:
+000000r 3               							;  - left when maj up, up when maj right
+000000r 3               							;  - otherwise, right when maj up, down when maj right
+000000r 3               
+000000r 3               BLITCON_EXEC_A			:=	$01
+000000r 3               BLITCON_EXEC_B			:=	$02
+000000r 3               BLITCON_EXEC_C			:=	$04
+000000r 3               BLITCON_EXEC_D			:=	$08
+000000r 3               BLITCON_EXEC_E			:=	$10
+000000r 3               
+000000r 3               AERIS_CTL_ACT			:=	$80
+000000r 3               
+000000r 3               ; DMA controller control flags
+000000r 3               DMACTL_ACT			:=	$80		; always set to initiate a transfer
+000000r 3               
+000000r 3               DMACTL_EXTEND			:=	$20		; use extended functions from control2
+000000r 3               DMACTL_HALT			:=	$10		; halt cpu during transfer
+000000r 3               DMACTL_STEP_DEST_NONE		:=	$00		; do not step destination address
+000000r 3               DMACTL_STEP_DEST_UP		:=	$04		; step destination up after transfer
+000000r 3               DMACTL_STEP_DEST_DOWN		:=	$08		; step destination down after transfer
+000000r 3               DMACTL_STEP_DEST_NOP		:=	$0C		; skip writes, do not increment address
+000000r 3               DMACTL_STEP_SRC_NONE		:=	$00		; do not step destination address
+000000r 3               DMACTL_STEP_SRC_UP		:=	$01		; step destination up after transfer
+000000r 3               DMACTL_STEP_SRC_DOWN		:=	$02		; step destination down after transfer
+000000r 3               DMACTL_STEP_SRC_NOP		:=	$03		; skip reads, do not incrememnt address
+000000r 3               
+000000r 3               DMACTL2_IF			:=	$80		; interrupt occurred
+000000r 3               DMACTL2_IE			:=	$02		; interrupt enable, interrupt after transfer
+000000r 3               DMACTL2_SZ_BYTE			:=	$00
+000000r 3               DMACTL2_SZ_WORD			:=	$04
+000000r 3               DMACTL2_SZ_WORDSWAPDEST		:=	$08
+000000r 3               DMACTL2_SZ_WORDSWAPSRC		:=	$0C
+000000r 3               DMACTL2_PAUSE			:=	$01
+000000r 3               
+000000r 3               ; Sound Status / control bits
+000000r 3               SND_CTL_ACT			:=	$80
+000000r 3               SND_CTL_REPEAT			:=	$01
+000000r 3               
+000000r 3               
+000000r 3               DMAC_BLITCON_offs		:=	0
+000000r 3               DMAC_FUNCGEN_offs		:=	$1
+000000r 3               DMAC_WIDTH_offs			:=	$2
+000000r 3               DMAC_HEIGHT_offs		:=	$3
+000000r 3               DMAC_SHIFT_offs			:=	$4
+000000r 3               DMAC_MASK_FIRST_offs		:=	$5
+000000r 3               DMAC_MASK_LAST_offs		:=	$6
+000000r 3               DMAC_DATA_A_offs		:=	$7
+000000r 3               DMAC_ADDR_A_offs		:=	$8
+000000r 3               DMAC_DATA_B_offs		:=	$B
+000000r 3               DMAC_ADDR_B_offs		:=	$C
+000000r 3               DMAC_ADDR_C_offs		:=	$F
+000000r 3               DMAC_ADDR_D_offs		:=	$12
+000000r 3               DMAC_ADDR_E_offs		:=	$15
+000000r 3               DMAC_STRIDE_A_offs		:=	$18
+000000r 3               DMAC_STRIDE_B_offs		:=	$1A
+000000r 3               DMAC_STRIDE_C_offs		:=	$1C
+000000r 3               DMAC_STRIDE_D_offs		:=	$1E
+000000r 3               
+000000r 3               DMAC_BLIT_EXT_offs		:=	$40
+000000r 3               DMAC_ADDR_D_MIN_offs		:=	DMAC_BLIT_EXT_offs
+000000r 3               DMAC_ADDR_D_MAX_offs		:=	DMAC_BLIT_EXT_offs+3
+000000r 3               
+000000r 3               
+000000r 3               
+000000r 3               DMAC_SND_DATA_offs		:=	$20
+000000r 3               DMAC_SND_ADDR_offs		:=	$21
+000000r 3               DMAC_SND_PERIOD_offs		:=	$24
+000000r 3               DMAC_SND_LEN_offs		:=	$26
+000000r 3               DMAC_SND_STATUS_offs		:=	$28
+000000r 3               DMAC_SND_VOL_offs		:=	$29
+000000r 3               DMAC_SND_REPOFF_offs		:=	$2A
+000000r 3               DMAC_SND_PEAK_offs		:=	$2C
+000000r 3               
+000000r 3               DMAC_SND_MA_VOL_offs		:=	$2E
+000000r 3               DMAC_SND_SEL_offs		:=	$2F
+000000r 3               
+000000r 3               DMAC_DMA_CTL_offs		:=	$30
+000000r 3               DMAC_DMA_SRC_ADDR_offs		:=	$31
+000000r 3               DMAC_DMA_DEST_ADDR_offs		:=	$34
+000000r 3               DMAC_DMA_COUNT_offs		:=	$37
+000000r 3               DMAC_DMA_DATA_offs		:=	$39
+000000r 3               DMAC_DMA_CTL2_offs		:=	$3A
+000000r 3               DMAC_DMA_PAUSE_VAL_offs		:=	$3B
+000000r 3               DMAC_DMA_SEL_offs		:=	$3F
+000000r 3               
+000000r 3               
+000000r 3               
+000000r 3               DMAC_AERIS_CTL_offs		:=	$50
+000000r 3               DMAC_AERIS_PROGBASE_offs	:=	$51
+000000r 3               
+000000r 3               
+000000r 3               DMAC_I2C_offs		:=	$70
+000000r 3               
+000000r 3               jim_page_DMAC			:=	$FEFC
+000000r 3               
+000000r 3               jim_page_VERSION		:=	$FC00
+000000r 3               
+000000r 3               jim_offs_VERSION_API_level	:=	$80
+000000r 3               jim_offs_VERSION_Board_level	:=	$81
+000000r 3               jim_offs_VERSION_API_sublevel	:=	$82
+000000r 3               jim_offs_VERSION_cfg_bits	:=	$84
+000000r 3               jim_offs_VERSION_cap_bits	:=	$88
+000000r 3               
+000000r 3               ; Mk.2/1 option switches - note in API level >1 the sense of these is reversed!
+000000r 3               BLT_MK2_CFG0_T65		:=	$01
+000000r 3               BLT_MK2_CFG0_CPU_6502A_2M	:=	$00
+000000r 3               BLT_MK2_CFG0_CPU_65C02_4M	:=	$02
+000000r 3               BLT_MK2_CFG0_CPU_65C02_8M	:=	$04
+000000r 3               BLT_MK2_CFG0_CPU_6x09_2M	:=	$08
+000000r 3               BLT_MK2_CFG0_CPU_6309_4M	:=	$0A
+000000r 3               BLT_MK2_CFG0_CPU_Z80_8M		:=	$0C
+000000r 3               BLT_MK2_CFG0_CPU_68008		:=	$0E
+000000r 3               BLT_MK2_CFG0_SWROMX		:=	$10
+000000r 3               BLT_MK2_CFG0_BUGBTN		:=	$80
+000000r 3               
+000000r 3               BLT_MK2_CFG1_MEMI		:=	$01
+000000r 3               BLT_MK2_CFG1_BUGOUT		:=	$02
+000000r 3               
+000000r 3               ; Mk.3 switches from PORTF/G
+000000r 3               BLT_MK3_CFG0_T65		:=	$08
+000000r 3               BLT_MK3_CFG0_SWROMX		:=	$10
+000000r 3               BLT_MK3_CFG0_MEMI		:=	$40
+000000r 3               
+000000r 3               
+000000r 3               
+000000r 3               jim_DMAC			:=	$FD60
+000000r 3               jim_DMAC_BLITCON		:=	jim_DMAC + DMAC_BLITCON_offs
+000000r 3               jim_DMAC_FUNCGEN		:=	jim_DMAC + DMAC_FUNCGEN_offs
+000000r 3               jim_DMAC_WIDTH			:=	jim_DMAC + DMAC_WIDTH_offs
+000000r 3               jim_DMAC_HEIGHT			:=	jim_DMAC + DMAC_HEIGHT_offs
+000000r 3               jim_DMAC_SHIFT			:=	jim_DMAC + DMAC_SHIFT_offs
+000000r 3               jim_DMAC_MASK_FIRST		:=	jim_DMAC + DMAC_MASK_FIRST_offs
+000000r 3               jim_DMAC_MASK_LAST		:=	jim_DMAC + DMAC_MASK_LAST_offs
+000000r 3               jim_DMAC_DATA_A			:=	jim_DMAC + DMAC_DATA_A_offs
+000000r 3               jim_DMAC_ADDR_A			:=	jim_DMAC + DMAC_ADDR_A_offs
+000000r 3               jim_DMAC_DATA_B			:=	jim_DMAC + DMAC_DATA_B_offs
+000000r 3               jim_DMAC_ADDR_B			:=	jim_DMAC + DMAC_ADDR_B_offs
+000000r 3               jim_DMAC_ADDR_C			:=	jim_DMAC + DMAC_ADDR_C_offs
+000000r 3               jim_DMAC_ADDR_D			:=	jim_DMAC + DMAC_ADDR_D_offs
+000000r 3               jim_DMAC_ADDR_E			:=	jim_DMAC + DMAC_ADDR_E_offs
+000000r 3               jim_DMAC_STRIDE_A		:=	jim_DMAC + DMAC_STRIDE_A_offs
+000000r 3               jim_DMAC_STRIDE_B		:=	jim_DMAC + DMAC_STRIDE_B_offs
+000000r 3               jim_DMAC_STRIDE_C		:=	jim_DMAC + DMAC_STRIDE_C_offs
+000000r 3               jim_DMAC_STRIDE_D		:=	jim_DMAC + DMAC_STRIDE_D_offs
+000000r 3               jim_DMAC_ADDR_D_MIN		:=	jim_DMAC + DMAC_ADDR_D_MIN_offs
+000000r 3               jim_DMAC_ADDR_D_MAX		:=	jim_DMAC + DMAC_ADDR_D_MAX_offs
+000000r 3               
+000000r 3               
+000000r 3               
+000000r 3               
+000000r 3               jim_DMAC_SND_DATA		:= 	jim_DMAC + DMAC_SND_DATA_offs
+000000r 3               jim_DMAC_SND_ADDR		:= 	jim_DMAC + DMAC_SND_ADDR_offs
+000000r 3               jim_DMAC_SND_PERIOD		:= 	jim_DMAC + DMAC_SND_PERIOD_offs
+000000r 3               jim_DMAC_SND_LEN		:= 	jim_DMAC + DMAC_SND_LEN_offs
+000000r 3               jim_DMAC_SND_STATUS		:= 	jim_DMAC + DMAC_SND_STATUS_offs
+000000r 3               jim_DMAC_SND_VOL		:= 	jim_DMAC + DMAC_SND_VOL_offs
+000000r 3               jim_DMAC_SND_REPOFF		:= 	jim_DMAC + DMAC_SND_REPOFF_offs
+000000r 3               jim_DMAC_SND_PEAK		:= 	jim_DMAC + DMAC_SND_PEAK_offs
+000000r 3               
+000000r 3               jim_DMAC_SND_SEL		:= 	jim_DMAC + DMAC_SND_SEL_offs
+000000r 3               jim_DMAC_SND_MA_VOL		:= 	jim_DMAC + DMAC_SND_MA_VOL_offs
+000000r 3               
+000000r 3               jim_DMAC_DMA_CTL		:=	jim_DMAC + DMAC_DMA_CTL_offs
+000000r 3               jim_DMAC_DMA_SRC_ADDR		:=	jim_DMAC + DMAC_DMA_SRC_ADDR_offs
+000000r 3               jim_DMAC_DMA_DEST_ADDR		:=	jim_DMAC + DMAC_DMA_DEST_ADDR_offs
+000000r 3               jim_DMAC_DMA_COUNT		:=	jim_DMAC + DMAC_DMA_COUNT_offs
+000000r 3               jim_DMAC_DMA_DATA		:=	jim_DMAC + DMAC_DMA_DATA_offs
+000000r 3               jim_DMAC_DMA_CTL2		:=	jim_DMAC + DMAC_DMA_CTL2_offs
+000000r 3               jim_DMAC_DMA_PAUSE_VAL		:=	jim_DMAC + DMAC_DMA_PAUSE_VAL_offs
+000000r 3               jim_DMAC_DMA_SEL		:=	jim_DMAC + DMAC_DMA_SEL_offs
+000000r 3               
+000000r 3               jim_DMAC_AERIS_CTL		:=	jim_DMAC + DMAC_AERIS_CTL_offs
+000000r 3               jim_DMAC_AERIS_PROGBASE		:=	jim_DMAC + DMAC_AERIS_PROGBASE_offs
+000000r 3               
+000000r 3               
+000000r 3               jim_I2C_BASE			:= 	jim_DMAC + DMAC_I2C_offs
+000000r 3               jim_I2C_STAT			:= 	jim_I2C_BASE
+000000r 3               jim_I2C_DATA			:= 	jim_I2C_BASE + 1
+000000r 3               
+000000r 3               I2C_BUSY	:= $80
+000000r 3               I2C_NACK	:= $40
+000000r 3               I2C_STOP	:= $04
+000000r 3               I2C_START	:= $02
+000000r 3               I2C_RNW		:= $01
+000000r 3               
+000000r 3               sheila_sim_control		:=	$FEFF
+000000r 3               sheila_reg_debug		:=	$FEFF
+000000r 3               
+000000r 3               fred_JIM_PAGE_HI2		:=	$FCFC		; note ignored Blitter/Paula
+000000r 3               fred_JIM_PAGE_HI		:=	$FCFD
+000000r 3               fred_JIM_PAGE_LO		:=	$FCFE
+000000r 3               fred_JIM_DEVNO			:=	$FCFF
+000000r 3               
+000000r 3               jim_base			:=	$FD00
+000000r 3               JIM				:=	jim_base
+000000r 3               
+000000r 3               SHEILA_ROMCTL_SWR	:=	$FE30
+000000r 3               SHEILA_ROMCTL_MOS	:=	$FE31
+000000r 3               
+000000r 3               SHEILA_ROMCTL_SWR_ELK	:=	$FE05
+000000r 3               
+000000r 3               
+000000r 3               ROMCTL_BITS_FLEX	:=	$10
+000000r 3               
+000000r 3               ROMCTL_MOS_JIMEN	:=	$02
+000000r 3               ROMCTL_MOS_SWMOS	:=	$01
+000000r 3               
+000000r 3               
+000000r 3               SHEILA_NULA_CTLAUX	:=	$FE22
+000000r 3               SHEILA_NULA_PALAUX	:=	$FE23
+000000r 3               
+000000r 3               SHEILA_DEBUG		:=	$FEFF
+000000r 3               
+000000r 3               
+000000r 3               ;***********************************************************************
+000000r 3               ;* System VIA                                                          *
+000000r 3               ;***********************************************************************
+000000r 3               sheila_SYSVIA_orb			:= $FE40
+000000r 3               sheila_SYSVIA_ora			:= $FE41
+000000r 3               sheila_SYSVIA_ddrb			:= $FE42
+000000r 3               sheila_SYSVIA_ddra			:= $FE43
+000000r 3               sheila_SYSVIA_t1cl			:= $FE44
+000000r 3               sheila_SYSVIA_t1ch			:= $FE45
+000000r 3               sheila_SYSVIA_t1ll			:= $FE46
+000000r 3               sheila_SYSVIA_t1lh			:= $FE47
+000000r 3               sheila_SYSVIA_t2cl			:= $FE48
+000000r 3               sheila_SYSVIA_t2ch			:= $FE49
+000000r 3               sheila_SYSVIA_sr			:= $FE4A
+000000r 3               sheila_SYSVIA_acr			:= $FE4B
+000000r 3               sheila_SYSVIA_pcr			:= $FE4C
+000000r 3               sheila_SYSVIA_ifr			:= $FE4D
+000000r 3               sheila_SYSVIA_ier			:= $FE4E
+000000r 3               sheila_SYSVIA_ora_nh			:= $FE4F
+000000r 3               
+000000r 3               ;***********************************************************************
+000000r 3               ;* SYS VIA - slow data bus RTC                                         *
+000000r 3               ;***********************************************************************
+000000r 3               
+000000r 3               	.IFDEF MACH_CHIPKIT
+000000r 3               BITS_RTC_AS_ON	:=		$88			; PB7
+000000r 3               BITS_RTC_AS_OFF :=		$08			;
+000000r 3               BITS_RTC_CS	:=		$04			; latch
+000000r 3               BITS_RTC_DS	:=		$02			; latch
+000000r 3               BITS_RTC_RnW	:=		$01			; latch
+000000r 3               BITS_LAT_ON	:=		$08			; latch
+000000r 3               
+000000r 3               RTC_REG_SECONDS	:=		$0
+000000r 3               RTC_REG_MINUTES	:=		$2
+000000r 3               RTC_REG_HOURS	:=		$4
+000000r 3               RTC_REG_DOW	:=		$6
+000000r 3               RTC_REG_DAY	:=		$7
+000000r 3               RTC_REG_MONTH	:=		$8
+000000r 3               RTC_REG_YEAR	:=		$9
+000000r 3               	.ENDIF
+000000r 3               
+000000r 3               
+000000r 3               ;***********************************************************************
+000000r 3               ;* User VIA                                                            *
+000000r 3               ;***********************************************************************
+000000r 3               sheila_USRVIA_orb			:= $FE60
+000000r 3               sheila_USRVIA_ora			:= $FE61
+000000r 3               sheila_USRVIA_ddrb			:= $FE62
+000000r 3               sheila_USRVIA_ddra			:= $FE63
+000000r 3               sheila_USRVIA_t1cl			:= $FE64
+000000r 3               sheila_USRVIA_t1ch			:= $FE65
+000000r 3               sheila_USRVIA_t1ll			:= $FE66
+000000r 3               sheila_USRVIA_t1lh			:= $FE67
+000000r 3               sheila_USRVIA_t2cl			:= $FE68
+000000r 3               sheila_USRVIA_t2ch			:= $FE69
+000000r 3               sheila_USRVIA_sr			:= $FE6A
+000000r 3               sheila_USRVIA_acr			:= $FE6B
+000000r 3               sheila_USRVIA_pcr			:= $FE6C
+000000r 3               sheila_USRVIA_ifr			:= $FE6D
+000000r 3               sheila_USRVIA_ier			:= $FE6E
+000000r 3               sheila_USRVIA_ora_nh			:= $FE6F
+000000r 3               
+000000r 3               ;***********************************************************************
+000000r 3               ;*  VIA constants                                                      *
+000000r 3               ;***********************************************************************
+000000r 3               
+000000r 3               VIA_IFR_BIT_ANY				:= $80
+000000r 3               VIA_IFR_BIT_T1				:= $40
+000000r 3               VIA_IFR_BIT_T2				:= $20
+000000r 3               VIA_IFR_BIT_CB1				:= $10
+000000r 3               VIA_IFR_BIT_CB2				:= $08
+000000r 3               VIA_IFR_BIT_SR				:= $04
+000000r 3               VIA_IFR_BIT_CA1				:= $02
+000000r 3               VIA_IFR_BIT_CA2				:= $01
+000000r 3               
+000000r 3               VIA_ACR_SHIFTMODE_0			:= $00
+000000r 3               VIA_ACR_SHIFTMODE_1			:= $04
+000000r 3               VIA_ACR_SHIFTMODE_2			:= $08
+000000r 3               VIA_ACR_SHIFTMODE_3			:= $0C
+000000r 3               VIA_ACR_SHIFTMODE_4			:= $10
+000000r 3               VIA_ACR_SHIFTMODE_5			:= $14
+000000r 3               VIA_ACR_SHIFTMODE_6			:= $18
+000000r 3               VIA_ACR_SHIFTMODE_7			:= $1C
+000000r 3               
+000000r 3               VIA_ACR_T1_MASK				:= $C0
+000000r 3               VIA_ACR_T1_CONT				:= $40
+000000r 3               
+000000r 3               
+000000r 3               ;***********************************************************************
+000000r 3               ;* BBC B/B+ WD177x                                                     *
+000000r 3               ;***********************************************************************
+000000r 3               
+000000r 3               sheila_1770_dcontrol			:=	$FE80
+000000r 3               sheila_1770_wdc_cmd			:=	$FE84
+000000r 3               sheila_1770_wdc_trk			:=	$FE85
+000000r 3               sheila_1770_wdc_sec			:=	$FE86
+000000r 3               sheila_1770_wdc_dat			:=	$FE87
+000000r 3               
+000000r 3               W1770_DRVSEL_BIT_SEL0			:= $01
+000000r 3               W1770_DRVSEL_BIT_SEL1			:= $02
+000000r 3               W1770_DRVSEL_BIT_SIDE1			:= $04
+000000r 3               W1770_DRVSEL_BIT_nDDEN			:= $08
+000000r 3               W1770_DRVSEL_BIT_nMR			:= $20
+000000r 3               
+000000r 3               
+000000r 3               ;***********************************************************************
+000000r 3               ;* NEW API JIM DEVICE NOs                                              *
+000000r 3               ;***********************************************************************
+000000r 3               
+000000r 3               
+000000r 3               JIM_DEVNO_HOG1MPAULA			:= $D0
+000000r 3               JIM_DEVNO_BLITTER			:= $D1
+000000r 3               
+000000r 3               	.ENDIF
+000000r 3               
+000000r 2               
+000000r 2               NOICE_BRK_INST	:= 	$5C				; special BRK instruction for noice
+000000r 2               
+000000r 2               ADDR_ERRBUF	:=	$100				; base of stack!
+000000r 2               PG_EEPROM_BASE	:=	$9000				; base phys/jim address of EEPROM is $90 0000
+000000r 2               							; note: this is a second copy of the EEPROM which
+000000r 2               							; also appears based at $80 0000
+000000r 2               
+000000r 2               OSWORD_BLTUTIL	:=	$99				; blutils #
+000000r 2               
+000000r 2               OSWORD_OP_ALLOC :=	$10
+000000r 2               OSWORD_OP_FREE  :=	$11
+000000r 2               
+000000r 2               JIM_SCRATCH	:=	$00FD				; page address of scratch space
+000000r 2               
+000000r 2               ;offsets in scrarch page
+000000r 2               SCR_JIMDEVSAVE	:=	$00				; belt and braces used in cases of a BRK
+000000r 2               
+000000r 2               OSWORD_BLTUTIL_FLAG_CURRENT	:= $80
+000000r 2               OSWORD_BLTUTIL_FLAG_ALTERNATE	:= $40
+000000r 2               OSWORD_BLTUTIL_FLAG_IGNOREMEMI	:= $20
+000000r 2               OSWORD_BLTUTIL_FLAG_MAP1	:= $01
+000000r 2               
+000000r 2               OSWORD_BLTUTIL_RET_FLASH	:= $80			; if memory is chip flash
+000000r 2               OSWORD_BLTUTIL_RET_SYS		:= $40			; bank also base set to FF 80xx
+000000r 2               OSWORD_BLTUTIL_RET_MEMI		:= $20
+000000r 2               OSWORD_BLTUTIL_RET_ISCUR	:= $02
+000000r 2               OSWORD_BLTUTIL_RET_MAP1		:= $01
+000000r 2               
+000000r 2               .macro		VERSION_NAME
+000000r 2               		.byte	"BLTUTIL"
+000000r 2               .endmacro
+000000r 2               
+000000r 2               		;TODO : move these to autogen'd files? Agree version # with JGH
+000000r 2               .macro		VERSION_BYTE
+000000r 2               		.byte	3
+000000r 2               .endmacro
+000000r 2               
+000000r 2               .macro		VERSION_STRING
+000000r 2               		.byte	"0.05"
+000000r 2               .endmacro
+000000r 2               
+000000r 2               .macro		M_ERROR
+000000r 2               		jsr	BounceErrorOffStack
+000000r 2               .endmacro
+000000r 2               
+000000r 2               .macro		TODO	error
+000000r 2               		M_ERROR
+000000r 2               		.byte	$FF
+000000r 2               		.byte	error
+000000r 2               		.byte	0
+000000r 2               .endmacro
+000000r 2               
+000000r 2               .macro		CLAIMDEV
+000000r 2               		jsr	jimClaimDev
+000000r 2               .endmacro
+000000r 2               
+000000r 2               .macro		SJTE	serv, addr
+000000r 2               		.byte	serv
+000000r 2               		.byte	>(addr - 1)			; bytes here in order ready to be stacked then rts'd to
+000000r 2               		.byte 	<(addr - 1)
+000000r 2               .endmacro
+000000r 2               
+000000r 2               
+000000r 2               zp_trans_tmp	:=	$A8				; transient command buffer
+000000r 2               zp_trans_acc	:=	$AC				; 4 byte accumulator used in hex parsers
+000000r 2               zp_tmp_ptr	:=	$AC				; !! NOTE: overlaps acc
+000000r 2               
+000000r 2               zp_SRCOPY_src	:=	zp_trans_tmp + 1
+000000r 2               zp_SRCOPY_dest	:=	zp_trans_tmp + 0
+000000r 2               zp_SRCOPY_flags	:=	zp_trans_tmp + 2		; when negative dest if a flash
+000000r 2               
+000000r 2               zp_ROMS_ctr	:=	zp_trans_tmp + 0
+000000r 2               zp_ROMS_copyptr	:=	zp_trans_tmp + 1
+000000r 2               zp_ROMS_flags	:=	zp_trans_tmp + 3
+000000r 2               zp_ROMS_OS99ret	:=	zp_trans_acc + 2
+000000r 2               zp_ROMS_bank	:=	zp_trans_acc + 3
+000000r 2               
+000000r 2               zp_ERASE_dest	:=	zp_trans_tmp + 0
+000000r 2               zp_ERASE_flags	:=	zp_trans_tmp + 1
+000000r 2               zp_ERASE_ctr	:=	zp_trans_tmp + 2
+000000r 2               zp_ERASE_errct	:=	zp_trans_tmp + 3
+000000r 2               zp_ERASE_bank	:=	zp_trans_tmp + 5
+000000r 2               
+000000r 2               zp_SRLOAD_dest	:=	zp_trans_tmp + 0
+000000r 2               zp_SRLOAD_flags	:=	zp_trans_tmp + 1
+000000r 2               zp_SRLOAD_ptr	:=	zp_trans_tmp + 2
+000000r 2               zp_SRLOAD_tmpA	:=	zp_trans_tmp + 4		; note overlaps acc
+000000r 2               zp_SRLOAD_bank	:=	zp_trans_tmp + 5		; note overlaps acc
+000000r 2               
+000000r 2               SRLOAD_buffer_page	:=	$30
+000000r 2               
+000000r 2               zp_mdump_addr	:=	zp_trans_tmp + 0
+000000r 2               zp_mdump_end	:=	zp_trans_tmp + 4		; not overlaps acc
+000000r 2               zp_mdump_cols	:=	zp_mos_txtptr			; allows 32 bit addressing
+000000r 2               
+000000r 2               ; we can claim to be a language here...well sort of...
+000000r 2               ZP_NUKE_LBAS	:=	$0
+000000r 2               ZP_NUKE_ERRPTR	:=	ZP_NUKE_LBAS + 0
+000000r 2               ZP_NUKE_S_TOP	:=	ZP_NUKE_LBAS + 2
+000000r 2               ZP_NUKE_ROMSF	:=	ZP_NUKE_LBAS + 4
+000000r 2               ZP_NUKE_PREVLANG:=	ZP_NUKE_LBAS + 5
+000000r 2               STR_NUKE_CMD	:=	$700
+000000r 2               
+000000r 2               zp_blturbo_old	:=	zp_trans_tmp + 0
+000000r 2               zp_blturbo_new	:=	zp_trans_tmp + 1
+000000r 2               zp_blturbo_ptr	:=	zp_trans_tmp + 2
+000000r 2               zp_blturbo_fl	:=	zp_trans_tmp + 4
+000000r 2               
+000000r 2               
+000000r 2               
+000000r 2               
+000000r 2               PAGE_ROMSCRATCH		:=	$0080
+000000r 2               PAGE_SAMPLETBL		:=	$0081
+000000r 2               PAGE_SOUNDWKSP		:=	$0083
+000000r 2               PAGE_SOUNDBUFFERS	:=	$0084
+000000r 2               PAGE_RAM_TOP_BLITTER	:=	$1C00			; note leave room for SWRAM!
+000000r 2               PAGE_RAM_TOP_PAULA	:=	$0800
+000000r 2               
+000000r 2               
+000000r 2               			; offsets within scratch space
+000000r 2               SCRATCH_CHECKSUM	:=	$00			; not used currently (reset on break)
+000000r 2               SCRATCH_HEAPTOP		:=	$04			; top of head / ram
+000000r 2               SCRATCH_HEAPBOT		:=	$06			; bottom of heap / extent allocated to heap (may contain holes)
+000000r 2               SCRATCH_HEAPLIM		:=	$08			; lower limit for heap, will not allocate below here
+000000r 2               
+000000r 2               SAMTBL_SZ	:=	8			; size of a table entry
+000000r 2               SAMTBLOFFS_BASE :=	0			; page number of start of sample
+000000r 2               SAMTBLOFFS_LEN  :=	2			; length in samples
+000000r 2               SAMTBLOFFS_REPL :=	4			; repeat offset
+000000r 2               SAMTBLOFFS_FLAGS:=	7
+000000r 2               
+000000r 2               
+000000r 2               			; offsets within the sound workspace page at 8300
+000000r 2               ; the following are all in the ROM workspace at JIM 00 8000
+000000r 2               SNDWKSP_SOUNDFLAGS	:=	$00
+000000r 2               SCR_FLAG_SND_EN		:=	$80			; enabled flag
+000000r 2               
+000000r 2               SND_BUFFER_NUMBER_0	:=	$14			; buffer numbers are $14..$1B for channels 0..7
+000000r 2               SND_BUF_LEN		:=	21
+000000r 2               SND_NUM_CHANS		:=	8
+000000r 2               
+000000r 2               SNDWKSP_OLDINSV		:=	$02
+000000r 2               SNDWKSP_OLDREMV		:=	$04
+000000r 2               SNDWKSP_OLDCNPV		:=	$06
+000000r 2               SNDWKSP_OLDBYTEV	:=	$08
+000000r 2               
+000000r 2               SNDWKDP_SCRATCH8	:=	$10			; 8 bytes of scratch space
+000000r 2               
+000000r 2               ; note the following need to be >SND_BUFFER_NUMBER_0 to avoid LDA nnn-$14,X tickling FRED
+000000r 2               SNDWKSP_BUF_BUSY_0	:=	$20			; 1 byte for each channel - shows if there is stuff in the buffer
+000000r 2               SNDWKSP_BUF_OUT_0	:=	$28			; 1 byte for each channel - pointer into buffer
+000000r 2               SNDWKSP_BUF_IN_0	:=	$30			; 1 byte for each channel - pointer into buffer
+000000r 2               SNDWKSP_ACTIVE		:=	$38			; sound channel active flags
+000000r 2               
+000000r 2               
+000000r 2               
+000000r 2               SNDWKSP_VAR_START		:= $40
+000000r 2               SNDWKSP_QUEUE_OCC		:= $40
+000000r 2               SNDWKSP_AMP_CUR			:= $48
+000000r 2               SNDWKSP_AMP_PHASE_CUR		:= $50			; current amplitude phase of envelope 0..3
+000000r 2               SNDWKSP_AMP_BASE_PITCH		:= $58
+000000r 2               SNDWKSP_PITCH_PHASE_CUR		:= $60
+000000r 2               SNDWKSP_PITCH_PH_STEPS		:= $68
+000000r 2               SNDWKSP_DURATION		:= $70			; duration from SOUND command
+000000r 2               SNDWKSP_DURATION_SUB		:= $78			; counts down from 5..0 to give 50ms per duration above
+000000r 2               SNDWKSP_ENVELOPE_OFFS		:= $80			; offset into envelope or -1 for no envelope
+000000r 2               SNDWKSP_ENV_STEPREPEAT		:= $88			; step length, b7=repeat flag
+000000r 2               SNDWKSP_SYNC_FLAG		:= $90
+000000r 2               SNDWKSP_SYNC_HOLD_PARAM		:= $98
+000000r 2               SNDWKSP_PITCH_SETTING		:= $A0
+000000r 2               SNDWKSP_PITCH_DEV		:= $A8
+000000r 2               SNDWKSP_SAMPLE_NO		:= $B0
+000000r 2               
+000000r 2               SNDWKSP_SYNC_CHANS		:= $B8
+000000r 2               SNDWKSP_AMP_STEP		:= $B9
+000000r 2               SNDWKSP_AMP_TARGET		:= $BA
+000000r 2               SNDWKSP_SYNC_HOLD_COUNT		:= $BB
+000000r 2               SNDWKSP_WS_0			:= $BC
+000000r 2               SNDWKSP_FREQ_LO			:= $BD
+000000r 2               SNDWKSP_FREQ_HI			:= $BE
+000000r 2               SNDWKSP_WS_3			:= $BF
+000000r 2               SNDWKSP_DEF_SAM			:= $C0			; table of default sample numbers per channel 0..31|$80
+000000r 2               SNDWKSP_VAR_END			:= $C8
+000000r 2               
+000000r 2               
+000000r 2               SNDBUF_BUF_0		:=	$00			; sound buffers 21 bytes per channel
+000000r 2               
+000000r 2               
+000000r 2               SCRATCH_TMP		:=	$80			; 128 bytes of scratch space for the current
+000000r 2               							; command - do not use in service routines
+000000r 2               
+000000r 2               
+000000r 1               		.include "bltutil_jimstuff.inc"
+000000r 2               		.import	CheckBlitterPresent
+000000r 2               		.import	CheckPaulaPresent
+000000r 2               		.import	CheckBlitterPresentBrk
+000000r 2               		.import CheckEitherPresentBrk
+000000r 2               		.import jimCheckEitherSelected
+000000r 2               		.import	brkBlitterNotPresent
+000000r 2               		.import	jimSetDEV_blitter
+000000r 2               		.import	jimSetDEV_paula
+000000r 2               		.import	jimSetDEV_either
+000000r 2               		.import	jimSetDEV_A
+000000r 2               		.import jimReleaseDev_err
+000000r 2               		.import jimClaimDev
+000000r 2               		.import jimPageWorkspace
+000000r 2               		.import jimPageChipset
+000000r 2               		.import jimPageVersion
+000000r 2               		.import brkBlitterNotPresent
+000000r 2               		.import	jimSetDEV_either_stack_old
+000000r 2               		.import jimUnStackDev
+000000r 2               		.import jimPageSamTbl
+000000r 2               		.import jimPageSoundWorkspace
+000000r 2               
+000000r 1               
+000000r 1               		.export	BounceErrorOffStack
+000000r 1               		.export	Print2Spc
+000000r 1               		.export PrintCommaSpace
+000000r 1               		.export	PrintSpc
+000000r 1               		.export	PrintA
+000000r 1               		.export	PrintNL
+000000r 1               		.export	PrintHexA
+000000r 1               		.export	PrintHexNybA
+000000r 1               		.export PrintDec
+000000r 1               		.export	PrintHexXY
+000000r 1               		.export	PrintMsgXYThenHexNyb
+000000r 1               		.export	PrintXY
+000000r 1               		.export	PrintPTR
+000000r 1               		.export PrintImmed
+000000r 1               		.export	PromptYN
+000000r 1               		.export	PromptNo
+000000r 1               		.export	PromptYes
+000000r 1               		.export	PromptRTS
+000000r 1               		.export	WaitKey
+000000r 1               		.export PrintBytesAndK
+000000r 1               		.export PrintSizeK
+000000r 1               
+000000r 1               		.export SkipSpacesPTR
+000000r 1               		.export ToUpper
+000000r 1               		.export parseONOFF
+000000r 1               		.export parseONOFF_ck
+000000r 1               		.export parseONOFF_ON
+000000r 1               		.export ParseHex
+000000r 1               		.export ParseHexLp
+000000r 1               		.export ParseHexShAd
+000000r 1               		.export ParseHexAlpha
+000000r 1               		.export ParseHexErr
+000000r 1               		.export ParseHexDone
+000000r 1               		.export zeroAcc
+000000r 1               		.export asl4Acc
+000000r 1               		.export addAAcc
+000000r 1               		.export div10Acc
+000000r 1               		.export isAcc0
+000000r 1               		.export	PushAcc
+000000r 1               		.export PopAcc
+000000r 1               		.export StackAllocX
+000000r 1               		.export StackFree
+000000r 1               		.export crc16
+000000r 1               		.export crc16_lp
+000000r 1               		.export crc16_cl
+000000r 1               
+000000r 1               		.export inkey_clear
+000000r 1               		.export ackEscape
+000000r 1               		.export CheckESC
+000000r 1               
+000000r 1               		.export brkBadCommand
+000000r 1               		.export brkInvalidArgument
+000000r 1               ;
+000000r 1               ; -----------------------------
+000000r 1               ; Generate a sideways ROM error in ADDR_ERRBUF *stack or other space*
+000000r 1               ; -----------------------------
+000000r 1               BounceErrorOffStack:
+000000r 1  A9 00        		lda	#0
+000002r 1  8D FF FC     		sta	fred_JIM_DEVNO			; deselect JIM in case caller does something horrible
+000005r 1  68           		pla
+000006r 1  85 AC        		sta	zp_tmp_ptr
+000008r 1  68           		pla
+000009r 1  85 AD        		sta	zp_tmp_ptr + 1
+00000Br 1  A0 00        		ldy	#0				; store brk
+00000Dr 1  8C 00 01     		sty	ADDR_ERRBUF + 0
+000010r 1               		; get byte _after_ jsr (jsr pushes ret-1)
+000010r 1  C8           @1:		iny
+000011r 1  B1 AC        		lda	(zp_tmp_ptr),Y
+000013r 1  99 00 01     		sta	ADDR_ERRBUF, Y
+000016r 1  D0 F8        		bne	@1
+000018r 1  20 rr rr     		jsr	jimReleaseDev_err		; restore device state
+00001Br 1  4C 00 01     		jmp	ADDR_ERRBUF			; execute BRK from buffer
+00001Er 1               
+00001Er 1               
+00001Er 1               
+00001Er 1               ;------------------------------------------------------------------------------
+00001Er 1               ; Printing
+00001Er 1               ;------------------------------------------------------------------------------
+00001Er 1  A9 2C        PrintCommaSpace:lda	#','
+000020r 1  20 rr rr     		jsr	PrintA
+000023r 1  4C rr rr     		jmp	PrintSpc
+000026r 1  20 rr rr     Print2Spc:	jsr	PrintSpc
+000029r 1  A9 20        PrintSpc:	lda	#' '
+00002Br 1  4C E3 FF     PrintA:		jmp	OSASCI
+00002Er 1  4C E7 FF     PrintNL:	jmp	OSNEWL
+000031r 1               
+000031r 1  48           PrintHexA:	pha
+000032r 1  4A           		lsr	a
+000033r 1  4A           		lsr	a
+000034r 1  4A           		lsr	a
+000035r 1  4A           		lsr	a
+000036r 1  20 rr rr     		jsr	PrintHexNybA
+000039r 1  68           		pla
+00003Ar 1  48           		pha
+00003Br 1  20 rr rr     		jsr	PrintHexNybA
+00003Er 1  68           		pla
+00003Fr 1  60           		rts
+000040r 1  29 0F        PrintHexNybA:	and	#$0F
+000042r 1  C9 0A        		cmp	#10
+000044r 1  90 02        		bcc	@1
+000046r 1  69 06        		adc	#'A'-'9'-2
+000048r 1  69 30        @1:		adc	#'0'
+00004Ar 1  20 rr rr     		jsr	PrintA
+00004Dr 1  60           		rts
+00004Er 1               
+00004Er 1  48           PrintHexXY:	pha
+00004Fr 1  98           		tya
+000050r 1  20 rr rr     		jsr	PrintHexA
+000053r 1  8A           		txa
+000054r 1  20 rr rr     		jsr	PrintHexA
+000057r 1  68           		pla
+000058r 1  60           		rts
+000059r 1               
+000059r 1               PrintDec:	; acc is number to print (destroyed)
+000059r 1               		; zp_trans_tmp+0,+1 destroyed
+000059r 1  A9 00        		lda	#0
+00005Br 1  85 A9        		sta	zp_trans_tmp+1
+00005Dr 1  20 rr rr     @l1:		jsr	div10Acc
+000060r 1  A5 A8        		lda	zp_trans_tmp
+000062r 1  48           		pha
+000063r 1  E6 A9        		inc	zp_trans_tmp+1
+000065r 1  20 rr rr     		jsr	isAcc0
+000068r 1  D0 F3        		bne	@l1
+00006Ar 1  68           @l2:		pla
+00006Br 1  20 rr rr     		jsr	PrintHexNybA
+00006Er 1  C6 A9        		dec	zp_trans_tmp+1
+000070r 1  D0 F8        		bne	@l2
+000072r 1  60           		rts
+000073r 1               
+000073r 1               
+000073r 1               PrintMsgXYThenHexNyb:
+000073r 1  48           		pha
+000074r 1  20 rr rr     		jsr	PrintXY
+000077r 1  68           		pla
+000078r 1  20 rr rr     		jsr	PrintHexNybA
+00007Br 1  4C rr rr     		jmp	PrintNL
+00007Er 1               
+00007Er 1               
+00007Er 1  48           PrintImmed:	pha
+00007Fr 1  8A           		txa
+000080r 1  48           		pha
+000081r 1  98           		tya
+000082r 1  48           		pha
+000083r 1  A5 AC        		lda	zp_tmp_ptr
+000085r 1  48           		pha
+000086r 1  A5 AD        		lda	zp_tmp_ptr+1
+000088r 1  48           		pha
+000089r 1               
+000089r 1  BA           		tsx
+00008Ar 1  BD 06 01     		lda	$106, X
+00008Dr 1  85 AC        		sta	zp_tmp_ptr
+00008Fr 1  BD 07 01     		lda	$107, X
+000092r 1  85 AD        		sta	zp_tmp_ptr + 1
+000094r 1  A0 01        		ldy	#1
+000096r 1  20 rr rr     		jsr	PrintPTR
+000099r 1               
+000099r 1  18           		clc
+00009Ar 1  88           		dey
+00009Br 1  98           		tya
+00009Cr 1  65 AC        		adc	zp_tmp_ptr
+00009Er 1  9D 06 01     		sta	$106,X
+0000A1r 1  90 03        		bcc	@s1
+0000A3r 1  FE 07 01     		inc	$107,X
+0000A6r 1  68           @s1:		pla
+0000A7r 1  85 AD        		sta	zp_tmp_ptr + 1
+0000A9r 1  68           		pla
+0000AAr 1  85 AC        		sta	zp_tmp_ptr
+0000ACr 1  68           		pla
+0000ADr 1  A8           		tay
+0000AEr 1  68           		pla
+0000AFr 1  AA           		tax
+0000B0r 1  68           		pla
+0000B1r 1  60           		rts
+0000B2r 1               
+0000B2r 1               
+0000B2r 1  A5 AC        PrintXY:	lda	zp_tmp_ptr
+0000B4r 1  48           		pha
+0000B5r 1  A5 AD        		lda	zp_tmp_ptr+1
+0000B7r 1  48           		pha
+0000B8r 1               
+0000B8r 1  86 AC        		stx	zp_tmp_ptr
+0000BAr 1  84 AD        		sty	zp_tmp_ptr + 1
+0000BCr 1  A0 00        		ldy	#0
+0000BEr 1  20 rr rr     		jsr	PrintPTR
+0000C1r 1               
+0000C1r 1  68           		pla
+0000C2r 1  85 AD        		sta	zp_tmp_ptr+1
+0000C4r 1  68           		pla
+0000C5r 1  85 AC        		sta	zp_tmp_ptr
+0000C7r 1  60           		rts
+0000C8r 1               
+0000C8r 1               PrintPTR:
+0000C8r 1  B1 AC        @lp:		lda	(zp_tmp_ptr),Y
+0000CAr 1  C8           		iny
+0000CBr 1  C9 00        		cmp	#0
+0000CDr 1  F0 07        		beq	@out
+0000CFr 1  20 E3 FF     		jsr	OSASCI
+0000D2r 1  C0 00        		cpy	#0
+0000D4r 1  D0 F2        		bne	@lp
+0000D6r 1  60           @out:		rts
+0000D7r 1               
+0000D7r 1               
+0000D7r 1               PrintBytesAndK:
+0000D7r 1  20 rr rr     		jsr	PushAcc
+0000DAr 1               
+0000DAr 1  20 rr rr     		jsr	PrintDec
+0000DDr 1               
+0000DDr 1  20 rr rr     		jsr	PrintSpc
+0000E0r 1               
+0000E0r 1  20 rr rr     		jsr	PopAcc
+0000E3r 1               
+0000E3r 1  20 rr rr     		jsr	PrintSizeK
+0000E6r 1               
+0000E6r 1  4C E7 FF     		jmp	OSNEWL
+0000E9r 1               
+0000E9r 1               
+0000E9r 1               PrintSizeK:
+0000E9r 1               		; print free space in Kbytes
+0000E9r 1               		; divide by 256
+0000E9r 1  A5 AD        		lda	zp_trans_acc+1
+0000EBr 1  85 AC        		sta	zp_trans_acc+0
+0000EDr 1  A5 AE        		lda	zp_trans_acc+2
+0000EFr 1  85 AD        		sta	zp_trans_acc+1
+0000F1r 1  46 AD        		lsr	zp_trans_acc+1
+0000F3r 1  66 AC        		ror	zp_trans_acc
+0000F5r 1  46 AD        		lsr	zp_trans_acc+1
+0000F7r 1  66 AC        		ror	zp_trans_acc
+0000F9r 1  A9 00        		lda	#0			; assume max of 16384k
+0000FBr 1  85 AE        		sta	zp_trans_acc+2
+0000FDr 1  85 AF        		sta	zp_trans_acc+3
+0000FFr 1               
+0000FFr 1  20 rr rr     		jsr	PrintDec
+000102r 1               
+000102r 1  A9 6B        		lda	#'k'
+000104r 1  4C EE FF     		jmp	OSWRCH
+000107r 1               
+000107r 1               
+000107r 1               
+000107r 1  20 rr rr     PromptYN:	jsr	PrintXY
+00010Ar 1  A2 rr        		ldx	#<str_YN
+00010Cr 1  A0 rr        		ldy	#>str_YN
+00010Er 1  20 rr rr     		jsr	PrintXY
+000111r 1  20 rr rr     @1:		jsr	WaitKey
+000114r 1  B0 1D        		bcs	PromptRTS
+000116r 1  C9 59        		cmp	#'Y'
+000118r 1  F0 0F        		beq	PromptYes
+00011Ar 1  C9 4E        		cmp	#'N'
+00011Cr 1  D0 F3        		bne	@1
+00011Er 1  A2 rr        PromptNo:	ldx	#<strNo
+000120r 1  A0 rr        		ldy	#>strNo
+000122r 1  20 rr rr     		jsr	PrintXY
+000125r 1  A9 FF        		lda	#$FF
+000127r 1  18           		clc
+000128r 1  60           		rts
+000129r 1  A2 rr        PromptYes:	ldx	#<strYes
+00012Br 1  A0 rr        		ldy	#>strYes
+00012Dr 1  20 rr rr     		jsr	PrintXY
+000130r 1  A9 00        		lda	#0
+000132r 1  18           		clc
+000133r 1  60           PromptRTS:	rts
+000134r 1               
+000134r 1               
+000134r 1  48           WaitKey:	pha
+000135r 1  8A           		txa
+000136r 1  48           		pha
+000137r 1  98           		tya
+000138r 1  48           		pha
+000139r 1  A9 81        @2:		lda	#OSBYTE_129_INKEY
+00013Br 1  A0 7F        		ldy	#$7F
+00013Dr 1  A2 FF        		ldx	#$FF
+00013Fr 1  20 F4 FF     		jsr	OSBYTE
+000142r 1  B0 0C        		bcs	@1
+000144r 1  8A           		txa
+000145r 1  BA           		tsx
+000146r 1  9D 03 01     		sta	$103,X
+000149r 1  18           		clc
+00014Ar 1  68           		pla
+00014Br 1  A8           		tay
+00014Cr 1  68           		pla
+00014Dr 1  AA           		tax
+00014Er 1  68           		pla
+00014Fr 1  60           		rts
+000150r 1  C0 1B        @1:		cpy	#27				; check for escape
+000152r 1  D0 E5        		bne	@2
+000154r 1  4C rr rr     		jmp	ackEscape
+000157r 1               
+000157r 1               
+000157r 1               ;------------------------------------------------------------------------------
+000157r 1               ; Parsing
+000157r 1               ;------------------------------------------------------------------------------
+000157r 1  B1 F2        SkipSpacesPTR:	lda	(zp_mos_txtptr),Y
+000159r 1  C8           		iny
+00015Ar 1  F0 04        		beq	@s
+00015Cr 1  C9 20        		cmp	#' '
+00015Er 1  F0 F7        		beq	SkipSpacesPTR
+000160r 1  88           @s:		dey
+000161r 1  60           		rts
+000162r 1               
+000162r 1  C9 61        ToUpper:	cmp	#'a'
+000164r 1  90 06        		bcc	@1
+000166r 1  C9 7B        		cmp	#'z'+1
+000168r 1  B0 02        		bcs	@1
+00016Ar 1  29 DF        		and	#$DF
+00016Cr 1  60           @1:		rts
+00016Dr 1               
+00016Dr 1  20 rr rr     parseONOFF:	jsr	SkipSpacesPTR
+000170r 1  B1 F2        		lda	(zp_mos_txtptr),Y
+000172r 1  20 rr rr     		jsr	ToUpper
+000175r 1  C9 4F        		cmp	#'O'
+000177r 1  D0 6A        		bne	ParseHexErr
+000179r 1  C8           		iny
+00017Ar 1  B1 F2        		lda	(zp_mos_txtptr),Y
+00017Cr 1  20 rr rr     		jsr	ToUpper
+00017Fr 1  C9 4E        		cmp	#'N'
+000181r 1  F0 1B        		beq	parseONOFF_ON
+000183r 1  C9 46        		cmp	#'F'
+000185r 1  D0 5C        		bne	ParseHexErr
+000187r 1  C8           		iny
+000188r 1  B1 F2        		lda	(zp_mos_txtptr),Y
+00018Ar 1  20 rr rr     		jsr	ToUpper
+00018Dr 1  C9 46        		cmp	#'F'
+00018Fr 1  D0 52        		bne	ParseHexErr
+000191r 1  A9 00        		lda	#0
+000193r 1               parseONOFF_ck:						; check for space or &D
+000193r 1  48           		pha
+000194r 1  C8           		iny
+000195r 1  B1 F2        		lda	(zp_mos_txtptr),Y
+000197r 1  C9 21        		cmp	#' '+1
+000199r 1  B0 48        		bcs	ParseHexErr
+00019Br 1  18           		clc
+00019Cr 1  68           		pla
+00019Dr 1  60           		rts
+00019Er 1  A9 FF        parseONOFF_ON:	lda	#$FF
+0001A0r 1  D0 F1        		bne	parseONOFF_ck
+0001A2r 1               
+0001A2r 1               
+0001A2r 1               ParseHex:
+0001A2r 1  48           		pha
+0001A3r 1  8A           		txa
+0001A4r 1  48           		pha
+0001A5r 1  A2 FF        		ldx	#$FF				; indicates first char
+0001A7r 1  20 rr rr     		jsr	zeroAcc
+0001AAr 1  20 rr rr     		jsr	SkipSpacesPTR
+0001ADr 1  C9 0D        		cmp	#$D
+0001AFr 1  F0 32        		beq	ParseHexErr
+0001B1r 1  B1 F2        ParseHexLp:	lda	(zp_mos_txtptr),Y
+0001B3r 1  C8           		iny
+0001B4r 1  20 rr rr     		jsr	ToUpper
+0001B7r 1  E8           		inx
+0001B8r 1  F0 04        		beq	@1
+0001BAr 1  C9 2B        		cmp	#'+'
+0001BCr 1  F0 2A        		beq	ParseHexDone
+0001BEr 1  C9 21        @1:		cmp	#' '+1
+0001C0r 1  90 26        		bcc	ParseHexDone
+0001C2r 1  C9 30        		cmp	#'0'
+0001C4r 1  90 1D        		bcc	ParseHexErr
+0001C6r 1  C9 3A        		cmp	#'9'+1
+0001C8r 1  B0 0C        		bcs	ParseHexAlpha
+0001CAr 1  38           		sec
+0001CBr 1  E9 30        		sbc	#'0'
+0001CDr 1  20 rr rr     ParseHexShAd:	jsr	asl4Acc				; multiply existing number by 16
+0001D0r 1  20 rr rr     		jsr	addAAcc				; add current digit
+0001D3r 1  4C rr rr     		jmp	ParseHexLp
+0001D6r 1  C9 41        ParseHexAlpha:	cmp	#'A'
+0001D8r 1  90 09        		bcc	ParseHexErr
+0001DAr 1  C9 47        		cmp	#'F'+1
+0001DCr 1  B0 05        		bcs	ParseHexErr
+0001DEr 1  E9 36        		sbc	#'A'-11				; note carry clear 'A'-'F' => 10-15
+0001E0r 1  4C rr rr     		jmp	ParseHexShAd
+0001E3r 1  38           ParseHexErr:	sec
+0001E4r 1  68           		pla
+0001E5r 1  AA           		tax
+0001E6r 1  68           		pla
+0001E7r 1  60           		rts
+0001E8r 1  88           ParseHexDone:	dey
+0001E9r 1  68           		pla
+0001EAr 1  AA           		tax
+0001EBr 1  68           		pla
+0001ECr 1  18           		clc
+0001EDr 1  60           		rts
+0001EEr 1               
+0001EEr 1               ;------------------------------------------------------------------------------
+0001EEr 1               ; Stackery
+0001EEr 1               ;------------------------------------------------------------------------------
+0001EEr 1               
+0001EEr 1               		; reserves X bytes on the stack and returns pointer in XY
+0001EEr 1               		; no bounds checking
+0001EEr 1  48           StackAllocX:	pha
+0001EFr 1  8A           		txa					; number of bytes to allocate
+0001F0r 1  49 FF        		eor	#$FF				; -(N+1)
+0001F2r 1  48           		pha
+0001F3r 1               
+0001F3r 1               		; stack
+0001F3r 1               		;	+ 4	RETH
+0001F3r 1               		;	+ 3	RETL
+0001F3r 1               		;	+ 2	A
+0001F3r 1               		;	+ 1	-(N+1)
+0001F3r 1               
+0001F3r 1  BA           		tsx
+0001F4r 1  38           		sec
+0001F5r 1  8A           		txa
+0001F6r 1  A8           		tay					; Y points at base of current stack
+0001F7r 1  7D 01 01     		adc	$101,X				; A should now be S-N (Cy set)
+0001FAr 1  AA           		tax
+0001FBr 1  9A           		txs					; move stack down
+0001FCr 1               
+0001FCr 1               		; stack
+0001FCr 1               		;	N + 4	RETH
+0001FCr 1               		;	N + 3	RETL
+0001FCr 1               		;	N + 2	A
+0001FCr 1               		;	N + 1	-(N+1)
+0001FCr 1               		; Y=>	N + 0	N bytes spare
+0001FCr 1               		;		...
+0001FCr 1               		; X,SP=>  + 1
+0001FCr 1               
+0001FCr 1  B9 02 01     		lda	$102, Y
+0001FFr 1  9D 01 01     		sta	$101, X				; saved A
+000202r 1  B9 03 01     		lda	$103, Y
+000205r 1  9D 02 01     		sta	$102, X				; RETL
+000208r 1  B9 04 01     		lda	$104, Y
+00020Br 1  9D 03 01     		sta	$103, X				; RETH
+00020Er 1  B9 01 01     		lda	$101, Y
+000211r 1  9D 04 01     		sta	$104, X				; -(N+1)
+000214r 1  8A           		txa
+000215r 1  18           		clc
+000216r 1  69 05        		adc	#5
+000218r 1  AA           		tax
+000219r 1  A0 01        		ldy	#$01				; XY points now at allocated block (hopefully)
+00021Br 1               
+00021Br 1               		; stack
+00021Br 1               		;	 N	rest of stack...
+00021Br 1               		; 	+ 4	-(N+1)
+00021Br 1               		; 	+ 3	RETH
+00021Br 1               		;	+ 2	RETL
+00021Br 1               		; SP=>	+ 1	A
+00021Br 1               
+00021Br 1  68           		pla
+00021Cr 1               
+00021Cr 1               
+00021Cr 1               		; stack on exit
+00021Cr 1               		;	 N	rest of stack...
+00021Cr 1               		; 	+ 3	-(N+1)
+00021Cr 1               		; 	+ 2	RETH
+00021Cr 1               		; SP=>	+ 1	RETL
+00021Cr 1               
+00021Cr 1  60           		rts
+00021Dr 1               
+00021Dr 1               		; free a block alloc'd with StackAllocX, stack should contain return address
+00021Dr 1               		; followed by the -(N+1) number placed there by StackAllocX
+00021Dr 1  48           StackFree:	pha
+00021Er 1  8A           		txa
+00021Fr 1  48           		pha
+000220r 1  98           		tya
+000221r 1  48           		pha
+000222r 1               
+000222r 1               
+000222r 1               		; stack contents
+000222r 1               		;	+7	N bytes of stuff
+000222r 1               		;	+6	-(N+1)
+000222r 1               		;	+5	RETH
+000222r 1               		;	+4	RETL
+000222r 1               		;	+3	A
+000222r 1               		;	+2	X
+000222r 1               		;	+1	Y
+000222r 1               
+000222r 1  BA           		tsx
+000223r 1  8A           		txa
+000224r 1  A8           		tay			; A=X=Y=S
+000225r 1               
+000225r 1               		; copy current stack up N+1 bytes and reset
+000225r 1               
+000225r 1  38           		sec
+000226r 1  49 FF        		eor	#$FF		; -(S+1)
+000228r 1  7D 06 01     		adc	$106, X		; -(S+1) + -(N+1) + 1 = -S + -N - 1
+00022Br 1  49 FF        		eor	#$FF		; -(-S + -N - 1 + 1) = S+N
+00022Dr 1               
+00022Dr 1  AA           		tax
+00022Er 1  E8           		inx			; one more for good luck (we actually reserved an extra byte for length)
+00022Fr 1  B9 05 01     		lda	$105,Y
+000232r 1  9D 05 01     		sta	$105,X
+000235r 1  B9 04 01     		lda	$104,Y
+000238r 1  9D 04 01     		sta	$104,X
+00023Br 1  B9 03 01     		lda	$103,Y
+00023Er 1  9D 03 01     		sta	$103,X
+000241r 1  B9 02 01     		lda	$102,Y
+000244r 1  9D 02 01     		sta	$102,X
+000247r 1  B9 01 01     		lda	$101,Y
+00024Ar 1  9D 01 01     		sta	$101,X
+00024Dr 1               
+00024Dr 1  9A           		txs
+00024Er 1  68           		pla
+00024Fr 1  A8           		tay
+000250r 1  68           		pla
+000251r 1  AA           		tax
+000252r 1  68           		pla
+000253r 1  60           		rts
+000254r 1               
+000254r 1               
+000254r 1               
+000254r 1               
+000254r 1               ;------------------------------------------------------------------------------
+000254r 1               ; Arith
+000254r 1               ;------------------------------------------------------------------------------
+000254r 1  48           zeroAcc:	pha
+000255r 1  A9 00        		lda	#0
+000257r 1  85 AC        		sta	zp_trans_acc
+000259r 1  85 AD        		sta	zp_trans_acc + 1
+00025Br 1  85 AE        		sta	zp_trans_acc + 2
+00025Dr 1  85 AF        		sta	zp_trans_acc + 3
+00025Fr 1  68           		pla
+000260r 1  60           		rts
+000261r 1               
+000261r 1               asl4Acc:
+000261r 1  48           		pha
+000262r 1  8A           		txa
+000263r 1  48           		pha
+000264r 1  A2 04        		ldx	#4
+000266r 1  06 AC        @1:		asl	zp_trans_acc + 0
+000268r 1  26 AD        		rol	zp_trans_acc + 1
+00026Ar 1  26 AE        		rol	zp_trans_acc + 2
+00026Cr 1  26 AF        		rol	zp_trans_acc + 3
+00026Er 1  CA           		dex
+00026Fr 1  D0 F5        		bne	@1
+000271r 1  68           		pla
+000272r 1  AA           		tax
+000273r 1  68           		pla
+000274r 1  60           		rts
+000275r 1               
+000275r 1               addAAcc:
+000275r 1  48           		pha
+000276r 1  18           		clc
+000277r 1  65 AC        		adc	zp_trans_acc + 0
+000279r 1  85 AC        		sta	zp_trans_acc + 0
+00027Br 1  90 0A        		bcc	@1
+00027Dr 1  E6 AD        		inc	zp_trans_acc + 1
+00027Fr 1  D0 06        		bne	@1
+000281r 1  E6 AE        		inc	zp_trans_acc + 2
+000283r 1  D0 02        		bne	@1
+000285r 1  E6 AF        		inc	zp_trans_acc + 3
+000287r 1  68           @1:		pla
+000288r 1  60           		rts
+000289r 1               
+000289r 1               
+000289r 1               		; found at http://nparker.llx.com/a2/mult.html
+000289r 1               
+000289r 1               div10Acc:
+000289r 1  A9 00        		lda	#0      	;Initialize REM to 0
+00028Br 1  85 A8                	sta	zp_trans_tmp
+00028Dr 1  A2 20                	ldx	#32     	;There are 32 bits in NUM1
+00028Fr 1  06 AC        @l1:      	asl	zp_trans_acc   	;Shift hi bit of NUM1 into REM
+000291r 1  26 AD                	rol	zp_trans_acc+1 	;(vacating the lo bit, which will be used for the quotient)
+000293r 1  26 AE                	rol	zp_trans_acc+2
+000295r 1  26 AF                	rol	zp_trans_acc+3
+000297r 1  26 A8                	rol	zp_trans_tmp
+000299r 1  A5 A8                	lda	zp_trans_tmp
+00029Br 1  38                   	sec		        ;Trial subtraction
+00029Cr 1  E9 0A                	sbc	#10
+00029Er 1  90 04                	bcc	@l2      	;Did subtraction succeed?
+0002A0r 1  85 A8                	sta	zp_trans_tmp
+0002A2r 1  E6 AC                	inc	zp_trans_acc   	;and record a 1 in the quotient
+0002A4r 1  CA           @l2:      	dex
+0002A5r 1  D0 E8        		bne	@l1
+0002A7r 1  60                   	rts
+0002A8r 1               
+0002A8r 1  A5 AC        isAcc0:		lda	zp_trans_acc
+0002AAr 1  05 AD        		ora	zp_trans_acc+1
+0002ACr 1  05 AE        		ora	zp_trans_acc+2
+0002AEr 1  05 AF        		ora	zp_trans_acc+3
+0002B0r 1  60           @s1:		rts
+0002B1r 1               
+0002B1r 1  48           PushAcc:	pha
+0002B2r 1  48           		pha
+0002B3r 1  48           		pha
+0002B4r 1  48           		pha
+0002B5r 1  48           		pha
+0002B6r 1  8A           		txa
+0002B7r 1  48           		pha
+0002B8r 1               		; stack contains
+0002B8r 1               		;	+8	RETH
+0002B8r 1               		;	+7	RETL
+0002B8r 1               		;	+6	spare
+0002B8r 1               		;	+5	spare
+0002B8r 1               		;	+4	spare
+0002B8r 1               		;	+3	spare
+0002B8r 1               		;	+2	A
+0002B8r 1               		;	+1	X
+0002B8r 1  BA           		tsx
+0002B9r 1  BD 07 01     		lda	$107,X
+0002BCr 1  9D 03 01     		sta	$103,X
+0002BFr 1  BD 08 01     		lda	$108,X
+0002C2r 1  9D 04 01     		sta	$104,X
+0002C5r 1               		; stack contains
+0002C5r 1               		;	+8	RETH
+0002C5r 1               		;	+7	RETL
+0002C5r 1               		;	+6	spare
+0002C5r 1               		;	+5	spare
+0002C5r 1               		;	+4	RETH
+0002C5r 1               		;	+3	RETL
+0002C5r 1               		;	+2	A
+0002C5r 1               		;	+1	X
+0002C5r 1               
+0002C5r 1  A5 AC        		lda	zp_trans_acc+0
+0002C7r 1  9D 05 01     		sta	$105,X
+0002CAr 1  A5 AD        		lda	zp_trans_acc+1
+0002CCr 1  9D 06 01     		sta	$106,X
+0002CFr 1  A5 AE        		lda	zp_trans_acc+2
+0002D1r 1  9D 07 01     		sta	$107,X
+0002D4r 1  A5 AF        		lda	zp_trans_acc+3
+0002D6r 1  9D 08 01     		sta	$108,X
+0002D9r 1               
+0002D9r 1               		; stack contains
+0002D9r 1               		;	+8	zp_trans_acc+3
+0002D9r 1               		;	+7	zp_trans_acc+2
+0002D9r 1               		;	+6	zp_trans_acc+1
+0002D9r 1               		;	+5	zp_trans_acc+0
+0002D9r 1               		;	+4	RETH
+0002D9r 1               		;	+3	RETL
+0002D9r 1               		;	+2	A
+0002D9r 1               		;	+1	X
+0002D9r 1  68           		pla
+0002DAr 1  AA           		tax
+0002DBr 1  68           		pla
+0002DCr 1  60           		rts
+0002DDr 1               
+0002DDr 1  48           PopAcc:		pha
+0002DEr 1  AA           		tax
+0002DFr 1  48           		pha
+0002E0r 1               
+0002E0r 1               		; stack contains
+0002E0r 1               		;	+8	zp_trans_acc+3
+0002E0r 1               		;	+7	zp_trans_acc+2
+0002E0r 1               		;	+6	zp_trans_acc+1
+0002E0r 1               		;	+5	zp_trans_acc+0
+0002E0r 1               		;	+4	RETH
+0002E0r 1               		;	+3	RETL
+0002E0r 1               		;	+2	A
+0002E0r 1               		;	+1	X
+0002E0r 1               
+0002E0r 1  BA           		tsx
+0002E1r 1  BD 05 01     		lda	$105,X
+0002E4r 1  85 AC        		sta	zp_trans_acc+0
+0002E6r 1  BD 06 01     		lda	$106,X
+0002E9r 1  85 AD        		sta	zp_trans_acc+1
+0002EBr 1  BD 07 01     		lda	$107,X
+0002EEr 1  85 AE        		sta	zp_trans_acc+2
+0002F0r 1  BD 08 01     		lda	$108,X
+0002F3r 1  85 AF        		sta	zp_trans_acc+3
+0002F5r 1               
+0002F5r 1  BD 02 01     		lda	$102,X
+0002F8r 1  9D 06 01     		sta	$106,X
+0002FBr 1  BD 03 01     		lda	$103,X
+0002FEr 1  9D 07 01     		sta	$107,X
+000301r 1  BD 04 01     		lda	$104,X
+000304r 1  9D 08 01     		sta	$108,X
+000307r 1               
+000307r 1               		; stack contains
+000307r 1               		;	+8	RETH
+000307r 1               		;	+7	RETL
+000307r 1               		;	+6	A
+000307r 1               		;	+5	zp_trans_acc+0
+000307r 1               		;	+4	?
+000307r 1               		;	+3	?
+000307r 1               		;	+2	?
+000307r 1               		;	+1	X
+000307r 1               
+000307r 1  68           		pla
+000308r 1  AA           		tax
+000309r 1  68           		pla
+00030Ar 1  68           		pla
+00030Br 1  68           		pla
+00030Cr 1  68           		pla
+00030Dr 1  68           		pla
+00030Er 1  60           		rts
+00030Fr 1               
+00030Fr 1               
+00030Fr 1               ;X;addAtXAcc	pshs	D
+00030Fr 1               ;X;		ldd	2,X
+00030Fr 1               ;X;		addd	zp_trans_acc + 2
+00030Fr 1               ;X;		std	zp_trans_acc + 2
+00030Fr 1               ;X;		ldd	0,x
+00030Fr 1               ;X;		adcb	zp_trans_acc + 1
+00030Fr 1               ;X;		adca	zp_trans_acc + 0
+00030Fr 1               ;X;		std	zp_trans_acc + 0
+00030Fr 1               ;X;		puls	D,PC
+00030Fr 1               ;X;
+00030Fr 1               ;X;subAtXAcc	pshs	D
+00030Fr 1               ;X;		ldd	zp_trans_acc + 2
+00030Fr 1               ;X;		subd	2,X
+00030Fr 1               ;X;		std	zp_trans_acc + 2
+00030Fr 1               ;X;		ldd	zp_trans_acc + 0
+00030Fr 1               ;X;		sbcb	1,X
+00030Fr 1               ;X;		sbca	0,x
+00030Fr 1               ;X;		std	zp_trans_acc + 0
+00030Fr 1               ;X;		puls	D,PC
+00030Fr 1               
+00030Fr 1               
+00030Fr 1               POLYH    	:= $10
+00030Fr 1               POLYL   	:= $21
+00030Fr 1               
+00030Fr 1               		; update CRC at zp_trans_acc with byte in A
+00030Fr 1  48           crc16:		pha
+000310r 1  8A           		txa
+000311r 1  48           		pha
+000312r 1  BA           		tsx
+000313r 1  BD 02 01     		lda	$102,X
+000316r 1  45 AD        		eor	zp_trans_acc+1
+000318r 1  A2 08        		ldx	#8
+00031Ar 1  06 AC        crc16_lp:	asl	zp_trans_acc
+00031Cr 1  2A           		rol	A
+00031Dr 1  90 0A        		bcc	crc16_cl
+00031Fr 1  A8           		tay
+000320r 1  A5 AC        		lda	zp_trans_acc
+000322r 1  49 21        		eor	#POLYL
+000324r 1  85 AC        		sta	zp_trans_acc
+000326r 1  98           		tya
+000327r 1  49 10        		eor	#POLYH
+000329r 1  CA           crc16_cl:	dex
+00032Ar 1  D0 EE        		bne 	crc16_lp
+00032Cr 1  85 AD        		sta	zp_trans_acc+1
+00032Er 1  68           		pla
+00032Fr 1  AA           		tax
+000330r 1  68           		pla
+000331r 1  60           		rts
+000332r 1               
+000332r 1               
+000332r 1               
+000332r 1               inkey_clear:
+000332r 1  A2 00        		ldx	#0
+000334r 1  A0 00        		ldy	#0
+000336r 1  A9 81        		lda	#OSBYTE_129_INKEY
+000338r 1  20 F4 FF     		jsr	OSBYTE
+00033Br 1  90 F5        		bcc	inkey_clear
+00033Dr 1               
+00033Dr 1               inkey:
+00033Dr 1  48           		pha
+00033Er 1  98           		tya
+00033Fr 1  48           		pha
+000340r 1  A2 FF        		ldx	#255
+000342r 1  A0 7F        		ldy	#127
+000344r 1  A9 81        		lda	#OSBYTE_129_INKEY
+000346r 1  20 F4 FF     		jsr	OSBYTE
+000349r 1  C0 1B        		cpy	#27
+00034Br 1  D0 03        		bne	@s
+00034Dr 1  4C rr rr     		jmp	ackEscape
+000350r 1  68           @s:		pla
+000351r 1  A8           		tay
+000352r 1  68           		pla
+000353r 1  60           		rts
+000354r 1               
+000354r 1  24 FF        CheckESC:	bit	zp_mos_ESC_flag			; TODO - system call for this?
+000356r 1  10 12        		bpl	ceRTS
+000358r 1  A2 FF        ackEscape:	ldx	#$FF
+00035Ar 1  A9 7E        		lda	#OSBYTE_126_ESCAPE_ACK
+00035Cr 1  20 F4 FF     		jsr	OSBYTE
+00035Fr 1  20 rr rr     brkEscape:	M_ERROR
+000362r 1  11 45 73 63  		.byte	17, "Escape",0
+000366r 1  61 70 65 00  
+00036Ar 1  60           ceRTS:		rts
+00036Br 1               
+00036Br 1               
+00036Br 1  20 rr rr     brkBadCommand:	M_ERROR
+00036Er 1  FE 42 61 64  		.byte	$FE, "Bad Command", 0
+000372r 1  20 43 6F 6D  
+000376r 1  6D 61 6E 64  
+00037Br 1               brkInvalidArgument:
+00037Br 1  20 rr rr     		M_ERROR
+00037Er 1  7F 49 6E 76  		.byte	$7F, "Invalid Argument", 0
+000382r 1  61 6C 69 64  
+000386r 1  20 41 72 67  
+000390r 1               
+000390r 1               
+000390r 1               		.SEGMENT "RODATA"
+000000r 1  20 28 59 2F  str_YN:			.byte	" (Y/N)?",0
+000004r 1  4E 29 3F 00  
+000008r 1  4E 6F 0D 00  strNo:			.byte	"No", $D, 0
+00000Cr 1  59 65 73 0D  strYes:			.byte	"Yes", $D, 0
+000010r 1  00           
+000010r 1               
