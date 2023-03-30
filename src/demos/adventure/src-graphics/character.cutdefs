@@ -1,6 +1,6 @@
 <!-- note paths are relative to build location -->
 <dest file="charac.til" size-x="16" size-y="24" mask="y">
-	<source file="../../src-graphics/character.png" />
+	<source file="src-graphics/character.png" />
 	<!-- walking down -->
 	<move x="0" y="6"/>
 	<cut x="4" y="1" dir="rd"/>
