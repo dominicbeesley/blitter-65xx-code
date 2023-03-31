@@ -116,7 +116,7 @@ $(BUILD)/tiles/charac.til $(BUILD)/tiles/main.pal $(BUILD)/tiles/over-back.til $
 		$(BUILD)/tiles/tile-cutter.xml
 
 
-		scripts/tilecutter.py $(BUILD)/tiles/tile-cutter.xml $(shell pwd)
+		$(SCRIPTS)/tilecutter.py $(BUILD)/tiles/tile-cutter.xml $(shell pwd)
 
 $(BUILD)/includes/gen_vars.h: $(BUILD)/tiles/charac.til $(BUILD)/tiles/over-back.til $(BUILD)/tiles/over-front.til
 		echo -n "#define CHARAC_SPR_LEN\t" > $(BUILD)/includes/gen_vars.h
