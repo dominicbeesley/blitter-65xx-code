@@ -17,14 +17,12 @@ SSD=$(SSDS)/adventure.ssd
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
-CCOPT=-T -O -Or -r -I ../../../includes -I $(BUILD)/includes -I /usr/local/share/cc65/include
-AS=ca65 -I ../../../includes
+CCOPT=-T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I /usr/share/cc65/include
+AS=ca65 -I $(TOP)/includes
 ASOPT=
 
 
-CLIBDIR=~/cc65-rom
-
-#CLIB=bbc.lib
+CLIBDIR=./clib
 CLIB=$(CLIBDIR)/clib.lib
 
 
@@ -36,32 +34,46 @@ LOADER_OBJS=	loader dma myos rle_asm
 INCS=$(BUILD)/includes/ $(BUILD)/includes/gen_vars.h
 
 
-TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(TARGETS)))
-GAME_OBJS_O=$(addprefix $(BUILD)/, addsuffix(.o, $(GAME_OBJS)))
-WANDER_OBJS_O=$(addprefix $(BUILD)/, addsuffix(.o, $(WANDER_OBJS)))
-LOADER_OBJS_O=$(addprefix $(BUILD)/, addsuffix(.o, $(LOADER_OBJS)))
+TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
+GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS)))
+WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS)))
+LOADER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_OBJS)))
 
 all: $(TARGETS_O)
 
 ssd: $(SSD)
 
+deploy: ssd
+	mkdir -p $(DEPLOY_TOP)/advent65 
+	dfs read -i -d $(DEPLOY_TOP)/advent65 $(SSD)
+
 $(BUILD)/clib.rom:
 	cp $(CLIBDIR)/clib.rom $(BUILD)/clib.rom
 
 $(SSD): ssd/include.lst tiles $(BUILD)/clib.rom $(TARGETS_O)
-	$(SCRIPTS)/buildssd.sh --dest adventure.ssd --hostfs ~/hostfs --name advent65 ./ssd
-	$(SCRIPTS)/hostfs2vdfs.sh ~/hostfs/advent65 ~/vdfs/advent65
+	dfs form -80 $(SSD)
+	dfs title $(SSD) advent65
+	dfs add -l FFFF2000 -e FFFF2000 -f 'T.CHARAC' $(SSD) $(BUILD)/tiles/charac.rle
+	dfs add -l FFFF2000 -e FFFF2000 -f 'P.MAIN' $(SSD) $(BUILD)/tiles/main.pal
+	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OBACK' $(SSD) $(BUILD)/tiles/over-back.rle
+	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OFRONT' $(SSD) $(BUILD)/tiles/over-front.rle
+	dfs add -l FFFF2000 -e FFFF2000 -f 'M.HOME' $(SSD) $(BUILD)/maps/home.bin
+	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.GAME' $(SSD) $(BUILD)/game.bin
+	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin
+	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.LOADER' $(SSD) $(BUILD)/loader.bin
+	dfs add -l FFFFFFFF -e FFFFFFFF -f '$.!BOOT' $(SSD) ./ssd/_21BOOT.txt
+	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(BUILD)/clib.rom
 
-$(BUILD)/game.bin: $(GAME_OBJS) game.cfg
-	$(LD) $(LDOPT) -o $@ $(GAME_OBJS) $(CLIB) -m $@.map
+$(BUILD)/game.bin: $(GAME_OBJS_O) game.cfg
+	$(LD) $(LDOPT) -C game.cfg -o $@ $(GAME_OBJS_O) $(CLIB) -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/game.bin.map >$(BUILD)/game.noi
 
-$(BUILD)/wander.bin: $(WANDER_OBJS) wander.cfg
-	$(LD) $(LDOPT) -o $@ $(WANDER_OBJS) $(CLIB) -m $@.map
+$(BUILD)/wander.bin: $(WANDER_OBJS_O) wander.cfg
+	$(LD) $(LDOPT) -C wander.cfg -o $@ $(WANDER_OBJS_O) $(CLIB) -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/wander.bin.map >$(BUILD)/wander.noi
 
-$(BUILD)/loader.bin: $(LOADER_OBJS) loader.cfg
-	$(LD) $(LDOPT) -o $@ $(LOADER_OBJS) $(CLIB) -m $@.map
+$(BUILD)/loader.bin: $(LOADER_OBJS_O) loader.cfg
+	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJS_O) $(CLIB) -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/loader.bin.map >$(BUILD)/loader.noi
 
 $(patsubst %.c, $(BUILD)/%.s, $(wildcard *.c)): $(BUILD)/includes/gen_vars.h adv_globals.h myos.h 
@@ -107,11 +119,11 @@ $(BUILD)/tiles/charac.til $(BUILD)/tiles/main.pal $(BUILD)/tiles/over-back.til $
 		scripts/tilecutter.py $(BUILD)/tiles/tile-cutter.xml $(shell pwd)
 
 $(BUILD)/includes/gen_vars.h: $(BUILD)/tiles/charac.til $(BUILD)/tiles/over-back.til $(BUILD)/tiles/over-front.til
-		echo -n -e "#define CHARAC_SPR_LEN\t" > $(BUILD)/includes/gen_vars.h
+		echo -n "#define CHARAC_SPR_LEN\t" > $(BUILD)/includes/gen_vars.h
 		stat -c%s $(BUILD)/tiles/charac.til >> $(BUILD)/includes/gen_vars.h
-		echo -n -e "#define BACK_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
+		echo -n "#define BACK_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
 		stat -c%s $(BUILD)/tiles/over-back.til >> $(BUILD)/includes/gen_vars.h
-		echo -n -e "#define FRONT_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
+		echo -n "#define FRONT_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
 		stat -c%s $(BUILD)/tiles/over-front.til >> $(BUILD)/includes/gen_vars.h
 		unix2dos $(BUILD)/includes/gen_vars.h
 
