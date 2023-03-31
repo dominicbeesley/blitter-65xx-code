@@ -104,8 +104,8 @@ $(BUILD)/tiles/tile-cutter.xml: \
 		scripts/build-tilecut.sh \
 			src-graphics/palette.xml \
 			src-graphics/character.cutdefs \
-			$(BUILD)/tiles/over-front.cutdefs \
 			$(BUILD)/tiles/over-back.cutdefs \
+			$(BUILD)/tiles/over-front.cutdefs \
 			$(BUILD)/tiles/tile-cutter.xml
 
 $(BUILD)/tiles/charac.til $(BUILD)/tiles/main.pal $(BUILD)/tiles/over-back.til $(BUILD)/tiles/over-back.til.cuts $(BUILD)/tiles/over-front.til $(BUILD)/tiles/over-front.til.cuts &: \

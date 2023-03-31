@@ -107,6 +107,9 @@ def main():
     for xDf in d.findall("dest"):
         destFileName = xDf.attrib["file"]
 
+        print(f"DEST:{destFileName}")
+
+
         szX = int(xDf.attrib.get("size-x") or "16")
         szY = int(xDf.attrib.get("size-y") or "16")
         mask = (xDf.attrib.get("mask") or "").lower().startswith("y");
@@ -124,63 +127,64 @@ def main():
         except Exception as ex:
             Usage(sys.stderr, f"Cannot open \"{destFullName}\" for output", ex=ex, exit=2)
 
-        bm=None
-        bmpData=None
-        bmpWidth=-1
-        bmpHeight=-1
-        curX=0
-        curY=0
-        tileIx=0
-        try:
-            for xe in xDf.findall("*"):
-                if xe.tag == "source":
-                    sourceFileName = xe.attrib["file"]
-                    sourceFullName = os.path.join(sourcedir, sourceFileName);
+        with destFH:
+            bm=None
+            bmpData=None
+            bmpWidth=-1
+            bmpHeight=-1
+            curX=0
+            curY=0
+            tileIx=0
+            try:
+                for xe in xDf.findall("*"):
+                    if xe.tag == "source":
+                        sourceFileName = xe.attrib["file"]
+                        sourceFullName = os.path.join(sourcedir, sourceFileName);
 
-                    print(f"SOURCE:{sourceFileName}")
+                        print(f"SOURCE:{sourceFileName}")
 
-                    if bm is not None:
-                        bm.close
-                        bm=None
+                        if bm is not None:
+                            bm.close
+                            bm=None
 
-                    try:
-                        bm = Image.open(sourceFullName)
-                    except Exception as ex:
-                        Usage(sys.stderr, f"Cannot open source image file \"{sourceFullName}\" for input", ex=ex, exit=2)
+                        try:
+                            bm = Image.open(sourceFullName)
+                        except Exception as ex:
+                            Usage(sys.stderr, f"Cannot open source image file \"{sourceFullName}\" for input", ex=ex, exit=2)
 
-                    bmpWidth = bm.width;
-                    bmpHeight = bm.height;
-                    pixels = bm.load()
+                        bmpWidth = bm.width;
+                        bmpHeight = bm.height;
+                        pixels = bm.load()
 
-                    xdSource = ET.SubElement(cuts, "source")
-                    xdSource.set("size-x", str(bmpWidth));
-                    xdSource.set("size-y", str(bmpHeight));
-                    xdSource.set("filename", sourceFileName);
+                        xdSource = ET.SubElement(cuts, "source")
+                        xdSource.set("size-x", str(bmpWidth));
+                        xdSource.set("size-y", str(bmpHeight));
+                        xdSource.set("filename", sourceFileName);
 
-                    # pixels16 contains palette indexes
-                    pixels16 = bmpTo16(pixels, bmpWidth, bmpHeight, pal, mask)
+                        # pixels16 contains palette indexes
+                        pixels16 = bmpTo16(pixels, bmpWidth, bmpHeight, pal, mask)
 
-                elif xe.tag == "move":
-                    curX = int(xe.attrib["x"])
-                    curY = int(xe.attrib["y"])
-                elif xe.tag == "cut":
-                    pixels is not None or Usage(sys.stderr, "Error: cut before source", exit=4)
+                    elif xe.tag == "move":
+                        curX = int(xe.attrib["x"])
+                        curY = int(xe.attrib["y"])
+                    elif xe.tag == "cut":
+                        pixels16 is not None or Usage(sys.stderr, "Error: cut before source", exit=4)
 
-                    nX = int(xe.attrib["x"])
-                    nY = int(xe.attrib["y"])
-                    cutDir = xe.attrib["dir"]
+                        nX = int(xe.attrib["x"])
+                        nY = int(xe.attrib["y"])
+                        cutDir = xe.attrib["dir"]
 
-                    cutDir == "rd" or Usage(sys.stderr, f"Bad direction \"{cutDir}\" only (rd) supported")
-                    
-                    for j in range(nY):
-                        for i in range(nX):
-                            tileIx = DoCut(destFH, pixels16, bmpWidth, bmpHeight, szX, szY, curX + szX * i, curY + szY * j, mask, tileIx)
+                        cutDir == "rd" or Usage(sys.stderr, f"Bad direction \"{cutDir}\" only (rd) supported")
+                        
+                        for j in range(nY):
+                            for i in range(nX):
+                                tileIx = DoCut(destFH, pixels16, bmpWidth, bmpHeight, szX, szY, curX + szX * i, curY + szY * j, mask, tileIx, cuts)
 
-        finally:
-            if bm is not None:
-                bm.close
-        cuts_doc = ET.ElementTree(cuts)
-        cuts_doc.write(destFullName + ".cuts", encoding="UTF-8", xml_declaration=True)
+            finally:
+                if bm is not None:
+                    bm.close
+            cuts_doc = ET.ElementTree(cuts)
+            cuts_doc.write(destFullName + ".cuts", encoding="UTF-8", xml_declaration=True)
 
 def bmpTo16(pixels, width, height, pal, mask):
     """Make a 4bpp bitmap, 0x80 for transparent bits"""    
@@ -217,7 +221,7 @@ def sq(x):
 def toRGB(c):
     return (c[0],c[1],c[2])    
 
-def DoCut(destFh, bmp16, bmpW, bmpH, szX, szY, leftX, topY, mask, tileIx):
+def DoCut(destFh, bmp16, bmpW, bmpH, szX, szY, leftX, topY, mask, tileIx, xCuts):
 
     print(f"CUT:{szX}, {szY}, {leftX}, {topY}, {mask}, {tileIx}")
 
@@ -253,27 +257,26 @@ def DoCut(destFh, bmp16, bmpW, bmpH, szX, szY, leftX, topY, mask, tileIx):
                 if (bmp16[srcY][srcX] & 0x80) == 0:
                     beebMaskRow[i >> 3] |= 1 << (7 - (i & 7));
 
-            print(beebMaskRow)
             destFh.write(bytes(beebMaskRow))
 
+
+    xCut = ET.SubElement(xCuts, "cut")
+
+    xCut.set("left-x", str(leftX));
+    xCut.set("top-y", str(topY));
+    xCut.set("index", str(tileIx+1));
+    
     return tileIx+1
-#             }
 
-#             xw.WriteStartElement("cut");
-#             xw.WriteAttributeString("left-x", leftX.ToString());
-#             xw.WriteAttributeString("top-y", topY.ToString());
-#             xw.WriteAttributeString("index", (++tileIx).ToString());
-#             xw.WriteEndElement();
-#         }
 
-def BeebPixLeft(ix):
+def BeebPixRight(ix):
     return        (((ix & 8) << 3)
                  + ((ix & 4) << 2)
                  + ((ix & 2) << 1)
                  + (ix & 1))
 
-def BeebPixRight(ix):
-    return BeebPixLeft(ix) << 1
+def BeebPixLeft(ix):
+    return BeebPixRight(ix) << 1
 
 #         protected int GetPixel(byte[,] bmp, int x, int y)
 #         {
