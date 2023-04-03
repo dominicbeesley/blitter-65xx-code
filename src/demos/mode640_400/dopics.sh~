@@ -25,10 +25,10 @@
 
 BUILD=$1
 
-echo "#define N_PICS `ls $BUILD/*.bbc | wc -l`" > $BUILD/includes/pics.h
+echo "#define N_PICS `ls $BUILD/*.bbc | wc -l`" > $BUILD/pics.h
 a=1 
 for x in $BUILD/*.bbc ; do 
 	echo $x 
 	printf "P.%02X FFFF0000 FFFF0000" $a> $x.inf
-	a=$((a+1))
+	a=(( $a + 1 ))
 done;

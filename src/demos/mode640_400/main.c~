@@ -32,7 +32,7 @@ SOFTWARE.
 
 #include "hardware.h"
 #include "myos.h"
-#include "pics.h"
+#include "build/pics.h"
 
 const char mo6845[]  = {
 	0x7f,				// 0 Horizontal Total	 =128
