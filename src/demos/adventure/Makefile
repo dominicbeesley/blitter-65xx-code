@@ -22,7 +22,7 @@ AS=ca65 -I $(TOP)/includes
 ASOPT=
 
 
-CLIBDIR=./clib
+CLIBDIR=$(TOP)/clib
 CLIB=$(CLIBDIR)/clib.lib
 
 

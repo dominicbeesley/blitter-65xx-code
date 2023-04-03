@@ -158,7 +158,7 @@ def main():
                         bmpWidth = bm.width;
                         bmpHeight = bm.height;
                         if bm.mode != "RGB":
-                            bm = bm.convert("RGB")
+                            bm = bm.convert("RGBA")
                         pixels = bm.load()
 
                         xdSource = ET.SubElement(cuts, "source")

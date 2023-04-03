@@ -12,7 +12,7 @@ ASM_DEPS=globals.inc $(wildcard $(TOP)/includes/*.inc)
 TILECUT=$(SCRIPTS)/tilecutter.py
 SSD=$(SSDS)/bigfonts.ssd
 
-CLIBDIR=./clib
+CLIBDIR=$(TOP)/clib
 CLIB=$(CLIBDIR)/clib.lib
 
 .PHONY:clean all 
