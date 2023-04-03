@@ -50,11 +50,14 @@ Slice a bitmap up into game tiles""", file=fh)
         sys.exit(exit)
 
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 3 and len(sys.argv) != 4:
         Usage(sys.stdout, "Incorrect number of arguments", exit=1)
 
     basefile = sys.argv[1]
-    basedir = os.path.dirname(basefile)
+    if len(sys.argv) == 4:
+        basedir = sys.argv[3]
+    else:
+        basedir = os.path.dirname(basefile)
     sourcedir = sys.argv[2]
 
     os.path.isdir(sourcedir) or Usage(sys.stderr, f"Source directory \"{sourcedir}\" does not exist", exit=1)
@@ -154,6 +157,8 @@ def main():
 
                         bmpWidth = bm.width;
                         bmpHeight = bm.height;
+                        if bm.mode != "RGB":
+                            bm = bm.convert("RGB")
                         pixels = bm.load()
 
                         xdSource = ET.SubElement(cuts, "source")

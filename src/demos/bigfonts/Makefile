@@ -1,73 +1,79 @@
-_dummy := $(shell mkdir -p build build/includes)
-
-
-TILECUT=/cygdrive/d/work/vs2017/AuthorityFileLtd/Games/TileCutter/TileCutter/bin/Debug/TileCutter.exe
+		include ../../Makefile.defs
 
 LD=ld65
-LDOPT=-v -vm
+LDOPT=-v -vm -L /usr/share/cc65/lib
 CC=cc65
-CCOPT=-g -T -O -Or -r -I ../../../includes -I build/includes -I /usr/local/share/cc65/include
-AS=ca65 -I ../../../includes
+CCOPT=-g -T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I /usr/share/cc65/include
+AS=ca65 -I $(TOP)/includes
 ASOPT=
-LOADER_OBJS=build/loader.o build/dma.o build/myos.o
-DEMO_OBJS=build/dma.o build/myos.o build/fontmap.o build/main.o build/aeris-test.o
-ASM_DEPS=globals.inc $(wildcard ../../../includes/*.inc)
+LOADER_OBJS=$(BUILD)/loader.o $(BUILD)/dma.o $(BUILD)/myos.o
+DEMO_OBJS=$(BUILD)/dma.o $(BUILD)/myos.o $(BUILD)/fontmap.o $(BUILD)/main.o $(BUILD)/aeris-test.o
+ASM_DEPS=globals.inc $(wildcard $(TOP)/includes/*.inc)
+TILECUT=$(SCRIPTS)/tilecutter.py
+SSD=$(SSDS)/bigfonts.ssd
+
+CLIBDIR=./clib
+CLIB=$(CLIBDIR)/clib.lib
 
 .PHONY:clean all 
 
-all:bigfonts.ssd
+all:	$(BUILD)/font.til $(BUILD)/main.pal $(BUILD)/loader.bin $(BUILD)/demo.bin
+
+ssd:	$(SSD)
+
+deploy:	ssd
+		mkdir -p $(DEPLOY_TOP)/bigfonts
+		dfs read -i -d $(DEPLOY_TOP)/bigfonts $(SSD)
+
+$(SSD): all
+	dfs form -80 $(SSD)
+	dfs add -f "T.FONT" $(SSD) $(BUILD)/font.til
+	dfs add -f "T.OWL" $(SSD) $(BUILD)/owl.til
+	dfs add -f "P.MAIN" $(SSD) $(BUILD)/main.pal
+	dfs add -l 0x1900 -e 0x1900 -f "LOADER" $(SSD) $(BUILD)/loader.bin
+	dfs add -l 0x1100 -e 0x1100 -f "DEMO" $(SSD) $(BUILD)/demo.bin
+	dfs add -f "!BOOT" $(SSD) _21BOOT.txt 
+	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(CLIBDIR)/clib.rom
+	dfs title $(SSD) "bigfonts"
+	dfs opt4 -3 $(SSD)
 
 
-bigfonts.ssd: build/font.til build/main.pal build/loader.bin build/demo.bin
-	dfs form -80 bigfonts.ssd
-	dfs add -f "T.FONT" bigfonts.ssd build/font.til
-	dfs add -f "T.OWL" bigfonts.ssd build/owl.til
-	dfs add -f "P.MAIN" bigfonts.ssd build/main.pal
-	dfs add -l 0x1900 -e 0x1900 -f "LOADER" bigfonts.ssd build/loader.bin
-	dfs add -l 0x1100 -e 0x1100 -f "DEMO" bigfonts.ssd build/demo.bin
-	dfs add -f "!BOOT" bigfonts.ssd _21BOOT.txt 
-	dfs title bigfonts.ssd "bigfonts"
-	dfs opt4 -3 bigfonts.ssd
+$(BUILD)/includes/gen_vars.h:
+	mkdir -p $(BUILD)/includes
+	touch $(BUILD)/includes/gen_vars.h
 
-	mkdir -p ~/hostfs/bigfonts
-	dfs read -i -d ~/hostfs/bigfonts -w "*.*" bigfonts.ssd
+$(BUILD)/loader.bin: $(LOADER_OBJS) loader.cfg
+	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJS) $(CLIB) -m $@.map
+	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/loader.bin.map >$(BUILD)/loader.noi
+
+$(BUILD)/demo.bin: $(DEMO_OBJS) demo.cfg
+	$(LD) $(LDOPT) -C demo.cfg -o $@ $(DEMO_OBJS) $(CLIB) -m $@.map
+	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/demo.bin.map >$(BUILD)/demo.noi
 
 
-build/includes/gen_vars.h:
-	touch build/includes/gen_vars.h
+$(patsubst %.c, $(BUILD)/%.s, $(wildcard *.c)): $(BUILD)/includes/gen_vars.h globals.h myos.h 
 
-build/loader.bin: $(LOADER_OBJS) loader.cfg
-	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJS) bbc.lib -m $@.map
-	../../../scripts/ld65map2noi.pl <build/loader.bin.map >build/loader.noi
+$(patsubst %.s, $(BUILD)/%.o, $(wildcard *.s)): globals.inc
 
-build/demo.bin: $(DEMO_OBJS) demo.cfg
-	$(LD) $(LDOPT) -C demo.cfg -o $@ $(DEMO_OBJS) bbc.lib -m $@.map
-	../../../scripts/ld65map2noi.pl <build/demo.bin.map >build/demo.noi
-
-
-$(patsubst %.c, build/%.s, $(wildcard *.c)): build/includes/gen_vars.h globals.h myos.h 
-
-$(patsubst %.s, build/%.o, $(wildcard *.s)): globals.inc
-
-build/%.s:	%.c
+$(BUILD)/%.s:	%.c
 		$(CC) $(CCOPT) -o $@ $<
 
-build/%.o:	build/%.s 
+$(BUILD)/%.o:	$(BUILD)/%.s 
 		$(AS) $(ASOPT) -l $(basename $@).lst -o $@ $<
 
-build/%.o:	%.s $(ASM_DEPS)
+$(BUILD)/%.o:	%.s $(ASM_DEPS)
 		$(AS) $(ASOPT) -l $(basename $@).lst -o $@ $<
 
 
-build/fontmap.s: fontmap/ascii2font.txt fontmap/big_fontmap.tmx scripts/fontmap2asm.pl
-		scripts/fontmap2asm.pl fontmap/big_fontmap.tmx fontmap/ascii2font.txt build/fontmap.s
+$(BUILD)/fontmap.s: fontmap/ascii2font.txt fontmap/big_fontmap.tmx scripts/fontmap2asm.pl
+		scripts/fontmap2asm.pl fontmap/big_fontmap.tmx fontmap/ascii2font.txt $(BUILD)/fontmap.s
 
 
-build/main.pal build/font.til: src-gra/big_font_parts_mo2_g2.png fontmap/tile-cutter.xml
-	$(TILECUT) "$(shell cygpath -w "fontmap/tile-cutter.xml")"
+$(BUILD)/main.pal $(BUILD)/font.til: src-gra/big_font_parts_mo2_g2.png fontmap/tile-cutter.xml
+	$(TILECUT) fontmap/tile-cutter.xml "$(shell pwd)" "$(BUILD)"
 
 
 clean::
-	-rm -f build/main.pal build/font.til
-	-rm -R -f build/*
-	-rm bigfonts.ssd
+	-rm -f $(BUILD)/main.pal $(BUILD)/font.til
+	-rm -R -f $(BUILD)/*
+	-rm $(SSD)
