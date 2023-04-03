@@ -9,17 +9,24 @@ CC=cc65
 CCOPT=-g -T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I /usr/share/cc65/include
 AS=ca65 -I $(TOP)/includes
 ASOPT=
-LOADER_OBJS=$(BUILD)/loader.o $(BUILD)/dma.o $(BUILD)/myos.o
-DEMO_OBJS=$(BUILD)/dma.o $(BUILD)/myos.o $(BUILD)/main.o $(BUILD)/aeris-test.o $(BUILD)/rainbow.o $(BUILD)/effects.o
+
+LOADER_OBJ=loader dma myos
+DEMO_OBJ=dma myos main aeris-test rainbow effects
+
+LOADER_OBJ_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_OBJ)))
+DEMO_OBJ_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(DEMO_OBJ)))
 ASM_DEPS=globals.inc $(wildcard $(TOP)/includes/*.inc)
 SSD=$(SSDS)/copper.ssd
 
 CLIBDIR=$(TOP)/clib
 CLIB=$(CLIBDIR)/clib.lib
 
+TARGETS=loader demo
+TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
+
 .PHONY:clean all 
 
-all:	$(BUILD)/loader.bin $(BUILD)/demo.bin
+all:	$(TARGETS_O)
 
 $(SSD): all
 	dfs form -80 $(SSD)
@@ -39,12 +46,12 @@ deploy:	$(SSD)
 $(BUILD)/includes/gen_vars.h:
 	touch $(BUILD)/includes/gen_vars.h
 
-$(BUILD)/loader.bin: $(LOADER_OBJS) loader.cfg
-	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJS) $(CLIB) -m $@.map
+$(BUILD)/loader.bin: $(LOADER_OBJ_O) loader.cfg
+	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJ_O) $(CLIB) -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/loader.bin.map >$(BUILD)/loader.noi
 
-$(BUILD)/demo.bin: $(DEMO_OBJS) demo.cfg
-	$(LD) $(LDOPT) -C demo.cfg -o $@ $(DEMO_OBJS) $(CLIB) -m $@.map
+$(BUILD)/demo.bin: $(DEMO_OBJ_O) demo.cfg
+	$(LD) $(LDOPT) -C demo.cfg -o $@ $(DEMO_OBJ_O) $(CLIB) -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/demo.bin.map >$(BUILD)/demo.noi
 
 
@@ -68,5 +75,15 @@ $(BUILD)/%.o:	%.s $(ASM_DEPS)
 
 clean::
 	
-	-rm -R -f $(BUILD)/*
+	-rm $(TARGETS_O)
+	-rm $(addsuffix .map, $(TARGETS_O))
+	-rm $(addprefix $(BUILD), $(TARGETS))
+	-rm $(addprefix $(BUILD)/, $(addsuffix .noi, $(TARGETS)))
+	-rm $(LOADER_OBJ_O)
+	-rm $(DEMO_OBJ_O)
+	-rm $(patsubst %.o, %.s, $(LOADER_OBJ_O))
+	-rm $(patsubst %.o, %.s, $(DEMO_OBJ_O))
+	-rm $(patsubst %.o, %.lst, $(LOADER_OBJ_O))
+	-rm $(patsubst %.o, %.lst, $(DEMO_OBJ_O))
+	-rm $(BUILD)/includes/gen_vars.h
 	-rm $(SSD)

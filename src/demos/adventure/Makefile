@@ -3,13 +3,6 @@
 _dummy := $(shell mkdir -p $(BUILD)/tiles $(BUILD)/maps $(BUILD)/includes)
 
 
-TILECUT=/cygdrive/d/work/vs2017/AuthorityFileLtd/Games/TileCutter/TileCutter/bin/Debug/TileCutter.exe
-
-CLEAN_EXTRA= \
-				tiles/charac.til \
-				tiles/main.pal \
-				gen_vars.h
-
 TARGETS=game loader wander
 
 SSD=$(SSDS)/adventure.ssd
@@ -26,7 +19,8 @@ CLIBDIR=$(TOP)/clib
 CLIB=$(CLIBDIR)/clib.lib
 
 
-.SECONDARY:$(BUILD)/game.s $(BUILD)/dma.s $(BUILD)/loader.s $(BUILD)/wander.s
+EXTRA_ASM=$(addprefix $(BUILD)/, game.s dma.s loader.s wander.s adval.s brk.s sprite.s text.s tile_map.s)
+.SECONDARY:$(EXTRA_ASM)
 
 GAME_OBJS=	game draw_map dma myos tile_map brk adval sprite screenmaths 
 WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
@@ -47,10 +41,7 @@ deploy: ssd
 	mkdir -p $(DEPLOY_TOP)/advent65 
 	dfs read -i -d $(DEPLOY_TOP)/advent65 $(SSD)
 
-$(BUILD)/clib.rom:
-	cp $(CLIBDIR)/clib.rom $(BUILD)/clib.rom
-
-$(SSD): ssd/include.lst tiles $(BUILD)/clib.rom $(TARGETS_O)
+$(SSD): ssd/include.lst tiles $(CLIBDIR)/clib.rom $(TARGETS_O)
 	dfs form -80 $(SSD)
 	dfs title $(SSD) advent65
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.CHARAC' $(SSD) $(BUILD)/tiles/charac.rle
@@ -62,7 +53,7 @@ $(SSD): ssd/include.lst tiles $(BUILD)/clib.rom $(TARGETS_O)
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.LOADER' $(SSD) $(BUILD)/loader.bin
 	dfs add -l FFFFFFFF -e FFFFFFFF -f '$.!BOOT' $(SSD) ./ssd/_21BOOT.txt
-	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(BUILD)/clib.rom
+	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(CLIBDIR)/clib.rom
 
 $(BUILD)/game.bin: $(GAME_OBJS_O) game.cfg
 	$(LD) $(LDOPT) -C game.cfg -o $@ $(GAME_OBJS_O) $(CLIB) -m $@.map
@@ -133,4 +124,21 @@ $(BUILD)/maps/home.bin $(BUILD)/tiles/over-back.cutdefs $(BUILD)/tiles/over-fron
 
 		
 clean::
-	-rm -R -f $(BUILD)/*
+	-rm $(SSD)
+	-rm $(CLEAN_EXTRA)
+
+	-rm $(TARGETS_O)
+	-rm $(addprefix $(BUILD)/, $(addsuffix .noi, $(TARGETS)))
+	-rm $(addsuffix .map, $(TARGETS_O))
+	-rm $(addsuffix .map, $(TARGETS_O))
+	-rm $(GAME_OBJS_O)
+	-rm $(WANDER_OBJS_O)
+	-rm $(EXTRA_ASM)
+	-rm $(LOADER_OBJS_O)	
+	-rm $(BUILD)/includes/gen_vars.h
+	-rm $(BUILD)/maps/home.bin
+	-rm $(BUILD)/tiles/tile-cutter.xml
+	-rm $(BUILD)/tiles/main.pal
+	-rm $(addprefix $(BUILD)/tiles/, $(addprefix charac, .rle .til .cutdefs .til.cuts))
+	-rm $(addprefix $(BUILD)/tiles/, $(addprefix over-front, .rle .til .cutdefs .til.cuts))
+	-rm $(addprefix $(BUILD)/tiles/, $(addprefix over-back, .rle .til .cutdefs .til.cuts))
