@@ -3,7 +3,7 @@
 PAULA_SSD=paula.ssd
 
 SUBDIRS=modplay
-PAULA_OBJS=modplay/modplay.bin
+PAULA_OBJS=modplay/modplay.bin modmenu/modmenu.bin
 
 .PHONY: all $(SUBDIRS)
 
@@ -17,6 +17,8 @@ $(SUBDIRS):
 modplay/modplay.bin:
 	make -C modplay all
 
+modmenu/modmenu.bin:
+	make -C modmenu all
 
 
 $(PAULA_SSD):	$(PAULA_OBJS) $(wildcard paula_files/.*)

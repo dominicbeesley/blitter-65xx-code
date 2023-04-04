@@ -1,22 +1,35 @@
-AS=ca65 -I ../../../includes 
+		include ../../../Makefile.defs
+
+AS=ca65 -I $(TOP)/includes 
 LD=ld65
 
-OBJS=modmenu.o
+OBJS=modmenu
+TARGETS=modmenu
 DEPS=
 
-all::	modmenu.bin
+OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
+TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
+
+all:	$(TARGETS_O)
 
 
-%.o: 	%.asm $(DEPS) $(INCS)
+$(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
 
 
-modmenu.bin: $(OBJS) modmenu.cfg
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(basename $@).cfg $(OBJS) $(LIBS)
-	../../../scripts/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
+$(BUILD)/%.bin: $(OBJS_O) %.cfg
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O) $(LIBS)
+	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
+	cp $(notdir $@).inf $(BUILD)
 
 
 clean::
-	-rm *.o
-	-rm modmenu.bin modmenu.sy2 modmenu.map modmenu.lst 2>/dev/nul
+	-rm $(OBJS_O)
+	-rm $(OBJS_O)
+	-rm $(TARGETS_O)
+	-rm $(addsuffix .inf, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.sy2, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.map, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.noi, $(TARGETS_O))
+	-rm $(patsubst %.o, %.lst, $(OBJS_O))
