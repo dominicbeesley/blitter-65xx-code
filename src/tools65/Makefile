@@ -14,7 +14,7 @@ OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 .PHONY: clean all $(SUBDIRS)
 
 all: $(SUBDIRS)
-ssd: $(SSD)
+ssd: all $(SSD)
 
 clean: $(SUBDIRS)
 	-rm $(SSD)
