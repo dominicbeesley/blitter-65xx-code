@@ -1,7 +1,6 @@
 	include ./Makefile.defs
 
-#SUBDIRSWIMAKE:=$(shell for a in $$(find -mindepth 1 -type d); do if [ -e $$a/Makefile ]; then echo $$a; fi; done;)
-SUBDIRSWIMAKE:=demos
+SUBDIRSWIMAKE:=blitlib demos roms test tools65
 
 $(TOPTARGETS): $(SUBDIRSWIMAKE)
 

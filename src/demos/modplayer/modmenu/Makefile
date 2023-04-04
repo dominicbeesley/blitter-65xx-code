@@ -11,6 +11,8 @@ OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
 
 all:	$(TARGETS_O)
+deploy: all
+ssd:	all
 
 
 $(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)

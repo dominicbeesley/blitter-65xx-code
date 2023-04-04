@@ -28,6 +28,8 @@ TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
 
 all:	$(TARGETS_O)
 
+ssd: $(SSD)
+
 $(SSD): all
 	dfs form -80 $(SSD)
 	dfs add -l 0xE00 -e 0xE00 -f "$.LOADER" $(SSD) $(BUILD)/loader.bin

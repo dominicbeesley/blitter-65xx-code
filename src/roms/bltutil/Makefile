@@ -20,6 +20,8 @@ TARGETS_O = $(addprefix $(BUILD)/, $(addsuffix .rom, $(TARGETS)))
 .PHONY: all clean
 
 all:	$(TARGETS_O)
+ssd:	all
+deploy:	all
 
 #dont know why I need this but otherwise gnu make deletes the .o files!
 poo: $(ALLOBJS_O)

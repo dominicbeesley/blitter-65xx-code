@@ -5,8 +5,11 @@ SSD=$(SSDS)/paula.ssd
 PAULA_OBJS=modplay/modplay.bin modmenu/modmenu.bin
 SUBDIRS=modplay modmenu
 
-all: $(PAULA_OBJS) $(SSD)
+PAULA_OBJS_O=$(addprefix $(BUILD)/, $(PAULA_OBJS))
 
+all: $(PAULA_OBJS_O)
+
+ssd: $(SSD)
 
 clean: 
 	make -C modmenu clean
@@ -17,15 +20,15 @@ deploy: $(SSD)
 	mkdir -p $(DEPLOY_TOP)/modplay
 	dfs read -i -d $(DEPLOY_TOP)/modplay $(SSD)
 
-modplay/modplay.bin:
+$(BUILD)/modplay/modplay.bin:
 	make -C modplay all
 
-modmenu/modmenu.bin:
+$(BUILD)/modmenu/modmenu.bin:
 	make -C modmenu all
 
 
-$(SSD):	$(PAULA_OBJS) $(wildcard paula_files/.*)
+$(SSD):	$(PAULA_OBJS_O) $(wildcard paula_files/.*)
 	dfs form -80 $(SSD)
 	dfs title $(SSD) "1mpaula"
-	dfs add $(SSD) $(addprefix $(BUILD)/, $(addsuffix .inf, $(PAULA_OBJS)))
+	dfs add $(SSD) $(addsuffix .inf, $(PAULA_OBJS_O))
 	dfs add $(SSD) paula_files/*.inf

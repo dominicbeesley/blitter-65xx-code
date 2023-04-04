@@ -16,6 +16,8 @@ clean:
 	-rm -f $(LST_O)
 	-rm -f $(TARGETS_O)
 
+deploy:all
+ssd:all
 
 $(BUILD)/blitlib.lib: $(OBJS_O)
 	-rm -f $@

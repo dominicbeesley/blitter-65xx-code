@@ -12,6 +12,8 @@ OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
 
 all:	$(TARGETS_O)
+deploy: all
+ssd:	all
 
 
 $(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
@@ -21,6 +23,7 @@ $(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
 $(BUILD)/%.bin: $(OBJS_O) %.cfg
 	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O) 
 	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
+	cp $(notdir $@).inf $(BUILD)
 
 ##	echo EDIT 700 $$(echo -n "$(MODNAME)" | hexdump -ve '1/1 "%X "') 0D 00 >$(basename $@).run.noi
 ##	echo LOAD $$(cygpath -w "$$(realpath "$@")") 2000 B >>$(basename $@).run.noi
