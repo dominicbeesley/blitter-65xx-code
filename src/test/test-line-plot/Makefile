@@ -1,24 +1,31 @@
-AS=ca65 -I ../../../includes 
+		include ../../Makefile.defs
+
+AS=ca65 -I $(TOP)/includes 
 LD=ld65
 
-OBJS=test-line.o
+OBJS=test-line
+TARGETS=test-line
 DEPS=
-INCS=$(wildcard ../../../includes/*.inc)
 
-all::	test-line.bin
+OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
+TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
+
+all:	$(TARGETS_O)
 
 
-%.o: 	%.asm $(DEPS) $(INCS)
+$(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
-test-line.bin: $(OBJS) test-line.cfg
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(basename $@).cfg $(OBJS) $(LIBS)
-	../../../scripts/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
-	echo LOAD `cygpath -a -w "test-line.bin"` 2000 B >$(basename $@).game.noi
-	cat $(basename $@).noi >> $(basename $@).game.noi
-	echo reg PC 2000 >>$(basename $@).game.noi
-	cp test-line.bin* ~/hostfs/0.TEST
+$(BUILD)/%.bin: $(OBJS_O) %.cfg
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O) $(LIBS)
+	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
+	cp $(notdir $@).inf $(BUILD)
 
-clean::
-	-rm *.o
-	-rm test-line.bin test-line.sy2 test-line.map test-line.lst test-line.noi test-line.game.noi 2>/dev/nul
+clean:
+	-rm $(OBJS_O)
+	-rm $(patsubst %.o, %.lst, $(OBJS_O))
+	-rm $(TARGETS_O)
+	-rm $(addsuffix .inf, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.sy2, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.map, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.noi, $(TARGETS_O))

@@ -3,8 +3,8 @@
 AS=ca65 -I $(TOP)/includes 
 LD=ld65
 
-OBJS=test-aeris
-TARGETS=test-aeris
+OBJS=test-hdmi
+TARGETS=test-hdmi
 DEPS=
 
 OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))

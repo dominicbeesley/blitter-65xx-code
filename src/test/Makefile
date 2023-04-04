@@ -1,10 +1,10 @@
 		include ../Makefile.defs
 
-SSD=$(SSDS)/roms65.ssd
-DEPLOY=$(DEPLOY_TOP)/roms65
+SSD=$(SSDS)/blittest.ssd
+DEPLOY=$(DEPLOY_TOP)/blittest
 
-SUBDIRS=bltutil
-OBJS=bltutil/bltutil.rom bltutil/bltutil.e.rom
+SUBDIRS=test-aeris test-hdmi test-line-plot
+OBJS=test-aeris/test-aeris.bin test-hdmi/test-hdmi.bin test-line-plot/test-line.bin
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 
@@ -23,8 +23,12 @@ deploy: $(SSD)
 $(SUBDIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)
 
-$(BUILD)/bltutil/bltutil.rom $(BUILD)/bltutil/bltutil.e.rom &:
-	$(MAKE) -C bltutil all
+$(BUILD)/test-aeris/test-aeris.bin:
+	make -C test-aeris all
+$(BUILD)/test-hdmi/test-hdmi.bin:
+	make -C test-hdmi all
+$(BUILD)/test-line-plot/test-line.bin:
+	make -C test-line-plot all
 
 $(SSD):	$(OBJS_O)
 	dfs form -80 $(SSD)
