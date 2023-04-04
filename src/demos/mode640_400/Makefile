@@ -71,4 +71,4 @@ clean:
 	-rm $(BUILD)/demo.bin.map
 	-rm $(BUILD)/demo.noi
 	-rm $(BUILD)/*.bbc.inf
-	-rm $(BUILD)/*.bbc.inf
+	-rm $(BUILD)/*.bbc

@@ -1,30 +1,33 @@
+		include ../Makefile.defs
 
-
-HOSTFSDIR=~/hostfs/roms65/
-SSD=roms65.ssd
+SSD=$(SSDS)/roms65.ssd
+DEPLOY=$(DEPLOY_TOP)/roms65
 
 SUBDIRS=bltutil
-OBJS=bltutil/build/bltutil.rom
-EXTRAS=$(basename $(wildcard extras/*.inf))
+OBJS=bltutil/bltutil.rom bltutil/bltutil.e.rom
 
-DOCS=bltutil_readme.htm SoundQuickstart.htm
+OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
+
 
 .PHONY: clean all $(SUBDIRS)
 
-all:: $(SUBDIRS) $(SSD) $(DOCS)
-clean:: $(SUBDIRS)
+all: $(SUBDIRS) $(SSD)
+
+clean: $(SUBDIRS)
+	-rm $(SSD)
+
+deploy: $(SSD)
+	mkdir -p $(DEPLOY)
+	dfs read -i -d $(DEPLOY) $(SSD)
 
 $(SUBDIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)
 
-$(SSD):	$(OBJS) $(EXTRAS)
+$(BUILD)/bltutil/bltutil.rom $(BUILD)/bltutil/bltutil.e.rom &:
+	$(MAKE) -C bltutil all
+
+$(SSD):	$(OBJS_O)
 	dfs form -80 $(SSD)
 	dfs title $(SSD) "roms65"
-	dfs add $(SSD) $(addsuffix .inf, $(OBJS) $(EXTRAS)) 
-	-mkdir -p $(HOSTFSDIR)
-	dfs read -i -w "*.*" -d $(HOSTFSDIR) $(SSD)
+	dfs add $(SSD) $(addsuffix .inf, $(OBJS_O)) 
 
-	cp $(OBJS) $$(cygpath -O)/BeebEm/BeebFile/BBC
-
-%.htm: %.md
-	perl ../../scripts/markdown/markdown.pl $< >$@

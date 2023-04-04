@@ -13,6 +13,7 @@ LST_O=$(addprefix $(BUILD)/, $(addsuffix .lst, $(TARGETS)))
 SY2_O=$(addprefix $(BUILD)/, $(addsuffix .sy2, $(TARGETS)))
 MAP_O=$(addprefix $(BUILD)/, $(addsuffix .map, $(TARGETS)))
 NOI_O=$(addprefix $(BUILD)/, $(addsuffix .noi, $(TARGETS)))
+RUN_NOI_O=$(addprefix $(BUILD)/, $(addsuffix .run.noi, $(TARGETS)))
 INF_O=$(addprefix $(BUILD)/, $(addsuffix .bin.inf, $(TARGETS)))
 
 SSD=$(SSDS)/demo65.ssd
@@ -57,4 +58,5 @@ clean:
 	-rm $(MAP_O)
 	-rm $(INF_O)
 	-rm $(NOI_O)
+	-rm $(RUN_NOI_O)
 	-rm $(SSD)

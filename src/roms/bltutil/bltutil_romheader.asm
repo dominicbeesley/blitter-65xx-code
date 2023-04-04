@@ -33,7 +33,7 @@
 		.include "bltutil_heap.inc"
 		.include "bltutil_cfg.inc"
 
-		.include "build/version-date.inc"
+		.include "version-date.inc"
 
 		.import oswordGetRomBase
 		.import cmdBLTurbo

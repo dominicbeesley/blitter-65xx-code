@@ -1,6 +1,8 @@
-AS=ca65 -I ../../../includes
+		include ../../Makefile.defs
+
+AS=ca65 -I $(TOP)/includes -I $(BUILD)
 LD=ld65
-INCS=$(wildcard ../../../includes/*.inc) $(filter-out version-date.inc, $(wildcard *.inc))
+INCS=$(wildcard $(TOP)/includes/*.inc) $(filter-out version-date.inc, $(wildcard *.inc))
 DEPS=$(INCS) 
 OBJS=	bltutil_romheader bltutil bltutil_flashutils \
 	bltutil_utils bltutil_noice bltutil_jimstuff \
@@ -8,21 +10,22 @@ OBJS=	bltutil_romheader bltutil bltutil_flashutils \
 	bltutil_cfg
 ROMNO=F
 
-BUILD=build
+TARGETS=bltutil bltutil.e
 
-BBCOBJS = $(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
-ELKOBJS = $(addprefix $(BUILD)/, $(addsuffix .e.o, $(OBJS)))
-ALLOBJS = $(BBCOBJS) $(ELKOBJS)
+BBCOBJS_O = $(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
+ELKOBJS_O = $(addprefix $(BUILD)/, $(addsuffix .e.o, $(OBJS)))
+ALLOBJS_O = $(BBCOBJS_O) $(ELKOBJS_O)
+TARGETS_O = $(addprefix $(BUILD)/, $(addsuffix .rom, $(TARGETS)))
 
 .PHONY: all clean
 
-all::	$(BUILD)/bltutil.rom $(BUILD)/bltutil.e.rom
+all:	$(TARGETS_O)
 
 #dont know why I need this but otherwise gnu make deletes the .o files!
-poo: $(ALLOBJS)
+poo: $(ALLOBJS_O)
 
 $(BUILD)/version-date.inc: $(DEPS) $(filter-out %.da.asm, $(wildcard *.asm))
-	../../../scripts/gendate.sh $@
+	$(SCRIPTS)/gendate.sh $@
 
 $(BUILD)/bltutil_romheader.o: $(BUILD)/version-date.inc
 $(BUILD)/bltutil_romheader.e.o: $(BUILD)/version-date.inc
@@ -33,22 +36,24 @@ $(BUILD)/%.o: 	%.asm $(DEPS)
 $(BUILD)/%.e.o: 	%.asm $(DEPS) 
 	$(AS) -D MACH_ELK -o $@ -g -l $(basename $@).lst $<
 
-$(BUILD)/%.rom: $(BBCOBJS) bltutil.cfg
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C bltutil.cfg $(BBCOBJS) $(LIBS)
+$(BUILD)/%.rom: $(BBCOBJS_O) bltutil.cfg
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C bltutil.cfg $(BBCOBJS_O) $(LIBS)
 	echo "$.BLTUTIL FF8000 FF8000" >$@.inf
-	da65 -S 0x8000 -v --comments 4 -o $@.da.asm $@
-	../../../../scripts/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
-	../../../../scripts/bemsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).bem
+	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
 
-$(BUILD)/%.e.rom: $(ELKOBJS) bltutil.cfg
+$(BUILD)/%.e.rom: $(ELKOBJS_O) bltutil.cfg
 	echo "E.BLTUTIL FF8000 FF8000" >$@.inf
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C bltutil.cfg $(ELKOBJS) $(LIBS)
-	da65 -S 0x8000 -v --comments 4 -o $@.e.da.asm $@
-	../../../../scripts/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
-	../../../../scripts/bemsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).bem
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C bltutil.cfg $(ELKOBJS_O) $(LIBS)
+	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
 
-clean::
-	-rm build/*
+clean:
+	-rm $(TARGETS_O)
+	-rm $(addsuffix .inf, $(TARGETS_O))
+	-rm $(patsubst %.rom, %.sy2, $(TARGETS_O))
+	-rm $(patsubst %.rom, %.map, $(TARGETS_O))
+	-rm $(patsubst %.rom, %.noi, $(TARGETS_O))
+	-rm $(ALLOBJS_O)
+	-rm $(patsubst %.o, %.lst, $(ALLOBJS_O))
+	-rm $(BUILD)/version-date.inc
 
 
-$(shell mkdir -p $(BUILD))

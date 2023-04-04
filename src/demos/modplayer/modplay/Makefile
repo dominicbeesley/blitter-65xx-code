@@ -3,8 +3,10 @@
 AS=ca65 -I $(TOP)/includes 
 LD=ld65
 
-OBJS=modplay.o modload.o
+OBJS=modplay modload
+TARGETS=modplay
 DEPS=modplay.inc helptext.mo7.txt
+
 
 OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
@@ -16,10 +18,9 @@ $(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
 
-%.bin: $(OBJS) %.cfg
+$(BUILD)/%.bin: $(OBJS_O) %.cfg
 	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O) 
 	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
-	$(SCRIPTS)/bemsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).bem
 
 ##	echo EDIT 700 $$(echo -n "$(MODNAME)" | hexdump -ve '1/1 "%X "') 0D 00 >$(basename $@).run.noi
 ##	echo LOAD $$(cygpath -w "$$(realpath "$@")") 2000 B >>$(basename $@).run.noi
