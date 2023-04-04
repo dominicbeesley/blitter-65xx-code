@@ -63,5 +63,12 @@ $(BUILD)/pics.h:	$(addprefix $(BUILD)/, $(notdir $(patsubst %.png,%.bbc, $(wildc
 		./dopics.sh $(BUILD)
 
 clean::
-	-rm -R -f $(BUILD)/*
-	-rm 640x400.ssd
+	-rm $(patsubst %.o, %.lst, $(DEMO_OBJS))
+	-rm $(DEMO_OBJS)
+	-rm $(SSD)
+	-rm $(BUILD)/includes/pics.h
+	-rm $(BUILD)/demo.bin
+	-rm $(BUILD)/demo.bin.map
+	-rm $(BUILD)/demo.noi
+	-rm $(BUILD)/*.bbc.inf
+	-rm $(BUILD)/*.bbc.inf
