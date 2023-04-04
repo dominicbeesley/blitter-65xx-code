@@ -25,7 +25,7 @@
 
 BUILD=$1
 
-echo "#define N_PICS `ls $BUILD/*.bbc | wc -l`" > $BUILD/includes/pics.h
+echo "#define N_PICS `ls $BUILD/*.bbc | wc -l`" > $BUILD/pics.h
 a=1 
 for x in $BUILD/*.bbc ; do 
 	echo $x 
