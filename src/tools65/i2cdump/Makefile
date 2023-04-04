@@ -1,22 +1,31 @@
-AS=ca65 -I ../../../includes
+		include ../../Makefile.defs
+
+AS=ca65 -I $(TOP)/includes 
 LD=ld65
 
-TARG=i2cdump
+OBJS=i2cdump
+TARGETS=i2cdump
+DEPS=
 
-%.o: 	%.asm $(DEPS) $(INCS)
-	$(AS) -g -l $(basename $@).lst $<
+OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
+TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
 
-%.bin %.sy2 %.map %.noi:	%.o %.cfg
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(basename $@).cfg $< $(LIBS)
-	../../../scripts/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
-	echo LOAD `cygpath -a -w $@` 2000 B >$(basename $@).debug.noi
-	cat $(basename $@).noi >> $(basename $@).debug.noi
-	echo EDIT zp_mos_txtptr 00 07 >>$(basename $@).debug.noi
-	echo EDIT 0700 `echo -n -e "W 10 1 2 3 4\r" | hexdump -e '1/1 "%x" " "'` >>$(basename $@).debug.noi
-	echo reg PC ENTER_DEBUG >>$(basename $@).debug.noi
+all:	$(TARGETS_O)
 
 
-all::	$(TARG).bin
+$(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
+	$(AS) -o $@ -g -l $(basename $@).lst $<
 
-clean::
-	-rm $(TARG).bin $(TARG).sy2 $(TARG).map $(TARG).lst 2>/dev/nul
+$(BUILD)/%.bin: $(OBJS_O) %.cfg
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O) $(LIBS)
+	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
+	cp $(notdir $@).inf $(BUILD)
+
+clean:
+	-rm $(OBJS_O)
+	-rm $(patsubst %.o, %.lst, $(OBJS_O))
+	-rm $(TARGETS_O)
+	-rm $(addsuffix .inf, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.sy2, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.map, $(TARGETS_O))
+	-rm $(patsubst %.bin, %.noi, $(TARGETS_O))

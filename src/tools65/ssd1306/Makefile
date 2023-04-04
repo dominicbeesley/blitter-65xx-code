@@ -1,17 +1,12 @@
+		include ../../Makefile.defs
+		
 BASICTOOL=basictool
 
-BUILD=./build
-HOSTFS=~/hostfs/tools65
+TARGETS=test1306.tok
 
-TARGETS=$(BUILD)/test1306.tok
+TARGETS_O=$(addprefix $(BUILD)/, $(TARGETS))
 
-$(shell mkdir -p $(BUILD))
-
-all: hostfs
-
-hostfs: $(BUILD)/test1306.tok
-	$(shell mkdir -p $(HOSTFS))
-	cp $(BUILD)/test1306.tok* $(HOSTFS)
+all: $(TARGETS_O)
 
 
 $(BUILD)/test1306.tok:test1306.bbc
@@ -19,4 +14,5 @@ $(BUILD)/test1306.tok:test1306.bbc
 	echo '$$.TST1306 FFFF8023 FFFF8023' >$@.inf
 
 clean:
-	-rm $(BUILD)/*
+	-rm $(TARGETS_O)
+	-rm $(addsuffix .inf, $(TARGETS_O))
