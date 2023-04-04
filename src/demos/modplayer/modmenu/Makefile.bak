@@ -17,6 +17,7 @@ $(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
 
+
 $(BUILD)/%.bin: $(OBJS_O) %.cfg
 	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O)
 	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi

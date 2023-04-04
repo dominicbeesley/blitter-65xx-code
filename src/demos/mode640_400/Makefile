@@ -62,7 +62,7 @@ $(BUILD)/%.bbc:	src_pngs/%.png
 $(BUILD)/pics.h:	$(addprefix $(BUILD)/, $(notdir $(patsubst %.png,%.bbc, $(wildcard src_pngs/*.png))))
 		./dopics.sh $(BUILD)
 
-clean::
+clean:
 	-rm $(patsubst %.o, %.lst, $(DEMO_OBJS))
 	-rm $(DEMO_OBJS)
 	-rm $(SSD)

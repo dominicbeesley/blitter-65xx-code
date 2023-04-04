@@ -73,7 +73,7 @@ $(BUILD)/%.o:	%.s $(ASM_DEPS)
 
 
 
-clean::
+clean:
 	
 	-rm $(TARGETS_O)
 	-rm $(addsuffix .map, $(TARGETS_O))
