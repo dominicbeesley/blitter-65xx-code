@@ -30,7 +30,7 @@ all:	$(TARGETS_O)
 
 ssd: $(SSD)
 
-$(SSD): all
+$(SSD): $(TARGETS_O) assets/RAIN.B _21BOOT.txt $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
 	dfs add -l 0xE00 -e 0xE00 -f "$.LOADER" $(SSD) $(BUILD)/loader.bin
 	dfs add -l 0xE00 -e 0xE00 -f "$.DEMO" $(SSD) $(BUILD)/demo.bin

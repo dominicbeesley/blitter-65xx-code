@@ -27,11 +27,15 @@ WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
 LOADER_OBJS=	loader dma myos rle_asm
 INCS=$(BUILD)/includes/ $(BUILD)/includes/gen_vars.h
 
+TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over-back.rle $(BUILD)/tiles/over-back.til.cuts $(BUILD)/tiles/over-front.rle $(BUILD)/tiles/over-front.til.cuts
+
 
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
 GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS)))
 WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS)))
 LOADER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_OBJS)))
+
+
 
 all: $(TARGETS_O)
 
@@ -41,7 +45,7 @@ deploy: ssd
 	mkdir -p $(DEPLOY_TOP)/advent65 
 	dfs read -i -d $(DEPLOY_TOP)/advent65 $(SSD)
 
-$(SSD): ssd/include.lst tiles $(CLIBDIR)/clib.rom $(TARGETS_O)
+$(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.txt $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
 	dfs title $(SSD) advent65
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.CHARAC' $(SSD) $(BUILD)/tiles/charac.rle
@@ -84,7 +88,6 @@ $(BUILD)/%.o:	%.s | adv_globals.inc
 $(BUILD)/tiles/%.rle: $(BUILD)/tiles/%.til scripts/runlengthencode.pl
 		scripts/runlengthencode.pl $< $@
 
-tiles: $(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over-back.rle $(BUILD)/tiles/over-back.til.cuts $(BUILD)/tiles/over-front.rle $(BUILD)/tiles/over-front.til.cuts
 
 $(BUILD)/tiles/tile-cutter.xml: \
 		$(BUILD)/tiles/over-back.cutdefs \

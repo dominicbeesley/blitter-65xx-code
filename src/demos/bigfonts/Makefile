@@ -29,7 +29,7 @@ deploy:	ssd
 		mkdir -p $(DEPLOY_TOP)/bigfonts
 		dfs read -i -d $(DEPLOY_TOP)/bigfonts $(SSD)
 
-$(SSD): all
+$(SSD): $(TARGETS) _21BOOT.txt $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
 	dfs add -f "T.FONT" $(SSD) $(BUILD)/font.til
 	dfs add -f "T.OWL" $(SSD) $(BUILD)/owl.til
