@@ -525,7 +525,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 		ldy	#0
 		lda	JIM + jim_offs_VERSION_cap_bits+0
 @caplp:		cpx	#tbl_capbits - tbl_bld + 8
-		bne	@skcap0
+		bne	@skcap0		
 		lda	JIM + jim_offs_VERSION_cap_bits+1
 @skcap0:	ror	A
 		bcc	@capnext
@@ -540,6 +540,33 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		jsr	cfgBldTblPrintX2
 
+		pla
+		tax
+		pha
+
+		; check for DMA/SOUND, if so show # of channels
+		ldy	#<jim_DMAC_SND_SEL
+		cpx	#tbl_capbits - tbl_bld + CAP_IX_SND
+		beq	@chans
+		cpx	#tbl_capbits - tbl_bld + CAP_IX_DMA
+		bne 	@nochans
+		ldy 	#<jim_DMAC_DMA_SEL
+@chans:		lda	#'('
+		jsr	OSWRCH
+		jsr	zeroAcc
+		jsr	jimPageChipset
+		lda	#$FF
+		sta	JIM,Y
+		lda	JIM,Y		
+		clc
+		adc	#1
+		sta	zp_trans_acc
+		jsr	PrintDec
+		lda	#')'
+		jsr	OSWRCH
+		jsr	jimPageVersion
+
+@nochans:
 		pla
 		tax
 		pla
@@ -754,6 +781,24 @@ tbl_capbits:	.byte	str_cap_CS - str_bld_base
 		.byte	str_cpu_z80 - str_bld_base
 		.byte	str_cpu_68008 - str_bld_base
 		.byte	str_cpu_68000 - str_bld_base
+
+CAP_IX_CS	= 0
+CAP_IX_DMA	= 1
+CAP_IX_BLITTER	= 2
+CAP_IX_AERIS	= 3
+CAP_IX_I2C	= 4
+CAP_IX_SND	= 5
+CAP_IX_HDMI	= 6
+CAP_IX_T65	= 7
+CAP_IX_65C02	= 8
+CAP_IX_6800	= 9
+CAP_IX_80188	= 10
+CAP_IX_65816	= 11
+CAP_IX_6X09	= 12
+CAP_IX_Z80	= 13
+CAP_IX_68008	= 14
+CAP_IX_68000	= 15
+
 
 str_bld_base:
 str_bld_bran:	.byte	"Repository  ",0
