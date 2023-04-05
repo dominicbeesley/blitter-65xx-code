@@ -114,12 +114,12 @@ Service:
 		txa
 
 		; check to see if this rom is disabled
+		pha
 		ldx	zp_mos_curROM
 		lda	swrom_wksp_tab,X
 		bpl	srv_ok
-		bvc	ServiceOut			; top bit set and not second - exit
-
-srv_ok:
+		bvc	plaServiceOut			; top bit set and not second - exit
+srv_ok:		pla
 		ldx	#0
 @1:		cmp	Serv_jump_table,X
 		beq	ServMatch
@@ -137,7 +137,7 @@ ServMatch:	inx
 		pha
 		rts					; jump to service routine
 
-
+plaServiceOut:	pla
 ServiceOut:	ldx	zp_mos_curROM
 		pla
 		tay
