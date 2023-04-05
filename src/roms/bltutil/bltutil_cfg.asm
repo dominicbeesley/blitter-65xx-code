@@ -862,7 +862,7 @@ str_10ns_ChipRAM:	.byte	"10ns ChipRAM",0
 str_45ns_BBRAM:	.byte	"45ns BB RAM",0
 
 
-		; these are in the order of bits 3..1 of the config byte
+		; these are in the order of bits 3..1 of the config byte for the 1st 8 then followed by the mk.3 specifics
 cputbl_mk2:		;	name		speed
 cpu_tbl_6502A_2:	.word	str_cpu_6502A,	$0200
 cpu_tbl_6x09_2:		.word	str_cpu_6x09,	$0200
@@ -879,6 +879,8 @@ cpu_tbl_T65:		.word	str_cpu_T65,	$1600
 cpu_tbl_6800_2:		.word	str_cpu_6800, 	$0200
 cpu_tbl_80188_20:	.word	str_cpu_80188,	$2000
 cpu_tbl_68000_20:	.word	str_cpu_68000,	$2000
+cpu_tbl_ARM2_8:		.word	str_cpu_ARM2,	$0800
+cpu_tbl_Z180_20:	.word	str_cpu_Z180,	$2000
 
 
 cputbl_mk3:		;	bits, tbl offs
@@ -892,6 +894,8 @@ cputbl_mk3:		;	bits, tbl offs
 			.byte	$70, cpu_tbl_6800_2 - cputbl_mk2
 			.byte	$40, cpu_tbl_80188_20 - cputbl_mk2
 			.byte	$30, cpu_tbl_68000_20 - cputbl_mk2
+			.byte	$6E, cpu_tbl_ARM2_8 - cputbl_mk2
+			.byte	$52, cpu_tbl_Z180_20 - cputbl_mk2
 cputbl_mk3_len = * - cputbl_mk3
 
 
