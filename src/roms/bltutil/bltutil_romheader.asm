@@ -61,13 +61,15 @@
 
 ; this contains the rom header and service routines and help/strings
 
+MY_ROM_TYPE	= $82
+
 code_base:		
 
 ;		ORG	$8000
 
 		.byte	0,0,0				; language entry
 		jmp	Service				; service entry
-		.byte	$82				; not a language, 6502 code
+		.byte	MY_ROM_TYPE			; not a language, 6502 code
 		.byte	Copyright-code_base
 		VERSION_BYTE	
 utils_name:
@@ -110,6 +112,14 @@ Service:
 		tya
 		pha
 		txa
+
+		; check to see if this rom is disabled
+		ldx	zp_mos_curROM
+		lda	swrom_wksp_tab,X
+		bpl	srv_ok
+		bvc	ServiceOut			; top bit set and not second - exit
+
+srv_ok:
 		ldx	#0
 @1:		cmp	Serv_jump_table,X
 		beq	ServMatch
@@ -158,6 +168,43 @@ svc1_ClaimAbs:
 		sta	sysvar_CUR_LANG
 @s:
 
+		; check for another BLTUTIL rom in higher slot and self-disable if there is one
+		; mainly to stop annoying messages
+
+		ldy	zp_mos_curROM
+@rlp:		cpy	#15
+		bcs	@rok
+
+		lda	oswksp_ROMTYPE_TAB,Y
+		cmp	#MY_ROM_TYPE
+		bne	@rnxt
+
+		; get pointer to ROM title
+		lda	#$09
+		sta	zp_mos_genPTR
+		lda	#$80
+		sta	zp_mos_genPTR
+
+@cmplp:		ldy	zp_mos_curROM
+		jsr	OSRDRM
+		ldy	#0
+		cmp	(zp_mos_genPTR),Y
+		bne	@rnxt
+		cmp	#0
+		bne	@rnxt
+
+		; we have a match disable ourself
+		lda	#$80
+		ldy	zp_mos_curROM
+		sta	swrom_wksp_tab,Y
+		jmp	ServiceOut
+		
+		
+@rnxt:		iny
+		bne	@rlp
+
+
+@rok:
 		jsr	CheckBlitterPresent
 		bcs	@s2
 
