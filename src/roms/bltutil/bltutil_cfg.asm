@@ -524,7 +524,11 @@ cmdInfo:	jsr	cfgGetAPILevel
 		ldx	#tbl_capbits - tbl_bld
 		ldy	#0
 		lda	JIM + jim_offs_VERSION_cap_bits+0
-@caplp:		cpx	#tbl_capbits - tbl_bld + 8
+@caplp:		cpx	#tbl_capbits - tbl_bld + 16
+		bne	@skcap00
+		lda	JIM + jim_offs_VERSION_cap_bits+2
+		jmp	@skcap0
+@skcap00:	cpx	#tbl_capbits - tbl_bld + 8
 		bne	@skcap0		
 		lda	JIM + jim_offs_VERSION_cap_bits+1
 @skcap0:	ror	A
@@ -574,8 +578,19 @@ cmdInfo:	jsr	cfgGetAPILevel
 		pla
 
 @capnext:	inx
-		cpx	#tbl_capbits - tbl_bld + 16
+		cpx	#tbl_capbits - tbl_bld + CAP_IX_MAX + 1
 		bne	@caplp
+
+		; capabilities
+
+		jsr	PrintImmed
+		.byte	13,"Cap. bits    : ",0
+		lda	JIM + jim_offs_VERSION_cap_bits+2
+		jsr	PrintHexA
+		lda	JIM + jim_offs_VERSION_cap_bits+1
+		jsr	PrintHexA
+		lda	JIM + jim_offs_VERSION_cap_bits+0
+		jsr	PrintHexA
 
 cmdInfo_API0_mem:
 		; get BB RAM size (assume starts at bank 60 and is at most 20 banks long)		
@@ -781,6 +796,11 @@ tbl_capbits:	.byte	str_cap_CS - str_bld_base
 		.byte	str_cpu_z80 - str_bld_base
 		.byte	str_cpu_68008 - str_bld_base
 		.byte	str_cpu_68000 - str_bld_base
+		.byte	str_cpu_ARM2 - str_bld_base
+		.byte	str_cpu_Z180 - str_bld_base
+		.byte	str_cpu_SuperShadow - str_bld_base
+		.byte	str_10ns_ChipRAM - str_bld_base
+		.byte	str_45ns_BBRAM - str_bld_base
 
 CAP_IX_CS	= 0
 CAP_IX_DMA	= 1
@@ -798,6 +818,12 @@ CAP_IX_6X09	= 12
 CAP_IX_Z80	= 13
 CAP_IX_68008	= 14
 CAP_IX_68000	= 15
+CAP_IX_ARM2	= 16
+CAP_IX_Z180	= 17
+CAP_IX_SuperShadow	= 18
+CAP_IX_10ns_ChipRAM	= 19
+CAP_IX_45ns_BBRAM	= 20
+CAP_IX_MAX=20
 
 
 str_bld_base:
@@ -818,7 +844,7 @@ str_cap_DMA:	.byte   "DMA",0
 str_Blitter:	.byte  	"Blitter", 0 
 str_cap_AERIS:	.byte   "Aeris",0
 str_cap_I2C:	.byte   "i2c",0
-str_cap_SND:	.byte   "Paula sound",0
+str_cap_SND:	.byte   "Paula",0
 str_cap_HDMI:	.byte   "HDMI",0
 str_bld_T65:	.byte	"T65",0
 str_cpu_65c02:	.byte	"65C02",0
@@ -829,6 +855,11 @@ str_cpu_6x09:	.byte	"6x09",0
 str_cpu_z80:	.byte	"z80",0
 str_cpu_68008:	.byte	"68008",0
 str_cpu_68000:	.byte	"68000",0
+str_cpu_ARM2:	.byte	"ARM2",0
+str_cpu_Z180:	.byte	"Z180",0
+str_cpu_SuperShadow:	.byte	"SuperShadow",0
+str_10ns_ChipRAM:	.byte	"10ns ChipRAM",0
+str_45ns_BBRAM:	.byte	"45ns BB RAM",0
 
 
 		; these are in the order of bits 3..1 of the config byte
