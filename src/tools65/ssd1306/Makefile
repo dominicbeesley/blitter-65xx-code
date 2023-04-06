@@ -7,7 +7,8 @@ TARGETS=test1306.tok
 TARGETS_O=$(addprefix $(BUILD)/, $(TARGETS))
 
 all: $(TARGETS_O)
-
+ssd: all
+deploy: ssd
 
 $(BUILD)/test1306.tok:test1306.bbc
 	basictool -t $< $@
