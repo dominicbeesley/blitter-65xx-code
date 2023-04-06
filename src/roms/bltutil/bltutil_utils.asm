@@ -35,6 +35,7 @@
 		.export	PrintNL
 		.export	PrintHexA
 		.export	PrintHexNybA
+		.export PrintDecA
 		.export PrintDec
 		.export	PrintHexXY
 		.export	PrintMsgXYThenHexNyb
@@ -139,6 +140,9 @@ PrintHexXY:	pha
 		jsr	PrintHexA
 		pla
 		rts
+
+PrintDecA:	jsr	zeroAcc
+		sta	zp_trans_acc
 
 PrintDec:	; acc is number to print (destroyed)
 		; zp_trans_tmp+0,+1 destroyed

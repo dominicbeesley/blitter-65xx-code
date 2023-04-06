@@ -236,7 +236,6 @@ svc1_ClaimAbs:
 		jsr	cfgPrintVersionBoot
 		bcs	@nope
 		jsr	OSNEWL
-		jsr	OSNEWL
 
 		jsr	heap_init
 		jsr	sound_boot

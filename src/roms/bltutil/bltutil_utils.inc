@@ -18,6 +18,7 @@
 		.import	PromptYes
 		.import	PromptRTS
 		.import PrintDec
+		.import PrintDecA
 		.import	WaitKey
 		.import PrintBytesAndK
 		.import PrintSizeK

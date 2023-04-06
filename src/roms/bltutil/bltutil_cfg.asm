@@ -185,16 +185,17 @@ cfgPrintVersionBoot:
 		jsr	OSWRCH
 		
 @nomap:
-		jsr	OSNEWL
+;;		jsr	OSNEWL
 
-		ldy	#0			; either full string for API 0 or 
-		jsr	cfgPrintStringY
+;;		ldy	#0			; either full string for API 0 or 
+;;		jsr	cfgPrintStringY
 		pla				; Get back API level
 		beq	@API0
-		jsr	PrintSpc
-		ldy	#1
-		jsr     cfgPrintStringY		; build time
+;;		jsr	PrintSpc
+;;		ldy	#1
+;;		jsr     cfgPrintStringY		; build time
 @API0:		clc
+
 @ret:		rts
 
 ;-----------------------------------------------------------------------------
@@ -458,6 +459,21 @@ cmdInfo:	jsr	cfgGetAPILevel
 		jsr	PrintHexA
 		dex
 		bpl	@bblp
+
+		; show board level / api 
+
+		jsr	PrintImmed
+		.byte	13,"Lvl/API      : ",0
+		lda	JIM+jim_offs_VERSION_Board_level
+		jsr	PrintDecA
+		lda	#'/'
+		jsr	OSWRCH
+		lda	JIM+jim_offs_VERSION_API_level
+		jsr	PrintDecA
+		lda	#'.'
+		jsr	OSWRCH
+		lda	JIM+jim_offs_VERSION_API_sublevel
+		jsr	PrintDecA
 
 		jsr	PrintImmed
 		.byte	13,"Boot jumpers : ",0
@@ -905,4 +921,4 @@ str_cpu_MHz:		.byte	"Mhz",0
 str_cpu_T65:		.byte	"T65",0
 
 str_Paula:		.byte  	"1M Paula", 0 
-str_map:		.byte	" ROM Map ",0
+str_map:		.byte	" ROM set ",0
