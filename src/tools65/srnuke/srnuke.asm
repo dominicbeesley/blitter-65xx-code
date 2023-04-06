@@ -26,7 +26,7 @@
 		.include	"hardware.inc"
 		.include	"mosrom.inc"
 
-PG_EEPROM_BASE	:=	$8000				; base phys/jim address of EEPROM is $10 0000
+PG_EEPROM_BASE	:=	$8000				; base phys/jim address of EEPROM is 80 0000
 
 .macro 		M_ERROR
 		brk
@@ -125,14 +125,20 @@ cmdSRNUKE_flash:
 		jsr	PrintXY
 
 		; erase entire flash chip
+		sei
 		jsr	FlashReset
 		lda	#$80
 		jsr	FlashCmdA
 		lda	#$10
 		jsr	FlashCmdA
+
+HERE:		jmp	HERE
+
+
 ;;		jsr	FlashWaitToggle
 
 		; just RTS for now!
+		cli
 		rts
 ;;cmdSRNUKE_reboot
 ;;		ORCC	#CC_I+CC_F
@@ -256,7 +262,7 @@ FlashCmdA:
 		sta	fred_JIM_DEVNO
 
 		pla
-		txa
+		tax
 		pla
 		rts
 
