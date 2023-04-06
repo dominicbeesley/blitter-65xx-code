@@ -172,10 +172,10 @@ svc1_ClaimAbs:
 		; mainly to stop annoying messages
 
 		ldy	zp_mos_curROM
-@rlp:		cpy	#15
+		cpy	#15
 		bcs	@rok
-
-		lda	oswksp_ROMTYPE_TAB,Y
+		iny
+@rlp:		lda	oswksp_ROMTYPE_TAB,Y
 		cmp	#MY_ROM_TYPE
 		bne	@rnxt
 
@@ -191,9 +191,13 @@ svc1_ClaimAbs:
 		cmp	(zp_mos_genPTR),Y
 		bne	@rnxt
 		cmp	#0
-		bne	@rnxt
+		beq	@mat
 
-		; we have a match disable ourself
+		inc	zp_mos_genPTR
+		bne	@cmplp
+		beq	@rnxt
+
+@mat:		; we have a match disable ourself
 		lda	#$80
 		ldy	zp_mos_curROM
 		sta	swrom_wksp_tab,Y
@@ -201,6 +205,7 @@ svc1_ClaimAbs:
 		
 		
 @rnxt:		iny
+		cpy	#16
 		bne	@rlp
 
 
