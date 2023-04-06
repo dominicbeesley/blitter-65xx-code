@@ -17,7 +17,7 @@ ssd: all $(SSD)
 clean: $(SUBDIRS)
 	-rm $(SSD)
 
-deploy: $(SSD)
+deploy: ssd
 	mkdir -p $(DEPLOY)
 	dfs read -i -d $(DEPLOY) $(SSD)
 
