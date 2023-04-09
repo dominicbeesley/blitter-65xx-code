@@ -23,7 +23,7 @@ use Data::Dumper;
 # depending on the context
 # Tileset-id: "_tsid" - these are indexed by column then row from the top-left
 # of a tileset's image. These are scoped only within a specific tileset. 
-# Numbering (re)starts at 1 for each tileset
+# Numbering (re)starts at 0! for each tileset (c.f. global ids which start at 1)
 # Global-id: "_gid" - these are scoped to a map. Numbering starts at 1 for 
 # tilese from the first tileset referenced by a map then at 
 # 1+{1st tileset count} for the 2nd and so on. The numbering in source map 
@@ -31,7 +31,8 @@ use Data::Dumper;
 # Layer-id: "_lid" - these are scoped to a layer (front/back) and start at 1
 # these are the ids that are used in the output binary maps - these ids are 
 # shared between all maps when output in binary but not between layers!
-# The _lid is effectively an index into the relevant bitmap
+# The _lid is effectively an index into the relevant bitmap. Like globals
+# ids layer ids start at 1 with 0 meaning empty
 
 
 sub Usage {
@@ -122,7 +123,8 @@ for (my $layer = 0; $layer <2; $layer++) {
 
 		foreach my $t (@$l) {
 			my $tsid = $t->{tsid};
-			if ($tsid) {
+			my $gid = $t->{gid};
+			if ($gid) {
 				my $ts = $t->{ts};
 				my $u = $ts->{usages}->[$layer];
 				if (exists $u->{$tsid}) {
@@ -163,7 +165,8 @@ for (my $layer = 0; $layer <2; $layer++) {
 
 		foreach my $t (@$l) {
 			my $tsid = $t->{tsid};
-			if ($tsid) {
+			my $gid = $t->{gid};
+			if ($gid) {
 				my $ts = $t->{ts};
 				my $u = $ts->{usages}->[$layer];
 				if (exists $u->{$tsid}) {
@@ -218,12 +221,13 @@ foreach my $map (@maps) {
 					foreach my $p (keys %{$props}) {
 						if ($props->{$p} eq "true") {
 							$v |= $propflags{$p};
+							print "$row $col $p $propflags{$p} $v\n";
 						}
 					}		
 				}
-				print $fh_map pack("C", $v);
-				$ix++;
 			}
+			print $fh_map pack("C", $v);
+			$ix++;
 		}
 	}
 
@@ -266,8 +270,8 @@ for (my $layer = 0; $layer < 2; $layer++) {
 		my $tile_columns = $ts->{tile_columns};
 		my $u = $ts->{usages}->[$layer];
 		foreach my $tsid (sort { $a <=> $b } keys %{$ts->{usages}->[$layer]}) {
-			my $x = $tile_margin + (($tsid - 1) % $tile_columns) * ($tile_spacing + $tilesz_x);
-			my $y = $tile_margin + int(($tsid - 1) / $tile_columns) * ($tile_spacing + $tilesz_y);
+			my $x = $tile_margin + ($tsid % $tile_columns) * ($tile_spacing + $tilesz_x);
+			my $y = $tile_margin + int($tsid / $tile_columns) * ($tile_spacing + $tilesz_y);
 
 			$xel_dest->appendChild($dom_tc->createComment(sprintf("%d %X", $tsid, $lid)));			
 			my $xel_move = $dom_tc->createElement("move");
@@ -352,7 +356,7 @@ sub do_map {
 				if (!$gid) {
 					{ 
 						gid => 0, 
-						tsid => 0, 
+						tsid => -1, 
 						ts => undef
 					};
 				} else {
@@ -360,7 +364,7 @@ sub do_map {
 					scalar @tscs == 1 or die "gid $gid out of range!";
 					{ 
 						gid => $gid, 
-						tsid => 1 + $gid - $tscs[0]->{firstgid}, 
+						tsid => $gid - $tscs[0]->{firstgid}, 
 						ts => $tscs[0]->{tileset}
 					};
 				}

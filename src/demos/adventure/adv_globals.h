@@ -82,10 +82,13 @@ extern char tilemap[];
 // o_spr_save_l	equ	7
 
 #define TILE_MAP_LAYER_SZ 	(TILE_MAP_STRIDE*TILE_MAP_HEIGHT)				//tile map front offset
-#define TILE_MAP_SZ		(TILE_MAP_LAYER_SZ*2)
+#define TILE_MAP_SZ		(TILE_MAP_LAYER_SZ*3)
 #define A_TILE_MAP		tilemap
 #define DMA_TILE_MAP		0x080000L
 
+#define LAYER_BACK 0
+#define LAYER_FRONT 1
+#define LAYER_OBJ 2
 
 #define SET_DMA_ADDR(x,y) \
 	{*((byte volatile *)x) = ((y) >> 16); \

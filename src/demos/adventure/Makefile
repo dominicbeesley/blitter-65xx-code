@@ -49,7 +49,7 @@ $(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.txt $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
 	dfs title $(SSD) advent65
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.CHARAC' $(SSD) $(BUILD)/tiles/charac.rle
-	dfs add -l FFFF2000 -e FFFF2000 -f 'P.MAIN' $(SSD) $(BUILD)/tiles/main.pal
+	dfs add -l FFFF2000 -e FFFF2000 -f 'P.MAIN' $(SSD) $(BUILD)/tiles/over.pal
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OBACK' $(SSD) $(BUILD)/tiles/over.back.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OFRONT' $(SSD) $(BUILD)/tiles/over.front.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'M.HOME' $(SSD) $(BUILD)/tiles/home.map

@@ -63,13 +63,15 @@ void front_spr_addr(unsigned char tileno)
 //flags & 0x01 to draw "nocollide"
 //flags & 0x02 to draw others
 
-unsigned char nocollide;
+static unsigned char nocollide;
+static unsigned char *tile_ptr;	//pointer to current "front" tile
+static unsigned char *obj_ptr;		//pointer to current "objects" tile
+static unsigned char j, i;
+static unsigned int scr_addr16;
+static unsigned char tileno;
+static unsigned char obj;
 
 void draw_front_nosave(unsigned char flags) {
-	unsigned char *tile_ptr;
-	unsigned char j, i;
-	unsigned int scr_addr16;
-	unsigned int tileno;
 
 	scr_addr16 = XY_to_dma_scr_adr(0,0);
 
@@ -80,16 +82,16 @@ void draw_front_nosave(unsigned char flags) {
 	SET_DMA_WORD(jim_DMAC_STRIDE_A, TILE_X_SZ >> 3);
 	SET_DMA_WORD(jim_DMAC_STRIDE_B, TILE_X_SZ >> 1);
 
-	tile_ptr = (char *)(A_TILE_MAP_WITH_OFFS + TILE_MAP_LAYER_SZ);
+	tile_ptr = (unsigned char *)(A_TILE_MAP_WITH_OFFS + TILE_MAP_LAYER_SZ);
+	obj_ptr = tile_ptr + TILE_MAP_LAYER_SZ;
 
 	j = ROOM_SZ_Y;
 	do {
 		i = ROOM_SZ_X;
 		do {
 			tileno = *tile_ptr++;
-			nocollide = 0;
-			//nocollide = tileno & 0x80;
-			//tileno &= 0x7F;
+			obj = *obj_ptr++;
+			nocollide = obj & 0x80;
 			
 			if (tileno 
 				&& 
@@ -104,6 +106,7 @@ void draw_front_nosave(unsigned char flags) {
 		} while (--i);
 
 		tile_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
+		obj_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
 		scr_addr16 += TILE_SCR_ADDR_STRIDE_Y;
 
 	} while (--j);	
@@ -111,11 +114,6 @@ void draw_front_nosave(unsigned char flags) {
 
 void draw_front(unsigned char flags) {
 	// specialised sprite plot - no bounds checking, all x are even
-
-	unsigned char *tile_ptr;
-	unsigned char j, i;
-	unsigned int scr_addr16;
-	unsigned int tileno;
 
 	scr_addr16 = XY_to_dma_scr_adr(0,0);
 
@@ -127,15 +125,15 @@ void draw_front(unsigned char flags) {
 	SET_DMA_WORD(jim_DMAC_STRIDE_B, TILE_X_SZ >> 1);
 
 	tile_ptr = (char *)(A_TILE_MAP_WITH_OFFS + TILE_MAP_LAYER_SZ);
+	obj_ptr = tile_ptr + TILE_MAP_LAYER_SZ;
 
 	j = ROOM_SZ_Y;
 	do {
 		i = ROOM_SZ_X;
 		do {
 			tileno = *tile_ptr++;
-			nocollide = 0;
-			//nocollide = tileno & 0x80;
-			//tileno &= 0x7F;
+			obj = *obj_ptr++;
+			nocollide = obj & 0x80;
 
 			if (tileno 
 				&& 
@@ -150,6 +148,7 @@ void draw_front(unsigned char flags) {
 		} while (--i);
 
 		tile_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
+		obj_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
 		scr_addr16 += TILE_SCR_ADDR_STRIDE_Y;
 
 	} while (--j);
@@ -157,7 +156,7 @@ void draw_front(unsigned char flags) {
 
 
 void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, unsigned char colourB) {
-	unsigned int scr_addr16;
+
 	scr_addr16 = XY_to_dma_scr_adr(x *TILE_X_SZ, y * TILE_Y_SZ);
 	SET_DMA_BYTE(jim_DMAC_SHIFT, 0);
 	SET_DMA_BYTE(jim_DMAC_MASK_FIRST, 0xFF);
@@ -172,15 +171,15 @@ void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, 
 
 
 unsigned char colcheck(
-	unsigned char layer, 
 	unsigned char charspr_ix, 
 	signed char x, 
 	signed char y, 
 	signed char offsx, 
 	signed char offsy) {
 
-	unsigned char tileno = get_tile_at(layer,x,y);
-	if (tileno && !(tileno & 0x80)) {
+	tileno = get_tile_at(LAYER_FRONT,x,y);
+	obj = get_tile_at(LAYER_OBJ,x,y);
+	if (tileno && !(obj & 0x80)) {
 
 		unsigned int ch_addr = (DMA_CHARAC_SPR & 0xFFFF) + ((unsigned int)charspr_ix*(unsigned int)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
 		unsigned int ti_addr = (DMA_FRONT_SPR & 0xFFFF) + ((unsigned int)FRONT_SPR_SZ*((unsigned int)tileno-1)) + FRONT_SPR_MO;
@@ -281,21 +280,21 @@ unsigned colcheck_at(signed new_x, signed new_y)
 	unsigned char y = new_y / TILE_Y_SZ;
 	unsigned char xx = new_x % TILE_X_SZ;
 	unsigned char yy = new_y % TILE_Y_SZ;
-	col = colcheck(1,CHARAC_COL,x,y,xx,yy);
+	col = colcheck(CHARAC_COL,x,y,xx,yy);
 	if (col)
 		return col;
 	if (xx) {
-		col = colcheck(1,CHARAC_COL,x+1,y,xx-TILE_X_SZ,yy);
+		col = colcheck(CHARAC_COL,x+1,y,xx-TILE_X_SZ,yy);
 		if (col)
 			return col;
 		if (yy) {
-			col = colcheck(1,CHARAC_COL,x+1,y+1,xx-TILE_X_SZ,yy-TILE_Y_SZ);
+			col = colcheck(CHARAC_COL,x+1,y+1,xx-TILE_X_SZ,yy-TILE_Y_SZ);
 			if (col)
 				return col;
 		}
 	}
 	if (yy) {
-		col = colcheck(1,CHARAC_COL,x,y+1,xx,yy-TILE_Y_SZ);
+		col = colcheck(CHARAC_COL,x,y+1,xx,yy-TILE_Y_SZ);
 		if (col)
 			return col;
 	}
