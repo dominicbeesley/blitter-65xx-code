@@ -187,7 +187,8 @@ for (my $layer = 0; $layer <2; $layer++) {
 }
 
 my %propflags = (
-	nocollide => 0x80
+	nocollide => 0x80,
+	"border-north" => 0x01
 	);
 
 foreach my $map (@maps) {

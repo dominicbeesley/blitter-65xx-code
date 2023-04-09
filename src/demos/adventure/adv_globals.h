@@ -90,6 +90,9 @@ extern char tilemap[];
 #define LAYER_FRONT 1
 #define LAYER_OBJ 2
 
+#define COLOBJ_FLAG_NOCOL 0x80
+#define COLOBJ_FLAG_BORDER_NORTH 0x01
+
 #define SET_DMA_ADDR(x,y) \
 	{*((byte volatile *)x) = ((y) >> 16); \
 	*((byte volatile *)x+1) = ((y) >> 8); \

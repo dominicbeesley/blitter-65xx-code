@@ -66,6 +66,21 @@
    <property name="nocollide" type="bool" value="true"/>
   </properties>
  </tile>
+ <tile id="946">
+  <properties>
+   <property name="border-north" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="947">
+  <properties>
+   <property name="border-north" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="948">
+  <properties>
+   <property name="border-north" type="bool" value="true"/>
+  </properties>
+ </tile>
  <tile id="987">
   <properties>
    <property name="nocollide" type="bool" value="true"/>
@@ -74,6 +89,21 @@
  <tile id="1025">
   <properties>
    <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1066">
+  <properties>
+   <property name="border-north" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1067">
+  <properties>
+   <property name="border-north" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1068">
+  <properties>
+   <property name="border-north" type="bool" value="true"/>
   </properties>
  </tile>
  <tile id="1163">

@@ -30,7 +30,7 @@ extern unsigned char get_tile_at(unsigned char layer, unsigned char x, unsigned 
 extern void draw_front(unsigned char flags);
 extern void draw_front_nosave(unsigned char flags);
 extern void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, unsigned char colourB);
-extern unsigned colcheck_at(signed new_x, signed new_y);
+extern unsigned colcheck_at(signed old_x, signed old_y, signed new_x, signed new_y);
 
 extern void draw_map(void *addr);
 

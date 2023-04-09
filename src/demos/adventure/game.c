@@ -231,7 +231,7 @@ unsigned char_move(void) {
 		char_new_y = char_y + dy;
 		char_new_x = char_x + dx;
 
-		if (!colcheck_at(char_new_x, char_new_y))
+		if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 			goto donemove;
 
 		REDUCE_DX
@@ -242,31 +242,31 @@ unsigned char_move(void) {
 			//try slower in same direction
 			char_new_x = char_x + dx;
 			char_new_y = char_y + dy;
-			if (!colcheck_at(char_new_x, char_new_y))
+			if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 				goto donemove;
 
 			if (char_facing & (KEY_UP | KEY_DN))
 			{
 				char_new_x = char_x;
 				char_new_y = char_y + dy;
-				if (!colcheck_at(char_new_x, char_new_y))
+				if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 					goto donemove;
 
 				char_new_x = char_x + dx;
 				char_new_y = char_y;
-				if (!colcheck_at(char_new_x, char_new_y))
+				if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 					goto donemove;
 			}
 			else
 			{
 				char_new_x = char_x + dx;
 				char_new_y = char_y;
-				if (!colcheck_at(char_new_x, char_new_y))
+				if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 					goto donemove;
 				
 				char_new_x = char_x;
 				char_new_y = char_y + dy;
-				if (!colcheck_at(char_new_x, char_new_y))
+				if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 					goto donemove;
 			}
 
@@ -275,7 +275,7 @@ unsigned char_move(void) {
 		} else {
 			char_new_x = char_x + dx;
 			char_new_y = char_y + dy;
-			if (!colcheck_at(char_new_x, char_new_y))
+			if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 				goto donemove;
 		}
 

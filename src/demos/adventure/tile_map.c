@@ -30,6 +30,13 @@ SOFTWARE.
 #include "sprite.h"
 
 unsigned char get_tile_at(unsigned char layer, signed char x, signed char y) {
+	signed int xx = tile_off_x + x;
+	signed int yy = tile_off_y + y;
+	
+	if (xx < 0 || xx >= TILE_MAP_STRIDE)
+		return 0;
+	if (yy < 0 || yy >= TILE_MAP_HEIGHT)
+		return 0;
 	return *(unsigned char *)(A_TILE_MAP_WITH_OFFS + (y * TILE_MAP_STRIDE) + x + (layer * TILE_MAP_LAYER_SZ));
 }
 
@@ -272,14 +279,41 @@ unsigned char colcheck(
 
 //x in map coordinates
 //y in map coordinates
-unsigned colcheck_at(signed new_x, signed new_y)
+unsigned colcheck_at(signed old_x, signed old_y, signed new_x, signed new_y)
 {
 	//check for collision with tiles
 	unsigned char col = 0;
 	unsigned char x = new_x / TILE_X_SZ;
 	unsigned char y = new_y / TILE_Y_SZ;
+	unsigned char ox = old_x / TILE_X_SZ;
+	unsigned char oy = old_y / TILE_Y_SZ;
 	unsigned char xx = new_x % TILE_X_SZ;
 	unsigned char yy = new_y % TILE_Y_SZ;
+	unsigned char oxx = old_x % TILE_X_SZ;
+	unsigned char oyy = old_y % TILE_Y_SZ;
+
+	if (x != ox || y != oy) 
+	{
+
+		if (y < oy) {
+			// heading north does old tile allow
+			if (get_tile_at(LAYER_OBJ, ox, oy) & COLOBJ_FLAG_BORDER_NORTH)
+				return 1;
+			if (oxx != 0)
+				if (get_tile_at(LAYER_OBJ, ox+1, oy) & COLOBJ_FLAG_BORDER_NORTH)
+					return 1;
+		} else if (y > oy) {
+			// heading south - does new tile allow entry from north (feet first!)
+			if (get_tile_at(LAYER_OBJ, x, y+1) & COLOBJ_FLAG_BORDER_NORTH)
+				return 1;
+			if (xx != 0)
+				if (get_tile_at(LAYER_OBJ, x+1, y+1) & COLOBJ_FLAG_BORDER_NORTH)
+					return 1;
+		}
+
+	}
+
+
 	col = colcheck(CHARAC_COL,x,y,xx,yy);
 	if (col)
 		return col;
