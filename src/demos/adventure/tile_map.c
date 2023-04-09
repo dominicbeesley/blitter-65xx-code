@@ -87,8 +87,9 @@ void draw_front_nosave(unsigned char flags) {
 		i = ROOM_SZ_X;
 		do {
 			tileno = *tile_ptr++;
-			nocollide = tileno & 0x80;
-			tileno &= 0x7F;
+			nocollide = 0;
+			//nocollide = tileno & 0x80;
+			//tileno &= 0x7F;
 			
 			if (tileno 
 				&& 
@@ -132,8 +133,9 @@ void draw_front(unsigned char flags) {
 		i = ROOM_SZ_X;
 		do {
 			tileno = *tile_ptr++;
-			nocollide = tileno & 0x80;
-			tileno &= 0x7F;
+			nocollide = 0;
+			//nocollide = tileno & 0x80;
+			//tileno &= 0x7F;
 
 			if (tileno 
 				&& 

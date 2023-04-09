@@ -41,7 +41,7 @@ sub Usage {
 	}
 
 	die "
-makemaps.pl <output directory> <group name> <maps>...\n
+makemaps.pl <output directory> <group name> <palette> <maps>...\n
 		";
 
 }
@@ -71,12 +71,15 @@ my $dir_out=shift or Usage "No output directory specified";
 
 my $group_name=shift or Usage "No group namespecified";
 
+my $fn_pal_in = shift or Usage "No palette file specified";
+my $xel_pal = read_palette($fn_pal_in);
+
 my $fn_backcuts=catfile($dir_out, "back.cutdefs");
 my $fn_frontcuts=catfile($dir_out, "front.cutdefs");
 
 my $tilesz_x = -1;
 my $tilesz_y = -1;
-my %tilesets = ();		# hash of tilesets by source filename or #EMBED#{n}
+my @tilesets = ();		
 my $embed = 0;			# highest {n} of embeded tilesets
 
 my @maps = ();
@@ -94,11 +97,11 @@ foreach my $fn_inmap (@ARGV) {
 
 	my $dom_intmx = XML::LibXML->new->parse_file($fn_inmap);
 
-	my $dom_inmap = $dom_intmx->documentElement;
+	my $xel_inmap = $dom_intmx->documentElement;
 
-	$dom_inmap->localname eq "map" or die "Missing map element in tmx $fn_inmap";
+	$xel_inmap->localname eq "map" or die "Missing map element in tmx $fn_inmap";
 
-	my $map = do_map($dom_inmap, $indir);
+	my $map = do_map($xel_inmap, $indir);
 	$map->{name} = $fn_inmap;
 	$map->{base_name} = $bn;
 	push @maps, $map;
@@ -107,8 +110,9 @@ foreach my $fn_inmap (@ARGV) {
 # now we've got all the maps read in, for each layer make the layer id sets
 for (my $layer = 0; $layer <2; $layer++) {
 	
-	foreach my $ts (values %tilesets) {
-		$ts->{usages} = {};
+	foreach my $ts (@tilesets) {
+		my %empty = ();
+		push @{$ts->{usages}}, \%empty;
 	}
 
 
@@ -120,7 +124,7 @@ for (my $layer = 0; $layer <2; $layer++) {
 			my $tsid = $t->{tsid};
 			if ($tsid) {
 				my $ts = $t->{ts};
-				my $u = $ts->{usages};
+				my $u = $ts->{usages}->[$layer];
 				if (exists $u->{$tsid}) {
 					$u->{$tsid}->{count} = $u->{$tsid}->{count} + 1;
 				} else {
@@ -132,13 +136,16 @@ for (my $layer = 0; $layer <2; $layer++) {
 		}
 	}
 
+
+	# ASSUMPTION: that this will process in the same order as the 
+	# loop that creates cuts
 	my $ix = 1;
 	# assigned indices to the tiles these should be in tileset order
 	# for sane cut definitions
 	my @cuts = ();
-	foreach my $ts (values %tilesets) {
-		foreach my $tsid (sort { $a <=> $b } keys %{$ts->{usages}}) {
-			$ts->{usages}->{$tsid}->{lid} = $ix++;
+	foreach my $ts (@tilesets) {
+		foreach my $tsid (sort { $a <=> $b } keys %{$ts->{usages}->[$layer]}) {
+			$ts->{usages}->[$layer]->{$tsid}->{lid} = $ix++;
 		}
 	}
 
@@ -158,7 +165,7 @@ for (my $layer = 0; $layer <2; $layer++) {
 			my $tsid = $t->{tsid};
 			if ($tsid) {
 				my $ts = $t->{ts};
-				my $u = $ts->{usages};
+				my $u = $ts->{usages}->[$layer];
 				if (exists $u->{$tsid}) {
 					push @olayer, $u->{$tsid}->{lid};
 				} else {
@@ -223,48 +230,103 @@ foreach my $map (@maps) {
 	close $fh_map;
 }
 
-#print Dumper(@maps);
+# output tilecutter.xml
+
+my $fn_tc = catfile($dir_out, $group_name . ".tilecuts.xml");
+
+my $dom_tc =  XML::LibXML::Document->createDocument( "1.0", "UTF-8" );
+
+my $xel_tc = $dom_tc->createElement("tile-cutter");
+$dom_tc->setDocumentElement($xel_tc);
+my $xel_pal2 = $xel_tc->appendChild($xel_pal);
+$xel_pal2->setAttribute("file", "$group_name.pal");
+
+my @layernames = ("back", "front");
+
+# ASSUMPTION: that this will process in the same order as the 
+# loop that assigns lids
+for (my $layer = 0; $layer < 2; $layer++) {
+
+	my $xel_dest = $dom_tc->createElement("dest");
+	$xel_tc->appendChild($xel_dest);
+	$xel_dest->setAttribute("file", "$group_name.$layernames[$layer].til");
+	$xel_dest->setAttribute("size-x", $tilesz_x);
+	$xel_dest->setAttribute("size-y", $tilesz_y);
+	$xel_dest->setAttribute("mask", ($layer == 0)?"n":"y");
+
+	my $lid = 1;
+	foreach my $ts (@tilesets) {
+		my $xel_src = $dom_tc->createElement("source");
+		$xel_dest->appendChild($xel_src);
+		$xel_src->setAttribute("file", $ts->{image});
+
+		my $tile_spacing = $ts->{tile_spacing};
+		my $tile_margin = $ts->{tile_margin};
+		my $tile_count = $ts->{tile_count};
+		my $tile_columns = $ts->{tile_columns};
+		my $u = $ts->{usages}->[$layer];
+		foreach my $tsid (sort { $a <=> $b } keys %{$ts->{usages}->[$layer]}) {
+			my $x = $tile_margin + (($tsid - 1) % $tile_columns) * ($tile_spacing + $tilesz_x);
+			my $y = $tile_margin + int(($tsid - 1) / $tile_columns) * ($tile_spacing + $tilesz_y);
+
+			$xel_dest->appendChild($dom_tc->createComment(sprintf("%d %X", $tsid, $lid)));			
+			my $xel_move = $dom_tc->createElement("move");
+			$xel_dest->appendChild($xel_move);			
+			$xel_move->setAttribute("x", $x);
+			$xel_move->setAttribute("y", $y);
+			my $xel_cut = $dom_tc->createElement("cut");
+			$xel_dest->appendChild($xel_cut);			
+			$xel_cut->setAttribute("x", "1");
+			$xel_cut->setAttribute("y", "1");
+			$xel_cut->setAttribute("dir", "rd");
+			$lid++;
+		}
+	}
+}
+
+$dom_tc->toFile($fn_tc, 2) or die "Error saving tile-cutter xml";
+
 
 sub do_map {
-	my ($dom_inmap, $indir) = @_;
+	my ($xel_inmap, $indir) = @_;
 	
 	my $gid = 1;
 
 	#look for and process tilesets
 	my @tsmap = ();
-	foreach my $dom_ts ($dom_inmap->findnodes("tileset")) {
-		my $ts = get_tileset($dom_ts, $indir);	
+	foreach my $xel_ts ($xel_inmap->findnodes("tileset")) {
+		my $ts = get_tileset($xel_ts, $indir);	
 		my %tsc = ( firstgid => $gid, lastgid => $gid + $ts->{tile_count} - 1, tileset => $ts );
 		$gid+=$ts->{tile_count};
 		push @tsmap, \%tsc;
 	}
 
-	my $width = $dom_inmap->getAttribute("width") // 0;
-	my $height = $dom_inmap->getAttribute("height") // 0;
+	my $width = $xel_inmap->getAttribute("width") // 0;
+	my $height = $xel_inmap->getAttribute("height") // 0;
 
 
 	my @maplayers = ();	# this will contain the layers, each layer contains an array of arrays of hashes
 
 	#read in the map's layers
 
-	my $dom_layers = $dom_inmap->findnodes("layer");
+	my $xlst_layers = $xel_inmap->findnodes("layer");
 	
-	my $layer_count = $dom_layers->size;
+	my $layer_count = $xlst_layers->size;
 	
 	$layer_count == 2 or Usage "Must have exactly 2 layers!";
 		
 	
 	for (my $layernum = 1; $layernum <= 2; $layernum++) {
-		my $dom_layer = $dom_layers->get_node($layernum);
+		my $xel_layer = $xlst_layers->get_node($layernum);
 
 		my @rawlayer = ();	# the layer's data as an array of arrays of gids
 	 
- 		my $layerwidth = $dom_layer->getAttribute('width');
-		my $layerheight = $dom_layer->getAttribute('height');
+ 		my $layerwidth = $xel_layer->getAttribute('width');
+		my $layerheight = $xel_layer->getAttribute('height');
  		$layerwidth == $width || die "layer $layernum has a different width to map";
  		$layerheight == $height || die "layer $layernum has a different height to map";
 	  
-	 	my $data = $dom_layer->findvalue("data");
+	 	my $data = $xel_layer->findvalue("data");
 	 
 	 	# parse map into a 32 rows of 32 cols
 	 
@@ -320,35 +382,40 @@ sub do_map {
 
 # reads in a tileset (or finds a cached one) and returns
 sub get_tileset {
-	my ($dom_ts, $indir) = @_;
+	my ($xel_ts, $indir) = @_;
 
 	#is this a "source" or embedded type?
-	my $source = $dom_ts->getAttribute("source");
+	my $source = $xel_ts->getAttribute("source");
 
 	if ($source) {
 		$source = catfile($indir, $source);
-		if (exists($tilesets{$source})) {
-			return $tilesets{$source};
+
+		my ($basename, $directory, $ext) = fileparse($source);
+
+		my ($ts) = grep { $_->{key} eq $source} @tilesets;
+
+		if ($ts) {
+			return $ts;
 		} else {
-			my $doc_ts = XML::LibXML->new->parse_file($source) or die "Error parsing tileset \"$source\" : $!";
-			my $dom_ts2 = $doc_ts->documentElement();
-			$dom_ts2->localname eq "tileset" or die "External tileset \"$source\" doesn't contain a tileset : \"${dom_ts2->localname}\".";
-			my $ts = parse_tileset($dom_ts2, $source);
-			$tilesets{$source} = $ts;
+			my $dom_ts = XML::LibXML->new->parse_file($source) or die "Error parsing tileset \"$source\" : $!";
+			my $xel_ts2 = $dom_ts->documentElement();
+			$xel_ts2->localname eq "tileset" or die "External tileset \"$source\" doesn't contain a tileset : \"${xel_ts2->localname}\".";
+			$ts = parse_tileset($xel_ts2, $source, $directory);
+			push @tilesets, $ts;
 			return $ts;
 		}
 	} else {
 		print STDERR "WARNING: embedded tileset in map - won't be shared\n";
 		my $tsk = "#EMBED#" . ++$embed;
-		my $ts = parse_tileset($dom_ts, $tsk);
-		$tilesets{$tsk} = $ts;
+		my $ts = parse_tileset($xel_ts, $tsk, $indir);
+		push @tilesets, $ts;
 		return $ts;
 	}
 
 }
 
 sub parse_tileset {
-	my ($tileset, $key) = @_;
+	my ($tileset, $key, $directory) = @_;
 
 	my %ret = ();
 
@@ -363,6 +430,19 @@ sub parse_tileset {
 	
 	$ret{tilesz_x} && $ret{tilesz_y} && $ret{tile_count} && $ret{tile_columns} || die "Cannot get tile sizes, count or columns : $tileset";
 	
+	my ($xel_img) = $tileset->findnodes("image");
+
+	$xel_img or die "Missing image element";
+
+
+	my $img_src = $xel_img->getAttribute("source");
+
+	if (!File::Spec->file_name_is_absolute($img_src)) {
+		$img_src = File::Spec->rel2abs(File::Spec->canonpath(catfile($directory, $img_src)));	
+	}
+
+	$ret{image} = $img_src;
+
 	my %tileproperties = ();
 	foreach my $tile ($tileset->findnodes("tile")) {
 		my $tile_id = $tile->getAttribute("id");
@@ -383,103 +463,20 @@ sub parse_tileset {
 		$tilesz_x == $ret{tilesz_x} and $tilesz_y == $ret{tilesz_y} or die "Mismatched tilesizes all must be $tilesz_x x $tilesz_y";
 	}
 
-
 	return \%ret;
-
 }
 
 
-exit;
+#read in a pallette document and return as a palette element reference
+sub read_palette {
 
-### my $fn_out=$ARGV[3];
-### 
-### 
-### my $tilesets = $dom_inmap->findnodes("/map/tileset");
-### $tilesets->size == 1 or die "can only handle one tileset which must be embedded";
-### my $tileset = $tilesets->get_node(1);
-### 
-### 
-### my $layers = $dom_inmap->findnodes("/map/layer");
-### 
-### my $layer_count = $layers->size;
-### 
-### $layer_count == 2 || Usage "Must have exactly 2 layers!";
-### 
-### my $bin='';
-### 
-### my $layerwidth = -1;
-### my $layerheight = -1;
-### 
-### for (my $layernum = 1; $layernum <= 2; $layernum++) {
-### 
-### 	my $fh_cuts;
-### 	if ($layernum == 1)
-### 	{
-### 		open($fh_cuts, ">", $fn_backcuts) or die "cannot open $fn_backcuts for output";
-### 	} else {
-### 		open($fh_cuts, ">", $fn_frontcuts) or die "cannot open $fn_frontcuts for output";		
-### 	}
-### 
-### 	my %tmx_index_to_cut_index = ();
-### 	my $ix_ctr = 0;
-### 
-### 	my $layer = $layers->get_node($layernum);
-### 
-### 	if ($layernum == 1)
-### 	{
-### 		$layerwidth = $layer->getAttribute('width');
-### 		$layerheight = $layer->getAttribute('height');
-### 	} else {
-### 		$layerwidth = $layer->getAttribute('width') || die "layer $layernum has a different width";
-### 		$layerheight = $layer->getAttribute('height') || die "layer $layernum has a different width";
-### 	}
-### 
-### 
-### 	my $data = $layer->findvalue("data");
-### 
-### 	# parse map into a 32 rows of 32 cols
-### 
-### 	my @lines = split /\n/, $data;
-### 	my $j = 0;
-### 	my $lno = 0;
-### 	foreach my $l (@lines) {
-### 		chomp $l;
-### 		$lno++;
-### 		if ($l =~ /^\s*([0-9]+(,|\s*$))+/) {
-### 			my @cols = split /\,/, $l;
-### 			scalar @cols == $layerwidth || die "line $lno of layer $layernum has different width ${\scalar(@cols)} <> $layerwidth $l";
-### 			my $i = 0;
-### 			foreach my $ix (@cols) {
-### 				my $b=0x00;
-### 				if ($ix != 0) {
-### 					if (exists $tmx_index_to_cut_index{$ix}) {
-### 						$b = $tmx_index_to_cut_index{$ix}
-### 					} else {
-### 						$b = $tmx_index_to_cut_index{$ix} = ++$ix_ctr;
-### 						my $x = $tile_margin + (($ix - $tile_gid_first) % $tile_columns) * ($tile_spacing + $tilesz_x);
-### 						my $y = $tile_margin + int(($ix - $tile_gid_first) / $tile_columns) * ($tile_spacing + $tilesz_y);
-### 						print $fh_cuts "<move x=\"$x\" y=\"$y\" /><cut x=\"1\" y=\"1\" dir=\"rd\" />\n";
-### 					}
-### 
-### 				}
-### 
-### 				my $nocolide = $tileproperties{$ix-$tile_gid_first}->{nocollide};
-### 				if ($nocolide && $nocolide eq "true") {
-### 					$b |= 0x80;
-### 					print "NOCOLLIDE: $ix @ $i x $j $b\n";
-### 				}
-### 
-### 				$bin .= chr($b);
-### 				$i++;
-### 			}
-### 			$j++;
-### 		} elsif ($l ne '') {
-### 			Usage("Non-blank line contains bad data $l");
-### 		}
-### 	}
-### 
-### 	$fh_cuts->close;
-### }
-### 
-### open(my $bin_out, '>:raw', $fn_out) or die "Unable to open: $!";
-### print $bin_out $bin;
+	my ($fn_pal) = @_;
+
+	my $dom_pal = XML::LibXML->new->parse_file($fn_pal) or die "Error parsing palette \"$fn_pal\" : $!";
+
+	my $xel_ret = $dom_pal->documentElement;
+
+	$xel_ret->localname eq "palette" or die "Unexpected element name \"${ \$xel_ret->localname} \" - exepecting \"palette\"";
+
+	return $xel_ret;
+}

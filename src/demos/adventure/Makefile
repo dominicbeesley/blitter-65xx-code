@@ -27,7 +27,7 @@ WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
 LOADER_OBJS=	loader dma myos rle_asm
 INCS=$(BUILD)/includes/ $(BUILD)/includes/gen_vars.h
 
-TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over-back.rle $(BUILD)/tiles/over-back.til.cuts $(BUILD)/tiles/over-front.rle $(BUILD)/tiles/over-front.til.cuts
+TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.back.til.cuts $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.front.til.cuts
 
 
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
@@ -50,9 +50,9 @@ $(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.txt $(CLIBDIR)/clib.rom
 	dfs title $(SSD) advent65
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.CHARAC' $(SSD) $(BUILD)/tiles/charac.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'P.MAIN' $(SSD) $(BUILD)/tiles/main.pal
-	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OBACK' $(SSD) $(BUILD)/tiles/over-back.rle
-	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OFRONT' $(SSD) $(BUILD)/tiles/over-front.rle
-	dfs add -l FFFF2000 -e FFFF2000 -f 'M.HOME' $(SSD) $(BUILD)/maps/home.bin
+	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OBACK' $(SSD) $(BUILD)/tiles/over.back.rle
+	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OFRONT' $(SSD) $(BUILD)/tiles/over.front.rle
+	dfs add -l FFFF2000 -e FFFF2000 -f 'M.HOME' $(SSD) $(BUILD)/tiles/home.map
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.GAME' $(SSD) $(BUILD)/game.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.LOADER' $(SSD) $(BUILD)/loader.bin
@@ -89,41 +89,30 @@ $(BUILD)/tiles/%.rle: $(BUILD)/tiles/%.til scripts/runlengthencode.pl
 		scripts/runlengthencode.pl $< $@
 
 
-$(BUILD)/tiles/tile-cutter.xml: \
-		$(BUILD)/tiles/over-back.cutdefs \
-		$(BUILD)/tiles/over-front.cutdefs \
-		src-graphics/character.cutdefs \
-		src-graphics/palette.xml \
-		scripts/build-tilecut.sh
-		scripts/build-tilecut.sh \
-			src-graphics/palette.xml \
-			src-graphics/character.cutdefs \
-			$(BUILD)/tiles/over-back.cutdefs \
-			$(BUILD)/tiles/over-front.cutdefs \
-			$(BUILD)/tiles/tile-cutter.xml
+$(BUILD)/tiles/charac.til:	maps/character.tilecuts.xml src-graphics/character.png
+		$(SCRIPTS)/tilecutter.py maps/character.tilecuts.xml $(shell pwd) $(BUILD)/tiles
 
-$(BUILD)/tiles/charac.til $(BUILD)/tiles/main.pal $(BUILD)/tiles/over-back.til $(BUILD)/tiles/over-back.til.cuts $(BUILD)/tiles/over-front.til $(BUILD)/tiles/over-front.til.cuts &: \
-		src-graphics/cave.png \
-		src-graphics/character.png \
+$(BUILD)/tiles/main.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til &: \
 		src-graphics/Overworld16x24.png \
-		src-graphics/objects.png \
-		$(BUILD)/tiles/tile-cutter.xml
+		$(BUILD)/tiles/over.tilecuts.xml
 
+		$(SCRIPTS)/tilecutter.py $(BUILD)/tiles/over.tilecuts.xml $(shell pwd)
 
-		$(SCRIPTS)/tilecutter.py $(BUILD)/tiles/tile-cutter.xml $(shell pwd)
-
-$(BUILD)/includes/gen_vars.h: $(BUILD)/tiles/charac.til $(BUILD)/tiles/over-back.til $(BUILD)/tiles/over-front.til
+$(BUILD)/includes/gen_vars.h: $(BUILD)/tiles/charac.til $(BUILD)/tiles/over.back.til $(BUILD)/tiles/over.front.til
 		echo -n "#define CHARAC_SPR_LEN\t" > $(BUILD)/includes/gen_vars.h
 		stat -c%s $(BUILD)/tiles/charac.til >> $(BUILD)/includes/gen_vars.h
 		echo -n "#define BACK_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
-		stat -c%s $(BUILD)/tiles/over-back.til >> $(BUILD)/includes/gen_vars.h
+		stat -c%s $(BUILD)/tiles/over.back.til >> $(BUILD)/includes/gen_vars.h
 		echo -n "#define FRONT_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
-		stat -c%s $(BUILD)/tiles/over-front.til >> $(BUILD)/includes/gen_vars.h
+		stat -c%s $(BUILD)/tiles/over.front.til >> $(BUILD)/includes/gen_vars.h
 		unix2dos $(BUILD)/includes/gen_vars.h
 
 
-$(BUILD)/maps/home.bin $(BUILD)/tiles/over-back.cutdefs $(BUILD)/tiles/over-front.cutdefs: maps/home2.tmx scripts/makemapsandcuts.pl
-		scripts/makemapsandcuts.pl maps/home2.tmx $(BUILD)/tiles/over-back.cutdefs $(BUILD)/tiles/over-front.cutdefs $(BUILD)/maps/home.bin
+$(BUILD)/tiles/home.map \
+$(BUILD)/tiles/over.tilecuts.xml \
+$(BUILD)/tiles/home.h &: $(wildcard maps/*.tmx) $(wildcard maps/*.tsx) maps/main.pal scripts/makemapsandcuts2.pl
+		scripts/makemapsandcuts2.pl $(BUILD)/tiles "over" maps/main.pal $(wildcard maps/*.tmx)
+
 
 		
 clean::
@@ -142,6 +131,7 @@ clean::
 	-rm $(BUILD)/maps/home.bin
 	-rm $(BUILD)/tiles/tile-cutter.xml
 	-rm $(BUILD)/tiles/main.pal
-	-rm $(addprefix $(BUILD)/tiles/, $(addprefix charac, .rle .til .cutdefs .til.cuts))
-	-rm $(addprefix $(BUILD)/tiles/, $(addprefix over-front, .rle .til .cutdefs .til.cuts))
-	-rm $(addprefix $(BUILD)/tiles/, $(addprefix over-back, .rle .til .cutdefs .til.cuts))
+	-rm $(addprefix $(BUILD)/tiles/, $(addprefix charac, .rle .til .tilecuts .til.cuts))
+	-rm $(addprefix $(BUILD)/tiles/, $(addprefix over.front, .rle .til .til.cuts))
+	-rm $(addprefix $(BUILD)/tiles/, $(addprefix over.back, .rle .til .til.cuts))
+	-rm $(addprefix $(BUILD)/tiles/, $(addprefix over, .pal .tilecuts.xml))

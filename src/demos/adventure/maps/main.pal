@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<palette file="main.pal">
+	<ent>#271f2a</ent>
+	<ent>#543940</ent>
+	<ent>#5e382f</ent>
+	<ent>#c43b39</ent>
+	<ent>#7e574b</ent>
+	<ent>#666471</ent>
+	<ent>#2b76b4</ent>
+	<ent>#3f7f45</ent>
+	<ent>#96785a</ent>
+	<ent>#b18253</ent>
+	<ent>#399edd</ent>
+	<ent>#36ba40</ent>
+	<ent>#9ea4aa</ent>
+	<ent>#a2ee63</ent>
+	<ent>#e8d5aa</ent>
+	<ent>#d8d9d6</ent>
+</palette>
