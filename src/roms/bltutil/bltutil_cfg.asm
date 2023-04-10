@@ -185,16 +185,17 @@ cfgPrintVersionBoot:
 		jsr	OSWRCH
 		
 @nomap:
-		jsr	OSNEWL
+;;		jsr	OSNEWL
 
-		ldy	#0			; either full string for API 0 or 
-		jsr	cfgPrintStringY
+;;		ldy	#0			; either full string for API 0 or 
+;;		jsr	cfgPrintStringY
 		pla				; Get back API level
 		beq	@API0
-		jsr	PrintSpc
-		ldy	#1
-		jsr     cfgPrintStringY		; build time
+;;		jsr	PrintSpc
+;;		ldy	#1
+;;		jsr     cfgPrintStringY		; build time
 @API0:		clc
+
 @ret:		rts
 
 ;-----------------------------------------------------------------------------
@@ -459,6 +460,21 @@ cmdInfo:	jsr	cfgGetAPILevel
 		dex
 		bpl	@bblp
 
+		; show board level / api 
+
+		jsr	PrintImmed
+		.byte	13,"Lvl/API      : ",0
+		lda	JIM+jim_offs_VERSION_Board_level
+		jsr	PrintDecA
+		lda	#'/'
+		jsr	OSWRCH
+		lda	JIM+jim_offs_VERSION_API_level
+		jsr	PrintDecA
+		lda	#'.'
+		jsr	OSWRCH
+		lda	JIM+jim_offs_VERSION_API_sublevel
+		jsr	PrintDecA
+
 		jsr	PrintImmed
 		.byte	13,"Boot jumpers : ",0
 
@@ -524,8 +540,12 @@ cmdInfo:	jsr	cfgGetAPILevel
 		ldx	#tbl_capbits - tbl_bld
 		ldy	#0
 		lda	JIM + jim_offs_VERSION_cap_bits+0
-@caplp:		cpx	#tbl_capbits - tbl_bld + 8
-		bne	@skcap0
+@caplp:		cpx	#tbl_capbits - tbl_bld + 16
+		bne	@skcap00
+		lda	JIM + jim_offs_VERSION_cap_bits+2
+		jmp	@skcap0
+@skcap00:	cpx	#tbl_capbits - tbl_bld + 8
+		bne	@skcap0		
 		lda	JIM + jim_offs_VERSION_cap_bits+1
 @skcap0:	ror	A
 		bcc	@capnext
@@ -542,13 +562,51 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		pla
 		tax
+		pha
+
+		; check for DMA/SOUND, if so show # of channels
+		ldy	#<jim_DMAC_SND_SEL
+		cpx	#tbl_capbits - tbl_bld + CAP_IX_SND
+		beq	@chans
+		cpx	#tbl_capbits - tbl_bld + CAP_IX_DMA
+		bne 	@nochans
+		ldy 	#<jim_DMAC_DMA_SEL
+@chans:		lda	#'('
+		jsr	OSWRCH
+		jsr	zeroAcc
+		jsr	jimPageChipset
+		lda	#$FF
+		sta	JIM,Y
+		lda	JIM,Y		
+		clc
+		adc	#1
+		sta	zp_trans_acc
+		jsr	PrintDec
+		lda	#')'
+		jsr	OSWRCH
+		jsr	jimPageVersion
+
+@nochans:
+		pla
+		tax
 		pla
 		tay
 		pla
 
 @capnext:	inx
-		cpx	#tbl_capbits - tbl_bld + 16
+		cpx	#tbl_capbits - tbl_bld + CAP_IX_MAX + 1
 		bne	@caplp
+
+		; capabilities
+
+		jsr	PrintImmed
+		.byte	13,"Cap. bits    : ",0
+		lda	JIM + jim_offs_VERSION_cap_bits+2
+		jsr	PrintHexA
+		lda	JIM + jim_offs_VERSION_cap_bits+1
+		jsr	PrintHexA
+		lda	JIM + jim_offs_VERSION_cap_bits+0
+		jsr	PrintHexA
 
 cmdInfo_API0_mem:
 		; get BB RAM size (assume starts at bank 60 and is at most 20 banks long)		
@@ -754,6 +812,35 @@ tbl_capbits:	.byte	str_cap_CS - str_bld_base
 		.byte	str_cpu_z80 - str_bld_base
 		.byte	str_cpu_68008 - str_bld_base
 		.byte	str_cpu_68000 - str_bld_base
+		.byte	str_cpu_ARM2 - str_bld_base
+		.byte	str_cpu_Z180 - str_bld_base
+		.byte	str_cpu_SuperShadow - str_bld_base
+		.byte	str_10ns_ChipRAM - str_bld_base
+		.byte	str_45ns_BBRAM - str_bld_base
+
+CAP_IX_CS	= 0
+CAP_IX_DMA	= 1
+CAP_IX_BLITTER	= 2
+CAP_IX_AERIS	= 3
+CAP_IX_I2C	= 4
+CAP_IX_SND	= 5
+CAP_IX_HDMI	= 6
+CAP_IX_T65	= 7
+CAP_IX_65C02	= 8
+CAP_IX_6800	= 9
+CAP_IX_80188	= 10
+CAP_IX_65816	= 11
+CAP_IX_6X09	= 12
+CAP_IX_Z80	= 13
+CAP_IX_68008	= 14
+CAP_IX_68000	= 15
+CAP_IX_ARM2	= 16
+CAP_IX_Z180	= 17
+CAP_IX_SuperShadow	= 18
+CAP_IX_10ns_ChipRAM	= 19
+CAP_IX_45ns_BBRAM	= 20
+CAP_IX_MAX=20
+
 
 str_bld_base:
 str_bld_bran:	.byte	"Repository  ",0
@@ -773,7 +860,7 @@ str_cap_DMA:	.byte   "DMA",0
 str_Blitter:	.byte  	"Blitter", 0 
 str_cap_AERIS:	.byte   "Aeris",0
 str_cap_I2C:	.byte   "i2c",0
-str_cap_SND:	.byte   "Paula sound",0
+str_cap_SND:	.byte   "Paula",0
 str_cap_HDMI:	.byte   "HDMI",0
 str_bld_T65:	.byte	"T65",0
 str_cpu_65c02:	.byte	"65C02",0
@@ -784,9 +871,14 @@ str_cpu_6x09:	.byte	"6x09",0
 str_cpu_z80:	.byte	"z80",0
 str_cpu_68008:	.byte	"68008",0
 str_cpu_68000:	.byte	"68000",0
+str_cpu_ARM2:	.byte	"ARM2",0
+str_cpu_Z180:	.byte	"Z180",0
+str_cpu_SuperShadow:	.byte	"SuperShadow",0
+str_10ns_ChipRAM:	.byte	"10ns ChipRAM",0
+str_45ns_BBRAM:	.byte	"45ns BB RAM",0
 
 
-		; these are in the order of bits 3..1 of the config byte
+		; these are in the order of bits 3..1 of the config byte for the 1st 8 then followed by the mk.3 specifics
 cputbl_mk2:		;	name		speed
 cpu_tbl_6502A_2:	.word	str_cpu_6502A,	$0200
 cpu_tbl_6x09_2:		.word	str_cpu_6x09,	$0200
@@ -803,6 +895,8 @@ cpu_tbl_T65:		.word	str_cpu_T65,	$1600
 cpu_tbl_6800_2:		.word	str_cpu_6800, 	$0200
 cpu_tbl_80188_20:	.word	str_cpu_80188,	$2000
 cpu_tbl_68000_20:	.word	str_cpu_68000,	$2000
+cpu_tbl_ARM2_8:		.word	str_cpu_ARM2,	$0800
+cpu_tbl_Z180_20:	.word	str_cpu_Z180,	$2000
 
 
 cputbl_mk3:		;	bits, tbl offs
@@ -816,6 +910,8 @@ cputbl_mk3:		;	bits, tbl offs
 			.byte	$70, cpu_tbl_6800_2 - cputbl_mk2
 			.byte	$40, cpu_tbl_80188_20 - cputbl_mk2
 			.byte	$30, cpu_tbl_68000_20 - cputbl_mk2
+			.byte	$6E, cpu_tbl_ARM2_8 - cputbl_mk2
+			.byte	$52, cpu_tbl_Z180_20 - cputbl_mk2
 cputbl_mk3_len = * - cputbl_mk3
 
 
@@ -825,4 +921,4 @@ str_cpu_MHz:		.byte	"Mhz",0
 str_cpu_T65:		.byte	"T65",0
 
 str_Paula:		.byte  	"1M Paula", 0 
-str_map:		.byte	" ROM Map ",0
+str_map:		.byte	" ROM set ",0
