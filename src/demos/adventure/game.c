@@ -342,10 +342,9 @@ void main(void) {
 	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_DMAC >> 8;
 
 
-	set_map(&home_def);
+	set_map(&home2_def);
 	set_offset(0,0);
 
-	dma_copy_block(1,DMA_TILE_MAP, 0x000000L + (long)A_TILE_MAP, TILE_MAP_SZ);
 
 	dma_clear(DMA_SCR_SHADOW, 0, 0x5000-1);
 

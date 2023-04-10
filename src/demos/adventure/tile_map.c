@@ -29,6 +29,7 @@ SOFTWARE.
 #include "screenmaths.h"
 #include "sprite.h"
 #include "mapdef.h"
+#include "dma.h"
 
 unsigned char *map_ptr = A_TILE_MAP;
 unsigned char *map_ptr_offset;
@@ -342,9 +343,14 @@ unsigned colcheck_at(signed old_x, signed old_y, signed new_x, signed new_y)
 
 
 void set_map(mapdef_t *map) {
+
 	map_width = map->width;
 	map_height = map->height;
 	map_layer_size = map_width * map_height;
+
+	//get map from DMA to tiles buffer
+	dma_copy_block(1,DMA_TILE_MAP + (unsigned long)map->binary_offs, 0x000000L + (long)A_TILE_MAP, 3*map_layer_size);
+
 }
 
 

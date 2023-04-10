@@ -42,7 +42,7 @@ sub Usage {
 	}
 
 	die "
-makemaps.pl <output directory> <group name> <palette> <maps>...\n
+makemaps.pl <output directory> <group name> <map binary offset> <palette> <maps>...\n
 		";
 
 }
@@ -71,6 +71,8 @@ my $dir_out=shift or Usage "No output directory specified";
 -d "$dir_out" or Usage  "Output directory \"$dir_out\" does not exist";
 
 my $group_name=shift or Usage "No group namespecified";
+
+my $map_bin_offs = shift;
 
 my $fn_pal_in = shift or Usage "No palette file specified";
 my $xel_pal = read_palette($fn_pal_in);
@@ -191,34 +193,35 @@ my %propflags = (
 	"border-north" => 0x01
 	);
 
+my $fn_map = catfile($dir_out, $group_name . ".map");
+open(my $fh_map, ">:raw:", $fn_map) or die "Cannot open $fn_map for output : $!";
+
+my $fn_map_c = catfile($dir_out, $group_name . ".c");
+my $fn_map_h = catfile($dir_out, $group_name . ".h");
+open(my $fh_map_h, ">", $fn_map_h) or die "Cannot open $fn_map_h for output : $!";
+open(my $fh_map_c, ">", $fn_map_c) or die "Cannot open $fn_map_c for output : $!";
+print $fh_map_h "#ifndef __MAP_${group_name}_H__\n";
+print $fh_map_h "#define __MAP_${group_name}_H__\n";
+print $fh_map_c "#include \"mapdef.h\"\n";
+
+
+my $bin_offs_rtot = 0;
+
 foreach my $map (@maps) {
 	# make header file
-	my $fn_map_c = catfile($dir_out, $map->{base_name} . ".c");
-	my $fn_map_h = catfile($dir_out, $map->{base_name} . ".h");
-	open(my $fh_map_h, ">", $fn_map_h) or die "Cannot open $fn_map_h for output : $!";
-	open(my $fh_map_c, ">", $fn_map_c) or die "Cannot open $fn_map_c for output : $!";
 
-	print $fh_map_h "#ifndef __MAP_$map->{base_name}_H__\n";
-	print $fh_map_h "#define __MAP_$map->{base_name}_H__\n";
 
 	print $fh_map_h "extern mapdef_t $map->{base_name}_def;\n";
-	
-	print $fh_map_h "#endif\n";
 
-	print $fh_map_c "#include \"mapdef.h\"\n";
 	print $fh_map_c "mapdef_t $map->{base_name}_def = {\n";	
+	printf $fh_map_c "\t(unsigned int)%s+%d,\n", $map_bin_offs, $bin_offs_rtot;
 	print $fh_map_c "\t$map->{width}, //width\n";
 	print $fh_map_c "\t$map->{height}, //height\n";
 	print $fh_map_c "};\n";
 	
 
-	close $fh_map_h;
-	close $fh_map_c;
 
 	# save binary map layer
-	my $fn_map = catfile($dir_out, $map->{base_name} . ".map");
-	open(my $fh_map, ">:raw:", $fn_map) or die "Cannot open $fn_map for output : $!";
-
 
 	foreach my $l (@{$map->{outlayers}}) {			
 		print $fh_map pack("C*", @$l);
@@ -247,8 +250,18 @@ foreach my $map (@maps) {
 		}
 	}
 
-	close $fh_map;
+	$bin_offs_rtot += 3 * $map->{height} * $map->{width};
 }
+
+printf $fh_map_h "#define MAP_GROUP_SIZE_%s %d\n", uc(${group_name}), $bin_offs_rtot;
+
+print $fh_map_h "#endif\n";
+
+close $fh_map_h;
+close $fh_map_c;
+
+close $fh_map;
+
 
 # output tilecutter.xml
 

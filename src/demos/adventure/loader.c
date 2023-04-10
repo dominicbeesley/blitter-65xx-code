@@ -129,8 +129,7 @@ void loadforetiles(void) {
 
 void loadtiles(void) {
 	puts("tilemap");
-	osfile_load("M.HOME", A_LOADBUFFER, NULL, NULL, NULL, NULL);
-	dma_copy_block(1,DMA_LOADBUFFER, DMA_TILE_MAP, TILE_MAP_SZ);
+	rle_load("M.OVER", DMA_TILE_MAP);
 }
 
 void main(void) {

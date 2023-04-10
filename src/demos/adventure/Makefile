@@ -27,22 +27,22 @@ WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
 LOADER_OBJS=	loader dma myos rle_asm
 INCS=$(BUILD)/includes/ $(BUILD)/includes/gen_vars.h
 
-TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.back.til.cuts $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.front.til.cuts
+TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.back.til.cuts $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.front.til.cuts $(BUILD)/tiles/over.map.rle
 
-MAPS=home
+GROUPS=over
 
-MAPS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(MAPS)))
-MAPS_H_O=$(addprefix $(BUILD)/tiles/, $(addsuffix .h, $(MAPS)))
+GROUPS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GROUPS)))
+GROUPS_H_O=$(addprefix $(BUILD)/tiles/, $(addsuffix .h, $(GROUPS)))
 
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
-GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS))) $(MAPS_O)
-WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS))) $(MAPS_O)
+GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS))) $(GROUPS_O)
+WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS))) $(GROUPS_O)
 LOADER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_OBJS)))
 
 
 all: $(TARGETS_O)
 
-ssd: $(SSD)
+ssd: $(SSD) 
 
 deploy: ssd
 	mkdir -p $(DEPLOY_TOP)/advent65 
@@ -55,7 +55,7 @@ $(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.txt $(CLIBDIR)/clib.rom
 	dfs add -l FFFF2000 -e FFFF2000 -f 'P.MAIN' $(SSD) $(BUILD)/tiles/over.pal
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OBACK' $(SSD) $(BUILD)/tiles/over.back.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OFRONT' $(SSD) $(BUILD)/tiles/over.front.rle
-	dfs add -l FFFF2000 -e FFFF2000 -f 'M.HOME' $(SSD) $(BUILD)/tiles/home.map
+	dfs add -l FFFF2000 -e FFFF2000 -f 'M.OVER' $(SSD) $(BUILD)/tiles/over.map.rle
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.GAME' $(SSD) $(BUILD)/game.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.LOADER' $(SSD) $(BUILD)/loader.bin
@@ -93,10 +93,14 @@ $(BUILD)/%.o:	%.s | adv_globals.inc
 $(BUILD)/tiles/%.rle: $(BUILD)/tiles/%.til scripts/runlengthencode.pl
 		scripts/runlengthencode.pl $< $@
 
+$(BUILD)/tiles/%.map.rle: $(BUILD)/tiles/%.map scripts/runlengthencode.pl
+		scripts/runlengthencode.pl $< $@
+
+
 $(BUILD)/tiles/charac.til:	maps/character.tilecuts.xml src-graphics/character.png
 		$(SCRIPTS)/tilecutter.py maps/character.tilecuts.xml $(shell pwd) $(BUILD)/tiles
 
-$(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til &: \
+$(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til $(BUILD)/tiles/over.map &: \
 		src-graphics/Overworld16x24.png \
 		$(BUILD)/tiles/over.tilecuts.xml
 
@@ -115,15 +119,15 @@ $(BUILD)/includes/gen_vars.h: $(BUILD)/tiles/charac.til $(BUILD)/tiles/over.back
 $(BUILD)/tiles/home.map \
 $(BUILD)/tiles/over.tilecuts.xml \
 $(BUILD)/tiles/home.h &: $(wildcard maps/*.tmx) $(wildcard maps/*.tsx) maps/main.pal scripts/makemapsandcuts2.pl
-		scripts/makemapsandcuts2.pl $(BUILD)/tiles "over" maps/main.pal $(wildcard maps/*.tmx)
+		scripts/makemapsandcuts2.pl $(BUILD)/tiles "over" 0 maps/main.pal $(wildcard maps/*.tmx)
 
-game.c:$(BUILD)/all_maps.h
+game.c:$(BUILD)/includes/all_maps.h
 
-$(BUILD)/all_maps.h:
-		echo "#ifndef __ALLMAPS_H__" > all_maps.h
-		echo "#define __ALLMAPS_H__" >> all_maps.h
-		$(foreach x, $(MAPS), echo "#include \"$x.h\"" >> all_maps.h)
-		echo "#endif" >> all_maps.h
+$(BUILD)/includes/all_maps.h:
+		echo "#ifndef __ALLMAPS_H__" > $@
+		echo "#define __ALLMAPS_H__" >>$@
+		$(foreach x, $(GROUPS), echo "#include \"$x.h\"" >> $@)
+		echo "#endif" >> $@
 		
 clean::
 	-rm $(SSD)
@@ -138,6 +142,7 @@ clean::
 	-rm $(EXTRA_ASM)
 	-rm $(LOADER_OBJS_O)	
 	-rm $(BUILD)/includes/gen_vars.h
+	-rm $(BUILD)/includes/all_maps.h
 	-rm $(BUILD)/maps/home.bin
 	-rm $(BUILD)/tiles/tile-cutter.xml
 	-rm $(BUILD)/tiles/main.pal
