@@ -40,6 +40,8 @@ SOFTWARE.
 #include "sprite.h"
 #include "screenmaths.h"
 
+#include "mapdef.h"
+#include "all_maps.h"
 
 
 
@@ -327,6 +329,8 @@ nomove:
 }
 
 
+
+
 void main(void) {
 
 	unsigned room_exit = 0;
@@ -338,8 +342,8 @@ void main(void) {
 	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_DMAC >> 8;
 
 
-	tile_off_x = 0;
-	tile_off_y = 0;
+	set_map(&home_def);
+	set_offset(0,0);
 
 	dma_copy_block(1,DMA_TILE_MAP, 0x000000L + (long)A_TILE_MAP, TILE_MAP_SZ);
 
@@ -348,7 +352,7 @@ void main(void) {
 	spr_init();
 
 	// draw background
-	draw_map((void *)A_TILE_MAP_WITH_OFFS);
+	draw_map(map_ptr_offset);
 	draw_front_nosave(0x02);
 
 	char_init();
@@ -368,34 +372,26 @@ void main(void) {
 			if (room_exit & KEY_RT)
 			{
 				char_x -= ROOM_SZ_X * TILE_X_SZ;
-				tile_off_x += ROOM_SZ_X;
-				if (tile_off_x >= TILE_MAP_STRIDE)
-					tile_off_x = 0;
+				set_offset(tile_off_x + ROOM_SZ_X, tile_off_y);
 			}
 			else if (room_exit & KEY_LT)
 			{
 				char_x += ROOM_SZ_X * TILE_X_SZ;
-				tile_off_x -= ROOM_SZ_X;
-				if (tile_off_x < 0)
-					tile_off_x = TILE_MAP_STRIDE - ROOM_SZ_X;
+				set_offset(tile_off_x - ROOM_SZ_X, tile_off_y);
 			}
 			else if (room_exit & KEY_UP)
 			{
 				char_y += ROOM_SZ_Y * TILE_Y_SZ;
-				tile_off_y -= ROOM_SZ_Y;
-				if (tile_off_y < 0)
-					tile_off_y = TILE_MAP_HEIGHT - ROOM_SZ_Y;
+				set_offset(tile_off_x, tile_off_y - ROOM_SZ_Y);
 			}
 			else if (room_exit & KEY_DN)
 			{
 				char_y -= ROOM_SZ_Y * TILE_Y_SZ;
-				tile_off_y += ROOM_SZ_Y;
-				if (tile_off_y >= TILE_MAP_HEIGHT)
-					tile_off_y = 0;
+				set_offset(tile_off_x, tile_off_y + ROOM_SZ_Y);
 			}
 
 			// re draw background
-			draw_map((void *)A_TILE_MAP_WITH_OFFS);
+			draw_map(map_ptr_offset);
 			draw_front_nosave(0x02);
 
 		}

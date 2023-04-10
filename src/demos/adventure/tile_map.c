@@ -28,30 +28,33 @@ SOFTWARE.
 #include "adv_globals.h"
 #include "screenmaths.h"
 #include "sprite.h"
+#include "mapdef.h"
+
+unsigned char *map_ptr = A_TILE_MAP;
+unsigned char *map_ptr_offset;
+unsigned char map_width;
+unsigned char map_height;
+unsigned int map_layer_size;
+int tile_off_x;
+int tile_off_y;
+char tilemap[TILE_MAP_SZ];
+
 
 unsigned char get_tile_at(unsigned char layer, signed char x, signed char y) {
 	signed int xx = tile_off_x + x;
 	signed int yy = tile_off_y + y;
 	
-	if (xx < 0 || xx >= TILE_MAP_STRIDE)
+	if (xx < 0 || xx >= map_width)
 		return 0;
-	if (yy < 0 || yy >= TILE_MAP_HEIGHT)
+	if (yy < 0 || yy >= map_height)
 		return 0;
-	return *(unsigned char *)(A_TILE_MAP_WITH_OFFS + (y * TILE_MAP_STRIDE) + x + (layer * TILE_MAP_LAYER_SZ));
+	return *(unsigned char *)(map_ptr_offset + (y * map_width) + x + (layer * map_height * map_width));
 }
 
 
 unsigned char getbltcon() {
 	return GET_DMA_BYTE(jim_DMAC_BLITCON);
 }
-
-int tile_off_x;
-int tile_off_y;
-
-
-char tilemap[TILE_MAP_SZ];
-
-
 
 
 // calculate address of front tile sprite #A in addresses A/B
@@ -89,8 +92,8 @@ void draw_front_nosave(unsigned char flags) {
 	SET_DMA_WORD(jim_DMAC_STRIDE_A, TILE_X_SZ >> 3);
 	SET_DMA_WORD(jim_DMAC_STRIDE_B, TILE_X_SZ >> 1);
 
-	tile_ptr = (unsigned char *)(A_TILE_MAP_WITH_OFFS + TILE_MAP_LAYER_SZ);
-	obj_ptr = tile_ptr + TILE_MAP_LAYER_SZ;
+	tile_ptr = (unsigned char *)(map_ptr_offset + map_layer_size);
+	obj_ptr = tile_ptr + map_layer_size;
 
 	j = ROOM_SZ_Y;
 	do {
@@ -112,8 +115,8 @@ void draw_front_nosave(unsigned char flags) {
 			scr_addr16 += TILE_SCR_ADDR_STRIDE_X;
 		} while (--i);
 
-		tile_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
-		obj_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
+		tile_ptr += (map_width-ROOM_SZ_X);
+		obj_ptr += (map_width-ROOM_SZ_X);
 		scr_addr16 += TILE_SCR_ADDR_STRIDE_Y;
 
 	} while (--j);	
@@ -131,8 +134,8 @@ void draw_front(unsigned char flags) {
 	SET_DMA_WORD(jim_DMAC_STRIDE_A, TILE_X_SZ >> 3);
 	SET_DMA_WORD(jim_DMAC_STRIDE_B, TILE_X_SZ >> 1);
 
-	tile_ptr = (char *)(A_TILE_MAP_WITH_OFFS + TILE_MAP_LAYER_SZ);
-	obj_ptr = tile_ptr + TILE_MAP_LAYER_SZ;
+	tile_ptr = (char *)(map_ptr_offset + map_layer_size);
+	obj_ptr = tile_ptr + map_layer_size;
 
 	j = ROOM_SZ_Y;
 	do {
@@ -154,8 +157,8 @@ void draw_front(unsigned char flags) {
 			scr_addr16 += TILE_SCR_ADDR_STRIDE_X;
 		} while (--i);
 
-		tile_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
-		obj_ptr += (TILE_MAP_STRIDE-ROOM_SZ_X);
+		tile_ptr += (map_width-ROOM_SZ_X);
+		obj_ptr += (map_width-ROOM_SZ_X);
 		scr_addr16 += TILE_SCR_ADDR_STRIDE_Y;
 
 	} while (--j);
@@ -337,4 +340,32 @@ unsigned colcheck_at(signed old_x, signed old_y, signed new_x, signed new_y)
 	return 0;
 }
 
+
+void set_map(mapdef_t *map) {
+	map_width = map->width;
+	map_height = map->height;
+	map_layer_size = map_width * map_height;
+}
+
+
+void set_offset(int x, int y) {
+
+	if (x > map_width)
+		x = 0;
+	else if (x < 0) {
+		x = map_width - ROOM_SZ_X;
+	}
+
+
+	if (y > map_height)
+		y = 0;
+	else if (y < 0) {
+		y = map_height - ROOM_SZ_Y;
+	}
+
+	tile_off_x = x;
+	tile_off_y = y;
+
+	map_ptr_offset = (unsigned char *)((unsigned int)map_ptr + (unsigned int)tile_off_x + (map_width*(unsigned int)tile_off_y));
+}
 

@@ -193,12 +193,27 @@ my %propflags = (
 
 foreach my $map (@maps) {
 	# make header file
+	my $fn_map_c = catfile($dir_out, $map->{base_name} . ".c");
 	my $fn_map_h = catfile($dir_out, $map->{base_name} . ".h");
 	open(my $fh_map_h, ">", $fn_map_h) or die "Cannot open $fn_map_h for output : $!";
-	my $map_h_pre = "MAP_" . uc($map->{base_name}) . "_";
-	printf $fh_map_h "#define %s_width %s\n", $map_h_pre, $map->{width};
-	printf $fh_map_h "#define %s_height %s\n", $map_h_pre, $map->{height};
+	open(my $fh_map_c, ">", $fn_map_c) or die "Cannot open $fn_map_c for output : $!";
+
+	print $fh_map_h "#ifndef __MAP_$map->{base_name}_H__\n";
+	print $fh_map_h "#define __MAP_$map->{base_name}_H__\n";
+
+	print $fh_map_h "extern mapdef_t $map->{base_name}_def;\n";
+	
+	print $fh_map_h "#endif\n";
+
+	print $fh_map_c "#include \"mapdef.h\"\n";
+	print $fh_map_c "mapdef_t $map->{base_name}_def = {\n";	
+	print $fh_map_c "\t$map->{width}, //width\n";
+	print $fh_map_c "\t$map->{height}, //height\n";
+	print $fh_map_c "};\n";
+	
+
 	close $fh_map_h;
+	close $fh_map_c;
 
 	# save binary map layer
 	my $fn_map = catfile($dir_out, $map->{base_name} . ".map");

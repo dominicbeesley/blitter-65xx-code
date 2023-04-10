@@ -28,6 +28,7 @@
 	.export _draw_map
 	.importzp sreg, sp
 	.import _XY_to_dma_scr_adr, pushax, incsp2
+	.import _map_width
 
 	.zeropage
 zp_ptr_t:		.res 2
@@ -133,12 +134,15 @@ s4:
 
 	clc
 	lda	zp_ptr_t
-	adc	#<(TILE_MAP_STRIDE-ROOM_SZ_X)
+	adc	_map_width
+	bcc	@x1
+	inc	zp_ptr_t+1
+@x1:	sec
+	sbc	#ROOM_SZ_X
 	sta	zp_ptr_t
-	lda	zp_ptr_t+1
-	adc	#>(TILE_MAP_STRIDE-ROOM_SZ_X)
-	sta	zp_ptr_t+1
-
+	bcs	@x2
+	dec	zp_ptr_t+1
+@x2:
 	dec	ctr_y
 	beq	no_lp_y
 	jmp	lp_y

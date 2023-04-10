@@ -10,7 +10,7 @@ SSD=$(SSDS)/adventure.ssd
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
-CCOPT=-T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I /usr/share/cc65/include
+CCOPT=-T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I $(BUILD)/tiles -I /usr/share/cc65/include -I $(shell pwd)
 AS=ca65 -I $(TOP)/includes
 ASOPT=
 
@@ -29,12 +29,15 @@ INCS=$(BUILD)/includes/ $(BUILD)/includes/gen_vars.h
 
 TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.back.til.cuts $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.front.til.cuts
 
+MAPS=home
+
+MAPS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(MAPS)))
+MAPS_H_O=$(addprefix $(BUILD)/tiles/, $(addsuffix .h, $(MAPS)))
 
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
-GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS)))
-WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS)))
+GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS))) $(MAPS_O)
+WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS))) $(MAPS_O)
 LOADER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_OBJS)))
-
 
 
 all: $(TARGETS_O)
@@ -81,18 +84,19 @@ $(BUILD)/%.s:	%.c
 $(BUILD)/%.o:	$(BUILD)/%.s 
 		$(AS) $(ASOPT) -o $@ $<
 
+$(BUILD)/%.s:	$(BUILD)/tiles/%.c
+		$(CC) $(CCOPT) -o $@ $<
+
 $(BUILD)/%.o:	%.s | adv_globals.inc
 		$(AS) $(ASOPT) -o $@ $<
-
 
 $(BUILD)/tiles/%.rle: $(BUILD)/tiles/%.til scripts/runlengthencode.pl
 		scripts/runlengthencode.pl $< $@
 
-
 $(BUILD)/tiles/charac.til:	maps/character.tilecuts.xml src-graphics/character.png
 		$(SCRIPTS)/tilecutter.py maps/character.tilecuts.xml $(shell pwd) $(BUILD)/tiles
 
-$(BUILD)/tiles/main.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til &: \
+$(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til &: \
 		src-graphics/Overworld16x24.png \
 		$(BUILD)/tiles/over.tilecuts.xml
 
@@ -113,7 +117,13 @@ $(BUILD)/tiles/over.tilecuts.xml \
 $(BUILD)/tiles/home.h &: $(wildcard maps/*.tmx) $(wildcard maps/*.tsx) maps/main.pal scripts/makemapsandcuts2.pl
 		scripts/makemapsandcuts2.pl $(BUILD)/tiles "over" maps/main.pal $(wildcard maps/*.tmx)
 
+game.c:$(BUILD)/all_maps.h
 
+$(BUILD)/all_maps.h:
+		echo "#ifndef __ALLMAPS_H__" > all_maps.h
+		echo "#define __ALLMAPS_H__" >> all_maps.h
+		$(foreach x, $(MAPS), echo "#include \"$x.h\"" >> all_maps.h)
+		echo "#endif" >> all_maps.h
 		
 clean::
 	-rm $(SSD)

@@ -41,6 +41,8 @@ SOFTWARE.
 #include "text.h"
 #include "tile_map.h"
 
+#include "mapdef.h"
+#include "all_maps.h"
 
 
 // 		setdp	0
@@ -310,14 +312,15 @@ void main(void) {
 
 	dma_clear(DMA_SCR_SHADOW, 0, 0x5000-1);
 
-	tile_off_x = 0;
-	tile_off_y = 0;
+	set_map(&home_def);
+	set_offset(0,0);
+
 
 	dma_copy_block(1, DMA_TILE_MAP, 0x000000L + (long)A_TILE_MAP, TILE_MAP_SZ);
 
 	spr_init();
 	// draw background
-	draw_map((void *)A_TILE_MAP_WITH_OFFS);
+	draw_map(map_ptr_offset);
 	draw_front_nosave(0x03);
 
 
