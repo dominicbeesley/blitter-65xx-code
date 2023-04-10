@@ -203,6 +203,8 @@ open(my $fh_map_c, ">", $fn_map_c) or die "Cannot open $fn_map_c for output : $!
 print $fh_map_h "#ifndef __MAP_${group_name}_H__\n";
 print $fh_map_h "#define __MAP_${group_name}_H__\n";
 print $fh_map_c "#include \"mapdef.h\"\n";
+print $fh_map_c "#include \"$group_name.h\"\n";
+print $fh_map_c "#include <stddef.h>\n";
 
 
 my $bin_offs_rtot = 0;
@@ -217,6 +219,10 @@ foreach my $map (@maps) {
 	printf $fh_map_c "\t(unsigned int)%s+%d,\n", $map_bin_offs, $bin_offs_rtot;
 	print $fh_map_c "\t$map->{width}, //width\n";
 	print $fh_map_c "\t$map->{height}, //height\n";
+	print $fh_map_c "\t" . mapref($map, "north") . ",\n";
+	print $fh_map_c "\t" . mapref($map, "south") . ",\n";
+	print $fh_map_c "\t" . mapref($map, "east") . ",\n";
+	print $fh_map_c "\t" . mapref($map, "west") . ",\n";
 	print $fh_map_c "};\n";
 	
 
@@ -323,6 +329,15 @@ $dom_tc->toFile($fn_tc, 2) or die "Error saving tile-cutter xml";
 sub do_map {
 	my ($xel_inmap, $indir) = @_;
 	
+	# map properties
+	my %mapproperties = ();
+	foreach my $prop ($xel_inmap->findnodes("properties/property"))
+	{
+		$mapproperties{$prop->getAttribute("name")} = $prop->getAttribute("value");
+	}
+
+
+
 	my $gid = 1;
 
 	#look for and process tilesets
@@ -406,11 +421,24 @@ sub do_map {
 	}
 
 	return {
+		props => \%mapproperties,
 		width => $width,
 		height => $height,
 		layers => \@maplayers		# a flat array of tiles in col, row order
 	};
 
+}
+
+sub mapref {
+	my ($map, $dir) = @_;
+
+	my $ref = $map->{props}->{"map-$dir"};
+
+	if ($ref) {
+		return "\&${ref}_def";
+	} else {
+		return "NULL";
+	}
 }
 
 # reads in a tileset (or finds a cached one) and returns

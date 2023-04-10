@@ -31,6 +31,7 @@ SOFTWARE.
 #include "mapdef.h"
 #include "dma.h"
 
+mapdef_t *map_cur = NULL;
 unsigned char *map_ptr = A_TILE_MAP;
 unsigned char *map_ptr_offset;
 unsigned char map_width;
@@ -344,6 +345,7 @@ unsigned colcheck_at(signed old_x, signed old_y, signed new_x, signed new_y)
 
 void set_map(mapdef_t *map) {
 
+	map_cur = map;
 	map_width = map->width;
 	map_height = map->height;
 	map_layer_size = map_width * map_height;
@@ -356,16 +358,25 @@ void set_map(mapdef_t *map) {
 
 void set_offset(int x, int y) {
 
-	if (x > map_width)
+	if (x >= map_width)
+	{
+		if (map_cur && map_cur->east)
+			set_map(map_cur->east);
 		x = 0;
-	else if (x < 0) {
+	} else if (x < 0) {
+		if (map_cur && map_cur->west)
+			set_map(map_cur->west);
 		x = map_width - ROOM_SZ_X;
 	}
 
 
-	if (y > map_height)
+	if (y >= map_height) {
+		if (map_cur && map_cur->south)
+			set_map(map_cur->south);
 		y = 0;
-	else if (y < 0) {
+	} else if (y < 0) {
+		if (map_cur && map_cur->north)
+			set_map(map_cur->north);
 		y = map_height - ROOM_SZ_Y;
 	}
 

@@ -342,7 +342,7 @@ void main(void) {
 	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_DMAC >> 8;
 
 
-	set_map(&home2_def);
+	set_map(&home_def);
 	set_offset(0,0);
 
 
