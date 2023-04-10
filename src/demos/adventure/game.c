@@ -234,6 +234,26 @@ unsigned char_move(void) {
 		if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 			goto donemove;
 
+
+		if (dx & !dy) {
+			char_new_x = char_x + dx;
+			char_new_y = char_y + dx;
+			if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
+				goto donemove;
+			char_new_y = char_y - dx;
+			if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
+				goto donemove;			
+		} else if (dy & !dx) {
+			char_new_y = char_y + dy;
+			char_new_x = char_x + dy;
+			if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
+				goto donemove;
+			char_new_x = char_x - dy;
+			if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
+				goto donemove;			
+		}
+
+
 		REDUCE_DX
 		REDUCE_DY
 
@@ -272,12 +292,13 @@ unsigned char_move(void) {
 
 
 
-		} else {
+		} else if (dx || dy) {
 			char_new_x = char_x + dx;
 			char_new_y = char_y + dy;
 			if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 				goto donemove;
 		}
+
 
 		charspr_ix=0;
 		goto nomove;
@@ -385,6 +406,7 @@ void main(void) {
 		room_exit = char_move();
 
 		charac_spr_plot_start();
+		charac_spr_plot(char_x, char_y, 16);
 		charac_spr_plot(char_x, char_y, charspr_offs + (charspr_ix >> 2));
 
 		draw_front(0x01);

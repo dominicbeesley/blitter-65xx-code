@@ -188,7 +188,9 @@ unsigned char colcheck(
 	obj = get_tile_at(LAYER_OBJ,x,y);
 	if (tileno && !(obj & 0x80)) {
 
-		unsigned int ch_addr = (DMA_CHARAC_SPR & 0xFFFF) + ((unsigned int)charspr_ix*(unsigned int)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
+
+//		unsigned int ch_addr = (DMA_CHARAC_SPR & 0xFFFF) + ((unsigned int)charspr_ix*(unsigned int)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
+				unsigned int ch_addr = (DMA_CHARAC_SPR & 0xFFFF) + ((unsigned int)16*(unsigned int)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
 		unsigned int ti_addr = (DMA_FRONT_SPR & 0xFFFF) + ((unsigned int)FRONT_SPR_SZ*((unsigned int)tileno-1)) + FRONT_SPR_MO;
 		unsigned char h = COL_Y_MAX;
 		unsigned char bw = FRONT_SPR_MASK_BYTES_PER_LINE;
