@@ -35,7 +35,7 @@ x:=$(shell mkdir -p $(SSDS))
 x:=$(shell mkdir -p $(BUILD))
 
 # DEPLOY_TOP - the deploy target will extract .ssd files to subfolders of this folder
-DEPLOY_TOP?=~/hostfs_test
+DEPLOY_TOP?=~/hostfs
 
 # make blit lib
 BLIT_LIB_MAKE=$(MAKE) -C $(TOP)/blitlib
