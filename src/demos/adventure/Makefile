@@ -27,7 +27,7 @@ WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
 LOADER_OBJS=	loader dma myos rle_asm
 INCS=$(BUILD)/includes/ $(BUILD)/includes/gen_vars.h
 
-TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.back.til.cuts $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.front.til.cuts $(BUILD)/tiles/over.map.rle
+TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.back.til.cuts $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.collide.rle $(BUILD)/tiles/over.front.til.cuts $(BUILD)/tiles/over.map.rle
 
 GROUPS=over
 
@@ -55,6 +55,7 @@ $(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.txt $(CLIBDIR)/clib.rom
 	dfs add -l FFFF2000 -e FFFF2000 -f 'P.MAIN' $(SSD) $(BUILD)/tiles/over.pal
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OBACK' $(SSD) $(BUILD)/tiles/over.back.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OFRONT' $(SSD) $(BUILD)/tiles/over.front.rle
+	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OCOLL' $(SSD) $(BUILD)/tiles/over.collide.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'M.OVER' $(SSD) $(BUILD)/tiles/over.map.rle
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.GAME' $(SSD) $(BUILD)/game.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin

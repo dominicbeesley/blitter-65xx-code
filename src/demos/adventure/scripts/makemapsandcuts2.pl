@@ -111,7 +111,7 @@ foreach my $fn_inmap (@ARGV) {
 }
 
 # now we've got all the maps read in, for each layer make the layer id sets
-for (my $layer = 0; $layer <2; $layer++) {
+for (my $layer = 0; $layer <3; $layer++) {
 	
 	foreach my $ts (@tilesets) {
 		my %empty = ();
@@ -188,10 +188,12 @@ for (my $layer = 0; $layer <2; $layer++) {
 
 }
 
-my %propflags = (
-	nocollide => 0x80,
-	"border-north" => 0x01
+my %collflags = (
+	nocollide => 0x80
 	);
+
+my $collmask = 0; map { $collmask |= $_ } values(%collflags);
+
 
 my $fn_map = catfile($dir_out, $group_name . ".map");
 open(my $fh_map, ">:raw:", $fn_map) or die "Cannot open $fn_map for output : $!";
@@ -227,26 +229,28 @@ foreach my $map (@maps) {
 	
 
 
-	# save binary map layer
-
-	foreach my $l (@{$map->{outlayers}}) {			
+	# save binary map layers 0..1
+	for (my $layer = 0; $layer < 2; $layer++) {
+		my $l = $map->{outlayers}->[$layer];
 		print $fh_map pack("C*", @$l);
 	}
 
-	# the properties layer
+	# the collision layer
+	my $l = $map->{outlayers}->[2];
 	my $ix = 0;
 	for (my $row = 0; $row < $map->{height}; $row++) {
 		for (my $col = 0; $col < $map->{width}; $col++) {
-			my $v = 0;
+			my $v = $l->[$ix];
+			($v & $collmask) and die "$v in collision layer too high > $collmask";
 			foreach my $l (@{$map->{layers}}) {
 				my $x = $l->[$ix];
 				my $tsid = $x->{tsid};
 				if ($tsid) {
 					my $props = $x->{ts}->{props}->{$tsid};
 					foreach my $p (keys %{$props}) {
-						if ($props->{$p} eq "true") {
-							$v |= $propflags{$p};
-							print "$row $col $p $propflags{$p} $v\n";
+						if ($props->{$p} eq "true" && exists $collflags{$p}) {
+							$v |= $collflags{$p};
+#							print "$row $col $p $collflags{$p} $v\n";
 						}
 					}		
 				}
@@ -280,11 +284,11 @@ $dom_tc->setDocumentElement($xel_tc);
 my $xel_pal2 = $xel_tc->appendChild($xel_pal);
 $xel_pal2->setAttribute("file", "$group_name.pal");
 
-my @layernames = ("back", "front");
+my @layernames = ("back", "front", "collide");
 
 # ASSUMPTION: that this will process in the same order as the 
 # loop that assigns lids
-for (my $layer = 0; $layer < 2; $layer++) {
+for (my $layer = 0; $layer < 3; $layer++) {
 
 	my $xel_dest = $dom_tc->createElement("dest");
 	$xel_tc->appendChild($xel_dest);
@@ -361,10 +365,10 @@ sub do_map {
 	
 	my $layer_count = $xlst_layers->size;
 	
-	$layer_count == 2 or Usage "Must have exactly 2 layers!";
+	$layer_count == 3 or Usage "Must have exactly 3 layers!";
 		
 	
-	for (my $layernum = 1; $layernum <= 2; $layernum++) {
+	for (my $layernum = 1; $layernum <= 3; $layernum++) {
 		my $xel_layer = $xlst_layers->get_node($layernum);
 
 		my @rawlayer = ();	# the layer's data as an array of arrays of gids
@@ -376,7 +380,7 @@ sub do_map {
 	  
 	 	my $data = $xel_layer->findvalue("data");
 	 
-	 	# parse map into a 32 rows of 32 cols
+	 	# parse map into rows of columns
 	 
 	 	my @lines = split /\n/, $data;
 	 	my $j = 0;

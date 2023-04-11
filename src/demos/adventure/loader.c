@@ -126,6 +126,10 @@ void loadforetiles(void) {
 	rle_load("T.OFRONT", DMA_FRONT_SPR);	
 }
 
+void loadcolltiles(void) {
+	puts("collision");
+	rle_load("T.OCOLL", DMA_COLL_SPR);	
+}
 
 void loadtiles(void) {
 	puts("tilemap");
@@ -148,6 +152,7 @@ void main(void) {
 	loadcharactersprites();
 	loadbacktiles();
 	loadforetiles();
+	loadcolltiles();
 
 	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_DMAC & 0xFF;
 	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_DMAC >> 8;

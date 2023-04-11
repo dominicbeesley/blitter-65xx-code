@@ -45,9 +45,15 @@ extern char tilemap[];
 
 #define	DMA_BACK_SPR	0x010000L
 #define DMA_FRONT_SPR	0x020000L
+#define DMA_COLL_SPR	0x090000L
+
 #define FRONT_SPR_MO	(8*24)				// mask offset from start of spr
 #define FRONT_SPR_SZ	((2*24)+(8*24))			// size of spr
 #define FRONT_SPR_MASK_BYTES_PER_LINE 2
+
+#define COLL_SPR_MO	(8*24)				// mask offset from start of spr
+#define COLL_SPR_SZ	((2*24)+(8*24))			// size of spr
+#define COLL_SPR_MASK_BYTES_PER_LINE 2
 
 #define DMA_SPR_SAVE	0x030000L			// save area for sprites bitmaps
 #define SPR_SAVE_MAX	80				// max sprites that can be saved per frame
@@ -90,7 +96,7 @@ extern char tilemap[];
 
 #define LAYER_BACK 0
 #define LAYER_FRONT 1
-#define LAYER_OBJ 2
+#define LAYER_COLL 2
 
 #define COLOBJ_FLAG_NOCOL 0x80
 #define COLOBJ_FLAG_BORDER_NORTH 0x01
