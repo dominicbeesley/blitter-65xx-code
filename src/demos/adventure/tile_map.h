@@ -47,5 +47,6 @@ extern unsigned char *map_ptr_offset;
 extern unsigned char map_width;
 extern unsigned char map_height;
 
+extern unsigned char room_exit;
 
 #endif

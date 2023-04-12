@@ -41,6 +41,13 @@ int tile_off_x;
 int tile_off_y;
 char tilemap[TILE_MAP_SZ];
 
+unsigned char room_exit = 0;
+
+int char_y, char_x;
+
+
+void set_map(mapdef_t *map);
+void set_offset(int x, int y);
 
 unsigned char get_tile_at(unsigned char layer, signed char x, signed char y) {
 	signed int xx = tile_off_x + x;
@@ -192,6 +199,8 @@ void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, 
 }
 
 
+struct mapdef_object *cur_obj;
+
 unsigned char colcheck(
 	unsigned char charspr_ix, 
 	signed char x, 
@@ -283,6 +292,27 @@ unsigned char colcheck(
 		//check result -- bodge using a function to get round ca65's lack of volatile
 		if (getbltcon() & BLITCON_ACT_COLLIDE)
 			return 0;
+
+		//we had a collision - check to see if there's an object on this square - if there
+		//is do its thing
+
+		cur_obj = &(map_cur->objects[0]);
+		while (cur_obj->type) {
+			if (cur_obj->x == x + tile_off_x && cur_obj->y == y + tile_off_y) {
+				if (cur_obj->type == MAPDEF_OBJ_TYPE_TELEPORT) {
+					set_map(cur_obj->data.teleport.map);
+
+					char_x = TILE_X_SZ * cur_obj->data.teleport.dest_x;
+					char_y = TILE_Y_SZ * cur_obj->data.teleport.dest_y;
+
+					set_offset(cur_obj->data.teleport.dest_x / ROOM_SZ_X, cur_obj->data.teleport.dest_y / ROOM_SZ_Y);
+					room_exit = 1;
+					return 0;
+				}
+			}
+			cur_obj++;
+		}
+
 
 		draw_front_collide(x,y,coll,0xF0);
 

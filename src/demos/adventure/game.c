@@ -52,7 +52,9 @@ SOFTWARE.
 // zp_spr_save_ram	equ	$74				; points at chip ram containing the save (only ls 2 bytes!)
 
 
-int char_y, char_x;
+extern int char_x;
+extern int char_y;
+
 int char_new_y, char_new_x;
 unsigned char charspr_ix, charspr_offs;
 unsigned int framectr;
@@ -114,7 +116,8 @@ void char_init() {
 
 
 
-#define SPEED 3
+#define SPEED_X 2
+#define SPEED_Y 3
 
 #define REDUCE_DX {if (dx>1) dx=1; else if (dx<-1) dx=-1; else dx = 0;}
 #define REDUCE_DY {if (dy>1) dy=1; else if (dy<-1) dy=-1; else dx = 0;}
@@ -146,7 +149,7 @@ void face(unsigned char direction)
 
 
 
-unsigned char_move(void) {
+void char_move(void) {
 
 	unsigned char ret = 0;
 	signed char dx = 0;
@@ -218,14 +221,14 @@ unsigned char_move(void) {
 
 
 	if (char_keyspressed & KEY_RT)
-		dx = SPEED;
+		dx = SPEED_X;
 	else if (char_keyspressed & KEY_LT)
-		dx = -SPEED;
+		dx = -SPEED_X;
 
 	if (char_keyspressed & KEY_DN)
-		dy = SPEED;
+		dy = SPEED_Y;
 	else if (char_keyspressed & KEY_UP)
-		dy = -SPEED;
+		dy = -SPEED_Y;
 
 	if (dx || dy) {
 		char_new_y = char_y + dy;
@@ -234,6 +237,9 @@ unsigned char_move(void) {
 		if (!colcheck_at(char_x, char_y, char_new_x, char_new_y))
 			goto donemove;
 
+
+		REDUCE_DX
+		REDUCE_DY
 
 		if (dx & !dy) {
 			char_new_x = char_x + dx;
@@ -253,9 +259,6 @@ unsigned char_move(void) {
 				goto donemove;			
 		}
 
-
-		REDUCE_DX
-		REDUCE_DY
 
 		if (dx && dy)
 		{
@@ -303,6 +306,10 @@ unsigned char_move(void) {
 		charspr_ix=0;
 		goto nomove;
 donemove:
+
+		if (room_exit)
+			return;
+
 		char_x = char_new_x;
 		char_y = char_new_y;	
 
@@ -311,27 +318,43 @@ donemove:
 
 nomove:
 		if (char_x > ROOM_SZ_X*TILE_X_SZ)
-			return KEY_RT;
+		{
+			char_x -= ROOM_SZ_X * TILE_X_SZ;
+			set_offset(tile_off_x + ROOM_SZ_X, tile_off_y);
+			room_exit = 1;
+			return;
+		}
 		else if (char_x < -TILE_X_SZ)
-			return KEY_LT;
+		{
+			char_x += ROOM_SZ_X * TILE_X_SZ;
+			set_offset(tile_off_x - ROOM_SZ_X, tile_off_y);
+			room_exit = 1;
+			return;
+		}
 		else if (char_y > ROOM_SZ_Y*TILE_Y_SZ)
-			return KEY_DN;
+		{
+			char_y -= ROOM_SZ_Y * TILE_Y_SZ;
+			set_offset(tile_off_x, tile_off_y + ROOM_SZ_Y);
+			room_exit = 1;
+			return;
+		}
 		else if (char_y < -TILE_Y_SZ)
-			return KEY_UP;
+		{
+			char_y += ROOM_SZ_Y * TILE_Y_SZ;
+			set_offset(tile_off_x, tile_off_y - ROOM_SZ_Y);
+			room_exit = 1;
+			return;
+		}
 	} else {
 		charspr_ix=0;
 	}
 
-	return 0;
-
 }
-
-
 
 
 void main(void) {
 
-	unsigned room_exit = 0;
+	room_exit = 0;
 
 	//naughty - set jim devno but don't save old
 	*((unsigned char *)0xEE) = JIM_DEVNO_BLITTER;
@@ -366,37 +389,17 @@ void main(void) {
 
 		if (room_exit)
 		{
-			if (room_exit & KEY_RT)
-			{
-				char_x -= ROOM_SZ_X * TILE_X_SZ;
-				set_offset(tile_off_x + ROOM_SZ_X, tile_off_y);
-			}
-			else if (room_exit & KEY_LT)
-			{
-				char_x += ROOM_SZ_X * TILE_X_SZ;
-				set_offset(tile_off_x - ROOM_SZ_X, tile_off_y);
-			}
-			else if (room_exit & KEY_UP)
-			{
-				char_y += ROOM_SZ_Y * TILE_Y_SZ;
-				set_offset(tile_off_x, tile_off_y - ROOM_SZ_Y);
-			}
-			else if (room_exit & KEY_DN)
-			{
-				char_y -= ROOM_SZ_Y * TILE_Y_SZ;
-				set_offset(tile_off_x, tile_off_y + ROOM_SZ_Y);
-			}
-
 			// re draw background
 			draw_map(map_ptr_offset);
 			draw_front_nosave(0x02);
 
+			room_exit = 0;
 		}
 
 		spr_save_start();
 
 
-		room_exit = char_move();
+		char_move();
 
 		charac_spr_plot_start();
 		charac_spr_plot(char_x, char_y, 16);
