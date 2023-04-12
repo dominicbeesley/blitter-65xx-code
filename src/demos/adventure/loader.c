@@ -27,8 +27,6 @@ SOFTWARE.
 #include <oslib/os.h>
 #include <oslib/osfile.h>
 
-#include "gen_vars.h"
-
 #include "hardware.h"
 #include "adv_globals.h"
 #include "dma.h"
