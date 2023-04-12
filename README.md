@@ -25,7 +25,6 @@ The R.CLIB file is included on .ssd images where it is required
 Python is required by the "adventure" and "bigfonts" game/demo. The 
 following python libraries should be installed (using pip)
 
-- xml.etree.ElementTree - xml DOM library
 - pillow - an image processing library (replaces PIL)
 
 ## perl
@@ -33,10 +32,10 @@ Perl 5 is required with the following libraries:
 
 - XML::LibXML
 - Data::Dumper
-- PNG::Libpng
+- Image::PNG::Libpng
 - Convert::Color
 - Math::Trig
-- GetOpt::Long
+- Getopt::Long
 
 These can be installed using CPAN
 
