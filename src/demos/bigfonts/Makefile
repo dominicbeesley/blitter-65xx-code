@@ -1,9 +1,9 @@
 		include ../../Makefile.defs
 
 LD=ld65
-LDOPT=-v -vm -L /usr/share/cc65/lib
+LDOPT=-v -vm
 CC=cc65
-CCOPT=-g -T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I /usr/share/cc65/include
+CCOPT=-g -T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes
 AS=ca65 -I $(TOP)/includes
 ASOPT=
 LOADER_OBJS=loader dma myos

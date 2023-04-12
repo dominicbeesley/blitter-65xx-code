@@ -24,7 +24,7 @@ SOFTWARE.
 */
 
 #include "hardware.h"
-#include "oslib/os.h"
+#include <oslib/os.h>
 #include "adv_globals.h"
 #include "screenmaths.h"
 #include "sprite.h"

@@ -6,6 +6,8 @@ sprite plotting and background preservation capabilities.
 The maps and graphics should be prepared with the [Tiled](https://www.mapeditor.org/)
 game editor
 
+Note: this demo requires a VideoNULA and for the [Aeris HSync/Vsync pick-up wires to be fitted](https://github.com/dominicbeesley/blitter-vhdl-6502/blob/main/doc/getting-started.md#hookup-the-aeris)
+
 # Wander
 
 Fast sprite plotting and preservation tech demo, use < and > keys for 

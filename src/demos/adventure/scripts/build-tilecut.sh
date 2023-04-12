@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #fail on first error
 set -Exe
@@ -54,12 +54,12 @@ cat "$pal" >> "$tmp"
 cat "$charcuts" >> "$tmp"
 
 echo '<dest file="over-back.til" size-x="16" size-y="24" mask="n">' >> "$tmp"
-echo '<source file="src-graphics/overworld16x24.png" />' >> "$tmp"
+echo '<source file="src-graphics/Overworld16x24.png" />' >> "$tmp"
 cat "$backcuts" >> "$tmp"
 echo '</dest>' >> "$tmp"
 
 echo '<dest file="over-front.til" size-x="16" size-y="24" mask="y">' >> "$tmp"
-echo '<source file="src-graphics/overworld16x24.png" />' >> "$tmp"
+echo '<source file="src-graphics/Overworld16x24.png" />' >> "$tmp"
 cat "$frontcuts" >> "$tmp"
 echo '</dest>' >> "$tmp"
 
