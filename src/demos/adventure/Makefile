@@ -10,7 +10,7 @@ SSD=$(SSDS)/adventure.ssd
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
-CCOPT=-T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I /usr/share/cc65/include
+CCOPT=-T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes
 AS=ca65 -I $(TOP)/includes
 ASOPT=
 

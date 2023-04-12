@@ -6,7 +6,7 @@ _dummy := $(shell mkdir -p $(BUILD) $(BUILD)/includes)
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
-CCOPT=-g -T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I /usr/share/cc65/include
+CCOPT=-g -T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes
 AS=ca65 -I $(TOP)/includes
 ASOPT=
 

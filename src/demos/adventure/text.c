@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "oslib/os.h"
+#include <oslib/os.h>
 #include "adv_globals.h"
 #include "hardware.h"
 

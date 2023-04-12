@@ -65,6 +65,17 @@ You may run the make process in lower level folders if (re)building specific
 projects. In most cases the ssd or deploy targets can be used at the relevant
 level to rebuild just that specific disk image.
 
+If you get errors involving header/library search paths, especially for 
+references to oslib/os.h then please check that you have a CC65_HOME
+environment set this needs to point at the root of the cc65 data files
+usually
+
+    export CC65_HOME=/usr/share/cc65
+
+or
+
+    export CC65_HOME/usr/local/share/cc65
+
 ## make overrides
 
 From the command line it is possible to override the location for the build
