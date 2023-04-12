@@ -1,4 +1,4 @@
-#!/bin/perl
+#!/usr/bin/env perl
 
 # extracts map information into a noice symbols file
 
