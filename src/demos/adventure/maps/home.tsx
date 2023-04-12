@@ -46,6 +46,61 @@
    <property name="nocollide" type="bool" value="true"/>
   </properties>
  </tile>
+ <tile id="840">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="841">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="842">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="883">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="884">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="885">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="898">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="899">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="900">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="901">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="902">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
  <tile id="905">
   <properties>
    <property name="nocollide" type="bool" value="true"/>
@@ -66,6 +121,46 @@
    <property name="nocollide" type="bool" value="true"/>
   </properties>
  </tile>
+ <tile id="923">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="924">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="925">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="938">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="939">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="940">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="941">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="942">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
  <tile id="946">
   <properties>
    <property name="border-north" type="bool" value="true"/>
@@ -81,7 +176,72 @@
    <property name="border-north" type="bool" value="true"/>
   </properties>
  </tile>
+ <tile id="963">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="964">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="965">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="978">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="979">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="980">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="981">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="982">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
  <tile id="987">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1018">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1019">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1020">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1021">
+  <properties>
+   <property name="nocollide" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="1022">
   <properties>
    <property name="nocollide" type="bool" value="true"/>
   </properties>
