@@ -45,9 +45,15 @@ extern char tilemap[];
 
 #define	DMA_BACK_SPR	0x010000L
 #define DMA_FRONT_SPR	0x020000L
+#define DMA_COLL_SPR	0x090000L
+
 #define FRONT_SPR_MO	(8*24)				// mask offset from start of spr
 #define FRONT_SPR_SZ	((2*24)+(8*24))			// size of spr
 #define FRONT_SPR_MASK_BYTES_PER_LINE 2
+
+#define COLL_SPR_MO	(8*24)				// mask offset from start of spr
+#define COLL_SPR_SZ	((2*24)+(8*24))			// size of spr
+#define COLL_SPR_MASK_BYTES_PER_LINE 2
 
 #define DMA_SPR_SAVE	0x030000L			// save area for sprites bitmaps
 #define SPR_SAVE_MAX	80				// max sprites that can be saved per frame
@@ -65,8 +71,7 @@ extern char tilemap[];
 #define SCREEN_SZ_X	160
 #define SCREEN_SZ_Y	(TILE_Y_SZ*ROOM_SZ_Y)
 #define SCREEN_D_STRIDE 640
-#define TILE_MAP_STRIDE 30
-#define TILE_MAP_HEIGHT 30
+
 #define TILE_BYTES	8*24				//bytes per tile sprite (no mask)
 #define TILE_SCR_ADDR_STRIDE_X	((TILE_X_SZ >> 1)*8)	//bytes on screen (adjusted for cells)
 #define TILE_SCR_ADDR_STRIDE_Y	(640+640)		//bytes on screen (adjusted for cells) - from end of one line to start of next
@@ -81,11 +86,20 @@ extern char tilemap[];
 // o_spr_save_h	equ	6
 // o_spr_save_l	equ	7
 
-#define TILE_MAP_LAYER_SZ 	(TILE_MAP_STRIDE*TILE_MAP_HEIGHT)				//tile map front offset
-#define TILE_MAP_SZ		(TILE_MAP_LAYER_SZ*2)
-#define A_TILE_MAP		tilemap
-#define DMA_TILE_MAP		0x080000L
+#define TILE_MAP_MAX_W 30
+#define TILE_MAP_MAX_H 30
 
+#define TILE_MAP_LAYER_SZ 	(TILE_MAP_MAX_W*TILE_MAP_MAX_H)				//tile map front offset
+#define TILE_MAP_SZ		(TILE_MAP_LAYER_SZ*3)
+#define A_TILE_MAP		tilemap
+#define DMA_TILE_MAP	0x080000L
+
+#define LAYER_BACK 0
+#define LAYER_FRONT 1
+#define LAYER_COLL 2
+
+#define COLOBJ_FLAG_NOCOL 0x80
+#define COLOBJ_FLAG_BORDER_NORTH 0x01
 
 #define SET_DMA_ADDR(x,y) \
 	{*((byte volatile *)x) = ((y) >> 16); \
@@ -106,8 +120,3 @@ extern char tilemap[];
 
 #endif
 
-extern int tile_off_x;
-extern int tile_off_y;
-
-#define A_TILE_MAP_WITH_OFFS \
-	(((unsigned int)A_TILE_MAP + (unsigned int)tile_off_x + (TILE_MAP_STRIDE*(unsigned int)tile_off_y)))

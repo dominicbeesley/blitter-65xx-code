@@ -1,0 +1,39 @@
+<tile-cutter>
+<!-- directories are relative to build directory -->
+<palette file="main.pal">
+	<ent>#271f2a</ent>
+	<ent>#543940</ent>
+	<ent>#5e382f</ent>
+	<ent>#c43b39</ent>
+	<ent>#7e574b</ent>
+	<ent>#666471</ent>
+	<ent>#2b76b4</ent>
+	<ent>#3f7f45</ent>
+	<ent>#96785a</ent>
+	<ent>#b18253</ent>
+	<ent>#399edd</ent>
+	<ent>#36ba40</ent>
+	<ent>#9ea4aa</ent>
+	<ent>#a2ee63</ent>
+	<ent>#e8d5aa</ent>
+	<ent>#d8d9d6</ent>
+</palette><!-- note paths are relative to build location -->
+<dest file="charac.til" size-x="16" size-y="24" mask="y">
+	<source file="src-graphics/character.png" />
+	<!-- walking down -->
+	<move x="0" y="6"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- walking right -->
+	<move x="0" y="38"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- walking up -->
+	<move x="0" y="68"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- walking left -->
+	<move x="0" y="100"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- shadow and collision mask -->
+	<move x="132" y="135" />
+	<cut x="1" y="1" dir="rd" />
+</dest>
+</tile-cutter>
