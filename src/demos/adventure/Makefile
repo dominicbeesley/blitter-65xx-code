@@ -10,7 +10,7 @@ SSD=$(SSDS)/adventure.ssd
 LD=ld65
 LDOPT=-v -vm
 CC=cc65
-CCOPT=-T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I $(BUILD)/tiles -I
+CCOPT=-T -O -Or -r -I $(TOP)/includes -I $(BUILD)/includes -I $(BUILD)/tiles
 AS=ca65 -I $(TOP)/includes
 ASOPT=
 
@@ -101,7 +101,7 @@ $(BUILD)/tiles/%.map.rle: $(BUILD)/tiles/%.map scripts/runlengthencode.pl
 $(BUILD)/tiles/charac.til:	maps/character.tilecuts.xml src-graphics/character.png
 		$(SCRIPTS)/tilecutter.py maps/character.tilecuts.xml $(shell pwd) $(BUILD)/tiles
 
-$(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til $(BUILD)/tiles/over.map &: \
+$(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til $(BUILD)/tiles/over.collide.til $(BUILD)/tiles/over.map &: \
 		src-graphics/Overworld16x24.png \
 		$(BUILD)/tiles/over.tilecuts.xml
 
