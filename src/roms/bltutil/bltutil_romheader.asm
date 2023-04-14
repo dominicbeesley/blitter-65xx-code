@@ -183,7 +183,7 @@ svc1_ClaimAbs:
 		lda	#$09
 		sta	zp_mos_genPTR
 		lda	#$80
-		sta	zp_mos_genPTR
+		sta	zp_mos_genPTR+1
 
 @cmplp:		ldy	zp_mos_curROM
 		jsr	OSRDRM
