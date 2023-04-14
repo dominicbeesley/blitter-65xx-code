@@ -571,7 +571,7 @@ strCmdBLInfo:		.byte	"BLINFO",0
 strCmdBLLOAD:		.byte	"BLLOAD",0
 strHelpBLLoad:		.byte	"<file> [#dev] [<start>]"
 strCmdBLSAVE:		.byte	"BLSAVE",0
-strHelpBLSave:		.byte	"<file> [#dev] <start> <end>|+<len>"
+strHelpBLSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
 
 cmdHelpPresent:		.byte	130,"(Blitter present)",0
 cmdHelpPaulaPresent:		.byte	130," (1M Paula present)",0
