@@ -48,7 +48,7 @@ deploy: ssd
 	mkdir -p $(DEPLOY_TOP)/advent65 
 	dfs read -i -d $(DEPLOY_TOP)/advent65 $(SSD)
 
-$(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.bin $(CLIBDIR)/clib.rom
+$(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.xxx $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
 	dfs title $(SSD) advent65
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.CHARAC' $(SSD) $(BUILD)/tiles/charac.rle
