@@ -30,12 +30,13 @@ all:	$(TARGETS_O)
 
 ssd: $(SSD)
 
-$(SSD): $(TARGETS_O) assets/RAIN.B _21BOOT.txt $(CLIBDIR)/clib.rom
+$(SSD): $(TARGETS_O) assets/RAIN.B _21BOOT.xxx $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
+	dfs title $(SSD) "copper"
 	dfs add -l 0xE00 -e 0xE00 -f "$.LOADER" $(SSD) $(BUILD)/loader.bin
 	dfs add -l 0xE00 -e 0xE00 -f "$.DEMO" $(SSD) $(BUILD)/demo.bin
 	dfs add -f "B.RAIN" $(SSD) assets/RAIN.B
-	dfs add -f "$.!BOOT" $(SSD) _21BOOT.txt
+	dfs add -f "$.!BOOT" $(SSD) _21BOOT.xxx
 	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(CLIBDIR)/clib.rom
 	dfs opt4 -3 $(SSD)
 

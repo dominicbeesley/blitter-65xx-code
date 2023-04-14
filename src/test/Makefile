@@ -33,6 +33,6 @@ $(BUILD)/test-line-plot/test-line.bin:
 
 $(SSD):	$(OBJS_O)
 	dfs form -80 $(SSD)
-	dfs title $(SSD) "roms65"
+	dfs title $(SSD) "blittest"
 	dfs add $(SSD) $(addsuffix .inf, $(OBJS_O)) 
 

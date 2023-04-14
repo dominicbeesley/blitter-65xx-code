@@ -51,6 +51,7 @@ deploy: ssd
 $(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.xxx $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
 	dfs title $(SSD) advent65
+	dfs opt4 -3 $(SSD)
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.CHARAC' $(SSD) $(BUILD)/tiles/charac.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'P.MAIN' $(SSD) $(BUILD)/tiles/over.pal
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OBACK' $(SSD) $(BUILD)/tiles/over.back.rle

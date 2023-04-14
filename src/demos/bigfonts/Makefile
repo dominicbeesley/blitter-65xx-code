@@ -29,14 +29,14 @@ deploy:	ssd
 		mkdir -p $(DEPLOY_TOP)/bigfonts
 		dfs read -i -d $(DEPLOY_TOP)/bigfonts $(SSD)
 
-$(SSD): $(TARGETS) _21BOOT.txt $(CLIBDIR)/clib.rom
+$(SSD): $(TARGETS) _21BOOT.xxx $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
 	dfs add -f "T.FONT" $(SSD) $(BUILD)/font.til
 	dfs add -f "T.OWL" $(SSD) $(BUILD)/owl.til
 	dfs add -f "P.MAIN" $(SSD) $(BUILD)/main.pal
 	dfs add -l 0x1900 -e 0x1900 -f "LOADER" $(SSD) $(BUILD)/loader.bin
 	dfs add -l 0x1100 -e 0x1100 -f "DEMO" $(SSD) $(BUILD)/demo.bin
-	dfs add -f "!BOOT" $(SSD) _21BOOT.txt 
+	dfs add -f "!BOOT" $(SSD) _21BOOT.xxx
 	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(CLIBDIR)/clib.rom
 	dfs title $(SSD) "bigfonts"
 	dfs opt4 -3 $(SSD)

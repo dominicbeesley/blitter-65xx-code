@@ -35,6 +35,7 @@ PICS_BBC=$(addprefix $(BUILD)/, $(notdir $(patsubst %.png,%.bbc, $(PICS))))
 
 $(SSD): $(PICS_BBC) $(TARGETS_O) $(CLIBDIR)/clib.rom
 	dfs form -80 $(SSD)
+	dfs title $(SSD) "mode640400"
 	dfs add -l 0xE00 -e 0xE00 -f "DEMO" $(SSD) $(BUILD)/demo.bin
 	dfs add $(SSD) $(addsuffix .inf, $(PICS_BBC))
 	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(CLIBDIR)/clib.rom

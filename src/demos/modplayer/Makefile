@@ -32,3 +32,4 @@ $(SSD):	$(PAULA_OBJS_O) $(wildcard paula_files/.*)
 	dfs title $(SSD) "1mpaula"
 	dfs add $(SSD) $(addsuffix .inf, $(PAULA_OBJS_O))
 	dfs add $(SSD) paula_files/*.inf
+	dfs opt4 -3 $(SSD)
