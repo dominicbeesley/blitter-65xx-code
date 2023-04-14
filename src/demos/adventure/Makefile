@@ -60,7 +60,7 @@ $(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.xxx $(CLIBDIR)/clib.rom
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.GAME' $(SSD) $(BUILD)/game.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin
 	dfs add -l FFFF0E00 -e FFFF0E00 -f '$.LOADER' $(SSD) $(BUILD)/loader.bin
-	dfs add -l FFFFFFFF -e FFFFFFFF -f '$.!BOOT' $(SSD) ./ssd/_21BOOT.txt
+	dfs add -l FFFFFFFF -e FFFFFFFF -f '$.!BOOT' $(SSD) ./ssd/_21BOOT.xxx
 	dfs add -l FFFF8000 -e FFFF8000 -f 'R.CLIB' $(SSD) $(CLIBDIR)/clib.rom
 
 $(BUILD)/game.bin: $(GAME_OBJS_O) game.cfg
