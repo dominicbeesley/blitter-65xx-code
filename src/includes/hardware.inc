@@ -15,7 +15,8 @@ sheila_MEM_TURBO2		:= $FE36
 BITS_MEM_TURBO2_THROTTLE	:= $80
 
 sheila_MEM_LOMEMTURBO		:= $FE37
-
+sheila_ROM_THROTTLE_0		:= $FE33
+sheila_ROM_THROTTLE_1		:= $FE35
 
 sheila_ACIA_CTL		:=	$FE08
 ACIA_RDRF		:=	$01

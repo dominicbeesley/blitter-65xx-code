@@ -569,7 +569,33 @@ cmdRoms_Go:
 
 		lda	#0
 		sta	zp_ROMS_ctr
-cmdRoms_lp:	jsr	Print2Spc
+cmdRoms_lp:	
+
+		; print "T" for rom throttle active
+
+		lda	zp_ROMS_ctr
+		ldy	sheila_ROM_THROTTLE_0
+		cmp	#8
+		bcc	@s1
+		ldy	sheila_ROM_THROTTLE_1
+@s1:		and	#$7
+		tax
+		tya
+@l1:		dex
+		bmi	@s2
+		ror	A		
+		bne	@l1
+@s2:		and	#1
+		beq	@s3
+		
+		lda	#'T'
+		jsr	OSWRCH
+		jsr	Print`Spc
+		jmp	@s4
+
+@s3:		jsr	Print2Spc
+@s4:	
+
 		lda	zp_ROMS_ctr
 		jsr	PrintHexNybA			; rom #
 		jsr	Print2Spc
