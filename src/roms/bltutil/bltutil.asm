@@ -590,7 +590,7 @@ cmdRoms_lp:
 		
 		lda	#'T'
 		jsr	OSWRCH
-		jsr	Print`Spc
+		jsr	PrintSpc
 		jmp	@s4
 
 @s3:		jsr	Print2Spc
