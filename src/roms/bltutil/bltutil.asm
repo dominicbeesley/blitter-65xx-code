@@ -570,6 +570,11 @@ cmdRoms_Go:
 		lda	#0
 		sta	zp_ROMS_ctr
 cmdRoms_lp:	
+		jsr	cfgGetAPISubLevel
+		bcs	@s3
+		beq	@s3
+		cpx	#2
+		bcc	@s3
 
 		; print "T" for rom throttle active
 

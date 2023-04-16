@@ -37,6 +37,7 @@
 		.export printHardCPU
 		.export cfgPrintVersionBoot
 		.export cfgGetAPILevel
+		.export cfgGetAPISubLevel
 		.export cfgGetRomMap
 		.export cfgGetStringY
 		.export cfgPrintStringY
@@ -211,6 +212,22 @@ cfgGetAPILevel:
 		jsr	jimPageVersion
 		lda	JIM+jim_offs_VERSION_API_level
 @ret:		rts
+
+;-----------------------------------------------------------------------------
+; cfgGetAPISubLevel
+;-----------------------------------------------------------------------------
+; Returns API level in A, Sublevel in X
+; on exit the current JIM page will be pointing to the VERSION info page
+; returns CS if Blitter not present/selected (by testing zp_mos_jimdevsave)
+; Z flag is set if API=0
+cfgGetAPISubLevel:
+		ldx	#0
+		jsr	cfgGetAPILevel		
+		bcs	@ret
+		beq	@ret
+		ldx	JIM+jim_offs_VERSION_API_sublevel
+@ret:		rts
+
 
 ;;; ;-----------------------------------------------------------------------------
 ;;; ; cfgGetAPILevelExt
