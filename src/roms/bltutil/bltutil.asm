@@ -235,11 +235,42 @@ cmdBLTurboQry:
 		jsr	OSWRCH
 @ton:
 
+		; Throttled ROMS
+		ldx	#0
+		stx	zp_trans_tmp			; flags $80 had hit
+
+		lda	sheila_ROM_THROTTLE_0
+		jsr	@bltrom8
+		lda	sheila_ROM_THROTTLE_1
+		jsr	@bltrom8
+
 		jsr	OSNEWL
 
 		pla
 		tay					; restore command pointer
 		jmp	cmdBLTurbo_Next
+
+
+@bltrom8:	sta	zp_trans_acc
+		ldy	#8
+@bltrom8lp:	ror	zp_trans_acc
+		bcc	@bltrom8nxt
+		bit	zp_trans_tmp
+		bmi	@already
+		lda	#$80
+		sta	zp_trans_tmp			; mark already
+		jsr	PrintSpc
+		lda	#'R'
+		bne	@blsk1
+@already:	lda	#','
+@blsk1:		jsr	OSWRCH
+		txa
+		jsr	PrintHexNybA
+@bltrom8nxt:	dey
+		inx
+		bne	@bltrom8lp
+		rts
+
 
 
 cmdBLTurboEnd:
