@@ -80,6 +80,8 @@
 
 		.export brkBadCommand
 		.export brkInvalidArgument
+
+		.export bitX
 ;
 ; -----------------------------
 ; Generate a sideways ROM error in ADDR_ERRBUF *stack or other space*
@@ -379,19 +381,14 @@ ParseHex:
 ParseHexLp:	lda	(zp_mos_txtptr),Y
 		iny
 		jsr	ToUpper
-		inx	
-		beq	@1
-		cmp	#'+'
-		beq	ParseHexDone	
-@1:		cmp	#' '+1
-		bcc	ParseHexDone
 		cmp	#'0'
 		bcc	ParseHexErr
 		cmp	#'9'+1
 		bcs	ParseHexAlpha
 		sec
 		sbc	#'0'
-ParseHexShAd:	jsr	asl4Acc				; multiply existing number by 16
+ParseHexShAd:	inx
+		jsr	asl4Acc				; multiply existing number by 16
 		jsr	addAAcc				; add current digit
 		jmp	ParseHexLp
 ParseHexAlpha:	cmp	#'A'
@@ -400,7 +397,9 @@ ParseHexAlpha:	cmp	#'A'
 		bcs	ParseHexErr
 		sbc	#'A'-11				; note carry clear 'A'-'F' => 10-15
 		jmp	ParseHexShAd
-ParseHexErr:	sec
+ParseHexErr:	inx
+		bne	ParseHexDone
+		sec
 		pla
 		tax
 		pla
@@ -795,6 +794,17 @@ brkBadCommand:	M_ERROR
 brkInvalidArgument:
 		M_ERROR
 		.byte	$7F, "Invalid Argument", 0
+
+
+bitX:		; bit A of A is set to 1, return X=0
+		tax
+		inx
+		lda	#0
+		sec
+@lp:		rol	A
+		dex
+		bne	@lp
+		rts
 
 
 		.SEGMENT "RODATA"

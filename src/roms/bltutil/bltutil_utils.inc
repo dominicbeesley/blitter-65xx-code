@@ -54,3 +54,5 @@
 
 		.import brkBadCommand
 		.import brkInvalidArgument
+
+		.import bitX

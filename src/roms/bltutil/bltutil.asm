@@ -43,6 +43,7 @@
 		.include	"bltutil_noice.inc"
 		.include	"bltutil_romheader.inc"
 		.include	"bltutil_cfg.inc"
+		.include	"bltutil_i2c.inc"
 
 		.export cmdBLTurbo
 		.export cmdXMdump
@@ -434,12 +435,117 @@ cmdBLTurbo_MOSSlotBusy:
 		.byte	$FF, "Slot #8 is in use cannot BLTURBO MOS",0
 
 cmdBLTurboRom:
-		rts
+		jsr	ParseHex				
+		bcs	@brkInvalidArgument3
+		
+		lda	zp_trans_acc
+		cmp	#16
+		bcc	@ok1
+@brkInvalidArgument3:
+		jmp	brkInvalidArgument
+@ok1:		sta	zp_trans_tmp			; rom # and flags 
+
+		; check for [-][X][!]
+@lpfl:		lda	(zp_mos_txtptr),Y
+		jsr	ToUpper
+		cmp	#$D
+		beq	@rgo
+		cmp	#' '
+		beq	@rgo
+
+		tax
+		lda	zp_trans_tmp
+
+		cpx	#'-'
+		bne	@ckX
+		ora	#$80				; add minus flag
+		bne	@rnxtflag
+@ckX:		cpx	#'X'
+		bne	@ckPling
+		ora	#$40				; X flag
+		bne	@rnxtflag
+@ckPling:	cpx	#'!'
+		bne	brkInvalidArgument2
+		ora	#$20
+@rnxtflag:	sta	zp_trans_tmp
+		iny
+		bne	@lpfl
+
+@rgo:		tya
+		pha
+		ldy	#0
+		lda	#8
+		bit	zp_trans_tmp
+		bvs	@altset
+		beq	@sk
+		ldy	#2				; X now contains 0 or 2
+@sk:		lda	zp_trans_tmp
+		and	#7
+		tax
+		jsr	bitX
+
+		bit	zp_trans_tmp
+		bpl	@pl
+		eor	#$ff
+		and	sheila_ROM_THROTTLE_0,Y
+		jmp	@s
+@pl:		ora	sheila_ROM_THROTTLE_0,Y
+@s:		sta	sheila_ROM_THROTTLE_0,Y
+		
+
+@altset:		;check for write to CMOS
+		lda	#$20
+		bit	zp_trans_tmp
+		beq	@nocmos
+
+		; work out cmos address in Y
+		ldy	#0
+		jsr	cfgGetRomMap
+		cmp	#1
+		bne	@notmap1
+		ldy	#2
+@notmap1:	lda	#8
+		bit	zp_trans_tmp
+		beq	@noge8
+		iny
+@noge8:		; y now contains the CMOS address - $1100
+		tya
+		pha
+		jsr	bltutil_firmCMOSRead
+		sta	zp_trans_acc
+
+		lda	zp_trans_tmp
+		and	#7
+		tax
+		jsr	bitX
+
+		bit	zp_trans_tmp
+		bmi	@pl2
+		eor	#$ff
+		and	zp_trans_acc
+		jmp	@s2
+@pl2:		ora	zp_trans_acc
+@s2:		sta	zp_trans_acc
+		pla
+		tay
+		lda	zp_trans_acc
+		jsr	bltutil_firmCMOSWrite
+
+
+@nocmos:		pla
+		tay
+
+
+		jmp	cmdBLTurbo_Next
+		
+
+
 cmdBLTurboLo:	
 		jsr	ParseHex		
-		bcc	@s1
+		bcc	cmdBLTurboLo_s1
+brkInvalidArgument2:
 		jmp	brkInvalidArgument
-@s1:		
+cmdBLTurboLo_s1:		
 		tya
 		pha					; store text pointer
 		php					; save interrupt status
