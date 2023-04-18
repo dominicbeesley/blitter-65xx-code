@@ -1947,14 +1947,12 @@ romThrottleInit:
 		jsr	bltutil_firmCMOSRead	; get from CMOS 1100,Y
 		eor	#$FF
 		sta	sheila_ROM_THROTTLE_0
-		jsr	PrintHexA
 		pla
 		tay
 		iny
 		jsr	bltutil_firmCMOSRead	; get from CMOS 1101,Y
 		eor	#$FF
 		sta	sheila_ROM_THROTTLE_1
-		jsr	PrintHexA
 
 @s3:		rts		
 
