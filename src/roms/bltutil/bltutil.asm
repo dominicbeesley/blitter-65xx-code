@@ -735,10 +735,7 @@ cmdRoms_lp:
 		pla	
 		sta	zp_ROMS_bank			; HI page
 
-		jsr	cfgGetAPISubLevel
-		bcs	@s3
-		beq	@s3
-		cpx	#2
+		jsr	cfgGetAPISubLevel_1_2
 		bcc	@s3
 
 		; print "T" for rom throttle active
@@ -1932,10 +1929,7 @@ cmdBLSave:	jsr	loadsavegetfn
 		rts
 
 romThrottleInit:
-		jsr	cfgGetAPISubLevel
-		bcs	@s3
-		beq	@s3
-		cpx	#2
+		jsr	cfgGetAPISubLevel_1_2
 		bcc	@s3
 
 		jsr	cfgGetRomMap

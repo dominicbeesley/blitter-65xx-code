@@ -42,6 +42,7 @@
 		.export cfgGetStringY
 		.export cfgPrintStringY
 		.export cmdInfo
+		.export cfgGetAPISubLevel_1_2
 
 
 ; NOTE: sheila BLT_MK2_CFG0/1 registers are deprecated - now in JIM page FC 008x
@@ -228,6 +229,18 @@ cfgGetAPISubLevel:
 		ldx	JIM+jim_offs_VERSION_API_sublevel
 @ret:		rts
 
+
+cfgGetAPISubLevel_1_2:
+; return Cy=1 when API >= 1.2
+		jsr	cfgGetAPISubLevel
+		bcs	@s3
+		beq	@s3
+		cmp	#2
+		bcs	@ret
+		cpx	#2
+@ret:		rts
+@s3:		clc
+		rts
 
 ;;; ;-----------------------------------------------------------------------------
 ;;; ; cfgGetAPILevelExt
