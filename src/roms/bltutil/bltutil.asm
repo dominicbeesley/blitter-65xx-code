@@ -56,7 +56,7 @@
 		.export cmdRoms
 		.export cmdBLLoad
 		.export cmdBLSave
-
+		.export romThrottleInit
 
 		.CODE
 
@@ -496,21 +496,23 @@ cmdBLTurboRom:
 @altset:		;check for write to CMOS
 		lda	#$20
 		bit	zp_trans_tmp
+		bvs	@docmos			; X implies !
 		beq	@nocmos
 
-		; work out cmos address in Y
-		ldy	#0
+
+@docmos:		; work out cmos address in Y
 		jsr	cfgGetRomMap
-		cmp	#1
-		bne	@notmap1
-		ldy	#2
-@notmap1:	lda	#8
 		bit	zp_trans_tmp
-		beq	@noge8
-		iny
-@noge8:		; y now contains the CMOS address - $1100
-		tya
-		pha
+		bvc	@noswap
+		eor	#1
+@noswap:		and	#1
+		sta	zp_trans_acc+1
+		lda	zp_trans_tmp		; if >8 rol 1 into bottom bit
+		and	#$F
+		cmp	#8
+		rol	zp_trans_acc+1
+		ldy	zp_trans_acc+1
+		; y now contains the CMOS address - $1100
 		jsr	bltutil_firmCMOSRead
 		sta	zp_trans_acc
 
@@ -526,7 +528,7 @@ cmdBLTurboRom:
 		jmp	@s2
 @pl2:		ora	zp_trans_acc
 @s2:		sta	zp_trans_acc
-		pla
+		lda	zp_trans_acc+1
 		tay
 		lda	zp_trans_acc
 		jsr	bltutil_firmCMOSWrite
@@ -707,6 +709,32 @@ cmdRoms_Go:
 		lda	#0
 		sta	zp_ROMS_ctr
 cmdRoms_lp:	
+		; get rom base using OSWORD 99
+		lda	#0
+		sta	zp_mos_genPTR
+		pha					; return hi
+		lda	zp_ROMS_flags
+		and	#CMDROMS_FLMASK
+		pha
+		lda	zp_ROMS_ctr
+		pha
+		lda	#5				; OSWORD return len
+		pha
+		lda	#4				; OSWORD in len
+		tsx
+		pha
+		ldy	#1
+		lda	#OSWORD_BLTUTIL
+		jsr	OSWORD
+		pla
+		pla					; ignore lengths
+		pla					
+		sta	zp_ROMS_OS99ret			; contains return flags from OS99
+		pla			
+		sta	zp_mos_genPTR+1			; LO page
+		pla	
+		sta	zp_ROMS_bank			; HI page
+
 		jsr	cfgGetAPISubLevel
 		bcs	@s3
 		beq	@s3
@@ -715,7 +743,24 @@ cmdRoms_lp:
 
 		; print "T" for rom throttle active
 
+		lda	zp_ROMS_OS99ret
+		and	#OSWORD_BLTUTIL_RET_ISCUR
+		bne	@st1a
+
+		; alt set - get from CMOS
+		lda	zp_ROMS_OS99ret
+		and	#1
+		ldy	zp_ROMS_ctr
+		cpy	#8
+		rol	A
+		tay
+		jsr	bltutil_firmCMOSRead
+		eor	#$FF
+		tay
 		lda	zp_ROMS_ctr
+		jmp	@s1
+
+@st1a:		lda	zp_ROMS_ctr
 		ldy	sheila_ROM_THROTTLE_0
 		cmp	#8
 		bcc	@s1
@@ -742,31 +787,6 @@ cmdRoms_lp:
 		jsr	PrintHexNybA			; rom #
 		jsr	Print2Spc
 
-		; get rom base using OSWORD 99
-		lda	#0
-		sta	zp_mos_genPTR
-		pha					; return hi
-		lda	zp_ROMS_flags
-		and	#CMDROMS_FLMASK
-		pha
-		lda	zp_ROMS_ctr
-		pha
-		lda	#5				; OSWORD return len
-		pha
-		lda	#4				; OSWORD in len
-		tsx
-		pha
-		ldy	#1
-		lda	#OSWORD_BLTUTIL
-		jsr	OSWORD
-		pla
-		pla					; ignore lengths
-		pla					
-		sta	zp_ROMS_OS99ret			; contains return flags from OS99
-		pla			
-		sta	zp_mos_genPTR+1			; LO page
-		pla	
-		sta	zp_ROMS_bank			; HI page
 
 
 		lda	zp_ROMS_OS99ret
@@ -1910,6 +1930,33 @@ cmdBLSave:	jsr	loadsavegetfn
 
 
 		rts
+
+romThrottleInit:
+		jsr	cfgGetAPISubLevel
+		bcs	@s3
+		beq	@s3
+		cpx	#2
+		bcc	@s3
+
+		jsr	cfgGetRomMap
+		rol	A
+		and	#2
+		pha
+
+		tay
+		jsr	bltutil_firmCMOSRead	; get from CMOS 1100,Y
+		eor	#$FF
+		sta	sheila_ROM_THROTTLE_0
+		jsr	PrintHexA
+		pla
+		tay
+		iny
+		jsr	bltutil_firmCMOSRead	; get from CMOS 1101,Y
+		eor	#$FF
+		sta	sheila_ROM_THROTTLE_1
+		jsr	PrintHexA
+
+@s3:		rts		
 
 ;------------------------------------------------------------------------------
 ; Strings and tables

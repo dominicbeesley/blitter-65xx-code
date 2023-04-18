@@ -47,6 +47,7 @@
 		.import cmdRoms
 		.import cmdBLLoad
 		.import cmdBLSave
+		.import romThrottleInit
 
 
 
@@ -238,6 +239,9 @@ svc1_ClaimAbs:
 		jmp	cmdSRNUKE_reboot
 
 @s2:		
+		jsr	romThrottleInit
+
+
 		jsr	cfgPrintVersionBoot
 		bcs	@nope
 		jsr	OSNEWL
@@ -556,7 +560,7 @@ strHelpNoIce:		.byte	"[ON|OFF]",0
 strCmdNOICE_BRK:	.byte	"NOICEBRK",0
 strHelpNoIce_BRK:	.byte	0
 strCmdBLTurbo:		.byte	"BLTURBO",0
-strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[X][!]] [?]",0
+strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[-][X][!]] [?]",0
 strCmdSound:		.byte	"BLSOUND", 0
 strHelpSound:		.byte	"[ON|OFF|DETUNE]", 0
 strCmdHeapInfo:		.byte	"BLHINF",0
