@@ -236,6 +236,9 @@ cmdBLTurboQry:
 		jsr	OSWRCH
 @ton:
 
+		jsr	cfgGetAPISubLevel_1_2
+		bcc	cmdBLTurboEnd
+
 		; Throttled ROMS
 		ldx	#0
 		stx	zp_trans_tmp			; flags $80 had hit
@@ -267,8 +270,8 @@ cmdBLTurboQry:
 @blsk1:		jsr	OSWRCH
 		txa
 		jsr	PrintHexNybA
-@bltrom8nxt:	dey
-		inx
+@bltrom8nxt:	inx
+		dey
 		bne	@bltrom8lp
 		rts
 
@@ -437,7 +440,10 @@ cmdBLTurbo_MOSSlotBusy:
 cmdBLTurboRom:
 		jsr	ParseHex				
 		bcs	@brkInvalidArgument3
-		
+	
+		jsr	cfgGetAPISubLevel_1_2
+		bcc	@brkInvalidArgument3
+
 		lda	zp_trans_acc
 		cmp	#16
 		bcc	@ok1
