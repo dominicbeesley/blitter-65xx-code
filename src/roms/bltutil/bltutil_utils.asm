@@ -40,6 +40,7 @@
 		.export	PrintHexXY
 		.export	PrintMsgXYThenHexNyb
 		.export	PrintXY
+		.export	PrintXYTB
 		.export	PrintPTR
 		.export PrintImmed
 		.export	PromptYN
@@ -207,8 +208,8 @@ PrintImmed:	pha
 		pla
 		rts
 
-
-PrintXY:	lda	zp_tmp_ptr
+		; zero terminated string at XY
+PrintXY:		lda	zp_tmp_ptr
 		pha
 		lda	zp_tmp_ptr+1
 		pha
@@ -230,6 +231,36 @@ PrintPTR:
 		cmp	#0
 		beq	@out
 		jsr	OSASCI
+		cpy	#0
+		bne	@lp
+@out:		rts
+
+
+		; to-bit terminated string at XY
+PrintXYTB:	lda	zp_tmp_ptr
+		pha
+		lda	zp_tmp_ptr+1
+		pha
+
+		stx	zp_tmp_ptr
+		sty	zp_tmp_ptr + 1
+		ldy	#0
+		jsr	PrintPTRTB
+
+		pla
+		sta	zp_tmp_ptr+1
+		pla
+		sta	zp_tmp_ptr
+		rts
+
+PrintPTRTB:
+@lp:		lda	(zp_tmp_ptr),Y
+		pha
+		iny		
+		and	#$7F
+		jsr	OSASCI
+		pla
+		bmi	@out
 		cpy	#0
 		bne	@lp
 @out:		rts

@@ -11,6 +11,7 @@
 		.import	PrintHexXY
 		.import	PrintMsgXYThenHexNyb
 		.import	PrintXY
+		.import	PrintXYTB
 		.import	PrintPTR
 		.import PrintImmed
 		.import	PromptYN
