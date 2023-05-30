@@ -37,10 +37,12 @@
 		.export printHardCPU
 		.export cfgPrintVersionBoot
 		.export cfgGetAPILevel
+		.export cfgGetAPISubLevel
 		.export cfgGetRomMap
 		.export cfgGetStringY
 		.export cfgPrintStringY
 		.export cmdInfo
+		.export cfgGetAPISubLevel_1_2
 
 
 ; NOTE: sheila BLT_MK2_CFG0/1 registers are deprecated - now in JIM page FC 008x
@@ -153,13 +155,13 @@ cfgPrintVersionBoot:
 		pla				; Discard API
 		ldx	#<str_Paula
 		ldy	#>str_Paula
-		jsr	PrintXY			; Print banner and Exit
+		jsr	PrintXYTB		; Print banner and Exit
 		clc
 		rts
 
 @skP:		ldx	#<str_Blitter
 		ldy	#>str_Blitter
-		jsr	PrintXY
+		jsr	PrintXYTB
 
 		pla
 		pha
@@ -211,6 +213,34 @@ cfgGetAPILevel:
 		jsr	jimPageVersion
 		lda	JIM+jim_offs_VERSION_API_level
 @ret:		rts
+
+;-----------------------------------------------------------------------------
+; cfgGetAPISubLevel
+;-----------------------------------------------------------------------------
+; Returns API level in A, Sublevel in X
+; on exit the current JIM page will be pointing to the VERSION info page
+; returns CS if Blitter not present/selected (by testing zp_mos_jimdevsave)
+; Z flag is set if API=0
+cfgGetAPISubLevel:
+		ldx	#0
+		jsr	cfgGetAPILevel		
+		bcs	@ret
+		beq	@ret
+		ldx	JIM+jim_offs_VERSION_API_sublevel
+@ret:		rts
+
+
+cfgGetAPISubLevel_1_2:
+; return Cy=1 when API >= 1.2
+		jsr	cfgGetAPISubLevel
+		bcs	@s3
+		beq	@s3
+		cmp	#2
+		bcs	@ret
+		cpx	#2
+@ret:		rts
+@s3:		clc
+		rts
 
 ;;; ;-----------------------------------------------------------------------------
 ;;; ; cfgGetAPILevelExt
@@ -342,7 +372,7 @@ printCPU2:	php
 		ldy	cputbl_mk2+1,X
 		lda	cputbl_mk2,X
 		tax
-		jsr	PrintXY
+		jsr	PrintXYTB
 		jsr	PrintSpc
 		pla
 		tax
@@ -749,7 +779,7 @@ cfgBldTblPrintX2:
 		tax
 		bcc	@sk2
 		iny
-@sk2:		jmp	PrintXY
+@sk2:		jmp	PrintXYTB
 
 cfgBldTblPrintX:
 		jsr	cfgBldTblPrintX2
@@ -843,39 +873,41 @@ CAP_IX_MAX=20
 
 
 str_bld_base:
-str_bld_bran:	.byte	"Repository  ",0
-str_bld_ver:	.byte	"Repo. ver   ",0
-str_bld_date:	.byte	"Build date  ",0
-str_bld_name:	.byte	"Board name  ",0
-str_bld_swromx:	.byte	"Swap Roms",0
-str_bld_mosram:	.byte	"MOSRAM",0
-str_bld_memi:	.byte	"ROM inhibit",0
-str_sys_B:	.byte	"Model B",0
-str_sys_Elk:	.byte	"Electron",0
-str_sys_BPlus:	.byte	"Model B+",0
-str_sys_M128:	.byte	"Master 128",0
-str_sys_UK:	.byte	"Unknown",0
-str_cap_CS:	.byte   "Chipset",0
-str_cap_DMA:	.byte   "DMA",0
-str_Blitter:	.byte  	"Blitter", 0 
-str_cap_AERIS:	.byte   "Aeris",0
-str_cap_I2C:	.byte   "i2c",0
-str_cap_SND:	.byte   "Paula",0
-str_cap_HDMI:	.byte   "HDMI",0
-str_bld_T65:	.byte	"T65",0
-str_cpu_65c02:	.byte	"65C02",0
-str_cpu_6800:	.byte	"6800",0
-str_cpu_80188:	.byte	"80188",0
-str_cpu_65816:	.byte	"65816",0
-str_cpu_6x09:	.byte	"6x09",0
-str_cpu_z80:	.byte	"z80",0
-str_cpu_68008:	.byte	"68008",0
-str_cpu_68000:	.byte	"68000",0
-str_cpu_ARM2:	.byte	"ARM2",0
-str_cpu_Z180:	.byte	"Z180",0
-str_cpu_SuperShadow:	.byte	"SuperShadow",0
-str_10ns_ChipRAM:	.byte	"10ns ChipRAM",0
-str_45ns_BBRAM:	.byte	"45ns BB RAM",0
+str_bld_bran:		.byte	"Repository ", ' '+$80
+str_bld_ver:		.byte	"Repo. ver  ", ' '+$80
+str_bld_date:		.byte	"Build date ", ' '+$80
+str_bld_name:		.byte	"Board name ", ' '+$80
+str_bld_swromx:		.byte	"Swap Rom", 's'+$80
+str_bld_mosram:		.byte	"MOSRA", 'M'+$80
+str_bld_memi:		.byte	"ROM inhibi", 't'+$80
+str_sys_B:		.byte	"Model ", 'B'+$80
+str_sys_Elk:		.byte	"Electro", 'n'+$80
+str_sys_BPlus:		.byte	"Model B", '+'+$80
+str_sys_M128:		.byte	"Master 12", '8'+$80
+str_sys_UK:		.byte	"Unknow", 'n'+$80
+str_cap_CS:		.byte   "Chipse", 't'+$80
+str_cap_DMA:		.byte   "DM", 'A'+$80
+str_Blitter:		.byte  	"Blitter", 'r'+$80
+str_cap_AERIS:		.byte   "Aeri", 's'+$80
+str_cap_I2C:		.byte   "i2", 'c'+$80
+str_cap_SND:		.byte   "Paul", 'a'+$80
+str_cap_HDMI:		.byte   "HDM", 'I'+$80
+str_bld_T65:		.byte	"T6", '5'+$80
+str_cpu_65c02:		.byte	"65C0", '2'+$80
+str_cpu_6800:		.byte	"680", '0'+$80
+str_cpu_80188:		.byte	"8018", '8'+$80
+str_cpu_80186:		.byte	"8018", '6'+$80
+str_cpu_80386ex:	.byte	"80386e", 'x'+$80
+str_cpu_65816:		.byte	"6581", '6'+$80
+str_cpu_6x09:		.byte	"6x0", '9'+$80
+str_cpu_z80:		.byte	"z8", '0'+$80
+str_cpu_68008:		.byte	"6800", '8'+$80
+str_cpu_68000:		.byte	"6800", '0'+$80
+str_cpu_ARM2:		.byte	"ARM", '2'+$80
+str_cpu_Z180:		.byte	"Z18", '0'+$80
+str_cpu_SuperShadow:	.byte	"SuperShado", 'w'+$80
+str_10ns_ChipRAM:	.byte	"10ns ChipRA", 'M'+$80
+str_45ns_BBRAM:		.byte	"45ns BB RA", 'M'+$80
 
 
 		; these are in the order of bits 3..1 of the config byte for the 1st 8 then followed by the mk.3 specifics
@@ -890,10 +922,12 @@ cpu_tbl_6x09_35:	.word	str_cpu_6x09,	$0350
 cpu_tbl_6581_8:		.word	str_cpu_65816,	$0800
 cpu_tbl_68008_10:	.word	str_cpu_68008,	$1000
 
-cpu_tbl_T65:		.word	str_cpu_T65,	$1600
+cpu_tbl_T65:		.word	str_bld_T65,	$1600
 
 cpu_tbl_6800_2:		.word	str_cpu_6800, 	$0200
 cpu_tbl_80188_20:	.word	str_cpu_80188,	$2000
+cpu_tbl_80186_20:	.word	str_cpu_80186,	$2000
+cpu_tbl_80386ex_40:	.word	str_cpu_80386ex,$4000
 cpu_tbl_68000_20:	.word	str_cpu_68000,	$2000
 cpu_tbl_ARM2_8:		.word	str_cpu_ARM2,	$0800
 cpu_tbl_Z180_20:	.word	str_cpu_Z180,	$2000
@@ -909,6 +943,8 @@ cputbl_mk3:		;	bits, tbl offs
 			.byte	$74, cpu_tbl_6x09_35 - cputbl_mk2
 			.byte	$70, cpu_tbl_6800_2 - cputbl_mk2
 			.byte	$40, cpu_tbl_80188_20 - cputbl_mk2
+			.byte	$48, cpu_tbl_80186_20 - cputbl_mk2
+			.byte	$4E, cpu_tbl_80386ex_40 - cputbl_mk2
 			.byte	$30, cpu_tbl_68000_20 - cputbl_mk2
 			.byte	$6E, cpu_tbl_ARM2_8 - cputbl_mk2
 			.byte	$52, cpu_tbl_Z180_20 - cputbl_mk2
@@ -917,8 +953,6 @@ cputbl_mk3_len = * - cputbl_mk3
 
 str_cpu_6502A:		.byte	"6502A",0
 str_cpu_MHz:		.byte	"Mhz",0
-
-str_cpu_T65:		.byte	"T65",0
 
 str_Paula:		.byte  	"1M Paula", 0 
 str_map:		.byte	" ROM set ",0

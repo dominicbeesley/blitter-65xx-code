@@ -43,6 +43,7 @@
 		.include	"bltutil_noice.inc"
 		.include	"bltutil_romheader.inc"
 		.include	"bltutil_cfg.inc"
+		.include	"bltutil_i2c.inc"
 
 		.export cmdBLTurbo
 		.export cmdXMdump
@@ -55,7 +56,7 @@
 		.export cmdRoms
 		.export cmdBLLoad
 		.export cmdBLSave
-
+		.export romThrottleInit
 
 		.CODE
 
@@ -235,11 +236,45 @@ cmdBLTurboQry:
 		jsr	OSWRCH
 @ton:
 
+		jsr	cfgGetAPISubLevel_1_2
+		bcc	cmdBLTurboEnd
+
+		; Throttled ROMS
+		ldx	#0
+		stx	zp_trans_tmp			; flags $80 had hit
+
+		lda	sheila_ROM_THROTTLE_0
+		jsr	@bltrom8
+		lda	sheila_ROM_THROTTLE_1
+		jsr	@bltrom8
+
 		jsr	OSNEWL
 
 		pla
 		tay					; restore command pointer
 		jmp	cmdBLTurbo_Next
+
+
+@bltrom8:	sta	zp_trans_acc
+		ldy	#8
+@bltrom8lp:	ror	zp_trans_acc
+		bcc	@bltrom8nxt
+		bit	zp_trans_tmp
+		bmi	@already
+		lda	#$80
+		sta	zp_trans_tmp			; mark already
+		jsr	PrintSpc
+		lda	#'R'
+		bne	@blsk1
+@already:	lda	#','
+@blsk1:		jsr	OSWRCH
+		txa
+		jsr	PrintHexNybA
+@bltrom8nxt:	inx
+		dey
+		bne	@bltrom8lp
+		rts
+
 
 
 cmdBLTurboEnd:
@@ -403,12 +438,122 @@ cmdBLTurbo_MOSSlotBusy:
 		.byte	$FF, "Slot #8 is in use cannot BLTURBO MOS",0
 
 cmdBLTurboRom:
-		rts
+		jsr	ParseHex				
+		bcs	@brkInvalidArgument3
+	
+		jsr	cfgGetAPISubLevel_1_2
+		bcc	@brkInvalidArgument3
+
+		lda	zp_trans_acc
+		cmp	#16
+		bcc	@ok1
+@brkInvalidArgument3:
+		jmp	brkInvalidArgument
+@ok1:		sta	zp_trans_tmp			; rom # and flags 
+
+		; check for [-][X][!]
+@lpfl:		lda	(zp_mos_txtptr),Y
+		jsr	ToUpper
+		cmp	#$D
+		beq	@rgo
+		cmp	#' '
+		beq	@rgo
+
+		tax
+		lda	zp_trans_tmp
+
+		cpx	#'-'
+		bne	@ckX
+		ora	#$80				; add minus flag
+		bne	@rnxtflag
+@ckX:		cpx	#'X'
+		bne	@ckPling
+		ora	#$40				; X flag
+		bne	@rnxtflag
+@ckPling:	cpx	#'!'
+		bne	brkInvalidArgument2
+		ora	#$20
+@rnxtflag:	sta	zp_trans_tmp
+		iny
+		bne	@lpfl
+
+@rgo:		tya
+		pha
+		ldy	#0
+		lda	#8
+		bit	zp_trans_tmp
+		bvs	@altset
+		beq	@sk
+		ldy	#2				; X now contains 0 or 2
+@sk:		lda	zp_trans_tmp
+		and	#7
+		tax
+		jsr	bitX
+
+		bit	zp_trans_tmp
+		bpl	@pl
+		eor	#$ff
+		and	sheila_ROM_THROTTLE_0,Y
+		jmp	@s
+@pl:		ora	sheila_ROM_THROTTLE_0,Y
+@s:		sta	sheila_ROM_THROTTLE_0,Y
+		
+
+@altset:		;check for write to CMOS
+		lda	#$20
+		bit	zp_trans_tmp
+		bvs	@docmos			; X implies !
+		beq	@nocmos
+
+
+@docmos:		; work out cmos address in Y
+		jsr	cfgGetRomMap
+		bit	zp_trans_tmp
+		bvc	@noswap
+		eor	#1
+@noswap:		and	#1
+		sta	zp_trans_acc+1
+		lda	zp_trans_tmp		; if >8 rol 1 into bottom bit
+		and	#$F
+		cmp	#8
+		rol	zp_trans_acc+1
+		ldy	zp_trans_acc+1
+		; y now contains the CMOS address - $1100
+		jsr	bltutil_firmCMOSRead
+		sta	zp_trans_acc
+
+		lda	zp_trans_tmp
+		and	#7
+		tax
+		jsr	bitX
+
+		bit	zp_trans_tmp
+		bmi	@pl2
+		eor	#$ff
+		and	zp_trans_acc
+		jmp	@s2
+@pl2:		ora	zp_trans_acc
+@s2:		sta	zp_trans_acc
+		lda	zp_trans_acc+1
+		tay
+		lda	zp_trans_acc
+		jsr	bltutil_firmCMOSWrite
+
+
+@nocmos:		pla
+		tay
+
+
+		jmp	cmdBLTurbo_Next
+		
+
+
 cmdBLTurboLo:	
 		jsr	ParseHex		
-		bcc	@s1
+		bcc	cmdBLTurboLo_s1
+brkInvalidArgument2:
 		jmp	brkInvalidArgument
-@s1:		
+cmdBLTurboLo_s1:		
 		tya
 		pha					; store text pointer
 		php					; save interrupt status
@@ -569,11 +714,7 @@ cmdRoms_Go:
 
 		lda	#0
 		sta	zp_ROMS_ctr
-cmdRoms_lp:	jsr	Print2Spc
-		lda	zp_ROMS_ctr
-		jsr	PrintHexNybA			; rom #
-		jsr	Print2Spc
-
+cmdRoms_lp:	
 		; get rom base using OSWORD 99
 		lda	#0
 		sta	zp_mos_genPTR
@@ -599,6 +740,56 @@ cmdRoms_lp:	jsr	Print2Spc
 		sta	zp_mos_genPTR+1			; LO page
 		pla	
 		sta	zp_ROMS_bank			; HI page
+
+		jsr	cfgGetAPISubLevel_1_2
+		bcc	@s3
+
+		; print "T" for rom throttle active
+
+		lda	zp_ROMS_OS99ret
+		and	#OSWORD_BLTUTIL_RET_ISCUR
+		bne	@st1a
+
+		; alt set - get from CMOS
+		lda	zp_ROMS_OS99ret
+		and	#1
+		ldy	zp_ROMS_ctr
+		cpy	#8
+		rol	A
+		tay
+		jsr	bltutil_firmCMOSRead
+		eor	#$FF
+		tay
+		lda	zp_ROMS_ctr
+		jmp	@s1
+
+@st1a:		lda	zp_ROMS_ctr
+		ldy	sheila_ROM_THROTTLE_0
+		cmp	#8
+		bcc	@s1
+		ldy	sheila_ROM_THROTTLE_1
+@s1:		and	#$7
+		tax
+		tya
+@l1:		dex
+		bmi	@s2
+		ror	A		
+		bne	@l1
+@s2:		and	#1
+		beq	@s3
+		
+		lda	#'T'
+		jsr	OSWRCH
+		jsr	PrintSpc
+		jmp	@s4
+
+@s3:		jsr	Print2Spc
+@s4:	
+
+		lda	zp_ROMS_ctr
+		jsr	PrintHexNybA			; rom #
+		jsr	Print2Spc
+
 
 
 		lda	zp_ROMS_OS99ret
@@ -1742,6 +1933,28 @@ cmdBLSave:	jsr	loadsavegetfn
 
 
 		rts
+
+romThrottleInit:
+		jsr	cfgGetAPISubLevel_1_2
+		bcc	@s3
+
+		jsr	cfgGetRomMap
+		rol	A
+		and	#2
+		pha
+
+		tay
+		jsr	bltutil_firmCMOSRead	; get from CMOS 1100,Y
+		eor	#$FF
+		sta	sheila_ROM_THROTTLE_0
+		pla
+		tay
+		iny
+		jsr	bltutil_firmCMOSRead	; get from CMOS 1101,Y
+		eor	#$FF
+		sta	sheila_ROM_THROTTLE_1
+
+@s3:		rts		
 
 ;------------------------------------------------------------------------------
 ; Strings and tables

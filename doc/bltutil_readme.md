@@ -361,4 +361,48 @@ Output
         +3      0 for success, -ve for error
 
 
+OSWORD 99, OP=&13 Read/Write i2c
+--------------------------------
+
+This call can be used to do writes, reads or combined write followed by reads to/from and attached i2c device
+
+```
+        + 3     Number of bytes to write
+        + 4     Number of bytes to read
+        + 5     i2c Device address
+        + 6..   Write/read data
+```
+
+The maximum number of bytes that may be read or written is limited to 127
+
+If there is a read following a write and any of the write bytes are not acked by the device or any other the read will be skipped.
+The number of bytes written and ack'd will be be subtracted from +3 i.e. +3=0 indicates all written
+The number of byte read back into the buffer will be subtracked from +4 i.e. +4=0 indicates all read
+
+The device address at +5 lowest bit will be set to 1 if the device did not acknowledge the address select
+
+If both the number of bytes to read and write are zero then a device select will still be performed and the low bit of the device address at +5 updated. This can be used as a device probe
+
+## i2c CMOS RAM allocations
+
+The mk.2 and mk.3 Blitter boards both contain an i2c EEPROM which may be used for storing configuration data the table below outlines the ranges that have been pre-allocated to the firmware and ranges which may be used freely for end-user applications.
+
+The mk.2 and mk.3 EEPROMs are 64kbit devices with device number A0 the addresses below are in bytes.
+
+### CMOS ranges
+
+| Address       | Description
+|---------------|-------------------------------------------------------------
+| 0000-0FFF     | User applications, please update this document with details
+| 1000-10FF     | OSBYTE A1/A2 - for the Model B / Electron the BLTUTIL rom provides an OSBYTE A1,A2
+| 1100-11FF     | BLTUTILs firmware (see table below)
+| 1200-1FFF     | Reserved please do not use
+
+### BLTUTIL ROM CMOS usage
+
+| Address       | Description
+|---------------|-------------------------------------------------------------
+| 1100-1101     | Per-rom Throttle setting, 1 bit for each ROM, set #0 (reversed sense i.e. 0 = throttle)
+| 1102-1103     | Per-rom Throttle setting, 1 bit for each ROM, set #1 (reversed sense i.e. 0 = throttle)
+
 

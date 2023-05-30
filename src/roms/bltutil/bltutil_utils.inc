@@ -11,6 +11,7 @@
 		.import	PrintHexXY
 		.import	PrintMsgXYThenHexNyb
 		.import	PrintXY
+		.import	PrintXYTB
 		.import	PrintPTR
 		.import PrintImmed
 		.import	PromptYN
@@ -54,3 +55,5 @@
 
 		.import brkBadCommand
 		.import brkInvalidArgument
+
+		.import bitX

@@ -31,7 +31,7 @@
 		.include "bltutil_romheader.inc"
 		.include "bltutil_utils.inc"
 		.include "bltutil_cfg.inc"
-
+		.include "bltutil_i2c.inc"
 		
 
 
@@ -173,7 +173,10 @@ heap_OSWORD_bltutil:
 		jmp	oswordAlloc
 @s2:		cmp	#OSWORD_OP_FREE
 		beq	oswordFree
-		jmp	ServiceOutA0
+		cmp	#OSWORD_OP_I2C
+		bne	@s3
+		jmp	i2c_OSWORD_13
+@s3:		jmp	ServiceOutA0
 
 oswordFree:	jsr	jimSetDEV_either
 		bcs	@exit

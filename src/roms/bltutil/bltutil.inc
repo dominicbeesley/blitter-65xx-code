@@ -34,6 +34,7 @@ OSWORD_BLTUTIL	:=	$99				; blutils #
 
 OSWORD_OP_ALLOC :=	$10
 OSWORD_OP_FREE  :=	$11
+OSWORD_OP_I2C	:=	$13
 
 JIM_SCRATCH	:=	$00FD				; page address of scratch space
 
