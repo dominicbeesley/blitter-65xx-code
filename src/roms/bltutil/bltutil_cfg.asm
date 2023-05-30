@@ -944,7 +944,7 @@ cputbl_mk3:		;	bits, tbl offs
 			.byte	$70, cpu_tbl_6800_2 - cputbl_mk2
 			.byte	$40, cpu_tbl_80188_20 - cputbl_mk2
 			.byte	$48, cpu_tbl_80186_20 - cputbl_mk2
-			.byte	$4A, cpu_tbl_80386ex_40 - cputbl_mk2
+			.byte	$4E, cpu_tbl_80386ex_40 - cputbl_mk2
 			.byte	$30, cpu_tbl_68000_20 - cputbl_mk2
 			.byte	$6E, cpu_tbl_ARM2_8 - cputbl_mk2
 			.byte	$52, cpu_tbl_Z180_20 - cputbl_mk2
