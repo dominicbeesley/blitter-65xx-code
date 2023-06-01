@@ -887,7 +887,7 @@ str_sys_M128:		.byte	"Master 12", '8'+$80
 str_sys_UK:		.byte	"Unknow", 'n'+$80
 str_cap_CS:		.byte   "Chipse", 't'+$80
 str_cap_DMA:		.byte   "DM", 'A'+$80
-str_Blitter:		.byte  	"Blitter", 'r'+$80
+str_Blitter:		.byte  	"Blitte", 'r'+$80
 str_cap_AERIS:		.byte   "Aeri", 's'+$80
 str_cap_I2C:		.byte   "i2", 'c'+$80
 str_cap_SND:		.byte   "Paul", 'a'+$80
@@ -954,5 +954,5 @@ cputbl_mk3_len = * - cputbl_mk3
 str_cpu_6502A:		.byte	"6502A",0
 str_cpu_MHz:		.byte	"Mhz",0
 
-str_Paula:		.byte  	"1M Paula", 0 
+str_Paula:		.byte  	"1M Paul", 'a' + $80
 str_map:		.byte	" ROM set ",0
