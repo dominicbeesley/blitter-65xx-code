@@ -122,10 +122,13 @@ lp:		lda	(zp_ptr),y
 		dex
 		bne	lp
 
+		jsr	wait
+
 		; access text memory via JIM and fill with a repeating pattern of chars
 
 ALPHA_BASE	:= $78	; page number in screen mem
 
+again:
 		ldx	#8				; number of pages to fill
 		ldy	#0
 
@@ -143,18 +146,6 @@ ALPHA_BASE	:= $78	; page number in screen mem
 		bne	@flp
 
 
-; wait for some time
-		lda	#25
-		sta	zp_tmp
-		ldx	#0
-		ldy	#0
-@wt:		dex
-		bne	@wt
-		dey
-		bne	@wt
-		dec 	zp_tmp
-		bne	@wt
-
 		lda	#>HDMI_PAGE_REGS
 		sta	fred_JIM_PAGE_HI
 		lda	#<HDMI_PAGE_REGS
@@ -163,7 +154,7 @@ ALPHA_BASE	:= $78	; page number in screen mem
 		; point at font data for now
 		lda 	#12
 		sta	HDMI_ADDR_CRTC_IX
-		lda	#15
+		lda	#$20
 		sta	HDMI_ADDR_CRTC_DAT
 		lda 	#13
 		sta	HDMI_ADDR_CRTC_IX
@@ -177,8 +168,49 @@ ALPHA_BASE	:= $78	; page number in screen mem
 		sta	HDMI_ADDR_SEQ_DAT		; select ansi/alpha
 
 
-HERE:JMP HERE
-		cli
+		jsr	wait
+
+; copy test card image
+		
+		ldx	#8				; number of pages to fill
+		ldy	#0
+
+		lda	#<screen_data
+		sta	zp_ptr
+		lda	#>screen_data
+		sta	zp_ptr+1
+
+		lda	#>(HDMI_PAGE_MEM+ALPHA_BASE)
+		sta	fred_JIM_PAGE_HI
+		lda	#<(HDMI_PAGE_MEM+ALPHA_BASE)
+		sta	fred_JIM_PAGE_LO
+
+@flp2:		lda	(zp_ptr),Y
+		sta	JIM,Y
+		iny
+		bne	@flp2
+		inc	fred_JIM_PAGE_LO
+		inc	zp_ptr+1
+		dex
+		bne	@flp2
+
+
+		jsr	wait
+
+		jmp	again
+
+wait:
+; wait for some time
+		lda	#25
+		sta	zp_tmp
+		ldx	#0
+		ldy	#0
+@wt:		dex
+		bne	@wt
+		dey
+		bne	@wt
+		dec 	zp_tmp
+		bne	@wt
 		rts
 
 
@@ -209,5 +241,6 @@ _CRTC_REG_TAB:		.byte	$7f				; 0 Horizontal Total	 =128
 
 font_data:		.incbin "VGA8.F16"
 font_end:
-
+screen_data:		.incbin "TEXT.VID"
+scren_end:
 		.END
