@@ -5,7 +5,7 @@ LD=ld65
 
 OBJS=ansi-text
 TARGETS=ansi-text
-DEPS=TEXT.VID VGA8.F16
+DEPS=COLOUR.VID VGA8.F16
 
 OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))

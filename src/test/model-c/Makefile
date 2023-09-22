@@ -5,7 +5,7 @@ DEPLOY=$(DEPLOY_TOP)/modelctest
 
 SUBDIRS=ansi-text
 OBJS=ansi-text/ansi-text.bin
-EXTRAS=$(basename $(wildcard extras/*.inf))
+EXTRAS=$(basename $(wildcard extras/*.inf)) ansi-text/VGA8.F16
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 

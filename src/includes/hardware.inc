@@ -255,6 +255,9 @@ ROMCTL_MOS_SWMOS	:=	$01
 SHEILA_NULA_CTLAUX	:=	$FE22
 SHEILA_NULA_PALAUX	:=	$FE23
 
+sheila_NULA_ctlaux	:=	$FE22
+sheila_NULA_palaux	:=	$FE23
+
 SHEILA_DEBUG		:=	$FEFF
 
 

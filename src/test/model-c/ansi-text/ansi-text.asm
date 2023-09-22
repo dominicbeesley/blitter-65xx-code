@@ -43,6 +43,7 @@ HDMI_ADDR_SEQ_DAT	:=	$FD03
 
 zp_ptr			:=	$70
 zp_tmp			:=	$72
+zp_tmp2			:=	$73
 
 
 BASE_VIDPROC_VALUE	:= $9C ; (mode 0/3)
@@ -88,62 +89,89 @@ _BCBB0:		lda	_CRTC_REG_TAB,X			; get end of 6845 registers 0-11 table
 		sta	HDMI_ADDR_CRTC_DAT
 
 
-		; palette black and white
+;;		; palette black and white
+;;		lda	#$0F
+;;		clc
+;;pplp:		sta	HDMI_ADDR_VIDPROC_PAL
+;;		adc	#$10
+;;		bpl	pplp
+;;
+;;		lda	#$88
+;;pplp2:		sta	HDMI_ADDR_VIDPROC_PAL
+;;		adc	#$10
+;;		bcc	pplp2
+
+		; palette colour
 		lda	#$0F
 		clc
-pplp:		sta	HDMI_ADDR_VIDPROC_PAL
-		adc	#$10
-		bpl	pplp
+ppl:		sta	HDMI_ADDR_VIDPROC_PAL
+		adc	#$0F
+		bcc	ppl
 
-		lda	#$88
-pplp2:		sta	HDMI_ADDR_VIDPROC_PAL
-		adc	#$10
-		bcc	pplp2
+		; ega palette in nula
+		ldx	#0
+		ldy	#32
+@pp2:		lda	palette,X
+		sta	sheila_NULA_palaux
+		inx
+		dey
+		bne	@pp2
 
-		; get pointer to font
-		lda	#<font_data
-		sta	zp_ptr
-		lda	#>font_data
-		sta	zp_ptr+1
+		; load font at FFFF3000 - assume this is mapped to gfx
+		lda	#$FF
+		ldx	#<FONT_FILE
+		ldy	#>FONT_FILE
+		jsr	OSFILE
 
-		lda	#>(HDMI_PAGE_MEM+$30)
-		sta	fred_JIM_PAGE_HI
-		lda	#<(HDMI_PAGE_MEM+$30)
-		sta	fred_JIM_PAGE_LO
-
-		ldy	#0
-		ldx	#1+>(font_end-font_data)
-lp:		lda	(zp_ptr),y
-		sta	JIM,y
-		iny
-		bne	lp
-		inc	zp_ptr+1
-		inc	fred_JIM_PAGE_LO
-		dex
-		bne	lp
 
 		jsr	wait
 
 		; access text memory via JIM and fill with a repeating pattern of chars
 
-ALPHA_BASE	:= $78	; page number in screen mem
+ALPHA_BASE	:= $70	; page number in screen mem
 
 again:
-		ldx	#8				; number of pages to fill
+		; fill screen memory with attributes and chars
+		ldx	#32				; number of lines
 		ldy	#0
 
 		lda	#>(HDMI_PAGE_MEM+ALPHA_BASE)
 		sta	fred_JIM_PAGE_HI
 		lda	#<(HDMI_PAGE_MEM+ALPHA_BASE)
 		sta	fred_JIM_PAGE_LO
-
-@flp:		tya
+@flp3:		lda	#80
+		sta	zp_tmp2
+@flp:		; character
+		lda	fred_JIM_PAGE_LO
+		ror	A
+		tya
+		ror	A
 		sta	JIM,Y
 		iny
-		bne	@flp
+		; attribute
+		sec
+		lda	#80
+		sbc	zp_tmp2
+		lsr	A
+		lsr	A		
+		and	#$F				; foreground colour
+		sta	zp_tmp		
+		txa	
+		and	#$F
+		eor	#$F
+		asl	A
+		asl	A
+		asl	A
+		asl	A
+		ora	zp_tmp
+		sta	JIM,Y
+		iny
+		bne	@fsk1
 		inc	fred_JIM_PAGE_LO
-		dex
+@fsk1:		dec	zp_tmp2
 		bne	@flp
+		dex
+		bne	@flp3
 
 
 		lda	#>HDMI_PAGE_REGS
@@ -154,7 +182,7 @@ again:
 		; point at font data for now
 		lda 	#12
 		sta	HDMI_ADDR_CRTC_IX
-		lda	#$20
+		lda	#$00
 		sta	HDMI_ADDR_CRTC_DAT
 		lda 	#13
 		sta	HDMI_ADDR_CRTC_IX
@@ -172,7 +200,7 @@ again:
 
 ; copy test card image
 		
-		ldx	#8				; number of pages to fill
+		ldx	#16				; number of pages to fill
 		ldy	#0
 
 		lda	#<screen_data
@@ -212,6 +240,12 @@ wait:
 		dec 	zp_tmp
 		bne	@wt
 		rts
+FONT_FILE_NAME:		.byte	"F.VGA8",$D,0
+FONT_FILE:		.word	FONT_FILE_NAME
+			.dword	$FFFF3000
+			.dword	0
+			.dword	0
+			.dword	0
 
 
 _ULA_SETTINGS:		.byte	$9c				; 10011100
@@ -231,16 +265,37 @@ _CRTC_REG_TAB:		.byte	$7f				; 0 Horizontal Total	 =128
 			.byte	$28				; 3 HSync Width+VSync	 =&28  VSync=2, HSync Width=8
 			.byte	$26				; 4 Vertical Total	 =38
 			.byte	$00				; 5 Vertial Adjust	 =0
-			.byte	$20				; 6 Vertical Displayed	 =32
-			.byte	$22				; 7 VSync Position	 =&22
+			.byte	$19				; 6 Vertical Displayed	 =25
+			.byte	$20				; 7 VSync Position	 =&20
 			.byte	$03				; 8 Interlace+Cursor	 =&03  Cursor=0, Display=0, Interlace=On+Video
 			.byte	$0F				; 9 Scan Lines/Character =16
 			.byte	$6D				; 10 Cursor Start Line	  =&67	Blink=On, Speed=1/32, Line=13
 			.byte	$0F				; 11 Cursor End Line	  =8
 
 
-font_data:		.incbin "VGA8.F16"
-font_end:
-screen_data:		.incbin "TEXT.VID"
+screen_data:		.incbin "COLOUR.VID"
 scren_end:
+
+		.macro	PAL IX,R,G,B			
+			.word (IX<<4)+R+(G<<12)+(B<<8)
+		.endmacro
+
+palette:		PAL	0,  0,  0,  0		; black
+			PAL	1,  0,  0,  8		; blue
+			PAL	2,  0,  8,  0		; green
+			PAL	3,  0,  8,  8		; cyan
+			PAL	4,  8,  0,  0		; red
+			PAL	5,  8,  0,  8		; magenta
+			PAL	6,  8,  8,  0		; yellow
+			PAL	7,  8,  8,  8		; grey
+
+			PAL	8,  5,  5,  5		; dark grey
+			PAL	9,  0,  0, 15		; light blue
+			PAL	10, 0, 15,  0		; light green
+			PAL	11, 0, 15, 15		; light cyan
+			PAL	12,15,  0,  0		; light red
+			PAL	13,15,  0, 15		; light magenta
+			PAL	14,15, 15,  0		; light yellow
+			PAL	15,15, 15, 15		; white
+			
 		.END
