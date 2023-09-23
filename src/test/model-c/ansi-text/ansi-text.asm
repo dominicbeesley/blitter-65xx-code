@@ -281,21 +281,21 @@ scren_end:
 		.endmacro
 
 palette:		PAL	0,  0,  0,  0		; black
-			PAL	1,  0,  0,  8		; blue
-			PAL	2,  0,  8,  0		; green
-			PAL	3,  0,  8,  8		; cyan
-			PAL	4,  8,  0,  0		; red
-			PAL	5,  8,  0,  8		; magenta
-			PAL	6,  8,  8,  0		; yellow
-			PAL	7,  8,  8,  8		; grey
+			PAL	1,  0,  0, 11		; blue
+			PAL	2,  0, 11,  0		; green
+			PAL	3,  0, 11, 11		; cyan
+			PAL	4, 11,  0,  0		; red
+			PAL	5, 11,  0, 11		; magenta
+			PAL	6, 11, 11,  0		; yellow
+			PAL	7, 11, 11, 11		; grey
 
 			PAL	8,  5,  5,  5		; dark grey
-			PAL	9,  0,  0, 15		; light blue
-			PAL	10, 0, 15,  0		; light green
-			PAL	11, 0, 15, 15		; light cyan
-			PAL	12,15,  0,  0		; light red
-			PAL	13,15,  0, 15		; light magenta
-			PAL	14,15, 15,  0		; light yellow
+			PAL	9,  5,  5, 15		; light blue
+			PAL	10, 5, 15,  5		; light green
+			PAL	11, 5, 15, 15		; light cyan
+			PAL	12,15,  5,  5		; light red
+			PAL	13,15,  5, 15		; light magenta
+			PAL	14,15, 15,  5		; light yellow
 			PAL	15,15, 15, 15		; white
 			
 		.END
