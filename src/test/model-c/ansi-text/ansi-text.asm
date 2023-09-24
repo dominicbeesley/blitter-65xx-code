@@ -286,7 +286,7 @@ palette:		PAL	0,  0,  0,  0		; black
 			PAL	3,  0, 11, 11		; cyan
 			PAL	4, 11,  0,  0		; red
 			PAL	5, 11,  0, 11		; magenta
-			PAL	6, 11, 11,  0		; yellow
+			PAL	6, 11,  5,  0		; yellow
 			PAL	7, 11, 11, 11		; grey
 
 			PAL	8,  5,  5,  5		; dark grey
