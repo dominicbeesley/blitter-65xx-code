@@ -3,8 +3,8 @@
 SSD=$(SSDS)/model-c-test.ssd
 DEPLOY=$(DEPLOY_TOP)/modelctest
 
-SUBDIRS=ansi-text
-OBJS=ansi-text/ansi-text.bin
+SUBDIRS=ansi-text ansi-term
+OBJS=ansi-text/ansi-text.bin ansi-term/ansi-term.bin
 EXTRAS=$(basename $(wildcard extras/*.inf)) ansi-text/VGA8.F16
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
@@ -28,6 +28,8 @@ $(SUBDIRS):
 
 $(BUILD)/ansi-text/ansi-test.bin:
 	make -C ansi-text all
+$(BUILD)/ansi-term/ansi-term.bin:
+	make -C ansi-term all
 
 $(SSD):	$(OBJS_O)
 	dfs form -80 $(SSD)

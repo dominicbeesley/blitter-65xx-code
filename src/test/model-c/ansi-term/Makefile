@@ -3,9 +3,9 @@
 AS=ca65 -I $(TOP)/includes 
 LD=ld65
 
-OBJS=ansi-text
-TARGETS=ansi-text
-DEPS=COLOUR.VID
+OBJS=ansi-term vid-init
+TARGETS=ansi-term
+
 
 OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
@@ -14,12 +14,11 @@ all:	$(TARGETS_O)
 ssd:	all
 deploy:	all
 
-
 $(BUILD)/%.o: 	%.asm $(DEPS) $(INCS)
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
 $(BUILD)/%.bin: $(OBJS_O) %.cfg
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O) $(LIBS)
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C $(filter %.cfg, $^) $(OBJS_O)
 	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
 	cp $(notdir $@).inf $(BUILD)
 
