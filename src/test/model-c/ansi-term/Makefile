@@ -3,7 +3,7 @@
 AS=ca65 -I $(TOP)/includes 
 LD=ld65
 
-OBJS=ansi-term vid-init
+OBJS=ansi-term ansi-vdu
 TARGETS=ansi-term
 
 

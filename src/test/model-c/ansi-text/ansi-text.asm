@@ -190,10 +190,14 @@ again:
 		sta	HDMI_ADDR_CRTC_DAT
 
 		; poke sequencer register to select ANSI text mode
-		lda	#0
-		sta	HDMI_ADDR_SEQ_IX
+		ldx	#0
+		stx	HDMI_ADDR_SEQ_IX
 		lda	#1
 		sta	HDMI_ADDR_SEQ_DAT		; select ansi/alpha
+		inx
+		stx	HDMI_ADDR_SEQ_IX
+		lda	#$03
+		sta	HDMI_ADDR_SEQ_DAT		; font base
 
 
 		jsr	wait

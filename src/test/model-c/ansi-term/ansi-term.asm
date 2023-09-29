@@ -41,82 +41,167 @@ zp_tmp2			:=	$73
 VDU_MEM_BASE		:=	$7000
 
 
-		.import	vid_init
+		.import	my_WRCHV
 
 		.CODE
 
 START:
-		jsr	vid_init
+		; load font at FFFF6000 - assume this is mapped to gfx
+		lda	#$FF
+		ldx	#<FONT_FILE
+		ldy	#>FONT_FILE
+		jsr	OSFILE
 
-		lda	$296			; time 
-		sta	seed
-		lda	#<VDU_MEM_BASE
-		sta	zp_ptr
-		lda	#>VDU_MEM_BASE
-		sta	zp_ptr+1
+
+		lda	#22
+		jsr	my_WRCHV
+		lda	#27
+		jsr	my_WRCHV
+
+		ldx	#0
 		ldy	#0
-@l1:		jsr	rnd8
-		sta	(zp_ptr),Y
-		iny
-		bne	@l1
-		inc	zp_ptr+1
-		bpl	@l1
+		
+@l2:		sty	zp_tmp2
+@l1:		stx	zp_tmp
+		lda	#17
+		jsr	my_WRCHV
+		lda	zp_tmp
+		jsr	my_WRCHV
+		lda	#17
+		jsr	my_WRCHV
+		lda	zp_tmp2
+		ora	#$80
+		jsr	my_WRCHV
 
-@loop:
-		; test scrolling
-		lda	#20
-		sta	zp_tmp
-@wl:		lda	#19
+		ldx	#<ish_str
+		ldy	#>ish_str
+		jsr	PrintXY
+
+		ldx	zp_tmp
+		inx
+		cpx	#16
+		bcc	@l1
+		ldx	#0
+
+		ldy	zp_tmp2
+		iny
+		cpy	#16
+		bcc	@l2
+
+
+
+		ldx	#<test_str
+		ldy	#>test_str
+		jsr	PrintXY
+
+		; escape key sends char 27
+		lda	#229
+		ldx	#1
+		ldy	#0
 		jsr	OSBYTE
-		dec	zp_tmp
-		bne	@wl
 
-		clc
-		lda	crtc_addr
-		adc	#80
-		sta	crtc_addr
-		lda	crtc_addr+1
-		adc	#0
-		and	#$0F
-		sta	crtc_addr+1
-@sk1:		
-		lda	crtc_addr+1
-		ldx	crtc_addr
-		ldy 	#12
-		jsr	set_crtc_YeqAX
+		; set baud to 9600/9600
+		lda	#7
+		ldx	#7
+		jsr	OSBYTE
 
-		lda	crtc_addr+1
-		ldx	crtc_addr
-		ldy 	#14
-		jsr	set_crtc_YeqAX
+		lda	#8
+		ldx	#7
+		jsr	OSBYTE
 
-		jmp	@loop	
-
-		rts
+		; listen on keyboard and serial
+		lda	#2
+		ldx	#2
+		jsr	OSBYTE
 
 
-set_crtc_YeqAX:	php
-		sei
-		sty	sheila_CRTC_ix
-		sta	sheila_CRTC_dat
-		iny
-		sty	sheila_CRTC_ix
+main_loop:	lda	#$80
+		ldx	#$FF
+		ldy	#$FF
+		jsr	OSBYTE			; adval -1
 		txa
-		sta	sheila_CRTC_dat
-		plp
-		rts
+		beq	@sk_keys
+		
+		ldx	#0
+		ldy	#0
+		lda	#$81
+		jsr	OSBYTE			; wait for a key
 
-crtc_addr:	.word	0
+		bcs	@sk_keys2
 
-rnd8:	
-		lda seed
-        		beq @doEor
-         	asl
-         	beq @noEor ;if the input was $80, skip the EOR
-         	bcc @noEor
-@doEor:    	eor #$1d
-@noEor: 		sta seed
-		rts
+		txa
+		pha
 
-seed:		.byte	0
+		; send to com port
+
+		lda	#3
+		tax
+		jsr	OSBYTE
+		pla
+		pha
+		jsr	OSWRCH
+
+		lda	#3
+		ldx	#0
+		jsr	OSBYTE
+
+		pla
+		jsr	my_WRCHV
+
+@sk_keys2:
+@sk_keys:
+		
+		; check for input from serial
+		lda	#$80
+		ldx	#$FE
+		ldy	#$FF
+		jsr	OSBYTE			; adval -2
+		txa
+		beq	@sk_ser
+
+		; switch input to serial		
+
+		lda	#2
+		ldx	#1
+		jsr	OSBYTE
+		
+		; wait for a char (should be there)
+		ldx	#0
+		ldy	#0
+		lda	#$81
+		jsr	OSBYTE
+		bcs	@sk_ser2
+
+		txa
+		jsr	my_WRCHV
+
+@sk_ser2:
+		lda	#2
+		ldx	#2
+		jsr	OSBYTE
+@sk_ser:
+
+		jmp	main_loop
+
+PrintXY:		stx	zp_ptr
+		sty	zp_ptr+1
+		ldy	#0
+@lp:		lda	(zp_ptr),Y
+		beq	@sk
+		jsr	my_WRCHV
+		iny
+		bne	@lp
+@sk:		rts
+
+
+FONT_FILE_NAME:		.byte	"F.VGA8",$D,0
+FONT_FILE:		.word	FONT_FILE_NAME
+			.dword	$FFFF6000
+			.dword	0
+			.dword	0
+			.dword	0
+
+test_str:	.byte	"This is an ANSI TEXT test, ", 27, "[5;10mPoopPoop",13,10,"AAAAAAA",0
+ish_str:		.byte	"Ish$%",0
+
 		.END
