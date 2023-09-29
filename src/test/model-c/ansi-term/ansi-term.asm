@@ -94,11 +94,24 @@ START:
 		ldy	#>test_str
 		jsr	PrintXY
 
+
+
 		; escape key sends char 27
 		lda	#229
 		ldx	#1
 		ldy	#0
 		jsr	OSBYTE
+
+
+;;main_loop:	lda	#$81
+;;		ldx	#0
+;;		ldy	#0
+;;		jsr	OSBYTE
+;;		bcs	main_loop
+;;
+;;		txa
+;;		jsr	my_WRCHV
+;;		jmp	main_loop
 
 		; set baud to 9600/9600
 		lda	#7
@@ -201,7 +214,7 @@ FONT_FILE:		.word	FONT_FILE_NAME
 			.dword	0
 			.dword	0
 
-test_str:	.byte	"This is an ANSI TEXT test, ", 27, "[5;10mPoopPoop",13,10,"AAAAAAA",0
+test_str:	.byte	"This is an ANSI TEXT test.",13,10,"AAAAAAA",0
 ish_str:		.byte	"Ish$%",0
 
 		.END

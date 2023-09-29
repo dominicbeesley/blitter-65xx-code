@@ -157,8 +157,10 @@ _BE0C8:
 		pla
 		rts
 
-_VDUCHR:	
-		ldx	OSB_VDU_QSIZE
+_VDUCHR:	ldx	v_ansip_state
+		bmi	@sk
+		jmp	ansip_enter
+@sk:		ldx	OSB_VDU_QSIZE
 		bne	_VDUCHR_PASSBACK
 		ldx	VDU_MODE			; are we in mode ANSI
 		cpx	#MODE_ANSI
@@ -228,8 +230,7 @@ _BC4EF:			tay					; Y=A
 			clc					; clear carry
 _VDU_0_6_27:
 _VDU_0:
-_VDU_6:
-_VDU_27:		rts					; and exit
+_VDU_6:		rts					; and exit
 
 
 _BC52F:			jsr	_LC565				; re-exchange pointers
@@ -1405,10 +1406,385 @@ hdmiSeqPoke:		; TODO: work out faster register method!
 			sta	fred_JIM_DEVNO
 			pla
 			rts
-			
 
+;=================================================================================			
+;     ___    _   _______ ____   ____  ___    ____  _____ __________ 
+;    /   |  / | / / ___//  _/  / __ \/   |  / __ \/ ___// ____/ __ \
+;   / /| | /  |/ /\__ \ / /   / /_/ / /| | / /_/ /\__ \/ __/ / /_/ /
+;  / ___ |/ /|  /___/ // /   / ____/ ___ |/ _, _/___/ / /___/ _, _/ 
+; /_/  |_/_/ |_//____/___/  /_/   /_/  |_/_/ |_|/____/_____/_/ |_|  
+; 
+;     ______________  ____________   __  ______   ________  _______   ________
+;    / ___/_  __/   |/_  __/ ____/  /  |/  /   | / ____/ / / /  _/ | / / ____/
+;    \__ \ / / / /| | / / / __/    / /|_/ / /| |/ /   / /_/ // //  |/ / __/
+;   ___/ // / / ___ |/ / / /___   / /  / / ___ / /___/ __  // // /|  / /___
+;  /____//_/ /_/  |_/_/ /_____/  /_/  /_/_/  |_\____/_/ /_/___/_/ |_/_____/
+;=================================================================================
+
+ANSI_BUF_LEN	:= $30
+
+			.macro	M_ANSIP_SYNTAX
+
+			jmp	ansip_syntax
+			.endmacro
+
+			.macro  M_ANSIP_NEXT state
+			ldx	#(.ident(.concat("ANSIP_STATE_", state))-ANSIP_STATES)/2
+			stx	v_ansip_state
+			rts
+			.endmacro
+
+			.macro  M_ANSIP_AGAIN
+			rts
+			.endmacro
+
+			.macro M_ANSIP_STATEDEF state
+.ident(.concat("ANSIP_STATE_", state)):	.word	.ident(.concat("ansip_", state))-1
+			.endmacro
+
+; -------------- helpers ---------------------------
+
+_VDU_27:		M_ANSIP_NEXT "bracket"			; main entry point!
+
+ansip_enter:		; X contains current state
+			tay
+			txa
+			asl	A
+			tax
+			lda	ANSIP_STATES+1,X
+			pha
+			lda	ANSIP_STATES,X
+			pha
+			tya
+			rts
+
+
+ansip_syntax:
+			ldx	#$FF
+			stx	v_ansip_state
+			jmp	_VDU_OUT_CHAR		
+
+ansip_bump_ptr:		; bump offset if we can
+			ldx	v_ansip_offs
+			inx	
+			cpx	#ANSI_BUF_LEN
+			bcs	@s
+			stx	v_ansip_offs
+@s:			rts
+
+; -------------- state machine handlers ------------
+
+; ---- bracket ----
+; Previous character was ESC.  This one should be a bracket if not, print it.
+; following chars make up char string
+ansip_bracket:		cmp	#'['
+			beq	@s
+			M_ANSIP_SYNTAX
+@s:			ldx	#$FF			; different to NANSI
+			stx	v_ansip_offs
+			M_ANSIP_NEXT "get_args"
+
+; ---- get_args ----
+; previous character was the opening [. Check for either = or ? and silently
+; consume, otherwise pass on to readparms state
+
+ansip_get_args:
+			cmp	#'='
+			beq	@s1
+			cmp	#'?'
+			bne	ansip_get_param
+@s1:			M_ANSIP_NEXT "get_param"
+
+; ---- get_param ---
+; previous character was one of the four characters "[?=;".
+; We are getting the first digit of a parameter, a quoted string,
+; a semi-colon, or letter command terminator
+ansip_get_param:
+			cmp	#'0'
+			bcc	@mq
+			cmp	#'9'+1
+			bcs	@mq
+
+			; store digit
+			sbc	#'0'-1
+			jsr	ansip_bump_ptr
+			sta	v_ansip_buf,X	; store first digit
+
+			; first digit
+			M_ANSIP_NEXT "in_param"
+
+@mq:			; it might be a quote
+			cmp	#'"'
+			beq	@isq
+			cmp	#'''
+			beq	@isq
+			jmp	ansip_semi_or_cmd
+@isq:			sta	v_ansip_quotechar
+			jsr	ansip_bump_ptr
+			M_ANSIP_NEXT "get_string"
+
+
+;----- get_string -------------------------------------
+; previous character was a quote or a string element,
+; get characters until ending quote found.
+ansip_get_string:
+			cmp	v_ansip_quotechar
+			bne	@s
+			lda	#0			; string terminator
+@s:			; store char in buffer (if there's space)
+			ldx	v_ansip_offs
+			sta	v_ansip_buf,X
+			jsr	ansip_bump_ptr
+			cmp	#0
+			bne	@ful
+			M_ANSIP_NEXT "eat_semi"
+@ful:			M_ANSIP_AGAIN
+
+;----- eat_semi -------------------------------------
+; previous character was an ending quote.
+; If this char is a semi, eat it, else pass to get_param
+ansip_eat_semi:
+			cmp	';'
+			bne	ansip_get_param		; parse
+			M_ANSIP_NEXT "get_param"	; else consume it
+
+
+;------ in_param -------------------------------------
+; previous character was a digit, look for more digits, 
+; a semicolon, or a command character.
+ansip_in_param:
+			cmp	#'0'
+			bcc	@end_in_param
+			cmp	#'9'+1
+			bcs	@end_in_param
+			; It's another digit.  Add into current parameter.			
+			sbc	#'0'-1
+			sta	VDU_TMP1
+			ldx	v_ansip_offs
+			lda	v_ansip_buf,X
+			asl	A
+			asl	A
+			clc
+			adc	v_ansip_buf,X
+			asl	A
+			clc
+			adc	VDU_TMP1
+			sta	v_ansip_buf,X
+			M_ANSIP_AGAIN
+
+@end_in_param:		
+
+ansip_semi_or_cmd:	; X must contain buffer offset on entry
+			cmp	#';'
+			bne	@notsemi
+
+			; we've got a semi, fnar
+			M_ANSIP_NEXT "get_param"	
+
+@syn:			jmp	ansip_syntax
+@notsemi:		; search lookup table for command and execute
+			cmp	#'@'
+			bcc	@syn
+			cmp	#'z'+1
+			bcs	@syn
+			cmp	#'Z'+1
+			bcc	@iscmd
+			cmp	#'a'
+			bcc	@syn
+			sbc	#'a' - '['
+@iscmd:			sec
+			sbc	#'@'
+			asl	A
+			tay
+			
+			lda	ansic_tab+1,Y
+			pha
+			lda	ansic_tab,Y
+			pha
+
+			ldx	#$FF
+			stx	v_ansip_state
+
+			ldx	v_ansip_offs
+			inx
+			rts
+
+ansic_eil:
+ansic_il:
+ansic_d_l:
+ansic_dc:
+ansic_sm:
+ansic_rm:
+ansic_dsr:
+ansic_key:
+ansic_scp:
+ansic_rcp:
+ansic_ic:
+ansic_nul:
+	rts
+
+
+ansic_cup:
+	beq	ansic_nul
+	; cursor up don't scroll up if past top of window?!
+	lda	VDU_T_CURS_Y
+	sec
+	sbc	VDU_T_WIN_T
+	sec
+	sbc	v_ansip_buf
+	bcs	@ok
+	lda	#0
+@ok:	
+ansic_cup_cdn_do:
+	pha
+	lda	#31
+	jsr	my_WRCHV
+	lda	VDU_T_CURS_X
+	sec
+	sbc	VDU_T_WIN_L
+	jsr	my_WRCHV
+	pla
+	jmp	my_WRCHV
+	
+ansic_cdn:
+	beq	ansic_nul
+	; cursor down don't scroll up if past top of window?!
+	lda	VDU_T_CURS_Y
+	sec	
+	adc	v_ansip_buf
+	cmp	VDU_T_WIN_B
+	bcc	@ok
+	lda	VDU_T_WIN_B
+	clc	
+	bcc	@ok2
+@ok:	sec
+@ok2:	sbc	VDU_T_WIN_T
+	jmp	ansic_cup_cdn_do
+
+ansic_cfw:
+	beq	ansic_nul
+	lda	VDU_T_CURS_X
+	clc
+	adc	v_ansip_buf
+	cmp	VDU_T_WIN_R
+	bcc	@ok
+	lda	VDU_T_WIN_R
+	clc
+	bcc	@ok2
+@ok:	sec
+@ok2:	sbc	VDU_T_WIN_L
+ansic_cfw_cbk_do:
+	pha
+	lda	#31
+	jsr	my_WRCHV
+	pla
+	jsr	my_WRCHV
+	lda	VDU_T_CURS_Y
+	sec
+	sbc	VDU_T_WIN_T
+	jmp	my_WRCHV
+
+ansic_cbk:
+	beq	ansic_nul
+	lda	VDU_T_CURS_X
+	sec
+	sbc	v_ansip_buf
+	bcs	ansic_cfw_cbk_do
+	lda	#0
+	bne	ansic_cfw_cbk_do
+
+ansic_sgr:
+	; if no parameters fake a zero
+	dex
+	bpl	@s1
+	lda	#0
+	tax
+	beq	@s2
+	
+	; for each parameter search the table for matching code
+	
+@s1:	
+@plp:	lda	v_ansip_buf,X
+@s2:	ldy	#(ansi_colors*3)-3
+@clp:	cmp	ansi_color_table,Y
+	beq	@fnd
+	dey
+	dey
+	dey
+	bpl	@clp
+@mor:	dex
+	bpl	@plp
+	rts
+
+@fnd:	lda	VDU_T_OR_MASK			; attribute
+	and	ansi_color_table+1,Y
+	ora	ansi_color_table+2,Y
+	sta	VDU_T_OR_MASK
+	jmp	@mor
+
+ansic_hvp:
+	bne	@p
+	jmp	ansic_nul
+@p:	ldy	#0
+	; goto Y,X
+	lda	v_ansip_buf,Y
+	beq	@s1
+	sec
+	sbc	#1
+@s1:	pha
+	lda	#0
+	iny
+	dex
+	beq	@defx
+	lda	v_ansip_buf,Y
+	beq	@defx
+	sec
+	sbc	#1
+@defx:	pha
+	lda	#31
+	jsr	my_WRCHV
+	pla	
+	jsr	my_WRCHV
+	pla
+	jmp	my_WRCHV
+
+
+ansic_eid:
+	; TODO this should scroll?
+	lda	#12
+	jmp	my_WRCHV
+
+
+		.DATA
+v_ansip_state:		.byte	$FF		; when non-zero contains state index
+v_ansip_offs:		.byte	0		; index into input buffer
+v_ansip_buf:		.res	ANSI_BUF_LEN
+v_ansip_quotechar:	.res	1		; current quote char
 
 		.RODATA
+
+ansic_tab:		
+	.word	ansic_ic-1,  ansic_cup-1, ansic_cdn-1, ansic_cfw-1, ansic_cbk-1		; @, A, B, C, D
+	.word	ansic_nul-1, ansic_nul-1, ansic_nul-1, ansic_hvp-1, ansic_nul-1		; E, F, G, H, I
+	.word	ansic_eid-1, ansic_eil-1, ansic_il-1,  ansic_d_l-1, ansic_nul-1		; J, K, L, M, N
+	.word	ansic_nul-1, ansic_dc-1,  ansic_nul-1, ansic_nul-1, ansic_nul-1		; O, P, Q, R, S
+	.word	ansic_nul-1, ansic_nul-1, ansic_nul-1, ansic_nul-1, ansic_nul-1		; T, U, V, W, X
+	.word	ansic_nul-1, ansic_nul-1			; Y, Z
+	.word	ansic_nul-1, ansic_nul-1, ansic_nul-1, ansic_nul-1, ansic_nul-1		; a, b, c, d, e
+	.word	ansic_hvp-1, ansic_nul-1, ansic_sm-1,  ansic_nul-1, ansic_nul-1		; f, g, h, i, j
+	.word	ansic_nul-1, ansic_rm-1,  ansic_sgr-1, ansic_dsr-1, ansic_nul-1		; k, l, m, n, o
+	.word	ansic_key-1, ansic_nul-1, ansic_nul-1, ansic_scp-1, ansic_nul-1		; p, q, r, s, t
+	.word	ansic_rcp-1, ansic_nul-1, ansic_nul-1, ansic_nul-1, ansic_nul-1		; u, v, w, x, y
+	.word	ansic_nul-1				; z
+
+ANSIP_STATES:		
+		M_ANSIP_STATEDEF "bracket"
+		M_ANSIP_STATEDEF "get_args"
+		M_ANSIP_STATEDEF "get_param"
+		M_ANSIP_STATEDEF "get_string"
+		M_ANSIP_STATEDEF "in_param"
+		M_ANSIP_STATEDEF "eat_semi"
+
 
 
 _VDU_TABLE_LO:		.byte	0
@@ -1438,7 +1814,7 @@ _VDU_TABLE_LO:		.byte	0
 			.byte	0
 			.byte	0
 			.byte	<_VDU_26
-			.byte	0
+			.byte	<_VDU_27
 			.byte	<_VDU_28
 			.byte	0
 			.byte	<_VDU_30
@@ -1472,7 +1848,7 @@ _VDU_TABLE_HI:		.byte	0				; VDU  0   - &C511, no parameters
 			.byte	0					; VDU 24  - &CA39, 8 parameters
 			.byte	0					; VDU 25  - &C9AC, 5 parameters
 			.byte	>_VDU_26				; VDU 26  - &C9BD, no parameters
-			.byte	0					; VDU 27  - &C511, no parameters
+			.byte	>_VDU_27				; VDU 27  - &C511, no parameters
 			.byte	>_VDU_28				; VDU 28  - &C6FA, 4 parameters
 			.byte	0					; VDU 29  - &CAA2, 4 parameters
 			.byte	>_VDU_30				; VDU 30  - &C779, no parameters
@@ -1589,3 +1965,29 @@ _TELETEXT_CHAR_TAB:	.byte	$23				; '#' -> '_'
 			.byte	$60				; '`' -> '#'
 			.byte	$23				; '#'
 
+ansi_colors		:=	22			; number of colors in table
+ansi_color_table:
+	.byte	0, $00,$07		; all attribs off; normal.
+	.byte	1, $ff,$08		; bold
+	.byte	4, $f8,$01		; underline
+	.byte	5, $ff,$80		; blink
+	.byte	7, $f8,$70		; reverse
+	.byte	8, $88,$00		; invisible
+
+	.byte	30,$f8,$00		; black foreground
+	.byte	31,$f8,$04		; red
+	.byte	32,$f8,$02		; green
+	.byte	33,$f8,$06		; yellow
+	.byte	34,$f8,$01		; blue
+	.byte	35,$f8,$05		; magenta
+	.byte	36,$f8,$03		; cyan
+	.byte	37,$f8,$07		; white
+
+	.byte	40,$8f,$00		; black background
+	.byte	41,$8f,$40		; red
+	.byte	42,$8f,$20		; green
+	.byte	43,$8f,$60		; yellow
+	.byte	44,$8f,$10		; blue
+	.byte	45,$8f,$50		; magenta
+	.byte	46,$8f,$30		; cyan
+	.byte	47,$8f,$70		; white
