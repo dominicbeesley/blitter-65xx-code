@@ -1617,8 +1617,6 @@ ansic_sm:
 ansic_rm:
 ansic_dsr:
 ansic_key:
-ansic_scp:
-ansic_rcp:
 ansic_ic:
 ansic_nul:
 	rts
@@ -1754,13 +1752,34 @@ ansic_eid:
 	lda	#12
 	jmp	my_WRCHV
 
+ansic_scp:
+	; save cursor position
+	sec
+	lda	VDU_T_CURS_X
+	sbc	VDU_T_WIN_L
+	sta	v_ansi_save_curs
+	sec
+	lda	VDU_T_CURS_Y
+	sbc	VDU_T_WIN_T
+	sta	v_ansi_save_curs+1
+	rts
+
+ansic_rcp:
+	; restore cursor position
+	lda	#31
+	jsr	my_WRCHV
+	lda	v_ansi_save_curs
+	jsr	my_WRCHV
+	lda	v_ansi_save_curs+1
+	jmp	my_WRCHV
+	
 
 		.DATA
 v_ansip_state:		.byte	$FF		; when non-zero contains state index
 v_ansip_offs:		.byte	0		; index into input buffer
 v_ansip_buf:		.res	ANSI_BUF_LEN
 v_ansip_quotechar:	.res	1		; current quote char
-
+v_ansi_save_curs:	.res	2
 		.RODATA
 
 ansic_tab:		
