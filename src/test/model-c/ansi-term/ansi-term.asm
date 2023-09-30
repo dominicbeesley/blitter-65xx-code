@@ -96,6 +96,8 @@ START:
 
 
 
+
+
 		; escape key sends char 27
 		lda	#229
 		ldx	#1
@@ -178,6 +180,7 @@ main_loop:	lda	#$80
 		ldx	#1
 		jsr	OSBYTE
 		
+@again:
 		; wait for a char (should be there)
 		ldx	#0
 		ldy	#0
@@ -187,6 +190,7 @@ main_loop:	lda	#$80
 
 		txa
 		jsr	my_WRCHV
+		jmp	@again
 
 @sk_ser2:
 		lda	#2
@@ -214,7 +218,7 @@ FONT_FILE:		.word	FONT_FILE_NAME
 			.dword	0
 			.dword	0
 
-test_str:	.byte	"This is an ANSI TEXT test.",13,10,"AAAAAAA",0
+test_str:	.byte	"This is an ANSI TEXT test.",13,10,"AAAAAAA",27,"[0m",0
 ish_str:		.byte	"Ish$%",0
 
 		.END
