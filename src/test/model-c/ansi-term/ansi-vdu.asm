@@ -1943,7 +1943,7 @@ crtcRegsAnsi:
 
 			.byte	$7f				; 0 Horizontal Total	 =128
 			.byte	$50				; 1 Horizontal Displayed =80
-			.byte	$62				; 2 Horizontal Sync	 =&62
+			.byte	$62				; 2 Horizontal Sync	 =98
 			.byte	$28				; 3 HSync Width+VSync	 =&28  VSync=2, HSync Width=8
 			.byte	$26				; 4 Vertical Total	 =38
 			.byte	$00				; 5 Vertial Adjust	 =0
