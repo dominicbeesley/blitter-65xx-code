@@ -3,8 +3,8 @@
 SSD=$(SSDS)/model-c-test.ssd
 DEPLOY=$(DEPLOY_TOP)/modelctest
 
-SUBDIRS=ansi-text ansi-term sprites-test
-OBJS=ansi-text/ansi-text.bin ansi-term/ansi-term.bin sprites-test/sprtest.tok
+SUBDIRS=ansi-text ansi-term sprites-test breakout
+OBJS=ansi-text/ansi-text.bin ansi-term/ansi-term.bin sprites-test/sprtest.tok breakout/breakout.tok breakout/sprites_all.bin
 EXTRAS=$(basename $(wildcard extras/*.inf)) ansi-text/VGA8.F16
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
@@ -31,6 +31,8 @@ $(BUILD)/ansi-text/ansi-test.bin:
 $(BUILD)/ansi-term/ansi-term.bin:
 	make -C ansi-term all
 $(BUILD)/sprites-test/sprtest.tok:
+	make -C ansi-term all
+$(BUILD)/breakout/breakout.tok $(BUILD)/breakout/sprites_all.bin:
 	make -C ansi-term all
 
 $(SSD):	$(OBJS_O)
