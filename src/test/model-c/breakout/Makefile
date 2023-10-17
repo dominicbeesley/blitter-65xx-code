@@ -12,7 +12,7 @@ deploy: ssd
 
 $(BUILD)/breakout.tok:breakout.bbc $(BUILD)/sprites_all.bbc
 	cat $(BUILD)/sprites_all.bbc breakout.bbc >$(BUILD)/bastmp.bbc
-	basictool -t $(BUILD)/bastmp.bbc $@
+	basictool -p -t $(BUILD)/bastmp.bbc $@
 	echo '$$.BRKOUT FFFF8023 FFFF8023' >$@.inf
 
 $(BUILD)/%.bin $(BUILD)/%.bbc:%.bspr
