@@ -244,10 +244,46 @@ svc1_ClaimAbs:
 
 		jsr	cfgPrintVersionBoot
 		bcs	@nope
-		jsr	OSNEWL
 
+		; work out memory size (depends on board type)
+		; get BB RAM size (assume starts at bank 60 and is at most 20 banks long)		
+		jsr	zeroAcc				; zero the maths accumulator
+		ldx	#$60
+		ldy	#$00
+		jsr	cfgMemCheckAlias
+		bcc	@noBB				;skip forwards if no writeable at 60
+		beq	@noBB				;if eq then 60 is aliased at 0
+@BBRAM_test:	
+		ldy	#$80				; limit
+		jsr	cfgMemSize
+		sta	zp_trans_acc+2
+@noBB:
+@BBChipram:	ldx	#0
+		ldy	#$60
+		jsr	cfgMemSize
+		pha					; save # of banks for heap_init
+		clc
+		adc	zp_trans_acc+2
+		sta	zp_trans_acc+2
+
+		jsr	PrintSpc
+		jsr	PrintSizeK
+
+		; if this is Mk.2 board knock off room for ROM (4 banks)
+		jsr	cfgGetAPILevel
+		bcs	@s1			; no blitter continue
+		beq	@ismk2			; API 0 - assume mk.2 (old board) TODO: deprecated, remove?
+		lda	JIM+jim_offs_VERSION_Board_level
+		cmp	#2
+		bne	@s1			; not mk.2
+@ismk2:		pla
+		sec
+		sbc	#4			; mk.2 clear way for BB roms
+		pha
+@s1:		pla
 		jsr	heap_init
 		jsr	sound_boot
+		jsr	OSNEWL
 
 @nope:		jmp	ServiceOut
 

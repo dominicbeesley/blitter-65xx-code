@@ -58,6 +58,8 @@ HEAPFLAG_INUSE	:=	$80
 
 		.CODE
 
+		; on entry A contains the number of 64 banks to use for the heap
+
 heap_init:	jsr	jimSetDEV_either		; either Blitter or Paula don't care which here
 		bcc	@ok1
 		rts
@@ -65,20 +67,10 @@ heap_init:	jsr	jimSetDEV_either		; either Blitter or Paula don't care which here
 
 		jsr	jimPageWorkspace
 
-		lda	zp_mos_jimdevsave		; detect Blitter or Paula
-		cmp	#JIM_DEVNO_HOG1MPAULA
-		beq	@paula1
-		cmp	#JIM_DEVNO_BLITTER
-		beq	@blitter1
-		rts
 
-@paula1:	ldx	#<PAGE_RAM_TOP_PAULA
-		ldy	#>PAGE_RAM_TOP_PAULA
-		jmp	@s1
-@blitter1:	ldx	#<PAGE_RAM_TOP_BLITTER
-		ldy	#>PAGE_RAM_TOP_BLITTER
-@s1:		stx	JIM+SCRATCH_HEAPTOP
-		sty	JIM+SCRATCH_HEAPTOP+1		; set heap limit at top of RAM
+@s1:		ldx	#0
+		stx	JIM+SCRATCH_HEAPTOP
+		sta	JIM+SCRATCH_HEAPTOP+1		; as passed in in A - number of banks
 
 		ldx	#$01				; set lower limit at 64k
 		stx	JIM+SCRATCH_HEAPLIM+1

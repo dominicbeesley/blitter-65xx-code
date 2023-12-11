@@ -43,6 +43,8 @@
 		.export cfgPrintStringY
 		.export cmdInfo
 		.export cfgGetAPISubLevel_1_2
+		.export cfgMemSize
+		.export cfgMemCheckAlias
 
 
 ; NOTE: sheila BLT_MK2_CFG0/1 registers are deprecated - now in JIM page FC 008x
@@ -643,11 +645,11 @@ cmdInfo_API0_mem:
 		ldx	#$60
 		ldy	#$00
 		jsr	cfgMemCheckAlias
-		bcc	@justChipRAM
-		bne	@BBRAM_test
+		bcc	@justChipRAM			;skip forwards if no writeable at 60
+		bne	@BBRAM_test			;skip forwards if 60 is not aliased at 0
 
 		; print combined
-		jsr	PrintImmed
+		jsr	PrintImmed			;shared BB/ChipRAM
 		.byte	13, "Chip/BB RAM  : ",0
 		jmp	@noBB
 
