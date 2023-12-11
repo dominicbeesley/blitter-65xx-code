@@ -7,5 +7,7 @@
 		.import cfgGetAPILevel
 		.import cfgGetAPISubLevel
 		.import cfgGetAPISubLevel_1_2
+		.import cfgMemSize
+		.import cfgMemCheckAlias
 
 		
