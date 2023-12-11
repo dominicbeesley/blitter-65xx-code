@@ -16,7 +16,7 @@ $(BUILD)/breakout.tok:breakout.bbc $(BUILD)/sprites_all.bbc
 	echo '$$.BRKOUT FFFF8023 FFFF8023' >$@.inf
 
 $(BUILD)/%.bin $(BUILD)/%.bbc:%.bspr
-	./bsprcvt.py $< "S_" $(basename $@).bin $(basename $@).bbc
+	../scripts/bsprcvt.py $< "S_" $(basename $@).bin $(basename $@).bbc
 
 $(BUILD)/sprites_all.bbc: $(BUILD)/sprites.bbc $(BUILD)/balls.bbc
 	cat $^ >$@

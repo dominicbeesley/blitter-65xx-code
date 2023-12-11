@@ -41,7 +41,7 @@ REPEAT
 PROCball
 PROCbat
 PROCcollidebat
-PROCupdate_sprites
+PROCupdate_sprites(X%,Y%)
 REPEAT:UNTILNOTINKEY(-1)
 UNTILDIE%
 *FX15
@@ -71,7 +71,6 @@ DEFPROCbat:LOCALA%
 IF INKEY(-98) THEN A%=1:PROCb1(-1)
 IF INKEY(-67) THEN A%=1:PROCb1(1)
 IF A%=0 THEN SB%=SB%-SBI%*SGN(SB%)
-IFSB%=0THENENDPROC
 BATX%=BATX%+SB%
 IF BATX%<0 THEN BATX%=0 ELSE IF BATX%>=W%-32 THEN BATX%=W%-32
 ENDPROC
@@ -81,11 +80,12 @@ IF SB%<>0 AND SGN(SB%)<>SGN(D%) THEN SB%=0 ELSE IF ABS(SB%)<SBM% THEN SB%=SB%+SG
 ENDPROC
 
 REM the ball needs two overlapping sprites, use whole of channels 0,1 for that purpose for now
-DEFPROCupdate_sprites:LOCALTT%
-PROCctldata(L1%,L%+X%,T%+Y%,16,TRUE,FALSE,FALSE,&3060+Z%)
-PROCctldata(L1%+8,L%+X%,T%+Y%,16,FALSE,FALSE,FALSE,&30A0+Z%)
-PROCctldata(L1%+16,L%+BATX%,T%+BATY%,8,FALSE,FALSE,FALSE,&3020)
-PROCctldata(L1%+24,L%+BATX%+16,T%+BATY%,8,FALSE,FALSE,FALSE,&3040)
+DEFPROCupdate_sprites(BALX%,BALY%):LOCALTT%,P%,X%,Y%,H%,A%,D%,C%,S%
+H%=16:A%=TRUE:D%=FALSE:C%=FALSE
+P%=L1%:X%=L%+BALX%:Y%=T%+BALY%:S%=&3060+Z%:PROCctldata
+A%=FALSE:S%=S%+&40:PROCctldata
+X%=L%+BATX%:Y%=T%+BATY%:H%=8:S%=&3020:PROCctldata
+X%=L%+BATX%+16:S%=&3040:PROCctldata
 REM swap list pointers
 !&FD0C=L1%:!&FD1C=L1%+8:!&FD2C=L1%+16:!&FD3C=L1%+24
 A%=19:CALL&FFF4:REMvsync
@@ -93,9 +93,7 @@ TT%=L1%:L1%=L2%:L2%=TT%
 ENDPROC
 
 
-REM P = addr, X,Y,H - position/height A%=attach, D%=load data pointer next, C%=continue
-DEFPROCctl(P%,X%,Y%,H%,A%,D%,C%):?P%=X%:P%?1=Y%:P%?2=Y%+H%:P%?3=((X%>255)AND1)OR((Y%>255)AND2)OR(((Y%+H%)>255)AND4)OR(A%AND128)OR(D%AND64)OR(C%AND32):ENDPROC
-DEFPROCctldata(P%,X%,Y%,H%,A%,D%,C%,S%):?P%=X%:P%?1=Y%:P%?2=Y%+H%:P%?3=((X%>255)AND1)OR((Y%>255)AND2)OR(((Y%+H%)>255)AND4)OR(A%AND128)OR(D%AND64)OR(C%AND32):P%!4=S%:ENDPROC
+DEFPROCctldata:?P%=X%:P%?&1=Y%:P%?&2=Y%+H%:P%?&3=((X%>&FF)AND&1)OR((Y%>&FF)AND&2)OR(((Y%+H%)>&FF)AND&4)OR(A%AND&908)OR(D%AND&40)OR(C%AND&20):P%!4=S%:P%=P%+8:ENDPROC
 
  900DEFPROCpal:LOCALI,X:FORI=0TO15:READX%:?&FE23=X%DIV256:?&FE23=X%:NEXT:ENDPROC
 1000DATA&0000,&1333,&2777,&3FF0,&400F,&5F0F,&60FF,&7FFF,&8502,&9E95,&A158,&BCC9,&CF80,&DAD3,&E99E,&FFFF
