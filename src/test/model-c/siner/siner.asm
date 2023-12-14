@@ -30,6 +30,7 @@
 		.include "maths.inc"
 
 		.global	sprite_data, sprite_data_end
+		.exportzp zp_acc
 
 jim_page_SPRITE_REGS = $FBFF
 
@@ -41,6 +42,8 @@ zp_ptr1:	.res	2
 zp_ptr2:	.res	2
 zp_ctr:	.res	2
 zp_tmp:	.res	1
+zp_acc:  .res	2
+
 
 	.macro	MEM_CPY src, dest, len
 
@@ -92,55 +95,61 @@ here:		lda	#19
 		lda	zp_ctr
 		ldx	zp_ctr+1
 		jsr	math_sin
-		txa
-		rol	A
-		php
-		txa
-		adc	#250
-		sta	SPR_LIST+0
+
+		ldx	#9
+		jsr	shr
+
+		clc
+		lda	#200
+		adc	zp_acc
+		sta	SPR_LIST+0		; X low byte
 		lda	#0
-		adc	#0
-		plp
-		adc	#0
+		adc	zp_acc+1
 		ror	A
-		lda	SPR_LIST+3
-		and	#$FE
-		adc	#0
-		sta	SPR_LIST+3
-		
+		php				; top bit of X
+
+
 		lda	zp_ctr
 		ldx	zp_ctr+1
 		jsr	math_cos
-		txa
-		rol	A
-		php
-		txa
-		adc	#160
-		sta	SPR_LIST+1
-		lda	#0
-		adc	#0
-		plp
-		adc	#0
-		ror	A
-		lda	SPR_LIST+3
-		and	#$FD
-		php
-		adc	#0
-		plp
-		adc	#0
-		sta	SPR_LIST+3
 
-
+		ldx	#8
+		jsr	shr
 
 		clc
-		lda	#5
+		lda	#170
+		adc	zp_acc
+		sta	SPR_LIST+1		; X low byte
+		lda	#0
+		adc	zp_acc+1
+		ror	A
+		php				; top bit of Y
+
+		clc
+		lda	#16
+		adc	zp_acc
+		sta	SPR_LIST+2
+		lda	#0
+		adc	zp_acc+1
+		
+		; top bit of Y+H now in A bit 0
+		and	#$01
+		plp	
+		rol	A
+		plp
+		rol	A
+
+		sta	SPR_LIST+3
+
+		clc
+		lda	#15
 		adc	zp_ctr
 		sta	zp_ctr
 		lda	zp_ctr+1
 		adc	#0
 		sta	zp_ctr+1
 
-		jmp	here
+@s1:		jmp	here
 
 memcpy:		lda	zp_ctr+1
 		beq	@skp
@@ -160,6 +169,20 @@ memcpy:		lda	zp_ctr+1
 		dex
 		bne	@lp2
 @end:		rts
+
+shr:		; shift right zp_acc by X bits
+		lda	zp_acc+1		
+@lp:		rol	A
+		php
+		ror	A
+		plp
+		ror	A
+		ror	zp_acc
+		dex
+		bne	@lp
+		sta	zp_acc+1
+		rts
+
 
 jimSPRPage:
 		pha
