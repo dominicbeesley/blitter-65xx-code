@@ -40,7 +40,10 @@ SPR_LIST = $3000
 
 zp_ptr1:	.res	2
 zp_ptr2:	.res	2
+
 zp_ctr:	.res	2
+zp_ctr2: .res	2
+
 zp_tmp:	.res	1
 zp_acc:  .res	2
 
@@ -79,7 +82,7 @@ zp_acc:  .res	2
 
 		; copy sprite data up to above 3000
 		MEM_CPY	sprite_data, SPR_RUN, (sprite_data_end-sprite_data)
-		MEM_CPY	spr_list, SPR_LIST, 8
+		MEM_CPY	spr_list, SPR_LIST, 16
 
 		jsr	jimSPRPage
 		lda	#<SPR_LIST
@@ -88,6 +91,14 @@ zp_acc:  .res	2
 		sta	$FD0D
 		lda	#0
 		sta	$FD0E
+
+		lda	#<(SPR_LIST+8)
+		sta	$FD1C
+		lda	#>(SPR_LIST+8)
+		sta	$FD1D
+		lda	#0
+		sta	$FD1E
+
 
 here:		lda	#19
 		jsr	OSBYTE
@@ -141,6 +152,61 @@ here:		lda	#19
 
 		sta	SPR_LIST+3
 
+
+	;==========================
+
+		lda	zp_ctr2
+		ldx	zp_ctr2+1
+		jsr	math_sin
+
+		ldx	#9
+		jsr	shr
+
+		clc
+		lda	#200
+		adc	zp_acc
+		sta	SPR_LIST+8		; X low byte
+		lda	#0
+		adc	zp_acc+1
+		ror	A
+		php				; top bit of X
+
+
+		lda	zp_ctr2
+		ldx	zp_ctr2+1
+		jsr	math_cos
+
+		ldx	#8
+		jsr	shr
+
+		clc
+		lda	#170
+		adc	zp_acc
+		sta	SPR_LIST+9		; X low byte
+		lda	#0
+		adc	zp_acc+1
+		ror	A
+		php				; top bit of Y
+
+		clc
+		lda	#16
+		adc	zp_acc
+		sta	SPR_LIST+10
+		lda	#0
+		adc	zp_acc+1
+		
+		; top bit of Y+H now in A bit 0
+		and	#$01
+		plp	
+		rol	A
+		plp
+		rol	A
+
+		sta	SPR_LIST+11
+
+
+
+
 		clc
 		lda	#15
 		adc	zp_ctr
@@ -148,6 +214,15 @@ here:		lda	#19
 		lda	zp_ctr+1
 		adc	#0
 		sta	zp_ctr+1
+
+		clc
+		lda	#13
+		adc	zp_ctr2
+		sta	zp_ctr2
+		lda	zp_ctr2+1
+		adc	#0
+		sta	zp_ctr2+1
+
 
 @s1:		jmp	here
 
@@ -194,6 +269,8 @@ jimSPRPage:
 		rts
 
 spr_list:	.dword	$00908090
+		.dword	SPR_RUN
+		.dword	$00F0E0F0
 		.dword	SPR_RUN
 
 		.END
