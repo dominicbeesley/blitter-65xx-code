@@ -54,8 +54,8 @@
 		.export cmdSRERASE
 		.export cmdSRCOPY
 		.export cmdRoms
-		.export cmdBLLoad
-		.export cmdBLSave
+		.export cmdXMLoad
+		.export cmdXMSave
 		.export romThrottleInit
 
 		.CODE
@@ -1605,10 +1605,10 @@ loadsavefnXY:	clc
 
 
 ;------------------------------------------------------------------------------
-; BLLOAD
+; XMLOAD
 ;------------------------------------------------------------------------------
 
-cmdBLLoad:	jsr	loadsavegetfn
+cmdXMLoad:	jsr	loadsavegetfn
 		stx	zp_trans_tmp+0			; start of filename
 		jsr	loadsavedev
 		jsr	SkipSpacesPTR
@@ -1739,7 +1739,7 @@ cmdBLLoad:	jsr	loadsavegetfn
 		beq	@loadlp0				; block finished
 
 @nextjimpg:	jsr	ls_nextjim
-		bne	@loadlp2
+		jmp	@loadlp2
 
 
 
@@ -1758,25 +1758,26 @@ cmdBLLoad:	jsr	loadsavegetfn
 		rts
 
 
+ls_nextjim:	inc	zp_trans_acc+1
+		bne	@sk1
+		inc	zp_trans_acc+2
+@sk1:	
+
 ls_updjimptr:	lda	zp_trans_acc+1
 		sta	fred_JIM_PAGE_LO
 		lda	zp_trans_acc+2
 		sta	fred_JIM_PAGE_HI
 		rts
 
-ls_nextjim:	inc	zp_trans_acc+1
-		bne	@loadsk1
-		inc	zp_trans_acc+2
-@loadsk1:	jmp	ls_updjimptr
 
 
 badcmd2:		jmp	brkBadCommand		
 
 ;------------------------------------------------------------------------------
-; BLSAVE
+; XMSAVE
 ;------------------------------------------------------------------------------
 
-cmdBLSave:	jsr	loadsavegetfn
+cmdXMSave:	jsr	loadsavegetfn
 		stx	zp_trans_tmp+0			; start of filename
 		jsr	loadsavedev
 		jsr	ParseHex
