@@ -45,8 +45,8 @@
 		.import cmdSRERASE
 		.import cmdSRCOPY
 		.import cmdRoms
-		.import cmdBLLoad
-		.import cmdBLSave
+		.import cmdXMLoad
+		.import cmdXMSave
 		.import romThrottleInit
 
 
@@ -340,8 +340,12 @@ svc9_helptable:
 		cmp	#JIM_DEVNO_HOG1MPAULA
 		bne	@1
 		ldx	#tbl_commands_PAULA-tbl_commands
-
-@1:		ldy	tbl_commands+1,X		; get hi byte of string
+@1:		cmp	#JIM_DEVNO_BLITTER
+		beq	@2
+		ldx	#tbl_commands_General-tbl_commands
+@2:
+@lp:
+		ldy	tbl_commands+1,X		; get hi byte of string
 		beq	svc9_HELP_exit			; if zero at end of table
 		jsr	PrintSpc
 		jsr	PrintSpc
@@ -358,7 +362,7 @@ svc9_helptable:
 		inx
 		inx					; point at help args string
 		ldy	tbl_commands+1,X		; hi byte of args string
-		beq	@2
+		beq	@sk3
 		txa
 		pha
 		lda	tbl_commands,X
@@ -366,10 +370,10 @@ svc9_helptable:
 		jsr	PrintXY
 		pla
 		tax
-@2:		jsr	PrintNL
+@sk3:		jsr	PrintNL
 		inx
 		inx
-		bne	@1
+		bne	@lp
 
 
 svc9_HELP_nokey:
@@ -564,12 +568,9 @@ tbl_commands:		.word	strCmdRoms, cmdRoms-1, helpRoms
 			.word	strCmdSRERASE, cmdSRERASE-1, strHelpSRERASE
 			.word	strCmdSRNUKE, cmdSRNUKE-1, 0
 			.word	strCmdSRLOAD, cmdSRLOAD-1, strHelpSRLOAD
-			.word	strCmdXMDUMP, cmdXMdump-1, strHelpXMdump
 			.word	strCmdBLTurbo, cmdBLTurbo-1, strHelpBLTurbo
 			.word	strCmdNOICE, cmdNoIce-1, strHelpNoIce
 			.word	strCmdNOICE_BRK, cmdNoIce_BRK-1, strHelpNoIce_BRK
-			.word	strCmdBLLOAD, cmdBLLoad-1, strHelpBLLoad
-			.word	strCmdBLSAVE, cmdBLSave-1, strHelpBLSave
 tbl_commands_PAULA:
 			.word	strCmdSound, cmdSound-1, strHelpSound	
 			.word	strCmdSoundSamLoad, cmdSoundSamLoad-1, strHelpSoundSamLoad
@@ -577,6 +578,11 @@ tbl_commands_PAULA:
 			.word	strCmdHeapInfo, cmdHeapInfo-1, strHelpHeapInfo	
 			.word	strCmdSoundSamMap, cmdSoundSamMap-1, strHelpSoundSamMap
 			.word	strCmdBLInfo, cmdInfo-1, 0
+tbl_commands_General:
+			.word	strCmdXMLOAD, cmdXMLoad-1, strHelpXMLoad
+			.word	strCmdXMSAVE, cmdXMSave-1, strHelpXMSave
+			.word	strCmdXMDUMP, cmdXMdump-1, strHelpXMdump
+
 			.word	0
 
 str_HELP_KEY	:= 	utils_name
@@ -608,10 +614,10 @@ strHelpSoundSamMap:	.byte	"<CH> <SN>",0
 strCmdSoundSamClear:	.byte	"BLSAMCLR",0
 strHelpSoundSamClear:	.byte	"[SN|*]",0
 strCmdBLInfo:		.byte	"BLINFO",0
-strCmdBLLOAD:		.byte	"BLLOAD",0
-strHelpBLLoad:		.byte	"<file> [#dev] [<start>]"
-strCmdBLSAVE:		.byte	"BLSAVE",0
-strHelpBLSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
+strCmdXMLOAD:		.byte	"XMLOAD",0
+strHelpXMLoad:		.byte	"<file> [#dev] [<start>]",0
+strCmdXMSAVE:		.byte	"XMSAVE",0
+strHelpXMSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
 
 cmdHelpPresent:		.byte	130,"(Blitter present)",0
 cmdHelpPaulaPresent:		.byte	130," (1M Paula present)",0
