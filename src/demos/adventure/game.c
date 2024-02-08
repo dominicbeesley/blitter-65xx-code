@@ -69,7 +69,8 @@ unsigned int framectr;
 
 void debug(unsigned int x)
 {
-	*((byte *)0xFE35) = x;
+	// FE35 now used for ROM mapping!
+	//*((byte *)0xFE35) = x;
 }
 
 void dma_shadow2_scr(void) {
