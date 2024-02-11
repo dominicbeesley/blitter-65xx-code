@@ -62,7 +62,7 @@ OSWORD_BLTUTIL_RET_MAP1		:= $01
 .endmacro
 
 .macro		VERSION_STRING
-		.byte	"0.05"
+		.byte	"0.06"
 .endmacro
 
 .macro		M_ERROR

@@ -49,6 +49,8 @@
 		.import cmdXMSave
 		.import romThrottleInit
 
+		.import autohazel_boot_first
+		.import autohazel_boot_second
 
 
 		.export	Copyright
@@ -85,7 +87,7 @@ utils_name:
 		.byte	")"
 Copyright:
 		.byte	0
-		.byte	"(C)2022 "
+		.byte	"(C)2024 "
 str_Dossy:	.byte   "Dossytronics"
 		.byte	0
 
@@ -102,7 +104,13 @@ Serv_jump_table:
 		SJTE	$05, svc5_UKIRQ
 		SJTE	$08, svc8_OSWORD
 		SJTE	$09, svc9_HELP
+		SJTE	$FE, svcFE_TubeInit
 Serv_jump_table_Len	:= 	* - Serv_jump_table	
+
+svcFE_TubeInit:
+		pha
+		jsr	autohazel_boot_second
+		jmp	plaServiceOut
 
 
 Service:
@@ -159,6 +167,9 @@ ServiceOutA0:	ldx	zp_mos_curROM
 ;   SRNUKE
 
 svc1_ClaimAbs:
+
+		; do autohazel for lower priority roms
+		jsr	autohazel_boot_first
 
 		; check to see if we are current language and put back 
 		; original

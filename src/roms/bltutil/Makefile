@@ -7,7 +7,7 @@ DEPS=$(INCS)
 OBJS=	bltutil_romheader bltutil bltutil_flashutils \
 	bltutil_utils bltutil_noice bltutil_jimstuff \
 	bltutil_sound bltutil_heap bltutil_sound_irq \
-	bltutil_cfg bltutil_i2c
+	bltutil_cfg bltutil_i2c bltutil_autohazel
 ROMNO=F
 
 TARGETS=bltutil bltutil.e
