@@ -49,6 +49,8 @@
 		.import cmdXMSave
 		.import romThrottleInit
 
+		.import autohazel_boot_first
+		.import autohazel_boot_second
 
 
 		.export	Copyright
@@ -85,7 +87,7 @@ utils_name:
 		.byte	")"
 Copyright:
 		.byte	0
-		.byte	"(C)2022 "
+		.byte	"(C)2024 "
 str_Dossy:	.byte   "Dossytronics"
 		.byte	0
 
@@ -102,7 +104,15 @@ Serv_jump_table:
 		SJTE	$05, svc5_UKIRQ
 		SJTE	$08, svc8_OSWORD
 		SJTE	$09, svc9_HELP
+		SJTE	$FE, svcFE_TubeInit
 Serv_jump_table_Len	:= 	* - Serv_jump_table	
+
+svcFE_TubeInit:
+		pha
+		jsr      cfgGetAPISubLevel_1_3
+		bcc	@s
+		jsr	autohazel_boot_second
+@s:		jmp	plaServiceOut
 
 
 Service:
@@ -114,6 +124,10 @@ Service:
 		pha
 		txa
 
+		; skip disabled check for svc=1
+		cmp	#1
+		beq	srv_ok2
+
 		; check to see if this rom is disabled
 		pha
 		ldx	zp_mos_curROM
@@ -121,6 +135,8 @@ Service:
 		bpl	srv_ok
 		bvc	plaServiceOut			; top bit set and not second - exit
 srv_ok:		pla
+srv_ok2:
+
 		ldx	#0
 @1:		cmp	Serv_jump_table,X
 		beq	ServMatch
@@ -156,9 +172,14 @@ ServiceOutA0:	ldx	zp_mos_curROM
 ; SERVICE 1 - Claim Abs Workspace
 ; -------------------------------
 ; - We don't need abs workspace but we do want to check for £ key to enter
-;   SRNUKE
+;   SRNUKE and do other setup of auto hazel etc
 
-svc1_ClaimAbs:
+svc1_ClaimAbs: 
+		jsr      cfgGetAPISubLevel_1_3
+		bcc	@sh
+		; do autohazel for lower priority roms
+		jsr	autohazel_boot_first
+@sh:
 
 		; check to see if we are current language and put back 
 		; original
@@ -172,13 +193,17 @@ svc1_ClaimAbs:
 		; check for another BLTUTIL rom in higher slot and self-disable if there is one
 		; mainly to stop annoying messages
 
+		lda	#0
 		ldy	zp_mos_curROM
+		sta	swrom_wksp_tab,Y		; set ourselves to enabled (in case of just unplugged / erased BLTUTIL in higher slot)
 		cpy	#15
 		bcs	@rok
 		iny
 @rlp:		lda	oswksp_ROMTYPE_TAB,Y
 		cmp	#MY_ROM_TYPE
 		bne	@rnxt
+		tya
+		pha				; preserve other ROM #
 
 		; get pointer to ROM title
 		lda	#$09
@@ -186,25 +211,31 @@ svc1_ClaimAbs:
 		lda	#$80
 		sta	zp_mos_genPTR+1
 
-@cmplp:		ldy	zp_mos_curROM
+@cmplp:		pla
+		pha
+		tay				; ROM number of other ROM
 		jsr	OSRDRM
+
 		ldy	#0
 		cmp	(zp_mos_genPTR),Y
-		bne	@rnxt
+		bne	@rnxt2
 		cmp	#0
 		beq	@mat
 
 		inc	zp_mos_genPTR
 		bne	@cmplp
-		beq	@rnxt
+		beq	@rnxt2
 
 @mat:		; we have a match disable ourself
-		lda	#$80
+		pla				
+		ora	#$80			; save number of other rom ore'd with $80 to self-disable
 		ldy	zp_mos_curROM
 		sta	swrom_wksp_tab,Y
 		jmp	ServiceOut
 		
 		
+@rnxt2:		pla
+		tay
 @rnxt:		iny
 		cpy	#16
 		bne	@rlp

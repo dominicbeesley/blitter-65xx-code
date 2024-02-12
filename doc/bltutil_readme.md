@@ -9,8 +9,6 @@ ChipRAM can be accessed using the FRED/JIM paging mechanism on all processors or
 directly by processors that support >64k addressing i.e. 65816, 68008
 
 
-
-
         00 0000         +-----------------------+----+
                         | BLTURBO shadow memory | B  |see BLTURBO command
         00 8000         +-----------------------+----+
@@ -23,8 +21,8 @@ directly by processors that support >64k addressing i.e. 65816, 68008
                         |                       |    |
         HEAPBOT         +-----------------------+----+  see HEAP OSWORD, ...
                         |                       |    |
-                        | Memory heap           | BP |  Used by various commands to load data
-        HEAPTOP         |                       |    |  
+                        | Memory heap           | BP |  Used by various commands 
+        HEAPTOP         |                       |    |       to load data
         1C 0000 (B)     +-----------------------+----+  see HEAP OSWORD, ...    
         08 0000 (P)     |                       |    |
                         | SWRAM                 | B  |  
