@@ -43,6 +43,7 @@
 		.export cfgPrintStringY
 		.export cmdInfo
 		.export cfgGetAPISubLevel_1_2
+		.export cfgGetAPISubLevel_1_3
 		.export cfgMemSize
 		.export cfgMemCheckAlias
 
@@ -243,6 +244,19 @@ cfgGetAPISubLevel_1_2:
 @ret:		rts
 @s3:		clc
 		rts
+
+cfgGetAPISubLevel_1_3:
+; return Cy=1 when API >= 1.3
+		jsr	cfgGetAPISubLevel
+		bcs	@s3
+		beq	@s3
+		cmp	#2
+		bcs	@ret
+		cpx	#3
+@ret:		rts
+@s3:		clc
+		rts
+
 
 ;;; ;-----------------------------------------------------------------------------
 ;;; ; cfgGetAPILevelExt

@@ -109,8 +109,10 @@ Serv_jump_table_Len	:= 	* - Serv_jump_table
 
 svcFE_TubeInit:
 		pha
+		jsr      cfgGetAPISubLevel_1_3
+		bcc	@s
 		jsr	autohazel_boot_second
-		jmp	plaServiceOut
+@s:		jmp	plaServiceOut
 
 
 Service:
@@ -168,9 +170,11 @@ ServiceOutA0:	ldx	zp_mos_curROM
 
 svc1_ClaimAbs:
 
+		jsr      cfgGetAPISubLevel_1_3
+		bcc	@s
 		; do autohazel for lower priority roms
 		jsr	autohazel_boot_first
-
+@s:
 		; check to see if we are current language and put back 
 		; original
 		lda	sysvar_CUR_LANG
