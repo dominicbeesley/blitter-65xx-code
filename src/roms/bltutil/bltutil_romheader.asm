@@ -166,15 +166,15 @@ ServiceOutA0:	ldx	zp_mos_curROM
 ; SERVICE 1 - Claim Abs Workspace
 ; -------------------------------
 ; - We don't need abs workspace but we do want to check for £ key to enter
-;   SRNUKE
+;   SRNUKE and do other setup of auto hazel etc
 
-svc1_ClaimAbs:
-
+svc1_ClaimAbs: 
 		jsr      cfgGetAPISubLevel_1_3
-		bcc	@s
+		bcc	@sh
 		; do autohazel for lower priority roms
 		jsr	autohazel_boot_first
-@s:
+@sh:
+
 		; check to see if we are current language and put back 
 		; original
 		lda	sysvar_CUR_LANG
@@ -194,6 +194,8 @@ svc1_ClaimAbs:
 @rlp:		lda	oswksp_ROMTYPE_TAB,Y
 		cmp	#MY_ROM_TYPE
 		bne	@rnxt
+		tya
+		pha				; preserve other ROM #
 
 		; get pointer to ROM title
 		lda	#$09
@@ -201,25 +203,31 @@ svc1_ClaimAbs:
 		lda	#$80
 		sta	zp_mos_genPTR+1
 
-@cmplp:		ldy	zp_mos_curROM
+@cmplp:		pla
+		pha
+		tay				; ROM number of other ROM
 		jsr	OSRDRM
+
 		ldy	#0
 		cmp	(zp_mos_genPTR),Y
-		bne	@rnxt
+		bne	@rnxt2
 		cmp	#0
 		beq	@mat
 
 		inc	zp_mos_genPTR
 		bne	@cmplp
-		beq	@rnxt
+		beq	@rnxt2
 
 @mat:		; we have a match disable ourself
-		lda	#$80
+		pla				
+		ora	#$80			; save number of other rom ore'd with $80 to self-disable
 		ldy	zp_mos_curROM
 		sta	swrom_wksp_tab,Y
 		jmp	ServiceOut
 		
 		
+@rnxt2:		pla
+		tay
 @rnxt:		iny
 		cpy	#16
 		bne	@rlp
