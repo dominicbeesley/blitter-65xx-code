@@ -124,6 +124,10 @@ Service:
 		pha
 		txa
 
+		; skip disabled check for svc=1
+		cmp	#1
+		beq	srv_ok2
+
 		; check to see if this rom is disabled
 		pha
 		ldx	zp_mos_curROM
@@ -131,6 +135,8 @@ Service:
 		bpl	srv_ok
 		bvc	plaServiceOut			; top bit set and not second - exit
 srv_ok:		pla
+srv_ok2:
+
 		ldx	#0
 @1:		cmp	Serv_jump_table,X
 		beq	ServMatch
@@ -187,7 +193,9 @@ svc1_ClaimAbs:
 		; check for another BLTUTIL rom in higher slot and self-disable if there is one
 		; mainly to stop annoying messages
 
+		lda	#0
 		ldy	zp_mos_curROM
+		sta	swrom_wksp_tab,Y		; set ourselves to enabled (in case of just unplugged / erased BLTUTIL in higher slot)
 		cpy	#15
 		bcs	@rok
 		iny
