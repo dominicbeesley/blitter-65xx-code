@@ -109,6 +109,8 @@ Serv_jump_table_Len	:= 	* - Serv_jump_table
 
 svcFE_TubeInit:
 		pha
+		jsr	CheckBlitterPresent
+		bcs	@s
 		jsr      cfgGetAPISubLevel_1_3
 		bcc	@s
 		jsr	autohazel_boot_second
@@ -175,12 +177,6 @@ ServiceOutA0:	ldx	zp_mos_curROM
 ;   SRNUKE and do other setup of auto hazel etc
 
 svc1_ClaimAbs: 
-		jsr      cfgGetAPISubLevel_1_3
-		bcc	@sh
-		; do autohazel for lower priority roms
-		jsr	autohazel_boot_first
-@sh:
-
 		; check to see if we are current language and put back 
 		; original
 		lda	sysvar_CUR_LANG
@@ -245,6 +241,13 @@ svc1_ClaimAbs:
 		jsr	CheckBlitterPresent
 		bcs	@s2
 
+		jsr      cfgGetAPISubLevel_1_3
+		bcc	@sh
+		; do autohazel for lower priority roms
+		jsr	autohazel_boot_first
+		@sh:
+
+
 		; belt and braces write $f0 to flash to clear soft id mode
 		jsr	FlashReset_Q
 
@@ -268,9 +271,8 @@ svc1_ClaimAbs:
 		bpl	@s2
 		jsr	cmdSRNUKE_lang
 		jmp	cmdSRNUKE_reboot
-
-@s2:		
 		jsr	romThrottleInit
+@s2:		
 
 
 		jsr	cfgPrintVersionBoot

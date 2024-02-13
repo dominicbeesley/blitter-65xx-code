@@ -3,8 +3,8 @@
 SSD=$(SSDS)/roms65.ssd
 DEPLOY=$(DEPLOY_TOP)/roms65
 
-SUBDIRS=bltutil
-OBJS=bltutil/bltutil.rom bltutil/bltutil.e.rom
+SUBDIRS=bltutil testrom
+OBJS=bltutil/bltutil.rom bltutil/bltutil.e.rom testrom/blttest.rom
 EXTRAS=$(wildcard extras/*.inf)
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
