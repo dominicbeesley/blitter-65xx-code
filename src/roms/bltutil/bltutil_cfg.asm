@@ -24,7 +24,7 @@
 
 		
 		.include	"mosrom.inc"
-		.include 	"oslib.inc"
+		.include "oslib.inc"
 		.include	"common.inc"
 		.include	"hardware.inc"
 		.include	"bltutil.inc"
@@ -57,10 +57,13 @@ sheila_BLT_API0_CFG1			:= $FE3F
 		.CODE
 
 
+;!!!!!!!!!!!!!!!!!!!!!!!!!!! SYNC WITH MODEL-C-MOS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 ;=============================================================================
 ; Version / Configuration access functions
 ;=============================================================================
-; Currently supports API level 0 and 1. 0 is deprecated and may be removed
+; Currently supports all API level 0..1. 0 is deprecated and may be removed
 ; at any time
 ; all the cfgXXX routines expect:
 ; - device is setup and zp_mos_jimdevsave contains the correct device number
@@ -70,7 +73,7 @@ sheila_BLT_API0_CFG1			:= $FE3F
 ; cfgGetRomMap
 ;-----------------------------------------------------------------------------
 ; Returns current ROM map number in A or Cy=1 if no ROMS (i.e. Paula) [always 0 or 1]
-; Also returns Ov=1, Cy=1 id MEMI inhibit jumper fitted
+; Also returns Ov=1, Cy=1 if MEMI inhibit jumper fitted
 ; A is 0 if CS set
 cfgGetRomMap:
 		jsr	cfgGetAPILevel
