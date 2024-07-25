@@ -2,7 +2,7 @@
 		
 BASICTOOL=basictool
 
-TARGETS=1bppfont.tok
+TARGETS=1bppfon2.tok
 
 TARGETS_O=$(addprefix $(BUILD)/, $(TARGETS))
 
@@ -10,9 +10,9 @@ all: $(TARGETS_O)
 ssd: all
 deploy: ssd
 
-$(BUILD)/1bppfont.tok:1bppfont.bas
+$(BUILD)/1bppfon2.tok:1bppfon2.bas
 	basictool -t $< $@
-	echo '$$.1BPPFON FFFF8023 FFFF8023' >$@.inf
+	echo '$$.1BPPFO2 FFFF8023 FFFF8023' >$@.inf
 
 clean:
 	-rm $(TARGETS_O)
