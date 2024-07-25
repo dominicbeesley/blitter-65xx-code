@@ -912,6 +912,7 @@ str_cap_I2C:		.byte   "i2", 'c'+$80
 str_cap_SND:		.byte   "Paul", 'a'+$80
 str_cap_HDMI:		.byte   "HDM", 'I'+$80
 str_bld_T65:		.byte	"T6", '5'+$80
+str_cpu_6502A:		.byte	"6502",'A'+$80
 str_cpu_65c02:		.byte	"65C0", '2'+$80
 str_cpu_6800:		.byte	"680", '0'+$80
 str_cpu_80188:		.byte	"8018", '8'+$80
@@ -970,7 +971,6 @@ cputbl_mk3:		;	bits, tbl offs
 cputbl_mk3_len = * - cputbl_mk3
 
 
-str_cpu_6502A:		.byte	"6502A",0
 str_cpu_MHz:		.byte	"Mhz",0
 
 str_Paula:		.byte  	"1M Paul", 'a' + $80
