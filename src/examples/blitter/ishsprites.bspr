@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SpriteSheet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Mode="1">
+  <BackgroundColour>Transparent</BackgroundColour>
+  <DefaultPalette>
+    <Colour>Black</Colour>
+    <Colour>Red</Colour>
+    <Colour>Yellow</Colour>
+    <Colour>White</Colour>
+  </DefaultPalette>
+  <DefaultShowGridLines>true</DefaultShowGridLines>
+  <HorizontalBlockDividers>0</HorizontalBlockDividers>
+  <VerticalBlockDividers>0</VerticalBlockDividers>
+  <DefaultZoom>6</DefaultZoom>
+  <HasSetExportSettings>true</HasSetExportSettings>
+  <SpriteLayout>Linear</SpriteLayout>
+  <ShouldBreakSprites>false</ShouldBreakSprites>
+  <SubSpriteWidth>2</SubSpriteWidth>
+  <SubSpriteHeight>2</SubSpriteHeight>
+  <ShouldExportSeparateMask>true</ShouldExportSeparateMask>
+  <ShouldGenerateHeader>true</ShouldGenerateHeader>
+  <AssemblerSyntax>{n} := ${v}</AssemblerSyntax>
+  <SpriteList>
+    <Sprite Name="landy" Width="16" Height="12">
+      <Bitmap>//////////////////////////////////////////////////////////////////////8CAgICAgICAgL/////////AgAAAAIAAAAC/////////wIAAAACAAAAAgH///8CAgICAgICAgICAgIB////AgICAgICAgICAgICAf///wICAAICAgICAgACAv//////AAAA/////wAAAP////////8A////////AP//////////////////////////</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Green</Colour>
+        <Colour>Cyan</Colour>
+        <Colour>Yellow</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="family" Width="16" Height="12">
+      <Bitmap>////////////////////////////////////////////////////AQEBAf//////////////AQABAAAB////////////AQAAAQAAAQH//////wEBAQEBAQEBAQEBAf////8BAQEBAQEBAQEBAQH/////AQEBAAEBAQEBAAEB////////AAAA////AAAA//////////8A//////8A////////////////////////////////////////////////</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Green</Colour>
+        <Colour>Cyan</Colour>
+        <Colour>Magenta</Colour>
+      </Palette>
+    </Sprite>
+    <Sprite Name="weird" Width="16" Height="12">
+      <Bitmap>//////////////////////////////////////////////////////////////////////////////////////////8AAAAAAAAAAP//////////AAICAAACAgD//////wAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAP////8AAAADAAAAAAADAAD///////8DAwP///8DAwP//////////wP//////wP/////////////////////////////</Bitmap>
+      <Palette>
+        <Colour>Black</Colour>
+        <Colour>Green</Colour>
+        <Colour>Cyan</Colour>
+        <Colour>Magenta</Colour>
+      </Palette>
+    </Sprite>
+  </SpriteList>
+</SpriteSheet>
