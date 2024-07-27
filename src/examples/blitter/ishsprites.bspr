@@ -21,7 +21,7 @@
   <AssemblerSyntax>{n} := ${v}</AssemblerSyntax>
   <SpriteList>
     <Sprite Name="landy" Width="16" Height="12">
-      <Bitmap>//////////////////////////////////////////////////////////////////////8CAgICAgICAgL/////////AgAAAAIAAAAC/////////wIAAAACAAAAAgH///8CAgICAgICAgICAgIB////AgICAgICAgICAgICAf///wICAAICAgICAgACAv//////AAAA/////wAAAP////////8A////////AP//////////////////////////</Bitmap>
+      <Bitmap>//////////////////////////8AAAAAAAAAAAAAAP//////AAICAgICAgICAgD//////wACAAAAAgAAAAIAAP8AAAAAAgAAAAIAAAACAQD/AAICAgICAgICAgICAgEA/wACAgICAgICAgICAgIBAP8AAgIAAgICAgICAAICAAD/AAAAAAAAAAAAAAAAAAD/////AAAA/////wAAAP////////8A////////AP//////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
         <Colour>Green</Colour>
@@ -30,7 +30,7 @@
       </Palette>
     </Sprite>
     <Sprite Name="family" Width="16" Height="12">
-      <Bitmap>////////////////////////////////////////////////////AQEBAf//////////////AQABAAAB////////////AQAAAQAAAQH//////wEBAQEBAQEBAQEBAf////8BAQEBAQEBAQEBAQH/////AQEBAAEBAQEBAAEB////////AAAA////AAAA//////////8A//////8A////////////////////////////////////////////////</Bitmap>
+      <Bitmap>/////////////////////////////wAAAAAAAP///////////wAAAQEBAQAA/////////wAAAQABAAABAAD///8AAAAAAQAAAQAAAQEAAP//AAEBAQEBAQEBAQEBAQD//wABAQEBAQEBAQEBAQEA//8AAQEBAAEBAQEBAAEBAP//AAAAAAAAAAAAAAAAAAD//////wAAAP///wAAAP//////////AP//////AP//////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
         <Colour>Green</Colour>
@@ -39,7 +39,7 @@
       </Palette>
     </Sprite>
     <Sprite Name="weird" Width="16" Height="12">
-      <Bitmap>//////////////////////////////////////////////////////////////////////////////////////////8AAAAAAAAAAP//////////AAICAAACAgD//////wAAAAAAAAAAAAAA/////wAAAAAAAAAAAAAAAP////8AAAADAAAAAAADAAD///////8DAwP///8DAwP//////////wP//////wP/////////////////////////////</Bitmap>
+      <Bitmap>////////////////////////////////////////////////AAAAAAAAAAAAAP///////wADAwMDAwMDAwD///8AAAAAAwICAwMCAgMA//8AAAMDAwMDAwMDAwMDAP//AAMDAwMDAwMDAwMDAwD//wADAwMAAwMDAwMAAwMA//8AAAAAAAAAAAAAAAAAAP//////AAAA////AAAA//////////8A//////8A////////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
         <Colour>Green</Colour>
