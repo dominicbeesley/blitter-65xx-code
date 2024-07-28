@@ -2,7 +2,6 @@ REM >1BPPFO3 A BASIC example of 1BPP blits with horizontal and vertical shifts
 
 *XMLOAD S.ISHSPR #D1 20000
 MODE 1:BPP%=2:SCRX%=320:SCRY%=256:COLOUR 129:CLS:FORI%=0TO100:DRAW RND(320),RND(1024):GCOL0,RND(4):NEXT
-DIM TEMP% 4
 
 SCR_CHAR_ROW%=SCRX%*BPP%
 
@@ -75,8 +74,7 @@ REM address generator
 ?DMAC_FUNCGEN=&CA:REM (A AND B) OR (NOT A AND C)
 ?DMAC_WIDTH=W%-1
 ?DMAC_HEIGHT=12-1
-?DMAC_SHIFT_A=X% MOD 8
-?DMAC_SHIFT_B=SHX%
+?DMAC_SHIFT_A=X% MOD 8:REM this also sets shift B
 REM as there may be a shift we need to mask off bits of the mask accordingly
 ?DMAC_MASK_FIRST=FNshr(&FF,SHX%)
 IF SHX%=0 THEN ?DMAC_MASK_LAST=&FF ELSE ?DMAC_MASK_LAST=FNshr(&FF00,SHX%)
@@ -96,9 +94,5 @@ DMAC_STRIDE_C?1 = SCR_CHAR_ROW% DIV 256: REM also sets STRIDE_D
 ENDPROC
 :
 DEFPROCSELDMAC:?&EE=&D1:?&FCFF=&D1:?&FCFE=&FC:?&FCFD=&FE:ENDPROC:REM Select JIM device and set page to chipset
-:
-DEFPROCPOKE24(A%,V%):!TEMP%=V%:A%?0=TEMP%?2:A%?1=TEMP%?1:A%?2=TEMP%?0:ENDPROC:REM Quick 24bit big-endian address poke
-:
-DEFPROCPOKE16(A%,V%):!TEMP%=V%:A%?0=TEMP%?1:A%?1=TEMP%?0:ENDPROC:REM Quick 16bit big-endian poke
 :
 DEFFNshr(V%,N%):LOCALI%:IFN%>0THENFORI%=1TON%:V%=V%DIV2:NEXT:=V%ELSE=V%
