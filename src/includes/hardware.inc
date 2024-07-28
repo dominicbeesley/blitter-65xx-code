@@ -90,11 +90,11 @@ SND_CTL_REPEAT			:=	$01
 
 DMAC_NEW_BLITCON_offs		:=	0
 DMAC_NEW_FUNCGEN_offs		:=	$1
-DMAC_NEW_MASK_FIRST_offs	:=	$2
+DMAC_NEW_MASK_FIRST_offs	:=	$2	; 
 DMAC_NEW_MASK_LAST_offs		:=	$3
 DMAC_NEW_WIDTH_offs		:=	$4	; 8 bit
 DMAC_NEW_HEIGHT_offs		:=	$5	; 8 bit 
-DMAC_NEW_SHIFT_A_offs		:=	$6	
+DMAC_NEW_SHIFT_A_offs		:=	$6	; shift for A data poking this will poke SHIFT_B
 DMAC_NEW_SHIFT_B_offs		:=	$7	
 DMAC_NEW_STRIDE_A_offs		:=	$8	; 16 bit little endian
 DMAC_NEW_STRIDE_B_offs		:=	$A	; 16 bit little endian
