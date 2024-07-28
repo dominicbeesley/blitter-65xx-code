@@ -86,6 +86,34 @@ SND_CTL_ACT			:=	$80
 SND_CTL_REPEAT			:=	$01
 
 
+;;; NEW little-endian Word aligned API
+
+DMAC_NEW_BLITCON_offs		:=	0
+DMAC_NEW_FUNCGEN_offs		:=	$1
+DMAC_NEW_MASK_FIRST_offs	:=	$2
+DMAC_NEW_MASK_LAST_offs		:=	$3
+DMAC_NEW_WIDTH_offs		:=	$4	; 8 bit
+DMAC_NEW_HEIGHT_offs		:=	$5	; 8 bit 
+DMAC_NEW_SHIFT_A_offs		:=	$6	
+DMAC_NEW_SHIFT_B_offs		:=	$7	
+DMAC_NEW_STRIDE_A_offs		:=	$8	; 16 bit little endian
+DMAC_NEW_STRIDE_B_offs		:=	$A	; 16 bit little endian
+DMAC_NEW_STRIDE_C_offs		:=	$C	; 16 bit little endian - writing this also writes STRIDE_D for convenience
+DMAC_NEW_STRIDE_D_offs		:=	$E	; 16 bit little endian
+DMAC_NEW_ADDR_A_offs		:=	$10	; 24 bit
+DMAC_NEW_DATA_A_offs		:=	$13
+DMAC_NEW_ADDR_B_offs		:=	$14	; 24 bit
+DMAC_NEW_DATA_B_offs		:=	$17
+DMAC_NEW_ADDR_C_offs		:=	$18	; 24 bit writing this also writes ADDR_D for convenience
+DMAC_NEW_DATA_C_offs		:=	$1B
+DMAC_NEW_ADDR_D_offs		:=	$1C	; 24 bit
+DMAC_NEW_ADDR_E_offs		:=	$20	
+DMAC_NEW_ADDR_D_MIN_offs	:=	$24	; 24 bit
+DMAC_NEW_ADDR_D_MAX_offs	:=	$28	; 24 bit
+
+
+;;; OLD Big-endian register ABI
+
 DMAC_BLITCON_offs		:=	0
 DMAC_FUNCGEN_offs		:=	$1
 DMAC_WIDTH_offs			:=	$2
@@ -108,6 +136,7 @@ DMAC_STRIDE_D_offs		:=	$1E
 DMAC_BLIT_EXT_offs		:=	$40
 DMAC_ADDR_D_MIN_offs		:=	DMAC_BLIT_EXT_offs
 DMAC_ADDR_D_MAX_offs		:=	DMAC_BLIT_EXT_offs+3
+DMAX_DATA_C_offs		:=	DMAC_BLIT_EXT_offs+6
 
 
 
@@ -170,6 +199,29 @@ BLT_MK3_CFG0_T65		:=	$08
 BLT_MK3_CFG0_SWROMX		:=	$10
 BLT_MK3_CFG0_MEMI		:=	$40
 
+
+DMAC_NEW_BLITCON		:= 	$FD00 + DMAC_NEW_BLITCON_offs
+DMAC_NEW_FUNCGEN		:= 	$FD00 + DMAC_NEW_FUNCGEN_offs
+DMAC_NEW_MASK_FIRST		:= 	$FD00 + DMAC_NEW_MASK_FIRST_offs
+DMAC_NEW_MASK_LAST		:= 	$FD00 + DMAC_NEW_MASK_LAST_offs
+DMAC_NEW_WIDTH			:= 	$FD00 + DMAC_NEW_WIDTH_offs
+DMAC_NEW_HEIGHT			:= 	$FD00 + DMAC_NEW_HEIGHT_offs
+DMAC_NEW_SHIFT_A		:= 	$FD00 + DMAC_NEW_SHIFT_A_offs
+DMAC_NEW_SHIFT_B		:= 	$FD00 + DMAC_NEW_SHIFT_B_offs
+DMAC_NEW_STRIDE_A		:= 	$FD00 + DMAC_NEW_STRIDE_A_offs
+DMAC_NEW_STRIDE_B		:= 	$FD00 + DMAC_NEW_STRIDE_B_offs
+DMAC_NEW_STRIDE_C		:= 	$FD00 + DMAC_NEW_STRIDE_C_offs
+DMAC_NEW_STRIDE_D		:= 	$FD00 + DMAC_NEW_STRIDE_D_offs
+DMAC_NEW_ADDR_A			:= 	$FD00 + DMAC_NEW_ADDR_A_offs
+DMAC_NEW_DATA_A			:= 	$FD00 + DMAC_NEW_DATA_A_offs
+DMAC_NEW_ADDR_B			:= 	$FD00 + DMAC_NEW_ADDR_B_offs
+DMAC_NEW_DATA_B			:= 	$FD00 + DMAC_NEW_DATA_B_offs
+DMAC_NEW_ADDR_C			:= 	$FD00 + DMAC_NEW_ADDR_C_offs
+DMAC_NEW_DATA_C			:= 	$FD00 + DMAC_NEW_DATA_C_offs
+DMAC_NEW_ADDR_D			:= 	$FD00 + DMAC_NEW_ADDR_D_offs
+DMAC_NEW_ADDR_E			:= 	$FD00 + DMAC_NEW_ADDR_E_offs
+DMAC_NEW_ADDR_D_MIN		:= 	$FD00 + DMAC_NEW_ADDR_D_MIN_offs
+DMAC_NEW_ADDR_D_MAX		:= 	$FD00 + DMAC_NEW_ADDR_D_MAX_offs
 
 
 jim_DMAC			:=	$FD60
