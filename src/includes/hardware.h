@@ -41,6 +41,35 @@
 #define DMACTL2_PAUSE			0x01	
 
 
+// NEW little-endian Word aligned API
+
+#define DMAC_NEW_BLITCON_offs		0x0
+#define DMAC_NEW_FUNCGEN_offs		0x1
+#define DMAC_NEW_MASK_FIRST_offs	0x2	
+#define DMAC_NEW_MASK_LAST_offs		0x3
+#define DMAC_NEW_WIDTH_offs		0x4	
+#define DMAC_NEW_HEIGHT_offs		0x5	
+#define DMAC_NEW_SHIFT_A_offs		0x6	
+#define DMAC_NEW_SHIFT_B_offs		0x7	
+#define DMAC_NEW_STRIDE_A_offs		0x8	
+#define DMAC_NEW_STRIDE_B_offs		0xA	
+#define DMAC_NEW_STRIDE_C_offs		0xC	
+#define DMAC_NEW_STRIDE_D_offs		0xE	
+#define DMAC_NEW_ADDR_A_offs		0x10	
+#define DMAC_NEW_DATA_A_offs		0x13
+#define DMAC_NEW_ADDR_B_offs		0x14	
+#define DMAC_NEW_DATA_B_offs		0x17
+#define DMAC_NEW_ADDR_C_offs		0x18	
+#define DMAC_NEW_DATA_C_offs		0x1B
+#define DMAC_NEW_ADDR_D_offs		0x1C	
+#define DMAC_NEW_ADDR_E_offs		0x20	
+#define DMAC_NEW_ADDR_D_MIN_offs	0x24	
+#define DMAC_NEW_ADDR_D_MAX_offs	0x28	
+
+
+// OLD Big-endian register ABI
+
+
 #define DMAC_BLITCON_offs		0x00	
 #define DMAC_FUNCGEN_offs		0x01	
 #define DMAC_WIDTH_offs			0x02	
@@ -107,6 +136,30 @@
 #define jim_DMAC_STRIDE_B		(jim_DMAC + DMAC_STRIDE_B_offs)
 #define jim_DMAC_STRIDE_C		(jim_DMAC + DMAC_STRIDE_C_offs)
 #define jim_DMAC_STRIDE_D		(jim_DMAC + DMAC_STRIDE_D_offs)
+
+#define jim_DMAC_NEW_BLITCON		(0xFD00 + DMAC_NEW_BLITCON_offs)
+#define jim_DMAC_NEW_FUNCGEN		(0xFD00 + DMAC_NEW_FUNCGEN_offs)
+#define jim_DMAC_NEW_MASK_FIRST		(0xFD00 + DMAC_NEW_MASK_FIRST_offs)
+#define jim_DMAC_NEW_MASK_LAST		(0xFD00 + DMAC_NEW_MASK_LAST_offs)
+#define jim_DMAC_NEW_WIDTH		(0xFD00 + DMAC_NEW_WIDTH_offs)
+#define jim_DMAC_NEW_HEIGHT		(0xFD00 + DMAC_NEW_HEIGHT_offs)
+#define jim_DMAC_NEW_SHIFT_A		(0xFD00 + DMAC_NEW_SHIFT_A_offs)
+#define jim_DMAC_NEW_SHIFT_B		(0xFD00 + DMAC_NEW_SHIFT_B_offs)
+#define jim_DMAC_NEW_STRIDE_A		(0xFD00 + DMAC_NEW_STRIDE_A_offs)
+#define jim_DMAC_NEW_STRIDE_B		(0xFD00 + DMAC_NEW_STRIDE_B_offs)
+#define jim_DMAC_NEW_STRIDE_C		(0xFD00 + DMAC_NEW_STRIDE_C_offs)
+#define jim_DMAC_NEW_STRIDE_D		(0xFD00 + DMAC_NEW_STRIDE_D_offs)
+#define jim_DMAC_NEW_ADDR_A		(0xFD00 + DMAC_NEW_ADDR_A_offs)
+#define jim_DMAC_NEW_DATA_A		(0xFD00 + DMAC_NEW_DATA_A_offs)
+#define jim_DMAC_NEW_ADDR_B		(0xFD00 + DMAC_NEW_ADDR_B_offs)
+#define jim_DMAC_NEW_DATA_B		(0xFD00 + DMAC_NEW_DATA_B_offs)
+#define jim_DMAC_NEW_ADDR_C		(0xFD00 + DMAC_NEW_ADDR_C_offs)
+#define jim_DMAC_NEW_DATA_C		(0xFD00 + DMAC_NEW_DATA_C_offs)
+#define jim_DMAC_NEW_ADDR_D		(0xFD00 + DMAC_NEW_ADDR_D_offs)
+#define jim_DMAC_NEW_ADDR_E		(0xFD00 + DMAC_NEW_ADDR_E_offs)
+#define jim_DMAC_NEW_ADDR_D_MIN		(0xFD00 + DMAC_NEW_ADDR_D_MIN_offs)
+#define jim_DMAC_NEW_ADDR_D_MAX		(0xFD00 + DMAC_NEW_ADDR_D_MAX_offs)
+
 
 #define jim_DMAC_SND_DATA		(jim_DMAC + DMAC_SND_DATA_offs)
 #define jim_DMAC_SND_ADDR		(jim_DMAC + DMAC_SND_ADDR_offs)

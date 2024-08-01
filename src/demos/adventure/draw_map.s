@@ -46,12 +46,12 @@ _draw_map:
 	stx	zp_ptr_t+1
 	sta	zp_ptr_t
 
-	SET_DMA_WORD	jim_DMAC_STRIDE_B, TILE_B_STRIDE
-	SET_DMA_WORD	jim_DMAC_STRIDE_D, SCREEN_D_STRIDE
-	SET_DMA_BYTE	jim_DMAC_HEIGHT,TILE_Y_SZ-1
-	SET_DMA_BYTE	jim_DMAC_WIDTH,TILE_B_STRIDE-1
-	SET_DMA_BYTE	jim_DMAC_FUNCGEN, $CC
-	SET_DMA_BYTE	jim_DMAC_BLITCON, BLITCON_EXEC_B + BLITCON_EXEC_D
+	SET_LE_DMA_WORD	jim_DMAC_NEW_STRIDE_B, TILE_B_STRIDE
+	SET_LE_DMA_WORD	jim_DMAC_NEW_STRIDE_D, SCREEN_D_STRIDE
+	SET_DMA_BYTE	jim_DMAC_NEW_HEIGHT,TILE_Y_SZ-1
+	SET_DMA_BYTE	jim_DMAC_NEW_WIDTH,TILE_B_STRIDE-1
+	SET_DMA_BYTE	jim_DMAC_NEW_FUNCGEN, $CC
+	SET_DMA_BYTE	jim_DMAC_NEW_BLITCON, BLITCON_EXEC_B + BLITCON_EXEC_D
 
 
 	ldx	#0
@@ -86,31 +86,31 @@ s1:
 	sbc	#0					 ; DECA
 	ldx	#0
 	clc
-	stx	jim_DMAC_ADDR_B+2
+	stx	jim_DMAC_NEW_ADDR_B+0
 	ror	A
-	sta	jim_DMAC_ADDR_B+1
-	ror	jim_DMAC_ADDR_B+2			; tile_ptr = A * 80
+	sta	jim_DMAC_NEW_ADDR_B+1
+	ror	jim_DMAC_NEW_ADDR_B+0			; tile_ptr = A * 80
 	ror	A
 	pha						; 
-	lda	jim_DMAC_ADDR_B+2
+	lda	jim_DMAC_NEW_ADDR_B+0
 	ror	A
-	adc	jim_DMAC_ADDR_B+2
-	sta	jim_DMAC_ADDR_B+2
+	adc	jim_DMAC_NEW_ADDR_B+0
+	sta	jim_DMAC_NEW_ADDR_B+0
 	pla
-	adc	jim_DMAC_ADDR_B+1
+	adc	jim_DMAC_NEW_ADDR_B+1
 
-	sta	jim_DMAC_ADDR_B+1
+	sta	jim_DMAC_NEW_ADDR_B+1
 	lda	#.LOBYTE(.HIWORD(DMA_BACK_SPR))		; ASSUME: bank not crossed
-	sta	jim_DMAC_ADDR_B
+	sta	jim_DMAC_NEW_ADDR_B+2
 
 	lda	screen_dma_addr
-	sta	jim_DMAC_ADDR_D+2
+	sta	jim_DMAC_NEW_ADDR_D+0
 	lda	screen_dma_addr+1
-	sta	jim_DMAC_ADDR_D+1
+	sta	jim_DMAC_NEW_ADDR_D+1
 	lda	screen_dma_addr+2
-	sta	jim_DMAC_ADDR_D+0
+	sta	jim_DMAC_NEW_ADDR_D+2
 
-	SET_DMA_BYTE	jim_DMAC_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_CELL + BLITCON_ACT_MODE_4BBP
+	SET_DMA_BYTE	jim_DMAC_NEW_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_CELL + BLITCON_ACT_MODE_4BBP
 
 s2:
 	clc

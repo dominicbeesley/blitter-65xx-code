@@ -81,3 +81,21 @@ A_TILE_MAP		:=	_tilemap
 		sta	addr
 .ENDMACRO
 
+
+.MACRO		SET_LE_DMA_WORD	addr, val
+		lda	#<val
+		sta	addr
+		lda	#>val
+		sta	addr+1
+.ENDMACRO
+
+.MACRO		SET_LE_DMA_ADDR	addr,val
+		lda	#<(val & 0xFFFF)
+		sta	addr
+		lda	#>(val & 0xFFFF)
+		sta	addr+1
+		lda	#val / 0x10000
+		sta	addr+2
+.ENDMACRO
+
+

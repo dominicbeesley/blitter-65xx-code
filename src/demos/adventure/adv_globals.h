@@ -118,5 +118,17 @@ extern char tilemap[];
 #define GET_DMA_BYTE(x) \
 	(*((byte volatile *)x))
 
+//WARNING: sets a 32 bit address - may have consequences
+#define SET_LE_DMA_ADDR(x,y) \
+	{*((unsigned long volatile *)x) = y;}
+
+#define SET_LE_DMA_WORD(x,y) \
+	{*((unsigned volatile *)x) = y;}
+
+#define GET_LE_DMA_WORD(x) \
+	(*((unsigned volatile *)x))
+
+
+
 #endif
 
