@@ -60,13 +60,6 @@ unsigned char charspr_ix, charspr_offs;
 unsigned int framectr;
 
 
-
-
-
-
-
-
-
 void debug(unsigned int x)
 {
 	// FE35 now used for ROM mapping!
@@ -97,15 +90,23 @@ void wait_vsync() {
 #define KEY_RT 0x02
 #define KEY_UP 0x04
 #define KEY_LT 0x08
+#define KEY_JOY 0x10
 
 unsigned char char_keyspressed;
 unsigned char char_facing;
+char joy = 0;						//disabled
 unsigned char joystick_facing;
 unsigned char char_mask_tmp;
 
 unsigned char tmp_ix, tmp_iy;
 
-const char keys[] = { 0xE8, 0xC2, 0xC8, 0xE1 };
+const char keys[] = { 
+	0xE8, // ?
+	0xC2, // X
+	0xC8, // *
+	0xE1, // Z 
+	0xC5  // J
+};
 
 void char_init() {
 	charspr_ix = 0;
@@ -158,7 +159,7 @@ unsigned char_move(void) {
 	/* scan keys */
 	char_keyspressed = 0;
 	char_mask_tmp = 1;
-	for (tmp_ix = 0; tmp_ix < 4; tmp_ix++)
+	for (tmp_ix = 0; tmp_ix < sizeof(keys) / sizeof(keys[0]); tmp_ix++)
 	{
 		if (my_os_byteAXYretX(0x79, keys[tmp_ix], 0) & 0x80) {
 			char_keyspressed |= char_mask_tmp;
@@ -186,36 +187,49 @@ unsigned char_move(void) {
 		char_keyspressed &= (~(KEY_UP + KEY_DN)) | char_facing;
 	}
 
-	/* joystick control */
-	dx = adval8(1);
-	if (dx > 0)
-		dx--;
-	else if (dx < 0)
-		dx++;
-	dy = adval8(2);
-	if (dy > 0)
-		dy--;
-	else if (dy < 0)
-		dy++;
 	
-	if (dx != 0 || dy != 0)
-	{
-		joystick_facing = 0;
-		if (mag(dx) > mag(dy)) {
-			if (dx > 0)
-				joystick_facing |= KEY_RT;
-			else if (dx < 0)
-				joystick_facing |= KEY_LT;
+	if (KEY_JOY & char_keyspressed) {
+		if (!(joy & 2)) {
+			joy ^= 1;
 		}
-		else {
-			if (dy > 0)
-				joystick_facing |= KEY_DN;
-			else if (dy < 0)
-				joystick_facing |= KEY_UP;
+		joy |= 2;
+	} else {
+		joy = joy & ~2;
+	}
+
+
+	if (joy) {
+		/* joystick control */
+		dx = adval8(1);
+		if (dx > 0)
+			dx--;
+		else if (dx < 0)
+			dx++;
+		dy = adval8(2);
+		if (dy > 0)
+			dy--;
+		else if (dy < 0)
+			dy++;
+		
+		if (dx != 0 || dy != 0)
+		{
+			joystick_facing = 0;
+			if (mag(dx) > mag(dy)) {
+				if (dx > 0)
+					joystick_facing |= KEY_RT;
+				else if (dx < 0)
+					joystick_facing |= KEY_LT;
+			}
+			else {
+				if (dy > 0)
+					joystick_facing |= KEY_DN;
+				else if (dy < 0)
+					joystick_facing |= KEY_UP;
+			}
+			if (!joystick_facing)
+				joystick_facing = 1;
+			face(joystick_facing);
 		}
-		if (!joystick_facing)
-			joystick_facing = 1;
-		face(joystick_facing);
 	}
 	
 
