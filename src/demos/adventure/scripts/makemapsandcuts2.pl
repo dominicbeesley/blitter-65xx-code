@@ -35,6 +35,14 @@ use Data::Dumper;
 # ids layer ids start at 1 with 0 meaning empty
 
 
+my %objtypes = (
+	teleport => qr/^\s*\&\w+\s*\,\s*\d+\s*\,\s*\d+\s*$/
+);
+my %collflags = (
+	nocollide => 0x80
+	);
+
+
 sub Usage {
 
 	while (my $x = shift) {
@@ -188,9 +196,7 @@ for (my $layer = 0; $layer <3; $layer++) {
 
 }
 
-my %collflags = (
-	nocollide => 0x80
-	);
+
 
 my $collmask = 0; map { $collmask |= $_ } values(%collflags);
 
@@ -225,6 +231,17 @@ foreach my $map (@maps) {
 	print $fh_map_c "\t" . mapref($map, "south") . ",\n";
 	print $fh_map_c "\t" . mapref($map, "east") . ",\n";
 	print $fh_map_c "\t" . mapref($map, "west") . ",\n";
+
+	# objects
+	print $fh_map_c "\t{\n";
+
+	foreach my $obj (@{$map->{objects}}) {
+		printf $fh_map_c "\t\tMAPDEF_OBJ_TYPE_%s, %d, %d, { %s },\n", uc($obj->{type}), $obj->{x}, $obj->{y}, $obj->{val};
+	}
+
+	print $fh_map_c "\t}\n";
+
+
 	print $fh_map_c "};\n";
 	
 
@@ -340,7 +357,50 @@ sub do_map {
 		$mapproperties{$prop->getAttribute("name")} = $prop->getAttribute("value");
 	}
 
+	my $tilesz_x = $xel_inmap->getAttribute("tilewidth") // 0;
+	my $tilesz_y = $xel_inmap->getAttribute("tileheight") // 0;
 
+
+	# map objects
+	my @objects = ();
+	foreach my $xel_obj ($xel_inmap->findnodes("objectgroup/object")) {
+		my $obj_id = $xel_obj->getAttribute("id") // 0;
+
+
+		my $obj_x = $xel_obj->getAttribute("x") // 0;
+		my $obj_y = $xel_obj->getAttribute("y") // 0;
+
+		print STDERR "OBJ: $obj_id $obj_x $obj_y\n";
+
+		if ($obj_x % $tilesz_x != 0 and $obj_y % $tilesz_y != 0) {
+			print STDERR "WARNING ignorning object $obj_id, must be placed on grid\n";
+			next;
+		}
+		$obj_x = int($obj_x / $tilesz_x);
+		$obj_y = int($obj_y / $tilesz_y) - 1;	# for some reason tiled makes x y the bottom left of the tile!
+
+		foreach my $xel_prop ($xel_obj->findnodes("properties/property")) {
+			my $p_name = $xel_prop->getAttribute("name");
+			my $p_val = $xel_prop->getAttribute("value");
+
+			my $re = $objtypes{$p_name};
+
+			if ($re) {
+	
+				$p_val =~ $re or die "Bad object $obj_id property $p_name doesn't match pattern $re : \"$p_val\"";
+
+				push @objects, {
+					x => $obj_x,
+					y => $obj_y,
+					type => $p_name,
+					val => $p_val
+				};
+			} else {
+				print STDERR "WARNING: Found object with non-matching property $obj_id: $p_name\n";
+			}
+		}
+
+	}
 
 	my $gid = 1;
 
@@ -424,8 +484,11 @@ sub do_map {
 
 	}
 
+	
+
 	return {
 		props => \%mapproperties,
+		objects => \@objects,
 		width => $width,
 		height => $height,
 		layers => \@maplayers		# a flat array of tiles in col, row order

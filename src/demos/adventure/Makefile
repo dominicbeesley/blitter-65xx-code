@@ -25,9 +25,9 @@ EXTRA_ASM=$(addprefix $(BUILD)/, game.s dma.s loader.s wander.s adval.s brk.s sp
 GAME_OBJS=	game draw_map dma myos tile_map brk adval sprite screenmaths 
 WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
 LOADER_OBJS=	loader dma myos rle_asm
-INCS=$(BUILD)/includes/ $(BUILD)/includes/gen_vars.h
+INCS=$(BUILD)/includes/ 
 
-TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/includes/gen_vars.h $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.back.til.cuts $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.collide.rle $(BUILD)/tiles/over.front.til.cuts $(BUILD)/tiles/over.map.rle
+TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.collide.rle $(BUILD)/tiles/over.map.rle
 
 GROUPS=over
 
@@ -76,7 +76,7 @@ $(BUILD)/loader.bin: $(LOADER_OBJS_O) loader.cfg
 	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJS_O) $(CLIB) -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/loader.bin.map >$(BUILD)/loader.noi
 
-$(patsubst %.c, $(BUILD)/%.s, $(wildcard *.c)): $(BUILD)/includes/gen_vars.h adv_globals.h myos.h 
+$(patsubst %.c, $(BUILD)/%.s, $(wildcard *.c)): adv_globals.h myos.h 
 
 $(patsubst %.s, $(BUILD)/%.o, $(wildcard *.s)): adv_globals.inc
 
@@ -108,19 +108,10 @@ $(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.t
 
 		$(SCRIPTS)/tilecutter.py $(BUILD)/tiles/over.tilecuts.xml $(shell pwd)
 
-$(BUILD)/includes/gen_vars.h: $(BUILD)/tiles/charac.til $(BUILD)/tiles/over.back.til $(BUILD)/tiles/over.front.til
-		echo -n "#define CHARAC_SPR_LEN\t" > $(BUILD)/includes/gen_vars.h
-		stat -c%s $(BUILD)/tiles/charac.til >> $(BUILD)/includes/gen_vars.h
-		echo -n "#define BACK_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
-		stat -c%s $(BUILD)/tiles/over.back.til >> $(BUILD)/includes/gen_vars.h
-		echo -n "#define FRONT_SPR_LEN\t" >> $(BUILD)/includes/gen_vars.h
-		stat -c%s $(BUILD)/tiles/over.front.til >> $(BUILD)/includes/gen_vars.h
-		unix2dos $(BUILD)/includes/gen_vars.h
 
-
-$(BUILD)/tiles/home.map \
+$(BUILD)/tiles/over.map \
 $(BUILD)/tiles/over.tilecuts.xml \
-$(BUILD)/tiles/home.h &: $(wildcard maps/*.tmx) $(wildcard maps/*.tsx) maps/main.pal scripts/makemapsandcuts2.pl
+$(BUILD)/tiles/over.h &: $(wildcard maps/*.tmx) $(wildcard maps/*.tsx) maps/main.pal scripts/makemapsandcuts2.pl
 		scripts/makemapsandcuts2.pl $(BUILD)/tiles "over" 0 maps/main.pal $(wildcard maps/*.tmx)
 
 game.c:$(BUILD)/includes/all_maps.h

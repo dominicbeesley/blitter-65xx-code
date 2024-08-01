@@ -120,22 +120,22 @@ while ($i+1 < scalar @stack)
 		and (2+length($a->{value})+length($c->{value})) <= 128
 		) 
 	{
-		print "TRIM $i\n";
+#		print "TRIM $i\n";
 		splice @stack, $i-1, 3, { type=> 'lit', value => $a->{value} . $b->{value} . $b->{value} . $c->{value} };
 	} else {
 		$i++;
 	}
 }
 
-for my $k (@stack) {
-	print "$k->{type}";	
-	if ( $k->{type} eq 'lit' )
-	{
-		print " ${\ length($k->{value}) }\n";
-	} else {
-		print " $k->{len}\n";
-	}
-}
+#for my $k (@stack) {
+#	print "$k->{type}";	
+#	if ( $k->{type} eq 'lit' )
+#	{
+#		print " ${\ length($k->{value}) }\n";
+#	} else {
+#		print " $k->{len}\n";
+#	}
+#}
 
 
 open (my $fh_out, ">:raw:", $fn_out) or die $!;
