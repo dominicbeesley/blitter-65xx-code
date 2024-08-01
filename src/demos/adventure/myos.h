@@ -35,7 +35,7 @@ extern unsigned char my_os_byteAXYretX(unsigned char A, unsigned char X, unsigne
 extern unsigned char my_os_find_open(unsigned char A, const char *ptr);
 extern void my_os_find_close(unsigned Y);
 
-extern long my_os_gbpb_read (unsigned char file, unsigned char const *data, long size);
+extern long my_os_gbpb_read (unsigned char file, unsigned char *data, long size);
 
 extern void my_os_brk(unsigned char n, const char *s);
 

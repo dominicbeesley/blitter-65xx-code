@@ -30,7 +30,7 @@ SOFTWARE.
 
 extern char tilemap[];
 
-#define RLE_LOADBUF	((unsigned char *)0x3000)
+#define RLE_LOADBUF	((unsigned char *)0x7E00)
 #define RLE_LOADBUFSZ   256
 
 #define A_LOADBUFFER 	((void *)0x4000)

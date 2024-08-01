@@ -26,13 +26,6 @@
 			.import _tilemap
 
 
-A_LOADBUFFER		:=	$3000
-
-DMA_LOADBUFFER		:=	($FF0000+A_LOADBUFFER)
-DMA_CHARAC_SPR		:=	$001000
-CHARAC_SPR_MO		:=	(8*24)				; mask offset from start of spr
-CHARAC_SPR_SZ		:=	((2*24)+(8*24))			; size of spr
-
 DMA_BACK_SPR		:=	$010000
 DMA_FRONT_SPR		:=	$020000
 FRONT_SPR_MO		:=	(8*16)				; mask offset from start of spr
