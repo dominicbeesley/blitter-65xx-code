@@ -43,21 +43,19 @@ extern char tilemap[];
 
 
 #define SET_DMA_ADDR(x,y) \
-	{*((byte volatile *)x) = ((y) >> 16); \
-	*((byte volatile *)x+1) = ((y) >> 8); \
-	*((byte volatile *)x+2) = (y);}
+	{*((unsigned long volatile *)x) = (y);}
 
 #define SET_DMA_WORD(x,y) \
-	{*((byte volatile *)x) = ((y) >> 8); \
-	*((byte volatile *)x+1) = (y);}
+	{*((unsigned int volatile *)x) = (y);}
+
 #define SET_DMA_BYTE(x,y) \
 	{*((byte volatile *)x) = (y);} 
 
 #define GET_DMA_WORD(x) \
-	(((unsigned int)(*((byte volatile *)(x+1)))) + (((unsigned int)(*((byte volatile *)(x))))<<8))
+	(*((unsigned int volatile *)(x)))
 
 #define GET_DMA_BYTE(x) \
-	(*((byte volatile *)x))
+	(*((byte volatile *)(x)))
 
 #endif
 

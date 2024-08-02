@@ -97,7 +97,7 @@
 #define CS_AERIS_PROGBASE_offs		0xB4
 #define CS_AERIS_PC_offs		0xB8
 
-#define jim_page_DMAC			0xFEFE
+#define jim_page_CHIPSET		0xFEFE
 
 #define jim_CS_BLIT_BLITCON		(0xFD00 + CS_BLIT_BLITCON_offs)
 #define jim_CS_BLIT_FUNCGEN		(0xFD00 + CS_BLIT_FUNCGEN_offs)
@@ -143,9 +143,9 @@
 #define jim_CS_DMA_PAUSE_VAL		(0xFD00 + CS_DMA_PAUSE_VAL_offs)
 #define jim_CS_DMA_SEL			(0xFD00 + CS_DMA_SEL_offs)
 
-#define jim_CS_AERIS_CTL		(0xFD00 + DMAC_AERIS_CTL_offs)
-#define jim_CS_AERIS_PROGBASE		(0xFD00 + DMAC_AERIS_PROGBASE_offs)
-#define jim_CS_AERIS_PPC		(0xFD00 + DMAC_AERIS_PC_offs)
+#define jim_CS_AERIS_CTL		(0xFD00 + CS_AERIS_CTL_offs)
+#define jim_CS_AERIS_PROGBASE		(0xFD00 + CS_AERIS_PROGBASE_offs)
+#define jim_CS_AERIS_PPC		(0xFD00 + CS_AERIS_PC_offs)
 
 
 #define SHEILA_NULA_CTLAUX		0xFE22

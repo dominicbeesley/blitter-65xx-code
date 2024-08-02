@@ -113,8 +113,8 @@ unsigned int SCR_LIM(unsigned int addr) {
 }
 
 void jimDEV(void) {
-	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_DMAC & 0xFF;
-	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_DMAC >> 8;
+	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_CHIPSET & 0xFF;
+	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_CHIPSET >> 8;
 }
 
 void jimAEPGM(void) {
@@ -144,8 +144,12 @@ void main(void) {
 
 	dma_copy_block(0xFF0000L | (long)&aeris_test_pgm,DMA_AERIS,(unsigned int)&aeris_test_pgm_end-(unsigned int)&aeris_test_pgm);
 
-	SET_DMA_ADDR(jim_DMAC_AERIS_PROGBASE, DMA_AERIS);
-	SET_DMA_BYTE(jim_DMAC_AERIS_CTL, 0x80);
+	SET_DMA_ADDR(jim_CS_AERIS_PROGBASE, DMA_AERIS);
+	SET_DMA_BYTE(jim_CS_AERIS_CTL, 0x80);
+
+	SET_DMA_ADDR(jim_CS_BLIT_ADDR_D_MIN, 0xFF3000);
+	SET_DMA_ADDR(jim_CS_BLIT_ADDR_D_MAX, 0xFF8000);
+
 
 	while(1) {
 
@@ -221,6 +225,8 @@ void main(void) {
 		*((char *)(0xFD00 + 1 + i)) = j >> 8;
 		*((char *)(0xFD00 + 2 + i)) = j;
 		jimDEV();
+
+
 		pal_offs2++;
 
 		if (first) 
@@ -237,43 +243,35 @@ void main(void) {
 
 				//owl logo "un"plot (not and with screen)
 				// setup screen block in dma
-				SET_DMA_BYTE(jim_DMAC_ADDR_D, 0xFF);
-				SET_DMA_BYTE(jim_DMAC_ADDR_C, 0xFF);
+				SET_DMA_BYTE(jim_CS_BLIT_ADDR_C+2, 0xFF);
 				// plot address
-				SET_DMA_WORD(jim_DMAC_ADDR_D+1, scr_ptr);
-				SET_DMA_WORD(jim_DMAC_ADDR_C+1, scr_ptr);
+				SET_DMA_WORD(jim_CS_BLIT_ADDR_C, scr_ptr);
 
-				SET_DMA_BYTE(jim_DMAC_ADDR_B, DMA_OWL_TIL >> 16);
-				SET_DMA_WORD(jim_DMAC_ADDR_B+1, (unsigned int)DMA_OWL_TIL);
+				SET_DMA_ADDR(jim_CS_BLIT_ADDR_B, DMA_OWL_TIL);
 
 
-				SET_DMA_BYTE(jim_DMAC_DATA_A, 0xFF);
+				SET_DMA_BYTE(jim_CS_BLIT_DATA_A, 0xFF);
 
-				SET_DMA_WORD(jim_DMAC_STRIDE_B, 9);
-				SET_DMA_WORD(jim_DMAC_STRIDE_D, 640);
-				SET_DMA_WORD(jim_DMAC_STRIDE_C, 640);
+				SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, 9);
+				SET_DMA_WORD(jim_CS_BLIT_STRIDE_D, 640);
+				SET_DMA_WORD(jim_CS_BLIT_STRIDE_C, 640);
 
 				if (k) {
-					SET_DMA_BYTE(jim_DMAC_SHIFT, 0x11);
-					SET_DMA_BYTE(jim_DMAC_MASK_FIRST, 0x7F);
-					SET_DMA_BYTE(jim_DMAC_MASK_LAST, 0xFF);
+					SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0x1);
+					SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0x7F);
+					SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
 				} else {
-					SET_DMA_BYTE(jim_DMAC_SHIFT, 0x00);
-					SET_DMA_BYTE(jim_DMAC_MASK_FIRST, 0xFF);
-					SET_DMA_BYTE(jim_DMAC_MASK_LAST, 0xFF);				
+					SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0x00);
+					SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
+					SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);				
 				}
 
-				SET_DMA_BYTE(jim_DMAC_WIDTH, l);
-				SET_DMA_BYTE(jim_DMAC_HEIGHT, 42-1);	
+				SET_DMA_BYTE(jim_CS_BLIT_WIDTH, l);
+				SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, 42-1);	
 				
-				SET_DMA_BYTE(jim_DMAC_ADDR_D_min, 0xFF);
-				SET_DMA_BYTE(jim_DMAC_ADDR_D_max, 0xFF);
-				SET_DMA_WORD(jim_DMAC_ADDR_D_min+1, 0x3000);
-				SET_DMA_WORD(jim_DMAC_ADDR_D_max+1, 0x8000);
-
-				SET_DMA_BYTE(jim_DMAC_FUNCGEN, 0x2A);	//	C&(!(B&A))
-				SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D);	//	exec A,B,C,D,E
-				SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
+				SET_DMA_BYTE(jim_CS_BLIT_FUNCGEN, 0x2A);	//	C&(!(B&A))
+				SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D);	//	exec A,B,C,D,E
+				SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
 			}
 			
 				
@@ -304,43 +302,34 @@ void main(void) {
 
 			//owl logo plot (or with screen)
 			// setup screen block in dma
-			SET_DMA_BYTE(jim_DMAC_ADDR_D, 0xFF);
-			SET_DMA_BYTE(jim_DMAC_ADDR_C, 0xFF);
+			SET_DMA_BYTE(jim_CS_BLIT_ADDR_C+2, 0xFF);
 			// plot address
-			SET_DMA_WORD(jim_DMAC_ADDR_D+1, scr_ptr);
-			SET_DMA_WORD(jim_DMAC_ADDR_C+1, scr_ptr);
+			SET_DMA_WORD(jim_CS_BLIT_ADDR_C, scr_ptr);
 
-			SET_DMA_BYTE(jim_DMAC_ADDR_B, DMA_OWL_TIL >> 16);
-			SET_DMA_WORD(jim_DMAC_ADDR_B+1, (unsigned int)DMA_OWL_TIL);
+			SET_DMA_ADDR(jim_CS_BLIT_ADDR_B, DMA_OWL_TIL);
 
+			SET_DMA_BYTE(jim_CS_BLIT_DATA_A, 0xFF);
 
-			SET_DMA_BYTE(jim_DMAC_DATA_A, 0xFF);
-
-			SET_DMA_WORD(jim_DMAC_STRIDE_B, 9);
-			SET_DMA_WORD(jim_DMAC_STRIDE_D, 640);
-			SET_DMA_WORD(jim_DMAC_STRIDE_C, 640);
+			SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, 9);
+			SET_DMA_WORD(jim_CS_BLIT_STRIDE_D, 640);
+			SET_DMA_WORD(jim_CS_BLIT_STRIDE_C, 640);
 
 			if (k) {
-				SET_DMA_BYTE(jim_DMAC_SHIFT, 0x11);
-				SET_DMA_BYTE(jim_DMAC_MASK_FIRST, 0x7F);
-				SET_DMA_BYTE(jim_DMAC_MASK_LAST, 0xFF);
+				SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0x1);
+				SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0x7F);
+				SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
 			} else {
-				SET_DMA_BYTE(jim_DMAC_SHIFT, 0x00);
-				SET_DMA_BYTE(jim_DMAC_MASK_FIRST, 0xFF);
-				SET_DMA_BYTE(jim_DMAC_MASK_LAST, 0xFF);				
+				SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0x00);
+				SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
+				SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);				
 			}
 
-			SET_DMA_BYTE(jim_DMAC_WIDTH, l);
-			SET_DMA_BYTE(jim_DMAC_HEIGHT, 42-1);	
+			SET_DMA_BYTE(jim_CS_BLIT_WIDTH, l);
+			SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, 42-1);	
 			
-			SET_DMA_BYTE(jim_DMAC_ADDR_D_min, 0xFF);
-			SET_DMA_BYTE(jim_DMAC_ADDR_D_max, 0xFF);
-			SET_DMA_WORD(jim_DMAC_ADDR_D_min+1, 0x3000);
-			SET_DMA_WORD(jim_DMAC_ADDR_D_max+1, 0x8000);
-
-			SET_DMA_BYTE(jim_DMAC_FUNCGEN, 0xEA);	//	(B&A)|C
-			SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D);	//	exec A,B,C,D,E
-			SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
+			SET_DMA_BYTE(jim_CS_BLIT_FUNCGEN, 0xEA);	//	(B&A)|C
+			SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D);	//	exec A,B,C,D,E
+			SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
 
 
 		}
@@ -348,32 +337,27 @@ void main(void) {
 
 
 
-		SET_DMA_BYTE(jim_DMAC_SHIFT, 0x00);
-		SET_DMA_BYTE(jim_DMAC_MASK_FIRST, 0xFF);
-		SET_DMA_BYTE(jim_DMAC_MASK_LAST, 0xFF);				
+		SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0x00);
+		SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
+		SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);				
 
 
 		//clear scrolled out column
 		// setup screen block in dma
-		SET_DMA_BYTE(jim_DMAC_ADDR_D, 0xFF);
+		SET_DMA_BYTE(jim_CS_BLIT_ADDR_D+2, 0xFF);
 		// plot address
-		SET_DMA_WORD(jim_DMAC_ADDR_D+1, SCR_LIM(scr_ptr_base+0x270));
+		SET_DMA_WORD(jim_CS_BLIT_ADDR_D+0, SCR_LIM(scr_ptr_base+0x270));
 
-		SET_DMA_BYTE(jim_DMAC_DATA_B, 0);
+		SET_DMA_BYTE(jim_CS_BLIT_DATA_B, 0);
 
-		SET_DMA_WORD(jim_DMAC_STRIDE_D, 640);
+		SET_DMA_WORD(jim_CS_BLIT_STRIDE_D, 640);
 
-		SET_DMA_BYTE(jim_DMAC_WIDTH, 2-1);
-		SET_DMA_BYTE(jim_DMAC_HEIGHT, 256-1);	
+		SET_DMA_BYTE(jim_CS_BLIT_WIDTH, 2-1);
+		SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, 256-1);	
 		
-		SET_DMA_BYTE(jim_DMAC_ADDR_D_min, 0xFF);
-		SET_DMA_BYTE(jim_DMAC_ADDR_D_max, 0xFF);
-		SET_DMA_WORD(jim_DMAC_ADDR_D_min+1, 0x3000);
-		SET_DMA_WORD(jim_DMAC_ADDR_D_max+1, 0x8000);
-
-		SET_DMA_BYTE(jim_DMAC_FUNCGEN, 0xCC);	//	B
-		SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_EXEC_D);	//	exec D
-		SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
+		SET_DMA_BYTE(jim_CS_BLIT_FUNCGEN, 0xCC);	//	B
+		SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_EXEC_D);	//	exec D
+		SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
 
 
 
@@ -405,28 +389,24 @@ void main(void) {
 			// blit the tile sliver at the right of the screen
 
 			// setup screen block in dma
-			SET_DMA_BYTE(jim_DMAC_ADDR_D, 0xFF);
+			SET_DMA_BYTE(jim_CS_BLIT_ADDR_D+2, 0xFF);
 			// plot address
-			SET_DMA_WORD(jim_DMAC_ADDR_D+1, scr_ptr);
+			SET_DMA_WORD(jim_CS_BLIT_ADDR_D, scr_ptr);
 
-			SET_DMA_BYTE(jim_DMAC_ADDR_B, DMA_FONT_TIL >> 16);
-			SET_DMA_WORD(jim_DMAC_ADDR_B+1, (unsigned int)tile_addr);
+			SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_FONT_TIL >> 16);
+			SET_DMA_WORD(jim_CS_BLIT_ADDR_B, (unsigned int)tile_addr);
 
 
-			SET_DMA_WORD(jim_DMAC_STRIDE_B, 8);
-			SET_DMA_WORD(jim_DMAC_STRIDE_D, 640);
+			SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, 8);
+			SET_DMA_WORD(jim_CS_BLIT_STRIDE_D, 640);
 
-			SET_DMA_BYTE(jim_DMAC_WIDTH, 2-1);
-			SET_DMA_BYTE(jim_DMAC_HEIGHT, 32-1);	
+			SET_DMA_BYTE(jim_CS_BLIT_WIDTH, 2-1);
+			SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, 32-1);	
 			
-			SET_DMA_BYTE(jim_DMAC_ADDR_D_min, 0xFF);
-			SET_DMA_BYTE(jim_DMAC_ADDR_D_max, 0xFF);
-			SET_DMA_WORD(jim_DMAC_ADDR_D_min+1, 0x3000);
-			SET_DMA_WORD(jim_DMAC_ADDR_D_max+1, 0x8000);
 
-			SET_DMA_BYTE(jim_DMAC_FUNCGEN, 0xCC);	//	B
-			SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_EXEC_B+BLITCON_EXEC_D);	//	exec A,B,C,D,E
-			SET_DMA_BYTE(jim_DMAC_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
+			SET_DMA_BYTE(jim_CS_BLIT_FUNCGEN, 0xCC);	//	B
+			SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_EXEC_B+BLITCON_EXEC_D);	//	exec A,B,C,D,E
+			SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_4BBP + BLITCON_ACT_CELL + BLITCON_ACT_WRAP);	//	act, cell, 4bpp
 
 			scr_ptr=SCR_LIM(scr_ptr + 640*32/8);	
 		}
