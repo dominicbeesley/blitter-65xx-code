@@ -95,21 +95,28 @@ CS_BLIT_MASK_LAST_offs		:=	$3
 CS_BLIT_WIDTH_offs		:=	$4	; 8 bit
 CS_BLIT_HEIGHT_offs		:=	$5	; 8 bit 
 CS_BLIT_SHIFT_A_offs		:=	$6	; shift for A data poking this will poke SHIFT_B
-CS_BLIT_SHIFT_B_offs		:=	$7	
+						; spare
 CS_BLIT_STRIDE_A_offs		:=	$8	; 16 bit little endian
 CS_BLIT_STRIDE_B_offs		:=	$A	; 16 bit little endian
 CS_BLIT_STRIDE_C_offs		:=	$C	; 16 bit little endian - writing this also writes STRIDE_D for convenience
-CS_BLIT_STRIDE_D_offs		:=	$E	; 16 bit little endian
+						; 16 spare
 CS_BLIT_ADDR_A_offs		:=	$10	; 24 bit
 CS_BLIT_DATA_A_offs		:=	$13
 CS_BLIT_ADDR_B_offs		:=	$14	; 24 bit
 CS_BLIT_DATA_B_offs		:=	$17
 CS_BLIT_ADDR_C_offs		:=	$18	; 24 bit writing this also writes ADDR_D for convenience
 CS_BLIT_DATA_C_offs		:=	$1B
-CS_BLIT_ADDR_D_offs		:=	$1C	; 24 bit
-CS_BLIT_ADDR_E_offs		:=	$20	
-CS_BLIT_ADDR_D_MIN_offs		:=	$24	; 24 bit
-CS_BLIT_ADDR_D_MAX_offs		:=	$28	; 24 bit
+CS_BLIT_ADDR_E_offs		:=	$1C
+						; spare
+CS_BLIT_ADDR_D_MIN_offs		:=	$20	; 24 bit
+						; spare
+CS_BLIT_ADDR_D_MAX_offs		:=	$24	; 24 bit
+						; spare
+CS_BLIT_STRIDE_D_offs		:=	$28	; 16 bit little endian
+CS_BLIT_SHIFT_B_offs		:=	$2A	
+						; spare
+CS_BLIT_ADDR_D_offs		:=	$2C	; 24 bit
+
 
 ;;; NEW little-endian Word aligned API
 
@@ -182,21 +189,21 @@ jim_CS_BLIT_MASK_LAST		:= 	$FD00 + CS_BLIT_MASK_LAST_offs
 jim_CS_BLIT_WIDTH		:= 	$FD00 + CS_BLIT_WIDTH_offs
 jim_CS_BLIT_HEIGHT		:= 	$FD00 + CS_BLIT_HEIGHT_offs
 jim_CS_BLIT_SHIFT_A		:= 	$FD00 + CS_BLIT_SHIFT_A_offs
-jim_CS_BLIT_SHIFT_B		:= 	$FD00 + CS_BLIT_SHIFT_B_offs
 jim_CS_BLIT_STRIDE_A		:= 	$FD00 + CS_BLIT_STRIDE_A_offs
 jim_CS_BLIT_STRIDE_B		:= 	$FD00 + CS_BLIT_STRIDE_B_offs
 jim_CS_BLIT_STRIDE_C		:= 	$FD00 + CS_BLIT_STRIDE_C_offs
-jim_CS_BLIT_STRIDE_D		:= 	$FD00 + CS_BLIT_STRIDE_D_offs
 jim_CS_BLIT_ADDR_A		:= 	$FD00 + CS_BLIT_ADDR_A_offs
 jim_CS_BLIT_DATA_A		:= 	$FD00 + CS_BLIT_DATA_A_offs
 jim_CS_BLIT_ADDR_B		:= 	$FD00 + CS_BLIT_ADDR_B_offs
 jim_CS_BLIT_DATA_B		:= 	$FD00 + CS_BLIT_DATA_B_offs
 jim_CS_BLIT_ADDR_C		:= 	$FD00 + CS_BLIT_ADDR_C_offs
 jim_CS_BLIT_DATA_C		:= 	$FD00 + CS_BLIT_DATA_C_offs
-jim_CS_BLIT_ADDR_D		:= 	$FD00 + CS_BLIT_ADDR_D_offs
 jim_CS_BLIT_ADDR_E		:= 	$FD00 + CS_BLIT_ADDR_E_offs
 jim_CS_BLIT_ADDR_D_MIN		:= 	$FD00 + CS_BLIT_ADDR_D_MIN_offs
 jim_CS_BLIT_ADDR_D_MAX		:= 	$FD00 + CS_BLIT_ADDR_D_MAX_offs
+jim_CS_BLIT_STRIDE_D		:= 	$FD00 + CS_BLIT_STRIDE_D_offs
+jim_CS_BLIT_SHIFT_B		:= 	$FD00 + CS_BLIT_SHIFT_B_offs
+jim_CS_BLIT_ADDR_D		:= 	$FD00 + CS_BLIT_ADDR_D_offs
 
 
 jim_CS_SND_SEL			:= 	$FD00 + CS_SND_SEL_offs

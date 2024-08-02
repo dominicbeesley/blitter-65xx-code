@@ -50,21 +50,21 @@
 #define CS_BLIT_WIDTH_offs		0x4	
 #define CS_BLIT_HEIGHT_offs		0x5	
 #define CS_BLIT_SHIFT_A_offs		0x6	
-#define CS_BLIT_SHIFT_B_offs		0x7	
 #define CS_BLIT_STRIDE_A_offs		0x8	
 #define CS_BLIT_STRIDE_B_offs		0xA	
 #define CS_BLIT_STRIDE_C_offs		0xC	
-#define CS_BLIT_STRIDE_D_offs		0xE	
 #define CS_BLIT_ADDR_A_offs		0x10	
 #define CS_BLIT_DATA_A_offs		0x13
 #define CS_BLIT_ADDR_B_offs		0x14	
 #define CS_BLIT_DATA_B_offs		0x17
 #define CS_BLIT_ADDR_C_offs		0x18	
 #define CS_BLIT_DATA_C_offs		0x1B
-#define CS_BLIT_ADDR_D_offs		0x1C	
-#define CS_BLIT_ADDR_E_offs		0x20	
-#define CS_BLIT_ADDR_D_MIN_offs		0x24	
-#define CS_BLIT_ADDR_D_MAX_offs		0x28	
+#define CS_BLIT_ADDR_E_offs		0x1C	
+#define CS_BLIT_ADDR_D_MIN_offs		0x20	
+#define CS_BLIT_ADDR_D_MAX_offs		0x24	
+#define CS_BLIT_STRIDE_D_offs		0x28	
+#define CS_BLIT_SHIFT_B_offs		0x2A	
+#define CS_BLIT_ADDR_D_offs		0x2C	
 
 // NEW little-endian Word aligned API
 
@@ -106,21 +106,21 @@
 #define jim_CS_BLIT_WIDTH		(0xFD00 + CS_BLIT_WIDTH_offs)
 #define jim_CS_BLIT_HEIGHT		(0xFD00 + CS_BLIT_HEIGHT_offs)
 #define jim_CS_BLIT_SHIFT_A		(0xFD00 + CS_BLIT_SHIFT_A_offs)
-#define jim_CS_BLIT_SHIFT_B		(0xFD00 + CS_BLIT_SHIFT_B_offs)
 #define jim_CS_BLIT_STRIDE_A		(0xFD00 + CS_BLIT_STRIDE_A_offs)
 #define jim_CS_BLIT_STRIDE_B		(0xFD00 + CS_BLIT_STRIDE_B_offs)
 #define jim_CS_BLIT_STRIDE_C		(0xFD00 + CS_BLIT_STRIDE_C_offs)
-#define jim_CS_BLIT_STRIDE_D		(0xFD00 + CS_BLIT_STRIDE_D_offs)
 #define jim_CS_BLIT_ADDR_A		(0xFD00 + CS_BLIT_ADDR_A_offs)
 #define jim_CS_BLIT_DATA_A		(0xFD00 + CS_BLIT_DATA_A_offs)
 #define jim_CS_BLIT_ADDR_B		(0xFD00 + CS_BLIT_ADDR_B_offs)
 #define jim_CS_BLIT_DATA_B		(0xFD00 + CS_BLIT_DATA_B_offs)
 #define jim_CS_BLIT_ADDR_C		(0xFD00 + CS_BLIT_ADDR_C_offs)
 #define jim_CS_BLIT_DATA_C		(0xFD00 + CS_BLIT_DATA_C_offs)
-#define jim_CS_BLIT_ADDR_D		(0xFD00 + CS_BLIT_ADDR_D_offs)
 #define jim_CS_BLIT_ADDR_E		(0xFD00 + CS_BLIT_ADDR_E_offs)
 #define jim_CS_BLIT_ADDR_D_MIN		(0xFD00 + CS_BLIT_ADDR_D_MIN_offs)
 #define jim_CS_BLIT_ADDR_D_MAX		(0xFD00 + CS_BLIT_ADDR_D_MAX_offs)
+#define jim_CS_BLIT_SHIFT_B		(0xFD00 + CS_BLIT_SHIFT_B_offs)
+#define jim_CS_BLIT_STRIDE_D		(0xFD00 + CS_BLIT_STRIDE_D_offs)
+#define jim_CS_BLIT_ADDR_D		(0xFD00 + CS_BLIT_ADDR_D_offs)
 
 
 #define jim_CS_SND_SEL			(0xFD00 + CS_SND_SEL_offs)
