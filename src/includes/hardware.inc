@@ -111,28 +111,29 @@ CS_BLIT_ADDR_E_offs		:=	$20
 CS_BLIT_ADDR_D_MIN_offs		:=	$24	; 24 bit
 CS_BLIT_ADDR_D_MAX_offs		:=	$28	; 24 bit
 
+;;; NEW little-endian Word aligned API
 
+CS_SND_SEL_offs			:=	$80
+CS_SND_MA_VOL_offs		:=	$81
+CS_SND_DATA_offs		:=	$82
+CS_SND_PEAK_offs		:=	$83
+CS_SND_REPOFF_offs		:=	$84
+CS_SND_VOL_offs			:=	$86
+CS_SND_STATUS_offs		:=	$87
+CS_SND_LEN_offs			:=	$88
+CS_SND_PERIOD_offs		:=	$8A
+CS_SND_ADDR_offs		:=	$8C
 
-DMAC_SND_DATA_offs		:=	$20
-DMAC_SND_ADDR_offs		:=	$21
-DMAC_SND_PERIOD_offs		:=	$24
-DMAC_SND_LEN_offs		:=	$26
-DMAC_SND_STATUS_offs		:=	$28
-DMAC_SND_VOL_offs		:=	$29
-DMAC_SND_REPOFF_offs		:=	$2A
-DMAC_SND_PEAK_offs		:=	$2C
+;;; NEW little-endian Word aligned API
 
-DMAC_SND_MA_VOL_offs		:=	$2E
-DMAC_SND_SEL_offs		:=	$2F
-
-DMAC_DMA_CTL_offs		:=	$30
-DMAC_DMA_SRC_ADDR_offs		:=	$31
-DMAC_DMA_DEST_ADDR_offs		:=	$34
-DMAC_DMA_COUNT_offs		:=	$37
-DMAC_DMA_DATA_offs		:=	$39
-DMAC_DMA_CTL2_offs		:=	$3A
-DMAC_DMA_PAUSE_VAL_offs		:=	$3B
-DMAC_DMA_SEL_offs		:=	$3F
+CS_DMA_SRC_ADDR_offs		:=	$90
+CS_DMA_DEST_ADDR_offs		:=	$94
+CS_DMA_COUNT_offs		:=	$98
+CS_DMA_DATA_offs		:=	$9A
+CS_DMA_CTL_offs			:=	$9C
+CS_DMA_CTL2_offs		:=	$9D
+CS_DMA_PAUSE_VAL_offs		:=	$9E
+CS_DMA_SEL_offs			:=	$9F
 
 
 
@@ -197,28 +198,27 @@ jim_CS_BLIT_ADDR_D_MIN		:= 	$FD00 + CS_BLIT_ADDR_D_MIN_offs
 jim_CS_BLIT_ADDR_D_MAX		:= 	$FD00 + CS_BLIT_ADDR_D_MAX_offs
 
 
+jim_CS_SND_SEL			:= 	$FD00 + CS_SND_SEL_offs
+jim_CS_SND_MA_VOL		:= 	$FD00 + CS_SND_MA_VOL_offs
+jim_CS_SND_DATA			:= 	$FD00 + CS_SND_DATA_offs
+jim_CS_SND_PEAK			:= 	$FD00 + CS_SND_PEAK_offs
+jim_CS_SND_REPOFF		:= 	$FD00 + CS_SND_REPOFF_offs
+jim_CS_SND_VOL			:= 	$FD00 + CS_SND_VOL_offs
+jim_CS_SND_STATUS		:= 	$FD00 + CS_SND_STATUS_offs
+jim_CS_SND_LEN			:= 	$FD00 + CS_SND_LEN_offs
+jim_CS_SND_PERIOD		:= 	$FD00 + CS_SND_PERIOD_offs
+jim_CS_SND_ADDR			:= 	$FD00 + CS_SND_ADDR_offs
+
+jim_CS_DMA_SRC_ADDR		:=	$FD00 + CS_DMA_SRC_ADDR_offs
+jim_CS_DMA_DEST_ADDR		:=	$FD00 + CS_DMA_DEST_ADDR_offs
+jim_CS_DMA_COUNT		:=	$FD00 + CS_DMA_COUNT_offs
+jim_CS_DMA_DATA			:=	$FD00 + CS_DMA_DATA_offs
+jim_CS_DMA_CTL			:=	$FD00 + CS_DMA_CTL_offs
+jim_CS_DMA_CTL2			:=	$FD00 + CS_DMA_CTL2_offs
+jim_CS_DMA_PAUSE_VAL		:=	$FD00 + CS_DMA_PAUSE_VAL_offs
+jim_CS_DMA_SEL			:=	$FD00 + CS_DMA_SEL_offs
+
 jim_DMAC			:=	$FD60
-jim_DMAC_SND_DATA		:= 	jim_DMAC + DMAC_SND_DATA_offs
-jim_DMAC_SND_ADDR		:= 	jim_DMAC + DMAC_SND_ADDR_offs
-jim_DMAC_SND_PERIOD		:= 	jim_DMAC + DMAC_SND_PERIOD_offs
-jim_DMAC_SND_LEN		:= 	jim_DMAC + DMAC_SND_LEN_offs
-jim_DMAC_SND_STATUS		:= 	jim_DMAC + DMAC_SND_STATUS_offs
-jim_DMAC_SND_VOL		:= 	jim_DMAC + DMAC_SND_VOL_offs
-jim_DMAC_SND_REPOFF		:= 	jim_DMAC + DMAC_SND_REPOFF_offs
-jim_DMAC_SND_PEAK		:= 	jim_DMAC + DMAC_SND_PEAK_offs
-
-jim_DMAC_SND_SEL		:= 	jim_DMAC + DMAC_SND_SEL_offs
-jim_DMAC_SND_MA_VOL		:= 	jim_DMAC + DMAC_SND_MA_VOL_offs
-
-jim_DMAC_DMA_CTL		:=	jim_DMAC + DMAC_DMA_CTL_offs
-jim_DMAC_DMA_SRC_ADDR		:=	jim_DMAC + DMAC_DMA_SRC_ADDR_offs
-jim_DMAC_DMA_DEST_ADDR		:=	jim_DMAC + DMAC_DMA_DEST_ADDR_offs
-jim_DMAC_DMA_COUNT		:=	jim_DMAC + DMAC_DMA_COUNT_offs
-jim_DMAC_DMA_DATA		:=	jim_DMAC + DMAC_DMA_DATA_offs
-jim_DMAC_DMA_CTL2		:=	jim_DMAC + DMAC_DMA_CTL2_offs
-jim_DMAC_DMA_PAUSE_VAL		:=	jim_DMAC + DMAC_DMA_PAUSE_VAL_offs
-jim_DMAC_DMA_SEL		:=	jim_DMAC + DMAC_DMA_SEL_offs
-
 jim_DMAC_AERIS_CTL		:=	jim_DMAC + DMAC_AERIS_CTL_offs
 jim_DMAC_AERIS_PROGBASE		:=	jim_DMAC + DMAC_AERIS_PROGBASE_offs
 

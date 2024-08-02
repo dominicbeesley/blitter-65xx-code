@@ -463,9 +463,9 @@ play_loop:
 
 snd_devsel:	php
 		pha
-		lda	#>jim_page_DMAC
+		lda	#>jim_page_CHIPSET
 		sta	fred_JIM_PAGE_HI
-		lda	#<jim_page_DMAC
+		lda	#<jim_page_CHIPSET
 		sta	fred_JIM_PAGE_LO
 		pla
 		plp
@@ -475,8 +475,8 @@ silence:
 		jsr	snd_devsel
 		ldx	#3
 		lda	#0
-@l1:		stx	jim_DMAC_SND_SEL
-		sta	jim_DMAC_SND_STATUS
+@l1:		stx	jim_CS_SND_SEL
+		sta	jim_CS_SND_STATUS
 		dex
 		bpl	@l1
 		rts
@@ -689,13 +689,13 @@ sk_no_next_patt:
 
 channel_loop:		
 		ldx	zp_cha_ctr		
-		stx	jim_DMAC_SND_SEL
+		stx	jim_CS_SND_SEL
 
 		; save peak and reset
 		ldy	#s_cha_vars::cha_var_peak
-		lda	jim_DMAC_SND_PEAK
+		lda	jim_CS_SND_PEAK
 		sta	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_PEAK		; reset
+		sta	jim_CS_SND_PEAK		; reset
 
 
 		ldy	#s_cha_vars::cha_var_restart
@@ -827,7 +827,7 @@ channel_loop:
 
 		; stop current sample
 		lda	#0
-		sta	jim_DMAC_SND_STATUS
+		sta	jim_CS_SND_STATUS
 
 		jsr	set_p_period
 		ldy	#s_cha_vars::cha_var_restart
@@ -842,28 +842,28 @@ channel_loop:
 
 		iny
 		lda	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_LEN + 1
+		sta	jim_CS_SND_LEN
 		dey
 		lda	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_LEN
+		sta	jim_CS_SND_LEN + 1
 		
 		ldy	#s_cha_vars::cha_var_s_roff + 1
 		lda	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_REPOFF + 1
+		sta	jim_CS_SND_REPOFF
 		dey
 		lda	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_REPOFF
+		sta	jim_CS_SND_REPOFF + 1
 		
 		ldy	#s_cha_vars::cha_var_s_addr_b
 		lda	(zp_cha_var_ptr),Y
 		and	#$0F					; blank out finetune
-		sta	jim_DMAC_SND_ADDR
+		sta	jim_CS_SND_ADDR + 2
 		iny
 		lda	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_ADDR + 1
+		sta	jim_CS_SND_ADDR + 1
 		iny
 		lda	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_ADDR + 2
+		sta	jim_CS_SND_ADDR + 0
 		iny
 		lda	(zp_cha_var_ptr),Y
 		rol	a				; get repeat flag into bit 0
@@ -882,39 +882,39 @@ channel_loop:
 		cmp	#9
 		bne	@sknosampleoffset
 
-		lda	jim_DMAC_SND_LEN
+		lda	jim_CS_SND_LEN + 1
 		sec
 		ldy	#s_cha_vars::cha_var_parm
 		sbc	(zp_cha_var_ptr),Y
 		bcc	@sk_nosample
-		sta	jim_DMAC_SND_LEN
+		sta	jim_CS_SND_LEN + 1
 
 		; adjust repeat offset
 		lda	zp_tmp
 		bne	@sksampleoffset_norepl
 
-		lda	jim_DMAC_SND_REPOFF		; hi byte of repeat offset
+		lda	jim_CS_SND_REPOFF + 1		; hi byte of repeat offset
 		sbc	(zp_cha_var_ptr),Y		; note Y and Cy already set above
-		sta	jim_DMAC_SND_REPOFF
+		sta	jim_CS_SND_REPOFF + 1
 		bcs	@sksampleoffset_norepl
 
 		lda	#0				; if we're here the note sample offset has overflowed the repeat offset
 		sta	zp_tmp				; clear repeat flag
 
 @sksampleoffset_norepl:
-		lda	jim_DMAC_SND_ADDR+1
+		lda	jim_CS_SND_ADDR+1
 		clc
 		ldy	#s_cha_vars::cha_var_parm
 		adc	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_ADDR+1
+		sta	jim_CS_SND_ADDR+1
 		bcc	@sknosampleoffset_carry
-		inc	jim_DMAC_SND_ADDR+0
+		inc	jim_CS_SND_ADDR+2
 @sknosampleoffset_carry:
 
 @sknosampleoffset:
 		lda	zp_tmp				; get back repeat flag
 		ora	#$80
-		sta	jim_DMAC_SND_STATUS
+		sta	jim_CS_SND_STATUS
 @sk_nosample:	jsr	check_more_effects
 		jsr	set_p_vol
 
@@ -1260,7 +1260,7 @@ play_skip_read_row:
 		stx	zp_cha_ctr
 @cha_loop:
 		ldx	zp_cha_ctr
-		stx	jim_DMAC_SND_SEL
+		stx	jim_CS_SND_SEL
 		jsr	check_effects
 
 		jsr	set_p_vol
@@ -1806,10 +1806,10 @@ set_p_period:
 		ldy	#s_cha_vars::cha_var_per + 0	; note big endian - check HI byte is 0
 		lda	(zp_cha_var_ptr),Y
 		beq	@ck
-@ok:		sta	jim_DMAC_SND_PERIOD + 0
+@ok:		sta	jim_CS_SND_PERIOD + 1
 		iny
 		lda	(zp_cha_var_ptr),Y
-		sta	jim_DMAC_SND_PERIOD + 1
+		sta	jim_CS_SND_PERIOD + 0
 		rts
 @ck:		iny
 		lda	(zp_cha_var_ptr),Y
@@ -1823,9 +1823,9 @@ set_p_period:
 set_p_period_zp_tmp:
 		lda	zp_tmp+1			; note zp_tmp is little endian but period reg is be
 		beq	@ck
-@ok:		sta	jim_DMAC_SND_PERIOD + 0
+@ok:		sta	jim_CS_SND_PERIOD + 1
 		lda	zp_tmp
-		sta	jim_DMAC_SND_PERIOD + 1
+		sta	jim_CS_SND_PERIOD + 0
 		rts
 @ck:		lda	zp_tmp
 		cmp	#113
@@ -1859,10 +1859,10 @@ do_arpeg:
 		sta	zp_num1 
 		jsr	mul16
 
-@aaaaaa:	lda	zp_tmp + 3
-		sta	jim_DMAC_SND_PERIOD
+@aaaaaa:		lda	zp_tmp + 3
+		sta	jim_CS_SND_PERIOD + 1
 		lda	zp_tmp + 2
-		sta	jim_DMAC_SND_PERIOD + 1
+		sta	jim_CS_SND_PERIOD + 0
 		rts
 
 @arp1:		txa
@@ -1885,7 +1885,7 @@ set_p_vol:
 		lda	(zp_cha_var_ptr),Y
 		asl	a
 		asl	a
-@s:		sta	jim_DMAC_SND_VOL
+@s:		sta	jim_CS_SND_VOL
 		rts
 @mute:		lda	#0
 		beq	@s
@@ -2384,26 +2384,26 @@ aeris_off:
 
 aeris_pgm2_chipram:
 		lda	#0
-		sta	jim_DMAC_DMA_SEL
+		sta	jim_CS_DMA_SEL
 		lda	#$FF
-		sta	jim_DMAC_DMA_SRC_ADDR
+		sta	jim_CS_DMA_SRC_ADDR+2
 		lda	#.HIBYTE(aeris_test_pgm)
-		sta	jim_DMAC_DMA_SRC_ADDR+1
+		sta	jim_CS_DMA_SRC_ADDR+1
 		lda	#.LOBYTE(aeris_test_pgm)
-		sta	jim_DMAC_DMA_SRC_ADDR+2
+		sta	jim_CS_DMA_SRC_ADDR+0
 		lda	#.BANKBYTE(AERIS_LIST_ADDR)
-		sta	jim_DMAC_DMA_DEST_ADDR
+		sta	jim_CS_DMA_DEST_ADDR+2
 		lda	#.HIBYTE(AERIS_LIST_ADDR)
-		sta	jim_DMAC_DMA_DEST_ADDR+1
+		sta	jim_CS_DMA_DEST_ADDR+1
 		lda	#.LOBYTE(AERIS_LIST_ADDR)
-		sta	jim_DMAC_DMA_DEST_ADDR+2
+		sta	jim_CS_DMA_DEST_ADDR+0
 		lda	#.HIBYTE(aeris_test_pgm_end-aeris_test_pgm-1)
-		sta	jim_DMAC_DMA_COUNT
+		sta	jim_CS_DMA_COUNT+1
 		lda	#.LOBYTE(aeris_test_pgm_end-aeris_test_pgm-1)
-		sta	jim_DMAC_DMA_COUNT+1
+		sta	jim_CS_DMA_COUNT+0
 	
 		lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
-		sta	jim_DMAC_DMA_CTL
+		sta	jim_CS_DMA_CTL
 		rts
 
 aeris_init:

@@ -200,25 +200,25 @@ load_loop:
 @blitter:
 		jsr	jimHardwarePage
 		lda	#0
-		sta	jim_DMAC_DMA_SEL
+		sta	jim_CS_DMA_SEL
 		lda	#$FF
-		sta	jim_DMAC_DMA_SRC_ADDR + 0
+		sta	jim_CS_DMA_SRC_ADDR + 2
 		lda	#>MODULE_BASE
-		sta	jim_DMAC_DMA_SRC_ADDR + 1
+		sta	jim_CS_DMA_SRC_ADDR + 1
 		lda	#<MODULE_BASE
-		sta	jim_DMAC_DMA_SRC_ADDR + 2
+		sta	jim_CS_DMA_SRC_ADDR + 0
 		lda	zp_ld_chippag + 1
-		sta	jim_DMAC_DMA_DEST_ADDR + 0
+		sta	jim_CS_DMA_DEST_ADDR + 2
 		lda	zp_ld_chippag + 0
-		sta	jim_DMAC_DMA_DEST_ADDR + 1
+		sta	jim_CS_DMA_DEST_ADDR + 1
 		lda	#0
-		sta	jim_DMAC_DMA_DEST_ADDR + 2
+		sta	jim_CS_DMA_DEST_ADDR + 0
 		lda	#>(LOAD_BLOCK_SIZE-1)
-		sta	jim_DMAC_DMA_COUNT + 0
+		sta	jim_CS_DMA_COUNT + 1
 		lda	#<(LOAD_BLOCK_SIZE-1)
-		sta	jim_DMAC_DMA_COUNT + 1
+		sta	jim_CS_DMA_COUNT + 0
 		lda	#DMACTL_ACT+DMACTL_HALT+DMACTL_STEP_DEST_UP+DMACTL_STEP_SRC_UP
-		sta	jim_DMAC_DMA_CTL
+		sta	jim_CS_DMA_CTL
 @notblitter:
 
 		; increment blit address
@@ -268,25 +268,25 @@ load_loop:
 @blitter2:
 		jsr	jimHardwarePage
 		lda	#0
-		sta	jim_DMAC_DMA_SEL
+		sta	jim_CS_DMA_SEL
 		lda	#$FF
-		sta	jim_DMAC_DMA_DEST_ADDR + 0
+		sta	jim_CS_DMA_DEST_ADDR + 2
 		lda	#>MODULE_BASE
-		sta	jim_DMAC_DMA_DEST_ADDR + 1
+		sta	jim_CS_DMA_DEST_ADDR + 1
 		lda	#<MODULE_BASE
-		sta	jim_DMAC_DMA_DEST_ADDR + 2
+		sta	jim_CS_DMA_DEST_ADDR + 0
 		lda	#>MODULE_CPAGE
-		sta	jim_DMAC_DMA_SRC_ADDR + 0
+		sta	jim_CS_DMA_SRC_ADDR + 2
 		lda	#<MODULE_CPAGE
-		sta	jim_DMAC_DMA_SRC_ADDR + 1
+		sta	jim_CS_DMA_SRC_ADDR + 1
 		lda	#0
-		sta	jim_DMAC_DMA_SRC_ADDR + 2
+		sta	jim_CS_DMA_SRC_ADDR + 0
 		lda	#>1083
-		sta	jim_DMAC_DMA_COUNT + 0
+		sta	jim_CS_DMA_COUNT + 1
 		lda	#<1083
-		sta	jim_DMAC_DMA_COUNT + 1
+		sta	jim_CS_DMA_COUNT + 0
 		lda	#DMACTL_ACT+DMACTL_HALT+DMACTL_STEP_DEST_UP+DMACTL_STEP_SRC_UP
-		sta	jim_DMAC_DMA_CTL
+		sta	jim_CS_DMA_CTL
 @notblitter2:
 
 		jsr	OSNEWL
@@ -553,9 +553,9 @@ load_loop:
 
 jimHardwarePage:
 		pha
-		lda	#<jim_page_DMAC
+		lda	#<jim_page_CHIPSET
 		sta	fred_JIM_PAGE_LO
-		lda	#>jim_page_DMAC
+		lda	#>jim_page_CHIPSET
 		sta	fred_JIM_PAGE_HI
 		pla
 		rts
