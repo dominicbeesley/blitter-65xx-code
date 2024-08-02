@@ -24,32 +24,33 @@
 		.include	"common.inc"
 		.include	"hardware.inc"
 
-		.export		blit_rd_bloc_be
-		.export		blit_rd_bloc_be16
-		.export		blit_rd_bloc_be24
-		.export		blit_rd_bloc_be32
+		.export		blit_rd_bloc_le8
+		.export		blit_rd_bloc_le16
+		.export		blit_rd_bloc_le24
+		.export		blit_rd_bloc_le32
 		.export		blit_rd_bloc
 		.importzp	ZP_BLIT_PTR
 
 		.CODE
 		
 
-; read an address and convert endianness
+; copy data of various widths in little-endian
 
 blit_rd_bloc:
 		lda	(ZP_BLIT_PTR),Y
 		iny
 		rts
-blit_rd_bloc_be32:
-		jsr	blit_rd_bloc_be
-blit_rd_bloc_be24:
-		jsr	blit_rd_bloc_be
-blit_rd_bloc_be16:
-		jsr	blit_rd_bloc_be
-blit_rd_bloc_be:
-		jsr	blit_rd_bloc
-		sta	jim_DMAC,X
-		dex
+blit_rd_bloc_le32:
+		jsr	blit_rd_bloc_le8
+blit_rd_bloc_le24:
+		jsr	blit_rd_bloc_le8
+blit_rd_bloc_le16:
+		jsr	blit_rd_bloc_le8
+blit_rd_bloc_le8:
+		lda	(ZP_BLIT_PTR),Y
+		iny
+		sta	JIM,X
+		inx
 		rts
 
 

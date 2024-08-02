@@ -141,83 +141,71 @@ FW := 10
 
 font_copy_to_SRAM_settings:
 	.byte	$0A		; 		 execD, execB	BLTCON
-	.byte	$CC		; copy B to D, ignore A, C	FUNCGEN
+	.byte	$CC		; copy B to D, ignore A, C		FUNCGEN
+	.byte	0		;				MASK_FIRST
+	.byte	0		;				MASK_LAST
 	.byte	(FW-1)		; 				WIDTH
 	.byte	7		;				HEIGHT
 	.byte	0		;				SHIFT
-	.byte	0		;				MASK_FIRST
-	.byte	0		;				MASK_LAST
+	.byte	0		; SPARE
+	.word	1		;				STRIDE_A
+	.word	FW		;				STRIDE_B
+	.word	FW		;				STRIDE_C/D
+	.word	0		; SPARE
+	ADDR24	0		;				ADDR_A
 	.byte	$AA		;				DATA_A
-	.byte	0		;				ADDR_A_BANK
-	WORDBE	0		;				ADDR_A
+	ADDR24	$FF000+mostbl_chardefs ;				ADDR_B
 	.byte	$55		;				DATA_B
-	.byte	$FF		;				ADDR_B_BANK
-	WORDBE	mostbl_chardefs ;				ADDR_B
-	.byte	0		;				ADDR_C_BANK
-	WORDBE	0		;				ADDR_C
-	.byte	$00		;				ADDR_D_BANK
-	WORDBE	$0		;				ADDR_D
-	.byte	$00		;				ADDR_E_BANK
-	WORDBE	$0		;				ADDR_E
-	WORDBE	1		;				STRIDE_A
-	WORDBE	FW		;				STRIDE_B
-	WORDBE	1		;				STRIDE_C
-	WORDBE	FW		;				STRIDE_D
+	ADDR24	$00		;				ADDR_C/D
+	.byte	0		;				DATA C
+	ADDR24	$00		;				ADDR_E
 	.byte	$80		; Act, lin, mo.0		BLTCON
 
 
 font_copy_from_SRAM_settings:
 	.byte	$0A		; 		execD, execB	BLTCON
-	.byte	$CC		; copy B to D, ignore A, C	FUNCGEN
+	.byte	$CC		; copy B to D, ignore A, C		FUNCGEN
+	.byte	0		;				MASK_FIRST
+	.byte	0		;				MASK_LAST
 	.byte	(FW-1)		; 				WIDTH
 	.byte	7		;				HEIGHT
 	.byte	0		;				SHIFT
-	.byte	0		;				MASK_FIRST
-	.byte	0		;				MASK_LAST
+	.byte	0		; SPARE
+	.word	1		;				STRIDE_A
+	.word	FW		;				STRIDE_B
+	.word	FW		;				STRIDE_C/D
+	.word	0		; SPARE
+	ADDR24	0		;				ADDR_A
 	.byte	$AA		;				DATA_A
-	.byte	0		;				ADDR_A_BANK
-	WORDBE	0		;				ADDR_A
+	ADDR24	$000000		 ;				ADDR_B
 	.byte	$55		;				DATA_B
-	.byte	$00		;				ADDR_B_BANK
-	WORDBE	$0000		 ;				ADDR_B
-	.byte	0		;				ADDR_C_BANK
-	WORDBE	0		;				ADDR_C
-	.byte	$FF		;				ADDR_D_BANK
-	WORDBE	$6000		;				ADDR_D
-	.byte	$00		;				ADDR_E_BANK
-	WORDBE	$0		;				ADDR_E
-	WORDBE	1		;				STRIDE_A
-	WORDBE	FW		;				STRIDE_B
-	WORDBE	1		;				STRIDE_C
-	WORDBE	FW		;				STRIDE_D
-	.byte	$80		; Act, lin, mo.0		BLTCON
+	ADDR24	0		;				ADDR_C/D
+	.byte	0		;				DATA_C
+	ADDR24	0		;				ADDR_E
+	.byte	$80		; Act, lin, mo.0			BLTCON
 
 
 
 sprite_test1_settings:
 	.byte	BLITCON_EXEC_B+BLITCON_EXEC_D					; 	execD, execB		BLTCON
 	.byte	$CC								; copy B to D, ignore A, C	FUNCGEN
-	.byte	(24 - 1)							; 				WIDTH
-	.byte	8								;				HEIGHT
-	.byte	0								;				SHIFT
 	.byte	0								;				MASK_FIRST
 	.byte	0								;				MASK_LAST
+	.byte	(24 - 1)								; 				WIDTH
+	.byte	8								;				HEIGHT
+	.byte	0								;				SHIFT_A
+	.byte	0		; SPARE
+	.word	1								;				STRIDE_A
+	.word	24								;				STRIDE_B
+	.word	640								;				STRIDE_C/D
+	.word	0		; SPARE
+	ADDR24	0								;				ADDR_A
 	.byte	$FF								;				DATA_A
-	.byte	0								;				ADDR_A_BANK
-	WORDBE	0								;				ADDR_A
+	ADDR24	$FF0000+sprite_test1						;				ADDR_B
 	.byte	$55								;				DATA_B
-	.byte	$FF								;				ADDR_B_BANK
-	WORDBE	sprite_test1							;				ADDR_B
-	.byte	0								;				ADDR_C_BANK
-	WORDBE	0								;				ADDR_C
-	.byte	$FF								;				ADDR_D_BANK
-	WORDBE	$300C								;				ADDR_D
-	.byte	$00								;				ADDR_E_BANK
-	WORDBE	$0								;				ADDR_E
-	WORDBE	1								;				STRIDE_A
-	WORDBE	24								;				STRIDE_B
-	WORDBE	640								;				STRIDE_C
-	WORDBE	640								;				STRIDE_D
+	ADDR24	$FF300C								;				ADDR_C/D
+	.byte	0								;				DATA_C
+	ADDR24	$0								;				ADDR_E
 	.byte	BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP		; act, cell, 4bpp		BLTCON
 
 

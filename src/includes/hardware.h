@@ -21,6 +21,7 @@
 #define BLITCON_EXEC_C			0x04	
 #define BLITCON_EXEC_D			0x08	
 #define BLITCON_EXEC_E			0x10	
+#define BLITCON_CELL_B			0x20
 
 
 #define DMACTL_ACT			0x80			

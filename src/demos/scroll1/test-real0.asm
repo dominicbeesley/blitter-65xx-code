@@ -138,30 +138,25 @@ sprite_test1:
 
 
 letter1:
-	.byte	$0D		; 	execD, execC,execA	BLTCON
-	.byte	$CA		; B foreground, C background masked by A
-;	.byte	$C0		; B foreground, masked by A
-	.byte	(4-1)		; 				WIDTH
-	.byte	8-1		;				HEIGHT
-	.byte	0		;				SHIFT
-	.byte	$FF		;				MASK_FIRST
-	.byte	$FF		;				MASK_LAST
-	.byte	$AA		;				DATA_A
-	.byte	$FF		;				ADDR_A_BANK
-	WORDBE	mostbl_chardefs+(65-32)*8 ;			ADDR_A
-	.byte	$33		;				DATA_B
-	.byte	0		;				ADDR_B_BANK
-	WORDBE	0 		;				ADDR_B
-	.byte	$FF		;				ADDR_C_BANK
-	WORDBE	$3000		;				ADDR_C
-	.byte	$FF		;				ADDR_D_BANK
-	WORDBE	$3000		;				ADDR_D
-	.byte	$00		;				ADDR_E_BANK
-	WORDBE	$0		;				ADDR_E
-	WORDBE	1		;				STRIDE_A
-	WORDBE	1		;				STRIDE_B
-	WORDBE	640		;				STRIDE_C
-	WORDBE	640		;				STRIDE_D
+	.byte	$0D		; 	execD, execC,execA		BLTCON
+	.byte	$CA		; B foreground, C background masked by A	FUNCGEN
+	.byte	$FF		;					MASK_FIRST
+	.byte	$FF		;					MASK_LAST
+	.byte	(4-1)		; 					WIDTH
+	.byte	8-1		;					HEIGHT
+	.byte	0		;					SHIFT_A
+	.byte	0		; SPARE
+	.word	1		;					STRIDE_A
+	.word	1		;					STRIDE_B
+	.word	640		;					STRIDE_C
+	.word	0		; SPARE
+	ADDR24	$FF0000+(mostbl_chardefs+(65-32)*8) ;			ADDR_A
+	.byte	$AA		;					DATA_A
+	ADDR24	0		;					ADDR_B
+	.byte	$33		;					DATA_B
+	ADDR24	$FF3000		;					ADDR_C
+	.byte	$CC		;					DATA C
+	ADDR24	$0		;					ADDR_E
 	.byte	$E0		; Act, cell, mo.2		BLTCON
 
 
@@ -197,16 +192,15 @@ lp2:		jsr	OSWRCH
 loop:
 
 
+
 		ldx	#<letter1
 		ldy	#>letter1
 		jsr	_blit_ctl_full
 
-		inc	letter1+DMAC_ADDR_C_offs+2	; page up
-		inc	letter1+DMAC_ADDR_D_offs+2	; page up
+		inc	letter1+block_ADDR_C_offs+0	; page up
 
-		inc	letter1+DMAC_ADDR_C_offs+1	; page up
-		inc	letter1+DMAC_ADDR_D_offs+1	; page up
-		lda	letter1+DMAC_ADDR_D_offs+1
+		inc	letter1+block_ADDR_C_offs+1	; page up
+		lda	letter1+block_ADDR_C_offs+1
 		bpl	loop
 
 		RTS

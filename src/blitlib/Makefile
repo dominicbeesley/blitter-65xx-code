@@ -1,7 +1,7 @@
 	include ../Makefile.defs
 
 TARGETS=blitlib.lib
-OBJS=blit_lib blit_lib__rd_bloc_be blit_lib_copy blit_lib_ctl_full blit_lib_plot
+OBJS=blit_lib blit_lib__rd_bloc_le blit_lib_copy blit_lib_ctl_full blit_lib_plot
 DEPS=blit_int.inc blit_lib.inc $(OSINCS)
 
 .PHONY:	all clean

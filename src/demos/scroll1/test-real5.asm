@@ -54,8 +54,6 @@ B_BACK_SAV	:=	$010000
 B_SHADOW	:=	$020000
 
 B_SCREEN_1	:=	$FF3000				; where background is loaded to
-;B_SCREEN	:=	$FF3000
-B_SCREEN	:=	$FA0000
 
 		.CODE 
 
@@ -63,9 +61,9 @@ B_SCREEN	:=	$FA0000
 		lda	#JIM_DEVNO_BLITTER
 		sta	zp_mos_jimdevsave
 		sta	fred_JIM_DEVNO
-		lda	#<jim_page_DMAC
+		lda	#<jim_page_CHIPSET
 		sta	fred_JIM_PAGE_LO
-		lda	#>jim_page_DMAC
+		lda	#>jim_page_CHIPSET
 		sta	fred_JIM_PAGE_HI
 
 
@@ -156,60 +154,60 @@ B_SCREEN	:=	$FA0000
 		jsr	_blit_ctl_full
 
 
-@restore_loop:
-		; see if there's anything to restore
-		dec	zp_save_ctr
-		bmi	@nomoresaves
-
-		; setup registers for restore
-		ldx	#<blit_restore
-		ldy	#>blit_restore
-		jsr	_blit_ctl_full_noExec
-
-
-		; move back ptr
-		sec
-		lda	zp_save_ptr
-		sbc	#save_b_size
-		sta	zp_save_ptr
-		bcs	@no_c
-		dec	zp_save_ptr + 1
-@no_c:
-
-		ldy	#0
-		; restore scr
-		lda	(zp_save_ptr),y
-		sta	jim_DMAC_ADDR_D + 1
-		iny
-		lda	(zp_save_ptr),y
-		sta	jim_DMAC_ADDR_D + 2
-		iny
-		; restore E into B
-		lda	(zp_save_ptr),y
-		sta	jim_DMAC_ADDR_B + 0
-		iny
-		lda	(zp_save_ptr),y
-		sta	jim_DMAC_ADDR_B + 1
-		iny
-		lda	(zp_save_ptr),y
-		sta	jim_DMAC_ADDR_B + 2
-		iny
-		;restore W
-		lda	(zp_save_ptr),y
-		sta	jim_DMAC_WIDTH
-		tax
-		inx
-		stx	jim_DMAC_STRIDE_B + 1
-		iny
-		;restore H
-		lda	(zp_save_ptr),y
-		sta	jim_DMAC_HEIGHT
-		iny
-
-		lda	#$E0
-		sta	jim_DMAC_BLITCON
-
-		jmp	@restore_loop
+;@restore_loop:
+;		; see if there's anything to restore
+;		dec	zp_save_ctr
+;		bmi	@nomoresaves
+;
+;		; setup registers for restore
+;		ldx	#<blit_restore
+;		ldy	#>blit_restore
+;		jsr	_blit_ctl_full_noExec
+;
+;
+;		; move back ptr
+;		sec
+;		lda	zp_save_ptr
+;		sbc	#save_b_size
+;		sta	zp_save_ptr
+;		bcs	@no_c
+;		dec	zp_save_ptr + 1
+;@no_c:
+;
+;		ldy	#0
+;		; restore scr
+;		lda	(zp_save_ptr),y
+;		sta	jim_CS_BLIT_ADDR_C + 1
+;		iny
+;		lda	(zp_save_ptr),y
+;		sta	jim_CS_BLIT_ADDR_C + 0
+;		iny
+;		; restore E into B
+;		lda	(zp_save_ptr),y
+;		sta	jim_CS_BLIT_ADDR_B + 0
+;		iny
+;		lda	(zp_save_ptr),y
+;		sta	jim_CS_BLIT_ADDR_B + 1
+;		iny
+;		lda	(zp_save_ptr),y
+;		sta	jim_CS_BLIT_ADDR_B + 2
+;		iny
+;		;restore W
+;		lda	(zp_save_ptr),y
+;		sta	jim_CS_BLIT_WIDTH
+;		tax
+;		inx
+;		stx	jim_CS_BLIT_STRIDE_B + 0
+;		iny
+;		;restore H
+;		lda	(zp_save_ptr),y
+;		sta	jim_CS_BLIT_HEIGHT
+;		iny
+;
+;		lda	#$E0
+;		sta	jim_CS_BLIT_BLITCON
+;
+;		jmp	@restore_loop
 
 
 @nomoresaves:
@@ -220,11 +218,11 @@ B_SCREEN	:=	$FA0000
 		sty	zp_save_ptr+1
 
 		lda	#B_BACK_SAV / $10000
-		sta	blit_ctl + DMAC_ADDR_E_offs
+		sta	blit_ctl + block_ADDR_E_offs+2
 		lda	#(B_BACK_SAV / $100) & $FF
-		sta	blit_ctl + DMAC_ADDR_E_offs+1
+		sta	blit_ctl + block_ADDR_E_offs+1
 		lda	#(B_BACK_SAV) & $FF
-		sta	blit_ctl + DMAC_ADDR_E_offs+2
+		sta	blit_ctl + block_ADDR_E_offs+0
 		lda	#0
 		sta	zp_save_ctr
 
@@ -242,10 +240,10 @@ render_scroll_line:
 
 		; initialise dma for save ops
 		lda	#0
-		sta	jim_DMAC_DMA_SEL
-		sta	jim_DMAC_DMA_COUNT + 0
+		sta	jim_CS_DMA_SEL
+		sta	jim_CS_DMA_COUNT + 1
 		lda	#$FF
-		sta	jim_DMAC_DMA_DEST_ADDR + 0
+		sta	jim_CS_DMA_DEST_ADDR + 2		; bank
 
 
 
@@ -275,7 +273,7 @@ render_scroll_line:
 		and	#$07
 		asl
 		asl
-		sta	jim_DMAC_ADDR_A + 2
+		sta	jim_CS_BLIT_ADDR_A + 0
 		pla
 		clc
 		and	#$18
@@ -285,18 +283,18 @@ render_scroll_line:
 		adc	zp_acc+1
 		sta	zp_acc+1
 		adc	#>B_FONT_MAS
-		sta	jim_DMAC_ADDR_A + 1
+		sta	jim_CS_BLIT_ADDR_A + 1
 
 		; calculate address of sprite B_FONT_SPR + 16 * (c mod 8) + &1800*(c div 8)
-		lda	jim_DMAC_ADDR_A + 2
+		lda	jim_CS_BLIT_ADDR_A + 0
 		asl	a
 		rol	zp_acc+1
 		asl	a
-		sta	jim_DMAC_ADDR_B + 2	; lo byte
+		sta	jim_CS_BLIT_ADDR_B + 0	; lo byte
 		lda	zp_acc+1
 		rol	a
 		adc	#>B_FONT_SPR
-		sta	jim_DMAC_ADDR_B + 1; hi byte
+		sta	jim_CS_BLIT_ADDR_B + 1; hi byte
 
 		; calculate screen address = $2800 + 8*(x div 2); shift = x mod 2
 		lda	zp_x + 1
@@ -309,12 +307,10 @@ render_scroll_line:
 		rol	zp_acc
 		clc
 		adc	#$C0
-		sta	jim_DMAC_ADDR_C + 2
-		sta	jim_DMAC_ADDR_D + 2
+		sta	jim_CS_BLIT_ADDR_C + 0
 		lda	zp_acc
 		adc	#$28
-		sta	jim_DMAC_ADDR_C + 1
-		sta	jim_DMAC_ADDR_D + 1
+		sta	jim_CS_BLIT_ADDR_C + 1
 
 		ldx	#$0
 		ldy	#15
@@ -326,13 +322,13 @@ render_scroll_line:
 		ldy	#16
 		lda	#$7F
 @sk1:		
-		sta	jim_DMAC_MASK_FIRST
+		sta	jim_CS_BLIT_MASK_FIRST
 		bmi	@sk4
 		lda	#$80
 @sk4:		
-		sta	jim_DMAC_MASK_LAST
-		stx	jim_DMAC_SHIFT
-		sty	jim_DMAC_WIDTH
+		sta	jim_CS_BLIT_MASK_LAST
+		stx	jim_CS_BLIT_SHIFT_A
+		sty	jim_CS_BLIT_WIDTH
 
 		; check left screen edge violation
 		lda	zp_x + 1
@@ -347,26 +343,24 @@ render_scroll_line:
 		bcc	@no8
 		pha								; more than 4 move a whole 8 pixels along
 		
-		lda	jim_DMAC_WIDTH
+		lda	jim_CS_BLIT_WIDTH
 		sec
 		sbc	#4							; subtract 4 from width
-		sta	jim_DMAC_WIDTH
+		sta	jim_CS_BLIT_WIDTH
 
-		lda	jim_DMAC_ADDR_C + 2
+		lda	jim_CS_BLIT_ADDR_C + 0
 		clc
 		adc	#32							; add 32 to screen address
-		sta	jim_DMAC_ADDR_C + 2
-		sta	jim_DMAC_ADDR_D + 2
+		sta	jim_CS_BLIT_ADDR_C + 0
 
-		lda	jim_DMAC_ADDR_C + 1
+		lda	jim_CS_BLIT_ADDR_C + 1
 		adc	#0
-		sta	jim_DMAC_ADDR_C + 1
-		sta	jim_DMAC_ADDR_D + 1
+		sta	jim_CS_BLIT_ADDR_C + 1
 
-		lda	jim_DMAC_ADDR_B + 2
+		lda	jim_CS_BLIT_ADDR_B + 0
 		adc	#4
-		sta	jim_DMAC_ADDR_B + 2			; add 4 to sprite pointer
-		inc	jim_DMAC_ADDR_A + 2			; and 1 to mask
+		sta	jim_CS_BLIT_ADDR_B + 0			; add 4 to sprite pointer
+		inc	jim_CS_BLIT_ADDR_A + 0			; and 1 to mask
 		pla
 		sec
 		sbc	#4
@@ -375,7 +369,7 @@ render_scroll_line:
 
 @no8:		tax
 		lda	masks_left, X
-		sta	jim_DMAC_MASK_FIRST
+		sta	jim_CS_BLIT_MASK_FIRST
 		jmp	@sk5
 
 @sk8:		; see if we'll go off screen at right
@@ -384,65 +378,43 @@ render_scroll_line:
 		lda	zp_x
 		ror	a			; X/2
 		clc
-		adc	jim_DMAC_WIDTH
+		adc	jim_CS_BLIT_WIDTH
 		sbc	#79
 		bcc	@sk5
 		; adjust width
 		eor	#$FF
 		clc
-		adc	jim_DMAC_WIDTH
-		sta	jim_DMAC_WIDTH
+		adc	jim_CS_BLIT_WIDTH
+		sta	jim_CS_BLIT_WIDTH
 		lda	#$FF
-		sta	jim_DMAC_MASK_LAST
+		sta	jim_CS_BLIT_MASK_LAST
 @sk5:
 
-;;;		ldy	#0
-;;;		; save to save block
-;;;		; - screen addr (shadow)
-;;;		lda	jim_DMAC_ADDR_D + 1
-;;;		sta	(zp_save_ptr),y
-;;;		iny
-;;;		lda	jim_DMAC_ADDR_D + 2
-;;;		sta	(zp_save_ptr),y
-;;;		iny
-;;;
-;;;		; - save addr
-;;;		lda	jim_DMAC_ADDR_E + 0
-;;;		sta	(zp_save_ptr),y
-;;;		iny
-;;;		lda	jim_DMAC_ADDR_E + 1
-;;;		sta	(zp_save_ptr),y
-;;;		iny
-;;;		lda	jim_DMAC_ADDR_E + 2
-;;;		sta	(zp_save_ptr),y
-;;;		iny
-
-
 		lda	zp_save_ptr + 1
-		sta	jim_DMAC_DMA_DEST_ADDR + 1
+		sta	jim_CS_DMA_DEST_ADDR + 1
 		lda	zp_save_ptr + 0
-		sta	jim_DMAC_DMA_DEST_ADDR + 2
+		sta	jim_CS_DMA_DEST_ADDR + 0
 
-		lda	#>jim_page_DMAC
-		sta	jim_DMAC_DMA_SRC_ADDR + 0
-		lda	#<jim_page_DMAC
-		sta	jim_DMAC_DMA_SRC_ADDR + 1
-		lda	#<(jim_DMAC_ADDR_D + 1)
-		sta	jim_DMAC_DMA_SRC_ADDR + 2
+		lda	#>jim_page_CHIPSET
+		sta	jim_CS_DMA_SRC_ADDR + 2
+		lda	#<jim_page_CHIPSET
+		sta	jim_CS_DMA_SRC_ADDR + 1
+		lda	#<(jim_CS_BLIT_ADDR_D)
+		sta	jim_CS_DMA_SRC_ADDR + 0
 
 		ldy	#4
-		sty	jim_DMAC_DMA_COUNT + 1
+		sty	jim_CS_DMA_COUNT + 0
 
-		lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
-		sta	jim_DMAC_DMA_CTL
+;;		lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
+		sta	jim_CS_DMA_CTL
 
 		iny
 
 		; - width, height
-		lda	jim_DMAC_WIDTH
+		lda	jim_CS_BLIT_WIDTH
 		sta	(zp_save_ptr),y
 		iny
-		lda	jim_DMAC_HEIGHT
+		lda	jim_CS_BLIT_HEIGHT
 		sta	(zp_save_ptr),y
 
 		clc
@@ -455,11 +427,8 @@ render_scroll_line:
 		inc	zp_save_ctr
 
 		; do blit
-;		ldx	#<blit_ctl
-;		ldy	#>blit_ctl
-;		jsr	blit_ctl_full_updE
-		lda	#$E0
-		sta	jim_DMAC_BLITCON
+		lda	#BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP
+		sta	jim_CS_BLIT_BLITCON
 
 @skip_space:						; got a space
 		lda	#32
@@ -561,112 +530,96 @@ masks_left:	.byte	$FF, $3F, $0F, $03
 
 		.global blit_ctl
 blit_ctl:
-		.byte	$1F		; BLTCON execE, execD, execC, execB, execA
-		.byte	$CA		; copy B to D, mask A, C	FUNCGEN
-		.byte	15		; 				WIDTH
-		.byte	47		;				HEIGHT
-		.byte	$00		;				SHIFT
+		.byte	BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D	; BLTCON
+		.byte	$CA		; copy B to D, mask A, C		FUNCGEN
 		.byte	$FF		;				MASK_FIRST
 		.byte	$FF		;				MASK_LAST
+		.byte	15		; 				WIDTH
+		.byte	47		;				HEIGHT
+		.byte	$00		;				SHIFT_A
+		.byte	0	; SPARE
+		.word	32		;				STRIDE_A
+		.word	128		;				STRIDE_B
+		.word	1024		;				STRIDE_C/D
+		.word	0	; SPARE
+		ADDR24	B_FONT_MAS	;				ADDR_A
 		.byte	$FF		;				DATA_A
-		.byte	0		;				ADDR_A_BANK
-		WORDBE	(B_FONT_MAS)	;				ADDR_A
+		ADDR24	B_FONT_SPR	;				ADDR_B
 		.byte	$55		;				DATA_B
-		.byte	$00		;				ADDR_B_BANK
-		WORDBE	(B_FONT_SPR)	;				ADDR_B
-		BANK	B_SHADOW	;				ADDR_C_BANK
-		WORDBE	$1900		;				ADDR_C
-		BANK	B_SHADOW	;				ADDR_D_BANK
-		WORDBE	$1900		;				ADDR_D
-		BANK	B_BACK_SAV	;				ADDR_E_BANK
-		WORDBE	$1900		;				ADDR_E
-		WORDBE	32		;				STRIDE_A
-		WORDBE	128		;				STRIDE_B
-		WORDBE	1024		;				STRIDE_C
-		WORDBE	1024		;				STRIDE_D
+		ADDR24	B_SHADOW+$1900	;				ADDR_C/D
+		.byte	0		;				DATA_C
+		ADDR24	B_BACK_SAV+$1900;				ADDR_E
 		.byte	$1F		; BLTCON act, cell, 4bpp				!NO EXEC!
 
 
 
 blit_bkg_1st:	
-		.byte	$0C		; BLTCON execD, execC, NOT execB, execA
-		.byte	$AA		; copy C to D			FUNCGEN
-		.byte	80		; 				WIDTH
-		.byte	255		;				HEIGHT
-		.byte	$00		;				SHIFT
+		.byte	BLITCON_EXEC_B+BLITCON_EXEC_D+BLITCON_CELL_B ;	BLTCON
+		.byte	$CC		; copy B to D			FUNCGEN
 		.byte	$FF		;				MASK_FIRST
 		.byte	$FF		;				MASK_LAST
-		.byte	$AA		;				DATA_A
-		.byte	0		;				ADDR_A_BANK
-		WORDBE	(B_FONT_MAS)	;				ADDR_A
-		.byte	$55		;				DATA_B
-		.byte	$00		;				ADDR_B_BANK
-		WORDBE	(B_FONT_SPR)	;				ADDR_B
-		BANK	B_SCREEN_1 	;				ADDR_C_BANK
-		WORDBE	B_SCREEN_1	;				ADDR_C
-		BANK	B_SHADOW	;				ADDR_D_BANK
-		WORDBE	B_SHADOW	;				ADDR_D
-		BANK	0		;				ADDR_E_BANK
-		WORDBE	0		;				ADDR_E
-		WORDBE	32		;				STRIDE_A
-		WORDBE	128		;				STRIDE_B
-		WORDBE	640		;				STRIDE_C
-		WORDBE	1024		;				STRIDE_D
-		.byte	$E0		; BLTCON act, cell, 4bpp
+		.byte	80		; 				WIDTH
+		.byte	255		;				HEIGHT
+		.byte	$00		;				SHIFT_A
+		.byte	0	; SPARE
+		.word	32		;				STRIDE_A
+		.word	640		;				STRIDE_B
+		.word	1024		;				STRIDE_C/D
+		.word	0	; SPARE
+		ADDR24	0		;				ADDR_A
+		.byte	0		;				DATA_A
+		ADDR24   B_SCREEN_1	;				ADDR_B
+		.byte	$0		;				DATA_B
+		ADDR24	B_SHADOW		;				ADDR_C/D
+		.byte	0		;				DATA_C
+		ADDR24	0		;				ADDR_E
+		.byte	BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP
 
 
 blit_shadow2screen:	
-		.byte	$0C		; BLTCON  execD, execC, NOT execB, execA
-		.byte	$AA		; copy C to D			FUNCGEN
-		.byte	80		; 				WIDTH
-		.byte	255		;				HEIGHT
-		.byte	$00		;				SHIFT
+		.byte	BLITCON_EXEC_B+BLITCON_EXEC_D+BLITCON_CELL_B ;	BLTCON
+		.byte	$CC		; copy B to D			FUNCGEN
 		.byte	$FF		;				MASK_FIRST
 		.byte	$FF		;				MASK_LAST
+		.byte	80		; 				WIDTH
+		.byte	255		;				HEIGHT
+		.byte	$00		;				SHIFT_A
+		.byte	0	; SPARE
+		.word	32		;				STRIDE_A
+		.word	1024		;				STRIDE_B
+		.word	640		;				STRIDE_C
+		.word	0	; SPARE
+		ADDR24	0		;				ADDR_A
 		.byte	$0		;				DATA_A
-		.byte	0		;				ADDR_A_BANK
-		WORDBE	0		;				ADDR_A
+		ADDR24	B_SHADOW		;				ADDR_B
 		.byte	0		;				DATA_B
-		.byte	$00		;				ADDR_B_BANK
-		WORDBE	0		;				ADDR_B
-		BANK	B_SHADOW	;				ADDR_C_BANK
-		WORDBE	B_SHADOW	;				ADDR_C
-		BANK	B_SCREEN	;				ADDR_D_BANK
-		WORDBE	B_SCREEN	;				ADDR_D
+		ADDR24	B_SCREEN_1	;				ADDR_C/D
 		.byte	$0		;				ADDR_E_BANK
-		WORDBE	$0000		;				ADDR_E
-		WORDBE	32		;				STRIDE_A
-		WORDBE	128		;				STRIDE_B
-		WORDBE	1024		;				STRIDE_C
-		WORDBE	640		;				STRIDE_D
-		.byte	$E0		; BLTCON act, cell, 4bpp
+		ADDR24	0		;				ADDR_E
+		.byte	BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP
 
 
 blit_restore:	
-		.byte	$0A		; BLTCON  execB,D
+		.byte	BLITCON_EXEC_B+BLITCON_EXEC_D	; 		BLTCON
 		.byte	$CC		; copy C to D			FUNCGEN
-		.byte	80		; 				WIDTH
-		.byte	255		;				HEIGHT
-		.byte	$00		;				SHIFT
 		.byte	$FF		;				MASK_FIRST
 		.byte	$FF		;				MASK_LAST
-		.byte	$AA		;				DATA_A
-		.byte	0		;				ADDR_A_BANK
-		WORDBE	0		;				ADDR_A
-		.byte	$55		;				DATA_B
-		BANK	B_SHADOW	;				ADDR_B_BANK
-		WORDBE	(B_FONT_SPR)	;				ADDR_B
-		BANK	0		;				ADDR_C_BANK
-		WORDBE	0		;				ADDR_C
-		BANK	B_SHADOW	;				ADDR_D_BANK
-		WORDBE	B_SHADOW	;				ADDR_D
-		.byte	$0		;				ADDR_E_BANK
-		WORDBE	$0000		;				ADDR_E
-		WORDBE	0		;				STRIDE_A
-		WORDBE	0		;				STRIDE_B
-		WORDBE	1024		;				STRIDE_C
-		WORDBE	1024		;				STRIDE_D
-		.byte	$00		; BLTCON act, cell, 4bpp			!! DON'T ACT!
+		.byte	0		; CODE				WIDTH
+		.byte	0		; CODE				HEIGHT
+		.byte	$00		;				SHIFT_A
+		.byte	0	; SPARE
+		.word	0		;				STRIDE_A
+		.word	0		; CODE				STRIDE_B
+		.word	1024		;				STRIDE_C/D
+		.word	0	; SPARE
+		ADDR24	0		;				ADDR_A
+		.byte	0		;				DATA_A
+		ADDR24	0		; CODE				ADDR_B
+		.byte	0		;				DATA_B
+		ADDR24	0		; CODE				ADDR_C/D
+		.byte	0		;				DATA C
+		ADDR24	0		;				ADDR_E
+		.byte	$00		; BLTCON act, cell, 4bpp			!! DON'T ACT - set in CODE
 
 
 scrolltext:	.byte	"....Ishbel Fiona Aibhlinn Beesley.....", 0

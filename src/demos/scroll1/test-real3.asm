@@ -81,29 +81,25 @@ spr_plot_blk:	.word	$3000		; dest_addr
 		.byte	$E0		; BLTCON act, cell, 4bpp
 
 test_a_stride:
-	.byte	BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D	; execD, execC, execB, execA BLTCON 
-	.byte	$CA								; copy B to D, mask A, C	FUNCGEN
+	.byte	BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D		; execD, execC, execB, execA 	BLTCON 
+	.byte	$CA								; copy B to D, mask A, C		FUNCGEN
+	.byte	$FF								;				MASK_FIRST
+	.byte	$FF								;				MASK_LAST
 	.byte	31								; 				WIDTH
 	.byte	95								;				HEIGHT
 	.byte	0								;				SHIFT
-	.byte	$FF								;				MASK_FIRST
-	.byte	$FF								;				MASK_LAST
+	.byte	0	; SPARE
+	.word	32								;				STRIDE_A
+	.word	128								;				STRIDE_B
+	.word	640								;				STRIDE_C
+	.word	0	; SPARE
+	ADDR24	(B_FONT_MAS+8)							;				ADDR_A
 	.byte	$AA								;				DATA_A
-	.byte	0								;				ADDR_A_BANK
-	WORDBE	(B_FONT_MAS+8)							;				ADDR_A
+	ADDR24	(B_FONT_SPR+32)							;				ADDR_B
 	.byte	$55								;				DATA_B
-	.byte	$00								;				ADDR_B_BANK
-	WORDBE	(B_FONT_SPR+32)							;				ADDR_B
-	.byte	$FF								;				ADDR_C_BANK
-	WORDBE	$4000								;				ADDR_C
-	.byte	$FF								;				ADDR_D_BANK
-	WORDBE	$4000								;				ADDR_D
-	.byte	$00								;				ADDR_E_BANK
-	WORDBE	$0000								;				ADDR_E
-	WORDBE	32								;				STRIDE_A
-	WORDBE	128								;				STRIDE_B
-	WORDBE	640								;				STRIDE_C
-	WORDBE	640								;				STRIDE_D
+	ADDR24	$FF4000								;				ADDR_C/D
+	.byte	0								;				DATA_C
+	ADDR24	$0								;				ADDR_E
 	.byte	BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP		; BLTCON act, cell, 4bpp
 
 

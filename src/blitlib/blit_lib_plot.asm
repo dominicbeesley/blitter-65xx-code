@@ -25,10 +25,10 @@
 		.include	"hardware.inc"
 		.include	"blit_int.inc"
 
-		.import		blit_rd_bloc_be
-		.import		blit_rd_bloc_be16
-		.import		blit_rd_bloc_be24
-		.import		blit_rd_bloc_be32
+		.import		blit_rd_bloc_le8
+		.import		blit_rd_bloc_le16
+		.import		blit_rd_bloc_le24
+		.import		blit_rd_bloc_le32
 		.import		blit_rd_bloc
 		.importzp	ZP_BLIT_PTR
 		.importzp	ZP_BLIT_TMP
@@ -67,37 +67,31 @@ _blit_plot_masked:
 		stx	ZP_BLIT_PTR
 		sty	ZP_BLIT_PTR + 1
 		lda	#$CA				; copy B to D, mask A, C	FUNCGEN
-		sta	jim_DMAC_FUNCGEN
+		sta	jim_CS_BLIT_FUNCGEN
 		ldy	#0
-		ldx	#DMAC_ADDR_D_offs + 2
-		jsr	blit_rd_bloc_be24		; dest addr D
-		ldy	#0
-		jsr	blit_rd_bloc_be24		; dest addr C
-		jsr	blit_rd_bloc_be24		; src addr B
-		dex					; skip data B
-		jsr	blit_rd_bloc_be24		; mask addr A
+		ldx	#CS_BLIT_ADDR_C_offs
+		jsr	blit_rd_bloc_le24		; dest addr C/D
+		ldx	#CS_BLIT_ADDR_B_offs
+		jsr	blit_rd_bloc_le24		; src addr B
+		ldx	#CS_BLIT_ADDR_A_offs
+		jsr	blit_rd_bloc_le24		; mask addr A
 		jsr	blit_rd_bloc
-		and	#$0F
-		sta	ZP_BLIT_TMP
-		asl
-		asl
-		asl
-		asl
-		ora	ZP_BLIT_TMP
-		sta	jim_DMAC_SHIFT
-		ldx	#DMAC_HEIGHT_offs
-		jsr	blit_rd_bloc_be16		; plot height, width
-		ldx	#DMAC_STRIDE_D_offs +1		; stride D
-		jsr	blit_rd_bloc_be16
-		dey
-		dey
-		jsr	blit_rd_bloc_be16		; stride C
-		jsr	blit_rd_bloc_be32		; stride B, A
+		sta	jim_CS_BLIT_SHIFT_A		; shift A/B
+		ldx	#CS_BLIT_HEIGHT_offs
+		jsr	blit_rd_bloc_le8		; plot height
+		ldx	#CS_BLIT_WIDTH_offs
+		jsr	blit_rd_bloc_le8		; plot width
+		ldx	#CS_BLIT_STRIDE_C_offs		; stride C/D
+		jsr	blit_rd_bloc_le16
+		ldx	#CS_BLIT_STRIDE_B_offs		; stride B
+		jsr	blit_rd_bloc_le16
+		ldx	#CS_BLIT_STRIDE_A_offs		; stride A
+		jsr	blit_rd_bloc_le16
 
 		lda	#$0F
-		sta	jim_DMAC_BLITCON
+		sta	jim_CS_BLIT_BLITCON
 		jsr	blit_rd_bloc			; BLITCON ACT
-		sta	jim_DMAC_BLITCON		; exec
+		sta	jim_CS_BLIT_BLITCON		; exec
 @sk2:		DMAC_EXIT
 		rts
 

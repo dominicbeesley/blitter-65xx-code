@@ -158,30 +158,26 @@ bmfont_mask_copy_to_SRAM:
 	.word	(4*8*192)
 
 font_copy_from_SRAM_settings:
-	.byte	BLITCON_EXEC_B+BLITCON_EXEC_D					; 		 execD, execB	BLTCON
-	.byte	$CC								; copy B to D, ignore A, C	FUNCGEN
-	.byte	(16*4-1)							; 				WIDTH
-	.byte	47								;				HEIGHT
-	.byte	0								;				SHIFT
-	.byte	0								;				MASK_FIRST
-	.byte	0								;				MASK_LAST
-	.byte	$AA								;				DATA_A
-	.byte	0								;				ADDR_A_BANK
-	WORDBE	0								;				ADDR_A
-	.byte	$55								;				DATA_B
-	.byte	$00								;				ADDR_B_BANK
-	WORDBE	B_FONT_SPR							 ;				ADDR_B
-	.byte	0								;				ADDR_C_BANK
-	WORDBE	0								;				ADDR_C
-	.byte	$FF								;				ADDR_D_BANK
-	WORDBE	$3000								;				ADDR_D
-	.byte	$00								;				ADDR_E_BANK
-	WORDBE	$0000								;				ADDR_E
-	WORDBE	0								;				STRIDE_A
-	WORDBE	(16*8)								;				STRIDE_B
-	WORDBE	640								;				STRIDE_C
-	WORDBE	640								;				STRIDE_D
-	.byte	BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP		; act, cell, mo.2		BLTCON
+	.byte	BLITCON_EXEC_B+BLITCON_EXEC_D				; 		 execD, execB	BLTCON
+	.byte	$CC							; copy B to D, ignore A, C	FUNCGEN
+	.byte	0							;				MASK_FIRST
+	.byte	0							;				MASK_LAST
+	.byte	(16*4-1)							; 			WIDTH
+	.byte	47							;				HEIGHT
+	.byte	0							;				SHIFT_A
+	.byte	0		; SPARE
+	.word	0							;				STRIDE_A
+	.word	(16*8)							;				STRIDE_B
+	.word	640							;				STRIDE_C/D
+	.word	0		; SPARE
+	ADDR24	0							;				ADDR_A
+	.byte	$AA							;				DATA_A
+	ADDR24	B_FONT_SPR						 ;				ADDR_B
+	.byte	$55							;				DATA_B
+	ADDR24	$FF3000							;				ADDR_C/D
+	.byte	0							;				DATA_C
+	ADDR24	$000000							;				ADDR_E
+	.byte	BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP	; act, cell, mo.2		BLTCON
 
 
 

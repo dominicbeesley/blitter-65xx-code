@@ -33,7 +33,6 @@ $(BUILD)/%.bin $(BUILD)/%.sy2 $(BUILD)/%.map: %.cfg $(BUILD)/%.o
 	echo U start >>$(basename $@).run.noi
 	cp $(notdir $(basename $@)).bin.inf $(BUILD)
 
-
 all:	$(TARGETS_O) 
 
 

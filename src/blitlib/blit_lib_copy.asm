@@ -26,9 +26,7 @@
 		.include	"blit_int.inc"
 
 
-		.import		blit_rd_bloc_be24
-		.import		blit_rd_bloc_be16
-		.import		blit_rd_bloc
+		.autoimport
 		.importzp	ZP_BLIT_PTR
 		.export		_blit_copy
 
@@ -58,17 +56,18 @@ _blit_copy:
 		sty	ZP_BLIT_PTR + 1
 
 		lda	#blit_dma_channel
-		sta	jim_DMAC_DMA_SEL
+		sta	jim_CS_DMA_SEL
 
-		ldy	#6
-		ldx	#DMAC_DMA_COUNT_offs + 1
-		jsr	blit_rd_bloc_be16
-		ldy	#3
-		jsr	blit_rd_bloc_be24
 		ldy	#0
-		jsr	blit_rd_bloc_be24
+		ldx	#CS_DMA_SRC_ADDR_offs
+		jsr	blit_rd_bloc_le24
+		inx
+		jsr	blit_rd_bloc_le24		; dest
+		inx
+		jsr	blit_rd_bloc_le16		; count 16
+
 		lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
-		sta	jim_DMAC_DMA_CTL
+		sta	jim_CS_DMA_CTL
 		DMAC_EXIT
 @sk2:		rts
 

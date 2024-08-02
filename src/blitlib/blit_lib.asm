@@ -44,9 +44,9 @@ blit_jimdevsel:
 		lda	#JIM_DEVNO_BLITTER
 		sta	zp_mos_jimdevsave
 		sta	fred_JIM_DEVNO
-		lda	#<jim_page_DMAC
+		lda	#<jim_page_CHIPSET
 		sta	fred_JIM_PAGE_LO
-		lda	#>jim_page_DMAC
+		lda	#>jim_page_CHIPSET
 		sta	fred_JIM_PAGE_HI
 		rts
 blit_jimdevrel:

@@ -56,6 +56,7 @@ BLITCON_EXEC_B			:=	$02
 BLITCON_EXEC_C			:=	$04
 BLITCON_EXEC_D			:=	$08
 BLITCON_EXEC_E			:=	$10
+BLITCON_CELL_B			:=	$20		; NEW
 
 AERIS_CTL_ACT			:=	$80
 
@@ -88,6 +89,7 @@ SND_CTL_REPEAT			:=	$01
 
 ;;; NEW little-endian Word aligned API
 
+CS_BLIT_base			:=	0	; base JIM offset
 CS_BLIT_BLITCON_offs		:=	0
 CS_BLIT_FUNCGEN_offs		:=	$1
 CS_BLIT_MASK_FIRST_offs		:=	$2	; 
@@ -120,6 +122,7 @@ CS_BLIT_ADDR_D_offs		:=	$2C	; 24 bit
 
 ;;; NEW little-endian Word aligned API
 
+CS_SND_base			:=      $80
 CS_SND_SEL_offs			:=	$80
 CS_SND_MA_VOL_offs		:=	$81
 CS_SND_DATA_offs		:=	$82
@@ -133,6 +136,7 @@ CS_SND_ADDR_offs		:=	$8C
 
 ;;; NEW little-endian Word aligned API
 
+CS_DMA_base			:=      $90
 CS_DMA_SRC_ADDR_offs		:=	$90
 CS_DMA_DEST_ADDR_offs		:=	$94
 CS_DMA_COUNT_offs		:=	$98
@@ -144,6 +148,7 @@ CS_DMA_SEL_offs			:=	$9F
 
 
 
+CS_AERIS_base			:=      $B0
 CS_AERIS_CTL_offs		:=	$B0
 CS_AERIS_PROGBASE_offs		:=	$B4
 CS_AERIS_PC_offs		:=	$B8

@@ -49,8 +49,8 @@ _blit_ctl_full:
 
 		DMAC_ENTER
 		jsr	blit_ctl_full_noExec_int
-		stx	jim_DMAC_DMA_DEST_ADDR + 2	; reset dmac to base of 
-		sta	jim_DMAC_DMA_CTL		; and again for final byte to bltcon
+		stx	jim_CS_DMA_DEST_ADDR	; reset dmac to base of 
+		sta	jim_CS_DMA_CTL		; and again for final byte to bltcon
 		DMAC_EXIT
 		rts
 
@@ -59,9 +59,9 @@ _blit_ctl_full:
 ; blit_ctl_full
 ;
 ; On entry:
-;	XY => full blitter register block (33 bytes)
-;	The first 32 bytes should mirror the registers
-;	of the blitter
+;	XY => full blitter register block (32 bytes)
+;	The first 31 bytes should mirror the registers
+;	of the blitter with gaps up to ADDR_E
 ;	byte 0 should contain the BLITCON_EXEC_* flags
 ;	byte 33 should contain the BLITCON_ACT_ flags
 ; On exit:
@@ -76,23 +76,23 @@ _blit_ctl_full_noExec:
 		
 blit_ctl_full_noExec_int:
 		lda	#blit_dma_channel
-		sta	jim_DMAC_DMA_SEL
-		stx	jim_DMAC_DMA_SRC_ADDR + 2
-		sty	jim_DMAC_DMA_SRC_ADDR + 1
+		sta	jim_CS_DMA_SEL
+		stx	jim_CS_DMA_SRC_ADDR + 0
+		sty	jim_CS_DMA_SRC_ADDR + 1
 		ldx	#$FF
-		stx	jim_DMAC_DMA_SRC_ADDR
+		stx	jim_CS_DMA_SRC_ADDR + 2
 		inx
-		stx	jim_DMAC_DMA_COUNT
-		ldx	#31
-		stx	jim_DMAC_DMA_COUNT + 1
-		ldx	#>jim_page_DMAC				; this address is in physical not cpu space!
-		stx	jim_DMAC_DMA_DEST_ADDR + 0
-		ldx	#<jim_page_DMAC
-		stx	jim_DMAC_DMA_DEST_ADDR + 1
-		ldx	#<jim_DMAC_BLITCON
-		stx	jim_DMAC_DMA_DEST_ADDR + 2
+		stx	jim_CS_DMA_COUNT + 1
+		ldx	#31-1
+		stx	jim_CS_DMA_COUNT + 0
+		ldx	#>jim_page_CHIPSET			; this address is in physical not cpu space!
+		stx	jim_CS_DMA_DEST_ADDR + 2
+		ldx	#<jim_page_CHIPSET
+		stx	jim_CS_DMA_DEST_ADDR + 1
+		ldx	#<CS_BLIT_BLITCON_offs
+		stx	jim_CS_DMA_DEST_ADDR + 0
 		lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
-		sta	jim_DMAC_DMA_CTL
+		sta	jim_CS_DMA_CTL
 
 		rts
 
@@ -101,9 +101,9 @@ blit_ctl_full_noExec_int:
 ; blit_ctl_full_updE
 ;
 ; On entry:
-;	XY => full blitter register block (33 bytes)
-;	The first 32 bytes should mirror the registers
-;	of the blitter
+;	XY => full blitter register block (32 bytes)
+;	The first 31 bytes should mirror the registers
+;	of the blitter with gaps
 ;	byte 0 should contain the BLITCON_EXEC_* flags
 ;	byte 33 should contain the BLITCON_ACT_ flags
 ;	the E address will be updated from the blitter
@@ -118,16 +118,14 @@ _blit_ctl_full_updE:
 		sty	ZP_BLIT_PTR + 1
 
 		jsr	blit_ctl_full_noExec_int
-		stx	jim_DMAC_DMA_DEST_ADDR + 2	; reset dmac to base of 
-		sta	jim_DMAC_DMA_CTL		; and again for final byte to bltcon
+		stx	jim_CS_DMA_DEST_ADDR 	; reset dmac to base of 
+		sta	jim_CS_DMA_CTL		; and again for final byte to bltcon
 
-		ldy	#DMAC_ADDR_E_offs
 		ldx	#3
-@lp:		lda	jim_DMAC,Y
-		sta	(ZP_BLIT_PTR),Y
-		iny
+@lp:		lda	jim_CS_BLIT_ADDR_E,X
+		sta	(ZP_BLIT_PTR),X
 		dex
-		bne	@lp
+		bpl	@lp
 		DMAC_EXIT
 		rts
 
