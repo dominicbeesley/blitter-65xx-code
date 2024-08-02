@@ -106,14 +106,9 @@ extern char tilemap[];
 	*((byte volatile *)x+1) = ((y) >> 8); \
 	*((byte volatile *)x+2) = (y);}
 
-#define SET_DMA_WORD(x,y) \
-	{*((byte volatile *)x) = ((y) >> 8); \
-	*((byte volatile *)x+1) = (y);}
 #define SET_DMA_BYTE(x,y) \
 	{*((byte volatile *)x) = (y);} 
 
-#define GET_DMA_WORD(x) \
-	(((unsigned int)(*((byte volatile *)(x+1)))) | (((unsigned int)(*((byte volatile *)(x))))<<8))
 
 #define GET_DMA_BYTE(x) \
 	(*((byte volatile *)x))
@@ -122,10 +117,10 @@ extern char tilemap[];
 #define SET_LE_DMA_ADDR(x,y) \
 	{*((unsigned long volatile *)x) = y;}
 
-#define SET_LE_DMA_WORD(x,y) \
+#define SET_DMA_WORD(x,y) \
 	{*((unsigned volatile *)x) = y;}
 
-#define GET_LE_DMA_WORD(x) \
+#define GET_DMA_WORD(x) \
 	(*((unsigned volatile *)x))
 
 

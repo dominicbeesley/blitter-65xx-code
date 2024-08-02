@@ -55,14 +55,14 @@ void spr_save_and_plot(unsigned char w, unsigned char h, unsigned char execmask,
 
 
 	// plot address
-	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_C, scr_dma_addr16);
-	//SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_D, scr_dma_addr16); //TODO: NEWABI
+	SET_DMA_WORD(jim_CS_BLIT_ADDR_C, scr_dma_addr16);
+	//SET_DMA_WORD(jim_CS_BLIT_ADDR_D, scr_dma_addr16); //TODO: NEWABI
 
 	if (ptr_spr_save >= &spr_save_block[SPR_SAVE_MAX-1])
 		brk_bounce(0xFF, "SPR SAVE AREA FULL");
 
 	ptr_spr_save->scr_addr_16 = scr_dma_addr16;
-	ptr_spr_save->bit_addr_16 = GET_LE_DMA_WORD(jim_CS_BLIT_ADDR_E);
+	ptr_spr_save->bit_addr_16 = GET_DMA_WORD(jim_CS_BLIT_ADDR_E);
 	ptr_spr_save->w = w;
 	ptr_spr_save->h = h;
 	ptr_spr_save++;
@@ -84,8 +84,8 @@ void spr_plot(unsigned char w, unsigned char h, unsigned char execmask, unsigned
 
 
 	// plot address
-	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_C, scr_dma_addr16);
-	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_D, scr_dma_addr16);
+	SET_DMA_WORD(jim_CS_BLIT_ADDR_C, scr_dma_addr16);
+	SET_DMA_WORD(jim_CS_BLIT_ADDR_D, scr_dma_addr16);
 
 	SET_DMA_BYTE(jim_CS_BLIT_WIDTH, w);
 	SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, h);	
@@ -120,8 +120,8 @@ void spr_plotXY(signed int _x, signed int _y, unsigned char _w, unsigned char _h
 	if ((y <= -(int)h) || (y > SCREEN_SZ_Y))
 		return;
 
-	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_B, w >> 1);
-	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_A, w >> 3);
+	SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, w >> 1);
+	SET_DMA_WORD(jim_CS_BLIT_STRIDE_A, w >> 3);
 
 	if (y < 0) {		
 		//off top of screen, keep incrementing y until +ve and sort out w/h
@@ -207,7 +207,7 @@ void spr_restore() {
 
 	SET_DMA_BYTE(jim_CS_BLIT_FUNCGEN, 0xCC);			//just plot B
 	SET_DMA_BYTE(jim_CS_BLIT_ADDR_D+2, DMA_SCR_SHADOW >> 16);
-	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_D, SCREEN_D_STRIDE);		//screen stride
+	SET_DMA_WORD(jim_CS_BLIT_STRIDE_D, SCREEN_D_STRIDE);		//screen stride
 	SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_SPR_SAVE>>16);		//start of saved bitmaps
 	SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_EXEC_B + BLITCON_EXEC_D);
 	SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0);
@@ -215,11 +215,11 @@ void spr_restore() {
 
 	while (ptr_spr_save > spr_save_block) {
 		ptr_spr_save--;
-		SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_B, ptr_spr_save->bit_addr_16);
+		SET_DMA_WORD(jim_CS_BLIT_ADDR_B, ptr_spr_save->bit_addr_16);
 		SET_DMA_BYTE(jim_CS_BLIT_WIDTH, ptr_spr_save->w);
 		SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, ptr_spr_save->h);
-		SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_B, ptr_spr_save->w+1);
-		SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_D, ptr_spr_save->scr_addr_16);
+		SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, ptr_spr_save->w+1);
+		SET_DMA_WORD(jim_CS_BLIT_ADDR_D, ptr_spr_save->scr_addr_16);
 		SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_CELL + BLITCON_ACT_MODE_4BBP);
 	}
 
@@ -234,8 +234,8 @@ void spr_init() {
 void spr_save_start() {
 	// set up channel E pointer and ptr_spr_save
 	SET_DMA_ADDR(jim_CS_BLIT_ADDR_E+2, DMA_SPR_SAVE);
-	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_C, SCREEN_D_STRIDE);
-	//SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_D, SCREEN_D_STRIDE); //TODO: REMOVE NEWABI
+	SET_DMA_WORD(jim_CS_BLIT_STRIDE_C, SCREEN_D_STRIDE);
+	//SET_DMA_WORD(jim_CS_BLIT_STRIDE_D, SCREEN_D_STRIDE); //TODO: REMOVE NEWABI
 
 		// setup screen block in dma
 	ptr_spr_save = spr_save_block;
@@ -289,7 +289,7 @@ void charac_spr_plot(signed int x, signed int y, unsigned char frameno) {
 
 	// tmp_addr = 0x0F * frameno
 
-	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_B, tmp_addr);
+	SET_DMA_WORD(jim_CS_BLIT_ADDR_B, tmp_addr);
 
 	asm("		clc");
 	asm("		lda	_tmp_addr");
