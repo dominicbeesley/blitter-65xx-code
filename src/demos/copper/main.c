@@ -57,8 +57,8 @@ unsigned char *p, *q;
 unsigned short oof;
 
 void jimDEV(void) {
-	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_DMAC & 0xFF;
-	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_DMAC >> 8;
+	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_CHIPSET & 0xFF;
+	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_CHIPSET >> 8;
 }
 
 void jimAEPGM(void) {
@@ -85,8 +85,8 @@ void main(void) {
 
 	dma_copy_block(0xFF0000L | (long)&aeris_test_pgm,DMA_AERIS,(unsigned int)&aeris_test_pgm_end-(unsigned int)&aeris_test_pgm);
 
-	SET_DMA_ADDR(jim_DMAC_AERIS_PROGBASE, DMA_AERIS);
-	SET_DMA_BYTE(jim_DMAC_AERIS_CTL, 0x80);
+	SET_DMA_ADDR(jim_CS_AERIS_PROGBASE, DMA_AERIS);
+	SET_DMA_BYTE(jim_CS_AERIS_CTL, 0x80);
 
 	while(1) {
 

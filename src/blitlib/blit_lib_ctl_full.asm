@@ -121,10 +121,10 @@ _blit_ctl_full_updE:
 		stx	jim_CS_DMA_DEST_ADDR 	; reset dmac to base of 
 		sta	jim_CS_DMA_CTL		; and again for final byte to bltcon
 
-		ldx	#3
-@lp:		lda	jim_CS_BLIT_ADDR_E,X
-		sta	(ZP_BLIT_PTR),X
-		dex
+		ldy	#3
+@lp:		lda	jim_CS_BLIT_ADDR_E,Y
+		sta	(ZP_BLIT_PTR),Y
+		dey
 		bpl	@lp
 		DMAC_EXIT
 		rts
