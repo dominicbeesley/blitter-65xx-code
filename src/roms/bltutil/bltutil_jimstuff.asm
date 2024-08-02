@@ -444,9 +444,9 @@ jimPageWorkspace:
 
 jimPageChipset:
 		pha
-		lda	#<jim_page_DMAC
+		lda	#<jim_page_CHIPSET
 		sta	fred_JIM_PAGE_LO
-		lda	#>jim_page_DMAC
+		lda	#>jim_page_CHIPSET
 		sta	fred_JIM_PAGE_HI
 		pla
 		rts

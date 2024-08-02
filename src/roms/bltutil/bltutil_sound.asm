@@ -86,20 +86,20 @@ cmdSound:	; initialize user via timer 1 in free run, with interrupts
 		; initialise hardware
 		jsr	jimPageChipset
 		lda	#$FF
-		sta	jim_DMAC_SND_MA_VOL
-		sta	jim_DMAC_SND_SEL
-		ldx	jim_DMAC_SND_SEL
+		sta	jim_CS_SND_MA_VOL
+		sta	jim_CS_SND_SEL
+		ldx	jim_CS_SND_SEL
 		inx
 @sch1:		txa
 		pha					; number of channels or 0 if read FF
 
 		; silence all channels
 @ls1:		dex
-		stx	jim_DMAC_SND_SEL
+		stx	jim_CS_SND_SEL
 		lda	#0
-		sta	jim_DMAC_SND_DATA
-		sta	jim_DMAC_SND_VOL
-		sta	jim_DMAC_SND_STATUS
+		sta	jim_CS_SND_DATA
+		sta	jim_CS_SND_VOL
+		sta	jim_CS_SND_STATUS
 		cpx	#0
 		bne	@ls1
 

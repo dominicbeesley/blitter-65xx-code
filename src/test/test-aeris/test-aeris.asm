@@ -40,45 +40,45 @@
 	;aeris setup at $00 1000
 
 	lda	#0
-	sta	jim_DMAC_DMA_SEL
+	sta	jim_CS_DMA_SEL
 	lda	#$FF
-	sta	jim_DMAC_DMA_SRC_ADDR
+	sta	jim_CS_DMA_SRC_ADDR+2
 	lda	#.HIBYTE(aeris_test_pgm)
-	sta	jim_DMAC_DMA_SRC_ADDR+1
+	sta	jim_CS_DMA_SRC_ADDR+1
 	lda	#.LOBYTE(aeris_test_pgm)
-	sta	jim_DMAC_DMA_SRC_ADDR+2
+	sta	jim_CS_DMA_SRC_ADDR+0
 	lda	#$00
-	sta	jim_DMAC_DMA_DEST_ADDR
+	sta	jim_CS_DMA_DEST_ADDR+2
 	lda	#$10
-	sta	jim_DMAC_DMA_DEST_ADDR+1
+	sta	jim_CS_DMA_DEST_ADDR+1
 	lda	#$00
-	sta	jim_DMAC_DMA_DEST_ADDR+2
+	sta	jim_CS_DMA_DEST_ADDR+0
 	lda	#.HIBYTE(aeris_test_pgm_end-aeris_test_pgm-1)
-	sta	jim_DMAC_DMA_COUNT
+	sta	jim_CS_DMA_COUNT+1
 	lda	#.LOBYTE(aeris_test_pgm_end-aeris_test_pgm-1)
-	sta	jim_DMAC_DMA_COUNT
+	sta	jim_CS_DMA_COUNT+0
 
 	lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
-	sta	jim_DMAC_DMA_CTL
+	sta	jim_CS_DMA_CTL
 
 
 	lda	#$00
-	sta	jim_DMAC_AERIS_PROGBASE
+	sta	jim_CS_AERIS_PROGBASE+2
 	lda	#$10
-	sta	jim_DMAC_AERIS_PROGBASE+1
+	sta	jim_CS_AERIS_PROGBASE+1
 	lda	#$00
-	sta	jim_DMAC_AERIS_PROGBASE+2
+	sta	jim_CS_AERIS_PROGBASE+0
 
 	lda	#$80
-	sta	jim_DMAC_AERIS_CTL
+	sta	jim_CS_AERIS_CTL
 	rts
 
 
 jimDMACPAGE:
 	pha
-	lda	#<jim_page_DMAC
+	lda	#<jim_page_CHIPSET
 	sta	fred_JIM_PAGE_LO
-	lda	#>jim_page_DMAC
+	lda	#>jim_page_CHIPSET
 	sta	fred_JIM_PAGE_HI
 	pla
 	rts

@@ -614,12 +614,12 @@ cmdInfo:	jsr	cfgGetAPILevel
 		pha
 
 		; check for DMA/SOUND, if so show # of channels
-		ldy	#<jim_DMAC_SND_SEL
+		ldy	#<jim_CS_SND_SEL
 		cpx	#tbl_capbits - tbl_bld + CAP_IX_SND
 		beq	@chans
 		cpx	#tbl_capbits - tbl_bld + CAP_IX_DMA
 		bne 	@nochans
-		ldy 	#<jim_DMAC_DMA_SEL
+		ldy 	#<jim_CS_DMA_SEL
 @chans:		lda	#'('
 		jsr	OSWRCH
 		jsr	zeroAcc

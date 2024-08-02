@@ -120,9 +120,9 @@ loop:		inc	zp_CTR_A
 
 jimDMACPAGE:
 		pha
-		lda	#<jim_page_DMAC
+		lda	#<jim_page_CHIPSET
 		sta	fred_JIM_PAGE_LO
-		lda	#>jim_page_DMAC
+		lda	#>jim_page_CHIPSET
 		sta	fred_JIM_PAGE_HI
 		pla
 		rts
@@ -218,57 +218,54 @@ line_draw:
 
 		jsr	calcSCRADDR
 		; mask value
-		sta	jim_DMAC_DATA_A	; set pixel mask
+		sta	jim_CS_BLIT_DATA_A	; set pixel mask
 
 		; set screen address start point
 		lda	#$FF
-		sta	jim_DMAC_ADDR_C
-		sta	jim_DMAC_ADDR_D
+		sta	jim_CS_BLIT_ADDR_C+2
 		lda	zp_SCR_ST
-		sta	jim_DMAC_ADDR_C+2
-		sta	jim_DMAC_ADDR_D+2
+		sta	jim_CS_BLIT_ADDR_C+0
 		lda	zp_SCR_ST+1
-		sta	jim_DMAC_ADDR_C+1
-		sta	jim_DMAC_ADDR_D+1
+		sta	jim_CS_BLIT_ADDR_C+1
 
 
 		; set colour to white
 		lda	#$FF
-		sta	jim_DMAC_DATA_B
+		sta	jim_CS_BLIT_DATA_B
 
 		; set function generator to set B masked by A XOR C masked by not A
 		lda	#$4A				
-		sta	jim_DMAC_FUNCGEN
+		sta	jim_CS_BLIT_FUNCGEN
 
 		lda	#BLITCON_EXEC_C + BLITCON_EXEC_D
-		sta	jim_DMAC_BLITCON
+		sta	jim_CS_BLIT_BLITCON
 
 		; set major / error acc /minor
 		lda	#0
-		sta	jim_DMAC_ADDR_B+1
-		sta	jim_DMAC_ADDR_A+1
-		sta	jim_DMAC_STRIDE_A
-		sta	jim_DMAC_WIDTH
+		sta	jim_CS_BLIT_ADDR_B+1
+		sta	jim_CS_BLIT_ADDR_A+1
+		sta	jim_CS_BLIT_STRIDE_A+1
+		sta	jim_CS_BLIT_WIDTH
 		
 		lda	DMAJ
-		sta	jim_DMAC_ADDR_B+2
-		sta	jim_DMAC_WIDTH+1
+		sta	jim_CS_BLIT_ADDR_B+0
+		sta	jim_CS_BLIT_HEIGHT
 		lsr	A
-		sta	jim_DMAC_ADDR_A+2
+		sta	jim_CS_BLIT_ADDR_A+0
 		lda	DMIN
-		sta	jim_DMAC_STRIDE_A+1
+		sta	jim_CS_BLIT_STRIDE_A+0
 
 		; set stride
 		lda	#>320
-		sta	jim_DMAC_STRIDE_C
-		sta	jim_DMAC_STRIDE_D
+		sta	jim_CS_BLIT_STRIDE_C+1
+		sta	jim_CS_BLIT_STRIDE_D+1
 		lda	#<320
-		sta	jim_DMAC_STRIDE_C+1
-		sta	jim_DMAC_STRIDE_D+1
+		sta	jim_CS_BLIT_STRIDE_C+0
+		sta	jim_CS_BLIT_STRIDE_D+0
 
 		; execute!
 		pla
-		sta	jim_DMAC_BLITCON
+		sta	jim_CS_BLIT_BLITCON
 	
 
 		rts

@@ -354,13 +354,13 @@ _LEB03:	; set volume to zero and end envelope
 			lda	#$c0				; load code for zero volume
 			sta	JIM+SNDWKSP_AMP_CUR,X
 			jsr	jimPageChipset
-			stx	jim_DMAC_SND_SEL
-			cpx	jim_DMAC_SND_SEL
+			stx	jim_CS_SND_SEL
+			cpx	jim_CS_SND_SEL
 			bne	@nochan				; check channel selected
 			lda	#0
-			sta	jim_DMAC_SND_VOL		; zero volume
-			sta	jim_DMAC_SND_DATA		; zero output
-			sta	jim_DMAC_SND_STATUS		; stop sound
+			sta	jim_CS_SND_VOL			; zero volume
+			sta	jim_CS_SND_DATA			; zero output
+			sta	jim_CS_SND_STATUS		; stop sound
 @nochan:		jmp	jimPageSoundWorkspace
 
 _LEB0A: ; set volume
@@ -370,10 +370,10 @@ _LEB0A: ; set volume
 			adc	#$40
 			asl	A
 			jsr	jimPageChipset
-			stx	jim_DMAC_SND_SEL
-			cpx	jim_DMAC_SND_SEL
+			stx	jim_CS_SND_SEL
+			cpx	jim_CS_SND_SEL
 			bne	@nochan				; check channel selected
-			sta	jim_DMAC_SND_VOL
+			sta	jim_CS_SND_VOL
 @nochan:		jmp	jimPageSoundWorkspace
 
 _LEB22: ; set period
@@ -390,8 +390,8 @@ _LEB22: ; set period
 
 
 			jsr	jimPageChipset
-			stx	jim_DMAC_SND_SEL
-			cpx	jim_DMAC_SND_SEL		; check to see that channel is actually set
+			stx	jim_CS_SND_SEL
+			cpx	jim_CS_SND_SEL			; check to see that channel is actually set
 			bne	@nochan
 
 
@@ -420,38 +420,39 @@ _LEB22: ; set period
 			lda	JIM+SAMTBLOFFS_REPL,X
 			pha
 			lda	JIM+SAMTBLOFFS_FLAGS,X
-
+			rol	A				; cy has repeat flag
+			php
 
 			jsr	jimPageChipset			; page in chipset
 
-			rol	A				; cy has repeat flag
+			plp			
 
 			lda	#0
-			sta	jim_DMAC_SND_ADDR+2		; low byte always on page boundary
+			sta	jim_CS_SND_ADDR+0		; low byte always on page boundary
 			pla	
-			sta	jim_DMAC_SND_REPOFF+1
+			sta	jim_CS_SND_REPOFF+0
 			pla	
-			sta	jim_DMAC_SND_REPOFF
+			sta	jim_CS_SND_REPOFF+1
 			pla	
-			sta	jim_DMAC_SND_LEN+1
+			sta	jim_CS_SND_LEN+0
 			pla	
-			sta	jim_DMAC_SND_LEN
+			sta	jim_CS_SND_LEN+1
 			pla	
-			sta	jim_DMAC_SND_ADDR+1
+			sta	jim_CS_SND_ADDR+1
 			pla	
-			sta	jim_DMAC_SND_ADDR+0
+			sta	jim_CS_SND_ADDR+2
 
 			pla
 			tax					; get back channel #
 
 			pla
-			sta	jim_DMAC_SND_PERIOD
+			sta	jim_CS_SND_PERIOD+1
 			pla
-			sta	jim_DMAC_SND_PERIOD+1		; set period
+			sta	jim_CS_SND_PERIOD+0		; set period
 
 			lda	#$40
 			rol	A				; carry flag from above - repeat flag
-			sta	jim_DMAC_SND_STATUS		; start sound playing
+			sta	jim_CS_SND_STATUS		; start sound playing
 			jmp	jimPageSoundWorkspace
 
 
@@ -461,9 +462,9 @@ _LEB22: ; set period
 
 			jsr	jimPageChipset			; page in chipset
 			pla
-			sta	jim_DMAC_SND_PERIOD
+			sta	jim_CS_SND_PERIOD+1
 			pla
-			sta	jim_DMAC_SND_PERIOD+1		; set period
+			sta	jim_CS_SND_PERIOD+0		; set period
 			jmp	jimPageSoundWorkspace
 
 @nochan:		pla

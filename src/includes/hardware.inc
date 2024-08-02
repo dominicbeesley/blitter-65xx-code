@@ -237,8 +237,8 @@ jim_CS_AERIS_PPC		:=	$FD00 + CS_AERIS_PC_offs
 
 
 jim_I2C_BASE			:= 	$FD00 + CS_I2C_offs
-jim_I2C_STAT			:= 	$FD00 + jim_I2C_BASE
-jim_I2C_DATA			:= 	$FD00 + jim_I2C_BASE + 1
+jim_I2C_STAT			:= 	jim_I2C_BASE
+jim_I2C_DATA			:= 	jim_I2C_BASE + 1
 
 I2C_BUSY	:= $80
 I2C_NACK	:= $40
