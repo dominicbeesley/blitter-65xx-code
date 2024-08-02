@@ -137,11 +137,12 @@ CS_DMA_SEL_offs			:=	$9F
 
 
 
-DMAC_AERIS_CTL_offs		:=	$50
-DMAC_AERIS_PROGBASE_offs	:=	$51
+CS_AERIS_CTL_offs		:=	$B0
+CS_AERIS_PROGBASE_offs		:=	$B4
+CS_AERIS_PC_offs		:=	$B8
 
 
-DMAC_I2C_offs			:=	$70
+CS_I2C_offs			:=	$D0
 
 jim_page_CHIPSET		:=	$FEFE
 
@@ -218,14 +219,14 @@ jim_CS_DMA_CTL2			:=	$FD00 + CS_DMA_CTL2_offs
 jim_CS_DMA_PAUSE_VAL		:=	$FD00 + CS_DMA_PAUSE_VAL_offs
 jim_CS_DMA_SEL			:=	$FD00 + CS_DMA_SEL_offs
 
-jim_DMAC			:=	$FD60
-jim_DMAC_AERIS_CTL		:=	jim_DMAC + DMAC_AERIS_CTL_offs
-jim_DMAC_AERIS_PROGBASE		:=	jim_DMAC + DMAC_AERIS_PROGBASE_offs
+jim_CS_AERIS_CTL		:=	$FD00 + CS_AERIS_CTL_offs
+jim_CS_AERIS_PROGBASE		:=	$FD00 + CS_AERIS_PROGBASE_offs
+jim_CS_AERIS_PPC		:=	$FD00 + CS_AERIS_PC_offs
 
 
-jim_I2C_BASE			:= 	jim_DMAC + DMAC_I2C_offs
-jim_I2C_STAT			:= 	jim_I2C_BASE
-jim_I2C_DATA			:= 	jim_I2C_BASE + 1
+jim_I2C_BASE			:= 	$FD00 + CS_I2C_offs
+jim_I2C_STAT			:= 	$FD00 + jim_I2C_BASE
+jim_I2C_DATA			:= 	$FD00 + jim_I2C_BASE + 1
 
 I2C_BUSY	:= $80
 I2C_NACK	:= $40

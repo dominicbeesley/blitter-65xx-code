@@ -2375,7 +2375,7 @@ div24x8:
 aeris_off:
 		jsr	snd_devsel
 		lda	#0
-		sta	jim_DMAC_AERIS_CTL
+		sta	jim_CS_AERIS_CTL
 		;reset nula
 		lda	#$40
 		sta	$FE22
@@ -2412,14 +2412,14 @@ aeris_init:
 	
 	
 		lda	#.BANKBYTE(AERIS_LIST_ADDR)
-		sta	jim_DMAC_AERIS_PROGBASE
+		sta	jim_CS_AERIS_PROGBASE+2
 		lda	#.HIBYTE(AERIS_LIST_ADDR)
-		sta	jim_DMAC_AERIS_PROGBASE+1
+		sta	jim_CS_AERIS_PROGBASE+1
 		lda	#.LOBYTE(AERIS_LIST_ADDR)
-		sta	jim_DMAC_AERIS_PROGBASE+2
+		sta	jim_CS_AERIS_PROGBASE+0
 	
 		lda	#AERIS_CTL_ACT
-		sta	jim_DMAC_AERIS_CTL
+		sta	jim_CS_AERIS_CTL
 		rts
 
 

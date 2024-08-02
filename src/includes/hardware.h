@@ -66,30 +66,36 @@
 #define CS_BLIT_ADDR_D_MIN_offs		0x24	
 #define CS_BLIT_ADDR_D_MAX_offs		0x28	
 
+// NEW little-endian Word aligned API
 
-#define DMAC_SND_DATA_offs		0x20	
-#define DMAC_SND_ADDR_offs		0x21	
-#define DMAC_SND_PERIOD_offs		0x24	
-#define DMAC_SND_LEN_offs		0x26	
-#define DMAC_SND_STATUS_offs		0x28	
-#define DMAC_SND_VOL_offs		0x29	
-#define DMAC_SND_REPOFF_offs		0x2A	
-#define DMAC_SND_PEAK_offs		0x2C	
+#define CS_SND_SEL_offs			0x80
+#define CS_SND_MA_VOL_offs		0x81
+#define CS_SND_DATA_offs		0x82
+#define CS_SND_PEAK_offs		0x83
+#define CS_SND_REPOFF_offs		0x84
+#define CS_SND_VOL_offs			0x86
+#define CS_SND_STATUS_offs		0x87
+#define CS_SND_LEN_offs			0x88
+#define CS_SND_PERIOD_offs		0x8A
+#define CS_SND_ADDR_offs		0x8C
 
-#define DMAC_SND_MA_VOL_offs		0x2E	
-#define DMAC_SND_SEL_offs		0x2F	
+// NEW little-endian Word aligned API
 
-#define DMAC_DMA_CTL_offs		0x30	
-#define DMAC_DMA_SRC_ADDR_offs		0x31	
-#define DMAC_DMA_DEST_ADDR_offs		0x34	
-#define DMAC_DMA_COUNT_offs		0x37	
-#define DMAC_DMA_DATA_offs		0x39	
-#define DMAC_DMA_CTL2_offs		0x3A	
-#define DMAC_DMA_PAUSE_VAL_offs		0x3B	
-#define DMAC_DMA_SEL_offs		0x3F	
+#define CS_DMA_SRC_ADDR_offs		0x90
+#define CS_DMA_DEST_ADDR_offs		0x94
+#define CS_DMA_COUNT_offs		0x98
+#define CS_DMA_DATA_offs		0x9A
+#define CS_DMA_CTL_offs			0x9C
+#define CS_DMA_CTL2_offs		0x9D
+#define CS_DMA_PAUSE_VAL_offs		0x9E
+#define CS_DMA_SEL_offs			0x9F
 
-#define DMAC_AERIS_CTL_offs		0x50
-#define DMAC_AERIS_PROGBASE_offs	0x51
+
+// NEW little-endian Word aligned API
+
+#define CS_AERIS_CTL_offs		0xB0
+#define CS_AERIS_PROGBASE_offs		0xB4
+#define CS_AERIS_PC_offs		0xB8
 
 #define jim_page_DMAC			0xFEFE
 
@@ -117,31 +123,29 @@
 #define jim_CS_BLIT_ADDR_D_MAX		(0xFD00 + CS_BLIT_ADDR_D_MAX_offs)
 
 
-#define jim_DMAC			0xFD60	
-#define jim_DMAC_SND_DATA		(jim_DMAC + DMAC_SND_DATA_offs)
-#define jim_DMAC_SND_ADDR		(jim_DMAC + DMAC_SND_ADDR_offs)
-#define jim_DMAC_SND_PERIOD		(jim_DMAC + DMAC_SND_PERIOD_offs)
-#define jim_DMAC_SND_LEN		(jim_DMAC + DMAC_SND_LEN_offs)
-#define jim_DMAC_SND_STATUS		(jim_DMAC + DMAC_SND_STATUS_offs)
-#define jim_DMAC_SND_VOL		(jim_DMAC + DMAC_SND_VOL_offs)
-#define jim_DMAC_SND_REPOFF		(jim_DMAC + DMAC_SND_REPOFF_offs)
-#define jim_DMAC_SND_PEAK		(jim_DMAC + DMAC_SND_PEAK_offs)
-#define jim_DMAC_SND_SEL		(jim_DMAC + DMAC_SND_SEL_offs)
-#define jim_DMAC_SND_MA_VOL		(jim_DMAC + DMAC_SND_MA_VOL_offs)
-#define jim_DMAC_DMA_CTL		(jim_DMAC + DMAC_DMA_CTL_offs)
-#define jim_DMAC_DMA_SRC_ADDR		(jim_DMAC + DMAC_DMA_SRC_ADDR_offs)
-#define jim_DMAC_DMA_DEST_ADDR		(jim_DMAC + DMAC_DMA_DEST_ADDR_offs)
-#define jim_DMAC_DMA_COUNT		(jim_DMAC + DMAC_DMA_COUNT_offs)
-#define jim_DMAC_DMA_DATA		(jim_DMAC + DMAC_DMA_DATA_offs)
-#define jim_DMAC_DMA_CTL2		(jim_DMAC + DMAC_DMA_CTL2_offs)
-#define jim_DMAC_DMA_PAUSE_VAL		(jim_DMAC + DMAC_DMA_PAUSE_VAL_offs)
-#define jim_DMAC_DMA_SEL		(jim_DMAC + DMAC_DMA_SEL_offs)
+#define jim_CS_SND_SEL			(0xFD00 + CS_SND_SEL_offs)
+#define jim_CS_SND_MA_VOL		(0xFD00 + CS_SND_MA_VOL_offs)
+#define jim_CS_SND_DATA			(0xFD00 + CS_SND_DATA_offs)
+#define jim_CS_SND_PEAK			(0xFD00 + CS_SND_PEAK_offs)
+#define jim_CS_SND_REPOFF		(0xFD00 + CS_SND_REPOFF_offs)
+#define jim_CS_SND_VOL			(0xFD00 + CS_SND_VOL_offs)
+#define jim_CS_SND_STATUS		(0xFD00 + CS_SND_STATUS_offs)
+#define jim_CS_SND_LEN			(0xFD00 + CS_SND_LEN_offs)
+#define jim_CS_SND_PERIOD		(0xFD00 + CS_SND_PERIOD_offs)
+#define jim_CS_SND_ADDR			(0xFD00 + CS_SND_ADDR_offs)
 
-#define jim_DMAC_ADDR_D_min		(jim_DMAC + DMAC_ADDR_D_min_offs)
-#define jim_DMAC_ADDR_D_max		(jim_DMAC + DMAC_ADDR_D_max_offs)
+#define jim_CS_DMA_SRC_ADDR		(0xFD00 + CS_DMA_SRC_ADDR_offs)
+#define jim_CS_DMA_DEST_ADDR		(0xFD00 + CS_DMA_DEST_ADDR_offs)
+#define jim_CS_DMA_COUNT		(0xFD00 + CS_DMA_COUNT_offs)
+#define jim_CS_DMA_DATA			(0xFD00 + CS_DMA_DATA_offs)
+#define jim_CS_DMA_CTL			(0xFD00 + CS_DMA_CTL_offs)
+#define jim_CS_DMA_CTL2			(0xFD00 + CS_DMA_CTL2_offs)
+#define jim_CS_DMA_PAUSE_VAL		(0xFD00 + CS_DMA_PAUSE_VAL_offs)
+#define jim_CS_DMA_SEL			(0xFD00 + CS_DMA_SEL_offs)
 
-#define jim_DMAC_AERIS_CTL		(jim_DMAC + DMAC_AERIS_CTL_offs)
-#define jim_DMAC_AERIS_PROGBASE		(jim_DMAC + DMAC_AERIS_PROGBASE_offs)
+#define jim_CS_AERIS_CTL		(0xFD00 + DMAC_AERIS_CTL_offs)
+#define jim_CS_AERIS_PROGBASE		(0xFD00 + DMAC_AERIS_PROGBASE_offs)
+#define jim_CS_AERIS_PPC		(0xFD00 + DMAC_AERIS_PC_offs)
 
 
 #define SHEILA_NULA_CTLAUX		0xFE22
