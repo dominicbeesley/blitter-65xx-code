@@ -101,11 +101,6 @@ extern char tilemap[];
 #define COLOBJ_FLAG_NOCOL 0x80
 #define COLOBJ_FLAG_BORDER_NORTH 0x01
 
-#define SET_DMA_ADDR(x,y) \
-	{*((byte volatile *)x) = ((y) >> 16); \
-	*((byte volatile *)x+1) = ((y) >> 8); \
-	*((byte volatile *)x+2) = (y);}
-
 #define SET_DMA_BYTE(x,y) \
 	{*((byte volatile *)x) = (y);} 
 
@@ -114,7 +109,7 @@ extern char tilemap[];
 	(*((byte volatile *)x))
 
 //WARNING: sets a 32 bit address - may have consequences
-#define SET_LE_DMA_ADDR(x,y) \
+#define SET_DMA_ADDR(x,y) \
 	{*((unsigned long volatile *)x) = y;}
 
 #define SET_DMA_WORD(x,y) \

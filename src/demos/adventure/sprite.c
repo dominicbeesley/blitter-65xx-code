@@ -35,7 +35,7 @@ SOFTWARE.
 #include "screenmaths.h"
 
 
-#define ADD_LE_DMA_WORD(x, y) {*((unsigned volatile *)x) += y;}
+#define ADD_DMA_WORD(x, y) {*((unsigned volatile *)x) += y;}
 
 typedef struct spr_save {
 	unsigned int scr_addr_16;
@@ -125,8 +125,8 @@ void spr_plotXY(signed int _x, signed int _y, unsigned char _w, unsigned char _h
 
 	if (y < 0) {		
 		//off top of screen, keep incrementing y until +ve and sort out w/h
-		ADD_LE_DMA_WORD(jim_CS_BLIT_ADDR_B, -y * (w >> 1));	
-		ADD_LE_DMA_WORD(jim_CS_BLIT_ADDR_A, -y * (w >> 3));	
+		ADD_DMA_WORD(jim_CS_BLIT_ADDR_B, -y * (w >> 1));	
+		ADD_DMA_WORD(jim_CS_BLIT_ADDR_A, -y * (w >> 3));	
 		h += y;
 		y = 0;
 	}
@@ -144,8 +144,8 @@ void spr_plotXY(signed int _x, signed int _y, unsigned char _w, unsigned char _h
 
 		while (x <= -8)
 		{
-			ADD_LE_DMA_WORD(jim_CS_BLIT_ADDR_B, 4);
-			ADD_LE_DMA_WORD(jim_CS_BLIT_ADDR_A, 1);
+			ADD_DMA_WORD(jim_CS_BLIT_ADDR_B, 4);
+			ADD_DMA_WORD(jim_CS_BLIT_ADDR_A, 1);
 			w-=8;
 			if (w <= 0) return;
 			x+=8;
@@ -233,7 +233,7 @@ void spr_init() {
 
 void spr_save_start() {
 	// set up channel E pointer and ptr_spr_save
-	SET_DMA_ADDR(jim_CS_BLIT_ADDR_E+2, DMA_SPR_SAVE);
+	SET_DMA_ADDR(jim_CS_BLIT_ADDR_E, DMA_SPR_SAVE);
 	SET_DMA_WORD(jim_CS_BLIT_STRIDE_C, SCREEN_D_STRIDE);
 	//SET_DMA_WORD(jim_CS_BLIT_STRIDE_D, SCREEN_D_STRIDE); //TODO: REMOVE NEWABI
 
