@@ -152,8 +152,8 @@ void main(void) {
 	loadforetiles();
 	loadcolltiles();
 
-	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_DMAC & 0xFF;
-	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_DMAC >> 8;
+	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_CHIPSET & 0xFF;
+	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_CHIPSET >> 8;
 
 	loadtiles();
 
