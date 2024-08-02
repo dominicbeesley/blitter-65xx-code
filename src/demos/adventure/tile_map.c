@@ -62,7 +62,7 @@ unsigned char get_tile_at(unsigned char layer, signed char x, signed char y) {
 
 
 unsigned char getbltcon() {
-	return GET_DMA_BYTE(jim_DMAC_NEW_BLITCON);
+	return GET_DMA_BYTE(jim_CS_BLIT_BLITCON);
 }
 
 
@@ -71,13 +71,13 @@ void front_spr_addr(unsigned char tileno)
 {
 	unsigned int a;
 
-	SET_DMA_BYTE(jim_DMAC_NEW_ADDR_B+2, DMA_FRONT_SPR >> 16);
-	SET_DMA_BYTE(jim_DMAC_NEW_ADDR_A+2, DMA_FRONT_SPR >> 16);
+	SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_FRONT_SPR >> 16);
+	SET_DMA_BYTE(jim_CS_BLIT_ADDR_A+2, DMA_FRONT_SPR >> 16);
 
 	a = ((unsigned int)FRONT_SPR_SZ)*((unsigned int)tileno);
-	SET_LE_DMA_WORD(jim_DMAC_NEW_ADDR_B, a);
+	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_B, a);
 	a+= FRONT_SPR_MO; 
-	SET_LE_DMA_WORD(jim_DMAC_NEW_ADDR_A, a);
+	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_A, a);
 	//Assume all tiles in single bank
 
 }
@@ -86,12 +86,12 @@ void front_spr_addr(unsigned char tileno)
 void coll_spr_addr(unsigned char tileno)
 {
 	unsigned int a = ((unsigned int)COLL_SPR_SZ)*((unsigned int)tileno);
-	SET_LE_DMA_WORD(jim_DMAC_NEW_ADDR_B, a);
+	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_B, a);
 	a+= FRONT_SPR_MO;
-	SET_LE_DMA_WORD(jim_DMAC_NEW_ADDR_A, a);
+	SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_A, a);
 	//Assume all tiles in single bank
-	SET_DMA_BYTE(jim_DMAC_NEW_ADDR_B+2, DMA_COLL_SPR >> 16);
-	SET_DMA_BYTE(jim_DMAC_NEW_ADDR_A+2, DMA_COLL_SPR >> 16);
+	SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_COLL_SPR >> 16);
+	SET_DMA_BYTE(jim_CS_BLIT_ADDR_A+2, DMA_COLL_SPR >> 16);
 
 }
 
@@ -110,12 +110,12 @@ void draw_front_nosave(unsigned char flags) {
 
 	scr_addr16 = XY_to_dma_scr_adr(0,0);
 
-	SET_DMA_BYTE(jim_DMAC_NEW_SHIFT_A, 0);
-	SET_DMA_BYTE(jim_DMAC_NEW_MASK_FIRST, 0xFF);
-	SET_DMA_BYTE(jim_DMAC_NEW_MASK_LAST, 0xFF);
+	SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0);
+	SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
+	SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
 
-	SET_LE_DMA_WORD(jim_DMAC_NEW_STRIDE_A, TILE_X_SZ >> 3);
-	SET_LE_DMA_WORD(jim_DMAC_NEW_STRIDE_B, TILE_X_SZ >> 1);
+	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_A, TILE_X_SZ >> 3);
+	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_B, TILE_X_SZ >> 1);
 
 	tile_ptr = (unsigned char *)(map_ptr_offset + map_layer_size);
 	coll_ptr = tile_ptr + map_layer_size;
@@ -150,12 +150,12 @@ void draw_front(unsigned char flags) {
 
 	scr_addr16 = XY_to_dma_scr_adr(0,0);
 
-	SET_DMA_BYTE(jim_DMAC_NEW_SHIFT_A, 0);
-	SET_DMA_BYTE(jim_DMAC_NEW_MASK_FIRST, 0xFF);
-	SET_DMA_BYTE(jim_DMAC_NEW_MASK_LAST, 0xFF);
+	SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0);
+	SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
+	SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
 
-	SET_LE_DMA_WORD(jim_DMAC_NEW_STRIDE_A, TILE_X_SZ >> 3);
-	SET_LE_DMA_WORD(jim_DMAC_NEW_STRIDE_B, TILE_X_SZ >> 1);
+	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_A, TILE_X_SZ >> 3);
+	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_B, TILE_X_SZ >> 1);
 
 	tile_ptr = (char *)(map_ptr_offset + map_layer_size);
 	coll_ptr = tile_ptr + map_layer_size;
@@ -190,12 +190,12 @@ void draw_front(unsigned char flags) {
 void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, unsigned char colourB) {
 
 	scr_addr16 = XY_to_dma_scr_adr(x *TILE_X_SZ, y * TILE_Y_SZ);
-	SET_DMA_BYTE(jim_DMAC_NEW_SHIFT_A, 0);
-	SET_DMA_BYTE(jim_DMAC_NEW_MASK_FIRST, 0xFF);
-	SET_DMA_BYTE(jim_DMAC_NEW_MASK_LAST, 0xFF);
+	SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0);
+	SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
+	SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
 
-	SET_LE_DMA_WORD(jim_DMAC_NEW_STRIDE_A, TILE_X_SZ >> 3);
-	SET_DMA_BYTE(jim_DMAC_NEW_DATA_B, colourB);
+	SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_A, TILE_X_SZ >> 3);
+	SET_DMA_BYTE(jim_CS_BLIT_DATA_B, colourB);
 
 	coll_spr_addr(tileno-1);
 	spr_save_and_plot((TILE_X_SZ>>1)-1, TILE_Y_SZ-1, BLITCON_EXEC_A + BLITCON_EXEC_C + BLITCON_EXEC_D + BLITCON_EXEC_E, scr_addr16);
@@ -272,26 +272,26 @@ unsigned char colcheck(
 			shiftB = -offsx;
 		}
 
-		SET_DMA_BYTE(jim_DMAC_NEW_SHIFT_A, shiftA);
-		SET_DMA_BYTE(jim_DMAC_NEW_SHIFT_B, shiftB);  
-		SET_DMA_BYTE(jim_DMAC_NEW_MASK_FIRST, mask_first);
-		SET_DMA_BYTE(jim_DMAC_NEW_MASK_LAST, mask_last);
+		SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, shiftA);
+		SET_DMA_BYTE(jim_CS_BLIT_SHIFT_B, shiftB);  
+		SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, mask_first);
+		SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, mask_last);
 
 
-		SET_DMA_BYTE(jim_DMAC_NEW_ADDR_A+2, DMA_CHARAC_SPR >> 16);
-		SET_LE_DMA_WORD(jim_DMAC_NEW_ADDR_A, ch_addr);
+		SET_DMA_BYTE(jim_CS_BLIT_ADDR_A+2, DMA_CHARAC_SPR >> 16);
+		SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_A, ch_addr);
 
-		SET_DMA_BYTE(jim_DMAC_NEW_ADDR_B+2, DMA_COLL_SPR >> 16);
-		SET_LE_DMA_WORD(jim_DMAC_NEW_ADDR_B, coll_addr);
+		SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_COLL_SPR >> 16);
+		SET_LE_DMA_WORD(jim_CS_BLIT_ADDR_B, coll_addr);
 
-		SET_DMA_BYTE(jim_DMAC_NEW_WIDTH, bw-1);
-		SET_LE_DMA_WORD(jim_DMAC_NEW_STRIDE_A, COLL_SPR_MASK_BYTES_PER_LINE);
-		SET_LE_DMA_WORD(jim_DMAC_NEW_STRIDE_B, COLL_SPR_MASK_BYTES_PER_LINE);
-		SET_DMA_BYTE(jim_DMAC_NEW_HEIGHT, h-1);
+		SET_DMA_BYTE(jim_CS_BLIT_WIDTH, bw-1);
+		SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_A, COLL_SPR_MASK_BYTES_PER_LINE);
+		SET_LE_DMA_WORD(jim_CS_BLIT_STRIDE_B, COLL_SPR_MASK_BYTES_PER_LINE);
+		SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, h-1);
 
-		SET_DMA_BYTE(jim_DMAC_NEW_FUNCGEN, 0xC0); //A&B
-		SET_DMA_BYTE(jim_DMAC_NEW_BLITCON, BLITCON_EXEC_A | BLITCON_EXEC_B);
-		SET_DMA_BYTE(jim_DMAC_NEW_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_1BBP + BLITCON_ACT_COLLIDE);
+		SET_DMA_BYTE(jim_CS_BLIT_FUNCGEN, 0xC0); //A&B
+		SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_EXEC_A | BLITCON_EXEC_B);
+		SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_1BBP + BLITCON_ACT_COLLIDE);
 
 		//check result -- bodge using a function to get round ca65's lack of volatile
 		if (getbltcon() & BLITCON_ACT_COLLIDE)

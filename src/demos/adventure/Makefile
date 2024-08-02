@@ -27,7 +27,12 @@ WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
 LOADER_OBJS=	loader dma myos rle_asm
 INCS=$(BUILD)/includes/ 
 
-TILES=$(BUILD)/tiles/charac.rle $(BUILD)/tiles/main.pal $(BUILD)/tiles/over.back.rle $(BUILD)/tiles/over.front.rle $(BUILD)/tiles/over.collide.rle $(BUILD)/tiles/over.map.rle
+TILES=	$(BUILD)/tiles/charac.rle \
+		$(BUILD)/tiles/main.pal \
+		$(BUILD)/tiles/over.back.rle \
+		$(BUILD)/tiles/over.front.rle \
+		$(BUILD)/tiles/over.collide.rle \
+		$(BUILD)/tiles/over.map.rle
 
 GROUPS=over
 
@@ -39,6 +44,9 @@ GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS))) $(GROUPS_O)
 WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS))) $(GROUPS_O)
 LOADER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_OBJS)))
 
+.PHONY: all tiles ssd deploy
+
+tiles: $(TILES)
 
 all: $(TARGETS_O)
 
@@ -102,7 +110,7 @@ $(BUILD)/tiles/%.map.rle: $(BUILD)/tiles/%.map scripts/runlengthencode.pl
 $(BUILD)/tiles/charac.til:	maps/character.tilecuts.xml src-graphics/character.png
 		$(SCRIPTS)/tilecutter.py maps/character.tilecuts.xml $(shell pwd) $(BUILD)/tiles
 
-$(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til $(BUILD)/tiles/over.collide.til $(BUILD)/tiles/over.map &: \
+$(BUILD)/tiles/over.pal $(BUILD)/tiles/over.front.til $(BUILD)/tiles/over.back.til $(BUILD)/tiles/over.collide.til &: \
 		src-graphics/Overworld16x24.png \
 		$(BUILD)/tiles/over.tilecuts.xml
 

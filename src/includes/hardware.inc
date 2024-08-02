@@ -88,55 +88,28 @@ SND_CTL_REPEAT			:=	$01
 
 ;;; NEW little-endian Word aligned API
 
-DMAC_NEW_BLITCON_offs		:=	0
-DMAC_NEW_FUNCGEN_offs		:=	$1
-DMAC_NEW_MASK_FIRST_offs	:=	$2	; 
-DMAC_NEW_MASK_LAST_offs		:=	$3
-DMAC_NEW_WIDTH_offs		:=	$4	; 8 bit
-DMAC_NEW_HEIGHT_offs		:=	$5	; 8 bit 
-DMAC_NEW_SHIFT_A_offs		:=	$6	; shift for A data poking this will poke SHIFT_B
-DMAC_NEW_SHIFT_B_offs		:=	$7	
-DMAC_NEW_STRIDE_A_offs		:=	$8	; 16 bit little endian
-DMAC_NEW_STRIDE_B_offs		:=	$A	; 16 bit little endian
-DMAC_NEW_STRIDE_C_offs		:=	$C	; 16 bit little endian - writing this also writes STRIDE_D for convenience
-DMAC_NEW_STRIDE_D_offs		:=	$E	; 16 bit little endian
-DMAC_NEW_ADDR_A_offs		:=	$10	; 24 bit
-DMAC_NEW_DATA_A_offs		:=	$13
-DMAC_NEW_ADDR_B_offs		:=	$14	; 24 bit
-DMAC_NEW_DATA_B_offs		:=	$17
-DMAC_NEW_ADDR_C_offs		:=	$18	; 24 bit writing this also writes ADDR_D for convenience
-DMAC_NEW_DATA_C_offs		:=	$1B
-DMAC_NEW_ADDR_D_offs		:=	$1C	; 24 bit
-DMAC_NEW_ADDR_E_offs		:=	$20	
-DMAC_NEW_ADDR_D_MIN_offs	:=	$24	; 24 bit
-DMAC_NEW_ADDR_D_MAX_offs	:=	$28	; 24 bit
-
-
-;;; OLD Big-endian register ABI
-
-DMAC_BLITCON_offs		:=	0
-DMAC_FUNCGEN_offs		:=	$1
-DMAC_WIDTH_offs			:=	$2
-DMAC_HEIGHT_offs		:=	$3
-DMAC_SHIFT_offs			:=	$4
-DMAC_MASK_FIRST_offs		:=	$5
-DMAC_MASK_LAST_offs		:=	$6
-DMAC_DATA_A_offs		:=	$7
-DMAC_ADDR_A_offs		:=	$8
-DMAC_DATA_B_offs		:=	$B
-DMAC_ADDR_B_offs		:=	$C
-DMAC_ADDR_C_offs		:=	$F
-DMAC_ADDR_D_offs		:=	$12
-DMAC_ADDR_E_offs		:=	$15
-DMAC_STRIDE_A_offs		:=	$18
-DMAC_STRIDE_B_offs		:=	$1A
-DMAC_STRIDE_C_offs		:=	$1C
-DMAC_STRIDE_D_offs		:=	$1E
-
-DMAC_BLIT_EXT_offs		:=	$40
-DMAC_ADDR_D_MIN_offs		:=	DMAC_BLIT_EXT_offs
-DMAC_ADDR_D_MAX_offs		:=	DMAC_BLIT_EXT_offs+3
-DMAX_DATA_C_offs		:=	DMAC_BLIT_EXT_offs+6
+CS_BLIT_BLITCON_offs		:=	0
+CS_BLIT_FUNCGEN_offs		:=	$1
+CS_BLIT_MASK_FIRST_offs		:=	$2	; 
+CS_BLIT_MASK_LAST_offs		:=	$3
+CS_BLIT_WIDTH_offs		:=	$4	; 8 bit
+CS_BLIT_HEIGHT_offs		:=	$5	; 8 bit 
+CS_BLIT_SHIFT_A_offs		:=	$6	; shift for A data poking this will poke SHIFT_B
+CS_BLIT_SHIFT_B_offs		:=	$7	
+CS_BLIT_STRIDE_A_offs		:=	$8	; 16 bit little endian
+CS_BLIT_STRIDE_B_offs		:=	$A	; 16 bit little endian
+CS_BLIT_STRIDE_C_offs		:=	$C	; 16 bit little endian - writing this also writes STRIDE_D for convenience
+CS_BLIT_STRIDE_D_offs		:=	$E	; 16 bit little endian
+CS_BLIT_ADDR_A_offs		:=	$10	; 24 bit
+CS_BLIT_DATA_A_offs		:=	$13
+CS_BLIT_ADDR_B_offs		:=	$14	; 24 bit
+CS_BLIT_DATA_B_offs		:=	$17
+CS_BLIT_ADDR_C_offs		:=	$18	; 24 bit writing this also writes ADDR_D for convenience
+CS_BLIT_DATA_C_offs		:=	$1B
+CS_BLIT_ADDR_D_offs		:=	$1C	; 24 bit
+CS_BLIT_ADDR_E_offs		:=	$20	
+CS_BLIT_ADDR_D_MIN_offs		:=	$24	; 24 bit
+CS_BLIT_ADDR_D_MAX_offs		:=	$28	; 24 bit
 
 
 
@@ -167,9 +140,9 @@ DMAC_AERIS_CTL_offs		:=	$50
 DMAC_AERIS_PROGBASE_offs	:=	$51
 
 
-DMAC_I2C_offs		:=	$70
+DMAC_I2C_offs			:=	$70
 
-jim_page_DMAC			:=	$FEFC
+jim_page_CHIPSET		:=	$FEFE
 
 jim_page_VERSION		:=	$FC00
 
@@ -200,55 +173,31 @@ BLT_MK3_CFG0_SWROMX		:=	$10
 BLT_MK3_CFG0_MEMI		:=	$40
 
 
-jim_DMAC_NEW_BLITCON		:= 	$FD00 + DMAC_NEW_BLITCON_offs
-jim_DMAC_NEW_FUNCGEN		:= 	$FD00 + DMAC_NEW_FUNCGEN_offs
-jim_DMAC_NEW_MASK_FIRST		:= 	$FD00 + DMAC_NEW_MASK_FIRST_offs
-jim_DMAC_NEW_MASK_LAST		:= 	$FD00 + DMAC_NEW_MASK_LAST_offs
-jim_DMAC_NEW_WIDTH		:= 	$FD00 + DMAC_NEW_WIDTH_offs
-jim_DMAC_NEW_HEIGHT		:= 	$FD00 + DMAC_NEW_HEIGHT_offs
-jim_DMAC_NEW_SHIFT_A		:= 	$FD00 + DMAC_NEW_SHIFT_A_offs
-jim_DMAC_NEW_SHIFT_B		:= 	$FD00 + DMAC_NEW_SHIFT_B_offs
-jim_DMAC_NEW_STRIDE_A		:= 	$FD00 + DMAC_NEW_STRIDE_A_offs
-jim_DMAC_NEW_STRIDE_B		:= 	$FD00 + DMAC_NEW_STRIDE_B_offs
-jim_DMAC_NEW_STRIDE_C		:= 	$FD00 + DMAC_NEW_STRIDE_C_offs
-jim_DMAC_NEW_STRIDE_D		:= 	$FD00 + DMAC_NEW_STRIDE_D_offs
-jim_DMAC_NEW_ADDR_A		:= 	$FD00 + DMAC_NEW_ADDR_A_offs
-jim_DMAC_NEW_DATA_A		:= 	$FD00 + DMAC_NEW_DATA_A_offs
-jim_DMAC_NEW_ADDR_B		:= 	$FD00 + DMAC_NEW_ADDR_B_offs
-jim_DMAC_NEW_DATA_B		:= 	$FD00 + DMAC_NEW_DATA_B_offs
-jim_DMAC_NEW_ADDR_C		:= 	$FD00 + DMAC_NEW_ADDR_C_offs
-jim_DMAC_NEW_DATA_C		:= 	$FD00 + DMAC_NEW_DATA_C_offs
-jim_DMAC_NEW_ADDR_D		:= 	$FD00 + DMAC_NEW_ADDR_D_offs
-jim_DMAC_NEW_ADDR_E		:= 	$FD00 + DMAC_NEW_ADDR_E_offs
-jim_DMAC_NEW_ADDR_D_MIN		:= 	$FD00 + DMAC_NEW_ADDR_D_MIN_offs
-jim_DMAC_NEW_ADDR_D_MAX		:= 	$FD00 + DMAC_NEW_ADDR_D_MAX_offs
+jim_CS_BLIT_BLITCON		:= 	$FD00 + CS_BLIT_BLITCON_offs
+jim_CS_BLIT_FUNCGEN		:= 	$FD00 + CS_BLIT_FUNCGEN_offs
+jim_CS_BLIT_MASK_FIRST		:= 	$FD00 + CS_BLIT_MASK_FIRST_offs
+jim_CS_BLIT_MASK_LAST		:= 	$FD00 + CS_BLIT_MASK_LAST_offs
+jim_CS_BLIT_WIDTH		:= 	$FD00 + CS_BLIT_WIDTH_offs
+jim_CS_BLIT_HEIGHT		:= 	$FD00 + CS_BLIT_HEIGHT_offs
+jim_CS_BLIT_SHIFT_A		:= 	$FD00 + CS_BLIT_SHIFT_A_offs
+jim_CS_BLIT_SHIFT_B		:= 	$FD00 + CS_BLIT_SHIFT_B_offs
+jim_CS_BLIT_STRIDE_A		:= 	$FD00 + CS_BLIT_STRIDE_A_offs
+jim_CS_BLIT_STRIDE_B		:= 	$FD00 + CS_BLIT_STRIDE_B_offs
+jim_CS_BLIT_STRIDE_C		:= 	$FD00 + CS_BLIT_STRIDE_C_offs
+jim_CS_BLIT_STRIDE_D		:= 	$FD00 + CS_BLIT_STRIDE_D_offs
+jim_CS_BLIT_ADDR_A		:= 	$FD00 + CS_BLIT_ADDR_A_offs
+jim_CS_BLIT_DATA_A		:= 	$FD00 + CS_BLIT_DATA_A_offs
+jim_CS_BLIT_ADDR_B		:= 	$FD00 + CS_BLIT_ADDR_B_offs
+jim_CS_BLIT_DATA_B		:= 	$FD00 + CS_BLIT_DATA_B_offs
+jim_CS_BLIT_ADDR_C		:= 	$FD00 + CS_BLIT_ADDR_C_offs
+jim_CS_BLIT_DATA_C		:= 	$FD00 + CS_BLIT_DATA_C_offs
+jim_CS_BLIT_ADDR_D		:= 	$FD00 + CS_BLIT_ADDR_D_offs
+jim_CS_BLIT_ADDR_E		:= 	$FD00 + CS_BLIT_ADDR_E_offs
+jim_CS_BLIT_ADDR_D_MIN		:= 	$FD00 + CS_BLIT_ADDR_D_MIN_offs
+jim_CS_BLIT_ADDR_D_MAX		:= 	$FD00 + CS_BLIT_ADDR_D_MAX_offs
 
 
 jim_DMAC			:=	$FD60
-jim_DMAC_BLITCON		:=	jim_DMAC + DMAC_BLITCON_offs
-jim_DMAC_FUNCGEN		:=	jim_DMAC + DMAC_FUNCGEN_offs
-jim_DMAC_WIDTH			:=	jim_DMAC + DMAC_WIDTH_offs
-jim_DMAC_HEIGHT			:=	jim_DMAC + DMAC_HEIGHT_offs
-jim_DMAC_SHIFT			:=	jim_DMAC + DMAC_SHIFT_offs
-jim_DMAC_MASK_FIRST		:=	jim_DMAC + DMAC_MASK_FIRST_offs
-jim_DMAC_MASK_LAST		:=	jim_DMAC + DMAC_MASK_LAST_offs
-jim_DMAC_DATA_A			:=	jim_DMAC + DMAC_DATA_A_offs
-jim_DMAC_ADDR_A			:=	jim_DMAC + DMAC_ADDR_A_offs
-jim_DMAC_DATA_B			:=	jim_DMAC + DMAC_DATA_B_offs
-jim_DMAC_ADDR_B			:=	jim_DMAC + DMAC_ADDR_B_offs
-jim_DMAC_ADDR_C			:=	jim_DMAC + DMAC_ADDR_C_offs
-jim_DMAC_ADDR_D			:=	jim_DMAC + DMAC_ADDR_D_offs
-jim_DMAC_ADDR_E			:=	jim_DMAC + DMAC_ADDR_E_offs
-jim_DMAC_STRIDE_A		:=	jim_DMAC + DMAC_STRIDE_A_offs
-jim_DMAC_STRIDE_B		:=	jim_DMAC + DMAC_STRIDE_B_offs
-jim_DMAC_STRIDE_C		:=	jim_DMAC + DMAC_STRIDE_C_offs
-jim_DMAC_STRIDE_D		:=	jim_DMAC + DMAC_STRIDE_D_offs
-jim_DMAC_ADDR_D_MIN		:=	jim_DMAC + DMAC_ADDR_D_MIN_offs
-jim_DMAC_ADDR_D_MAX		:=	jim_DMAC + DMAC_ADDR_D_MAX_offs
-
-
-
-
 jim_DMAC_SND_DATA		:= 	jim_DMAC + DMAC_SND_DATA_offs
 jim_DMAC_SND_ADDR		:= 	jim_DMAC + DMAC_SND_ADDR_offs
 jim_DMAC_SND_PERIOD		:= 	jim_DMAC + DMAC_SND_PERIOD_offs
