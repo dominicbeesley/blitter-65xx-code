@@ -86,9 +86,9 @@ ENTER_DEBUG:
 		.byte	$D1, "No blitter",0
 		brk
 @okblt:		
-		lda	#<jim_page_DMAC
+		lda	#<jim_page_CHIPSET
 		sta	fred_JIM_PAGE_LO
-		lda	#>jim_page_DMAC
+		lda	#>jim_page_CHIPSET
 		sta	fred_JIM_PAGE_HI
 
 		; default range
