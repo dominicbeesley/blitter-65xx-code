@@ -33,8 +33,10 @@ vec_nmi		:=	$D00
 		.SEGMENT "SCREEN"
 SCREEN_BASE:
 
-B_FONT_SPR	:=	$001000
-B_FONT_MAS	:=	$007000
+B_SHADOW	:=	$020000
+B_BACK_SAV	:=	$030000
+B_FONT_SPR	:=	$041000				; must be page aligned for calcs
+B_FONT_MAS	:=	$047000
 
 		.ZEROPAGE
 ZP_TMP:		.RES 1
@@ -66,19 +68,19 @@ ZP_TMP:		.RES 1
 
 		.DATA
 
-spr_plot_blk:	.word	$3000		; dest_addr
-		.byte	$FF		; dest bank
-		.word	(B_FONT_SPR)	; src addr
-		.byte	0		; src bank
-		.word	(B_FONT_MAS)	; mask addr
-		.byte	0		; mask bank
-		.byte	0		; shift
-		.byte	95		; height -1 
-		.byte	31		; width - 1
-		.word	640		; dest stride
-		.word	128		; sprite source stride
-		.word	32		; mask stride
-		.byte	$E0		; BLTCON act, cell, 4bpp
+spr_plot_blk:	.word	$3000			; dest_addr
+		.byte	$FF			; dest bank
+		.word	.loword(B_FONT_SPR)	; src addr
+		.byte	.bankbyte(B_FONT_SPR)	; src bank
+		.word	.loword(B_FONT_MAS)	; mask addr
+		.byte	.bankbyte(B_FONT_MAS)	; mask bank
+		.byte	0			; shift
+		.byte	95			; height -1 
+		.byte	31			; width - 1
+		.word	640			; dest stride
+		.word	128			; sprite source stride
+		.word	32			; mask stride
+		.byte	$E0			; BLTCON act, cell, 4bpp
 
 test_a_stride:
 	.byte	BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D		; execD, execC, execB, execA 	BLTCON 

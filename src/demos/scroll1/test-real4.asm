@@ -40,10 +40,10 @@ zp_acc:		.RES		2			; temp / accumulator
 		.SEGMENT "SCREEN"
 SCREEN_BASE:
 
-B_FONT_SPR	:=	$001000				; must be page aligned for calcs
-B_FONT_MAS	:=	$007000
-B_BACK_SAV	:=	$010000
 B_SHADOW	:=	$020000
+B_BACK_SAV	:=	$030000
+B_FONT_SPR	:=	$041000				; must be page aligned for calcs
+B_FONT_MAS	:=	$047000
 
 		.CODE 
 

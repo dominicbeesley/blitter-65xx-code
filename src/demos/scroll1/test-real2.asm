@@ -34,8 +34,10 @@ vec_nmi		:=	$D00
 ;LOAD_BASE:	
 LOAD_BASE	:= $2000
 
-B_FONT_SPR	:=	$001000
-B_FONT_MAS	:=	$007000
+B_SHADOW	:=	$020000
+B_BACK_SAV	:=	$030000
+B_FONT_SPR	:=	$041000				; must be page aligned for calcs
+B_FONT_MAS	:=	$047000
 
 		.ZEROPAGE
 ZP_TMP:		.RES 1
@@ -147,14 +149,14 @@ fn_font_spr:		.byte	"S.FONT", $D
 bmfont_copy_to_SRAM:
 	.word	LOAD_BASE
 	.byte	$FF
-	.word	B_FONT_SPR
-	.byte	$00
+	.word	.loword(B_FONT_SPR)
+	.byte	.bankbyte(B_FONT_SPR)
 	.word	(16*8*192)
 bmfont_mask_copy_to_SRAM:
 	.word	LOAD_BASE
 	.byte	$FF
-	.word	B_FONT_MAS
-	.byte	$00
+	.word	.loword(B_FONT_MAS)
+	.byte	.bankbyte(B_FONT_MAS)
 	.word	(4*8*192)
 
 font_copy_from_SRAM_settings:
