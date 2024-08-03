@@ -154,60 +154,60 @@ B_SCREEN_1	:=	$FF3000				; where background is loaded to
 		jsr	_blit_ctl_full
 
 
-;@restore_loop:
-;		; see if there's anything to restore
-;		dec	zp_save_ctr
-;		bmi	@nomoresaves
-;
-;		; setup registers for restore
-;		ldx	#<blit_restore
-;		ldy	#>blit_restore
-;		jsr	_blit_ctl_full_noExec
-;
-;
-;		; move back ptr
-;		sec
-;		lda	zp_save_ptr
-;		sbc	#save_b_size
-;		sta	zp_save_ptr
-;		bcs	@no_c
-;		dec	zp_save_ptr + 1
-;@no_c:
-;
-;		ldy	#0
-;		; restore scr
-;		lda	(zp_save_ptr),y
-;		sta	jim_CS_BLIT_ADDR_C + 1
-;		iny
-;		lda	(zp_save_ptr),y
-;		sta	jim_CS_BLIT_ADDR_C + 0
-;		iny
-;		; restore E into B
-;		lda	(zp_save_ptr),y
-;		sta	jim_CS_BLIT_ADDR_B + 0
-;		iny
-;		lda	(zp_save_ptr),y
-;		sta	jim_CS_BLIT_ADDR_B + 1
-;		iny
-;		lda	(zp_save_ptr),y
-;		sta	jim_CS_BLIT_ADDR_B + 2
-;		iny
-;		;restore W
-;		lda	(zp_save_ptr),y
-;		sta	jim_CS_BLIT_WIDTH
-;		tax
-;		inx
-;		stx	jim_CS_BLIT_STRIDE_B + 0
-;		iny
-;		;restore H
-;		lda	(zp_save_ptr),y
-;		sta	jim_CS_BLIT_HEIGHT
-;		iny
-;
-;		lda	#$E0
-;		sta	jim_CS_BLIT_BLITCON
-;
-;		jmp	@restore_loop
+@restore_loop:
+		; see if there's anything to restore
+		dec	zp_save_ctr
+		bmi	@nomoresaves
+
+		; setup registers for restore
+		ldx	#<blit_restore
+		ldy	#>blit_restore
+		jsr	_blit_ctl_full_noExec
+
+
+		; move back ptr
+		sec
+		lda	zp_save_ptr
+		sbc	#save_b_size
+		sta	zp_save_ptr
+		bcs	@no_c
+		dec	zp_save_ptr + 1
+@no_c:
+
+		ldy	#0
+		; restore scr
+		lda	(zp_save_ptr),y
+		sta	jim_CS_BLIT_ADDR_C + 0
+		iny
+		lda	(zp_save_ptr),y
+		sta	jim_CS_BLIT_ADDR_C + 1
+		iny
+		; restore E into B
+		lda	(zp_save_ptr),y
+		sta	jim_CS_BLIT_ADDR_B + 0
+		iny
+		lda	(zp_save_ptr),y
+		sta	jim_CS_BLIT_ADDR_B + 1
+		iny
+		lda	(zp_save_ptr),y
+		sta	jim_CS_BLIT_ADDR_B + 2
+		iny
+		;restore W
+		lda	(zp_save_ptr),y
+		sta	jim_CS_BLIT_WIDTH
+		tax
+		inx
+		stx	jim_CS_BLIT_STRIDE_B + 0
+		iny
+		;restore H
+		lda	(zp_save_ptr),y
+		sta	jim_CS_BLIT_HEIGHT
+		iny
+
+		lda	#BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP
+		sta	jim_CS_BLIT_BLITCON
+
+		jmp	@restore_loop
 
 
 @nomoresaves:
@@ -390,25 +390,44 @@ render_scroll_line:
 		sta	jim_CS_BLIT_MASK_LAST
 @sk5:
 
-		lda	zp_save_ptr + 1
-		sta	jim_CS_DMA_DEST_ADDR + 1
-		lda	zp_save_ptr + 0
-		sta	jim_CS_DMA_DEST_ADDR + 0
+;		lda	zp_save_ptr + 1
+;		sta	jim_CS_DMA_DEST_ADDR + 1
+;		lda	zp_save_ptr + 0
+;		sta	jim_CS_DMA_DEST_ADDR + 0
+;
+;		lda	#>jim_page_CHIPSET
+;		sta	jim_CS_DMA_SRC_ADDR + 2
+;		lda	#<jim_page_CHIPSET
+;		sta	jim_CS_DMA_SRC_ADDR + 1
+;		lda	#<(jim_CS_BLIT_ADDR_D)
+;		sta	jim_CS_DMA_SRC_ADDR + 0
+;
+;		ldy	#4
+;		sty	jim_CS_DMA_COUNT + 0
+;
+;		lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
+;		sta	jim_CS_DMA_CTL
+;
+;		iny
+		
+		ldy	#0
 
-		lda	#>jim_page_CHIPSET
-		sta	jim_CS_DMA_SRC_ADDR + 2
-		lda	#<jim_page_CHIPSET
-		sta	jim_CS_DMA_SRC_ADDR + 1
-		lda	#<(jim_CS_BLIT_ADDR_D)
-		sta	jim_CS_DMA_SRC_ADDR + 0
-
-		ldy	#4
-		sty	jim_CS_DMA_COUNT + 0
-
-;;		lda	#DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP
-		sta	jim_CS_DMA_CTL
-
+		lda	jim_CS_BLIT_ADDR_C
+		sta	(zp_save_ptr), Y
 		iny
+		lda	jim_CS_BLIT_ADDR_C+1
+		sta	(zp_save_ptr), Y
+		iny
+		lda	jim_CS_BLIT_ADDR_E
+		sta	(zp_save_ptr), Y
+		iny
+		lda	jim_CS_BLIT_ADDR_E+1
+		sta	(zp_save_ptr), Y
+		iny
+		lda	jim_CS_BLIT_ADDR_E+2
+		sta	(zp_save_ptr), Y
+		iny
+
 
 		; - width, height
 		lda	jim_CS_BLIT_WIDTH
@@ -530,7 +549,7 @@ masks_left:	.byte	$FF, $3F, $0F, $03
 
 		.global blit_ctl
 blit_ctl:
-		.byte	BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D	; BLTCON
+		.byte	BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D+BLITCON_EXEC_E	; BLTCON
 		.byte	$CA		; copy B to D, mask A, C		FUNCGEN
 		.byte	$FF		;				MASK_FIRST
 		.byte	$FF		;				MASK_LAST
@@ -570,7 +589,7 @@ blit_bkg_1st:
 		.byte	0		;				DATA_A
 		ADDR24   B_SCREEN_1	;				ADDR_B
 		.byte	$0		;				DATA_B
-		ADDR24	B_SHADOW		;				ADDR_C/D
+		ADDR24	B_SHADOW+$C0	;				ADDR_C/D
 		.byte	0		;				DATA_C
 		ADDR24	0		;				ADDR_E
 		.byte	BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_4BBP
@@ -591,7 +610,7 @@ blit_shadow2screen:
 		.word	0	; SPARE
 		ADDR24	0		;				ADDR_A
 		.byte	$0		;				DATA_A
-		ADDR24	B_SHADOW		;				ADDR_B
+		ADDR24	B_SHADOW+$C0	;				ADDR_B
 		.byte	0		;				DATA_B
 		ADDR24	B_SCREEN_1	;				ADDR_C/D
 		.byte	$0		;				ADDR_E_BANK
@@ -601,7 +620,7 @@ blit_shadow2screen:
 
 blit_restore:	
 		.byte	BLITCON_EXEC_B+BLITCON_EXEC_D	; 		BLTCON
-		.byte	$CC		; copy C to D			FUNCGEN
+		.byte	$CC		; copy B to D			FUNCGEN
 		.byte	$FF		;				MASK_FIRST
 		.byte	$FF		;				MASK_LAST
 		.byte	0		; CODE				WIDTH
@@ -616,7 +635,7 @@ blit_restore:
 		.byte	0		;				DATA_A
 		ADDR24	0		; CODE				ADDR_B
 		.byte	0		;				DATA_B
-		ADDR24	0		; CODE				ADDR_C/D
+		ADDR24	B_SHADOW		; CODE				ADDR_C/D
 		.byte	0		;				DATA C
 		ADDR24	0		;				ADDR_E
 		.byte	$00		; BLTCON act, cell, 4bpp			!! DON'T ACT - set in CODE
