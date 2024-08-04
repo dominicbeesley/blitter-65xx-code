@@ -40,6 +40,8 @@ $(BUILD)/%.bin: %.bspr
 $(BUILD)/%.tok:%.bas
 	basictool -2 -t $< $@
 	printf "$$.%-7.7s FFFF8023 FFFF8023" $(notdir $(basename $@)) >$@.inf
+	basictool $@ $@.bas
+	sed -i -E 's/^\s*[0-9]+\s*//' $@.bas
 
 
 $(SSD):	$(OBJS_O)
