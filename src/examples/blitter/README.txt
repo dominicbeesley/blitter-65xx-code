@@ -33,10 +33,8 @@ width of a character row in bytes (screen stride).
 simplest way is to use the FRED/JIM interface
 
 400 page in the Blitter by writing the device and page select registers. For
-more information on the way JIM/FRED is used in the Blitter see:
-
-[API](https://github.com/dominicbeesley/blitter-vhdl-6502/blob/main/doc/API.md)
-[JIM proposal](https://github.com/dominicbeesley/DataCentre/blob/master/jim-spec-2019.txt)
+more information on the way JIM/FRED is used in the Blitter see the API and
+JIM documents referred below
 
 410-440 repeatedly call PROCBlitCharCell with random coordinates
 
@@ -89,9 +87,55 @@ display. The 2BPP bits ensure that the data in loaded into channel A are
 660 this procedure pages the Blitter/Chipset page into JIM.
 
 
+## 2. 1BPPFO2
 
+This example is much the same as the one above except that the start address
+on the screen is at an arbitrary row within a cell. This shows that the 
+Blitter's CELL mode correctly proceeds to the next row in all cases.
+
+
+## 3. 1BPPFO3
+
+This example is extended to allow plotting the characters at arbitrary pixel 
+positions on the screen and show the use of the SHIFT registers.
+
+500 - here we calculate the number of bits of shift that we will need to apply
+to the A register. As this is a 2 bits per pixel mode (4 pixels per character
+cell) we will need to shift for up to 4 pixels. If we do need a shift then we
+will also need to widen the blit operation by 1 byte.
+
+590 - setting the SHIFT A register also sets the shift B register. Depending on
+the number of bits per pixel in force some bits of the value will be ignored in
+the SHIFT B register in almost all cases this means that we can just set the
+SHIFT A register. Shifts are always to the right. 
+
+Data are shifted from one byte to the next i.e. the "previous" bytes data are
+shifted into the current byte. Because of the bit-layout of the BBC screen 
+memory shifting pixels is not straight forward. In 2bpp mode for example the
+bits will be shifted as below for a shift of 1:
+
+            first byte                  Second byte
+
+Before      P7 P6 P5 P4 P3 P2 P1 P0     C7 C6 C5 C4 C3 C2 C1 C0
+
+After       ?? P7 P6 P5 ?? P3 P2 P1     P4 C7 C6 C5 P0 C3 C2 C1 
+
+610 - as can be seen in the example above in the first byte worth of data 
+garbage from the previous contents of the B register are shifted in to the 
+channel B data on the first byte of each pixel row. For this reason there is
+the MASK_FIRST register which may be set to mask off these unwanted bits.
+
+This register works in the same way as channel A i.e. it is "exploded" to the
+correct number of bits per pixel.
+
+620 - BLIT_MASK last is the corollary of BLIT_MASK_FIRST but for the last 
+mask byte of a row, here it used to only show the bits that we want in the 
+left most pixels.
 
 
 # References
 
 [FUNCGEN Venn diagram](https://amigadev.elowar.com/read/ADCD_2.1/Hardware_Manual_guide/node011E.html)
+[API](https://github.com/dominicbeesley/blitter-vhdl-6502/blob/main/doc/API.md)
+[JIM proposal](https://github.com/dominicbeesley/DataCentre/blob/master/jim-spec-2019.txt)
+[CHIPSET](https://github.com/dominicbeesley/blitter-vhdl-6502/blob/main/doc/chipset.md)
