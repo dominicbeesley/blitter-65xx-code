@@ -1,5 +1,16 @@
 REM >1BPPFO3 A BASIC example of 1BPP blits with horizontal and vertical shifts
+*VNVDU ON
+
+*XMLOAD S.ISHSPR #D1 20000
 MODE 1:BPP%=2:SCRX%=320:SCRY%=256
+COLOUR 129:CLS
+REMFORI%=0TO100:DRAW RND(1280),RND(1024):GCOL0,RND(4):NEXT
+
+VDU 19,0,16,0,0,0
+VDU 19,1,16,50,190,0
+VDU 19,2,16,0,60,190
+VDU 19,3,16,190,120,120
+
 
 SCR_CHAR_ROW%=SCRX%*BPP%
 
@@ -43,37 +54,56 @@ DMAC_ADDR_E=&FD1C
 
 PROCSELDMAC:
 
-REPEAT:*FX19
-PROCBlitCharCell(32+RND(50),RND(4)-1,RND(312)-1, RND(240)-1)
-UNTILFALSE
+DMAC_ADDR_E=&30000:REM save screen contents here
+
+READ W%
+REPEAT:
+ READ WM%,H%, O%, M%
+ PROCBlitSprite(O%,M%,RND(280),RND(200),W%,WM%,H%)
+ READ W%:
+UNTIL W%=-1
+
+END
+
 :
-DEFPROCBlitCharCell(A%,C%,X%,Y%):LOCAL CC%,SA%,SHX%,W%
-CC%=(C% AND 2)*&78 + (C% AND 1)*&0F:REM make screen colour
+DEFPROCBlitSprite(O%,M%,X%,Y%,W%,WM%,H%):LOCAL CC%,SA%,SHX%,ML%
 SA%=&FF3000+(X% DIV 4)*8+(Y% DIV 8)*640 + (Y% MOD 8)
-W%=1
-SHX%=X% MOD 4:IFSHX%<>0 THEN W%=W%+1:REM if there's a shift we need to widen the blit
-REM plot a solid colour through a mask read from the font data in MOS ROM at 
-REM FF C000 the character is aligned to a cell horizontally (not shifted) but 
-REM is placed on an arbitrary scan line within a cell using the CELL mode
+W2%=W%
+SHX%=X% MOD 4:IFSHX%<>0 THEN W2%=W2%+1:REM if there's a shift we need to widen the blit
+REM plot a non masked sprite data is read from channel B, channel C is used to read 
+REM existing screen data. The A channel is not executed (no mask) but the A channel
+REM must be initialized with &FF to not mask off data
+REM Sprite is placed on an arbitrary scan line within a cell using the CELL mode
 REM address generator
 
-?DMAC_BLITCON=BLITCON_EXEC_A+BLITCON_EXEC_C+BLITCON_EXEC_D: REM mask from A, original screen C, write screen D
+?DMAC_BLITCON=BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D+BLITCON_EXEC_E: REM bitmap from B, original screen C, write screen D
 ?DMAC_FUNCGEN=&CA:REM (A AND B) OR (NOT A AND C)
-?DMAC_WIDTH=W%
-?DMAC_HEIGHT=7
-?DMAC_SHIFT_A=SHX%
+?DMAC_WIDTH=W2%-1
+?DMAC_HEIGHT=H%-1
+?DMAC_SHIFT_A=SHX%:REM this also sets shift B
 REM as there may be a shift we need to mask off bits of the mask accordingly
 ?DMAC_MASK_FIRST=FNshr(&FF,SHX%)
-?DMAC_MASK_LAST=FNshr(&FF00,SHX%)
-!DMAC_ADDR_A = &FFC000 + (A%-32)*8
-?DMAC_DATA_B=CC%
-!DMAC_ADDR_C = SA%
-!DMAC_STRIDE_A = 1
+IF WM%<>(W%DIV2) THEN ML%=&FFF0 ELSE ML%=&FF00
+IF SHX%=0 THEN ?DMAC_MASK_LAST=&FF ELSE ?DMAC_MASK_LAST=FNshr(ML%,SHX%)
+REM poke these first in increasing order to use !
+!DMAC_STRIDE_A = WM%
+!DMAC_STRIDE_B = W%
 ?DMAC_STRIDE_C = SCR_CHAR_ROW%: REM also sets STRIDE_D
 DMAC_STRIDE_C?1 = SCR_CHAR_ROW% DIV 256: REM also sets STRIDE_D
+
+
+!DMAC_ADDR_A = &20000+M%
+!DMAC_ADDR_B = &20000+O%
+!DMAC_ADDR_C = SA%: REM also sets ADDR_D
+
 ?DMAC_BLITCON=BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_2BPP
 ENDPROC
 :
 DEFPROCSELDMAC:?&EE=&D1:?&FCFF=&D1:?&FCFE=&FE:?&FCFD=&FE:ENDPROC:REM Select JIM device and set page to chipset
 :
-DEFFNshr(V%,N%):LOCALI%:FORI%=1TON%:V%=V%DIV2:NEXT:=V%
+DEFFNshr(V%,N%):LOCALI%:IFN%>0THENFORI%=1TON%:V%=V%DIV2:NEXT:=V%ELSE=V%
+:
+
+REM table of start, width, height of sprites in file
+DATA&04,&02,&0C,&00,&30,&04,&02,&0C,&48,&78,&04,&02,&0C,&90,&C0,&05,&03,&10,&D8,&128,&05,&03,&0C,&158,&194,&06,&03,&0A,&1B8,&1F4
+DATA&02,&01,&06,&212,&21E,&07,&04,&0C,&224,&278,&05,&03,&0F,&2A8,&2F3,&02,&01,&06,&320,&32C,&03,&02,&0A,&332,&350,-1

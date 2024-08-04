@@ -1,7 +1,9 @@
 REM >1BPPFO3 A BASIC example of 1BPP blits with horizontal and vertical shifts
 
 *XMLOAD S.ISHSPR #D1 20000
-MODE 1:BPP%=2:SCRX%=320:SCRY%=256:COLOUR 129:CLS:FORI%=0TO100:DRAW RND(320),RND(1024):GCOL0,RND(4):NEXT
+MODE 1:BPP%=2:SCRX%=320:SCRY%=256
+COLOUR 129:CLS
+FORI%=0TO100:DRAW RND(320),RND(1024):GCOL0,RND(4):NEXT
 
 SCR_CHAR_ROW%=SCRX%*BPP%
 
@@ -32,37 +34,34 @@ DMAC_MASK_LAST=&FD03
 DMAC_WIDTH=&FD04
 DMAC_HEIGHT=&FD05
 DMAC_SHIFT_A=&FD06
-DMAC_SHIFT_B=&FD07
 DMAC_STRIDE_A=&FD08
 DMAC_STRIDE_B=&FD0A
 DMAC_STRIDE_C=&FD0C
-DMAC_STRIDE_D=&FD0E
 DMAC_ADDR_A=&FD10
 DMAC_DATA_A=&FD13
 DMAC_ADDR_B=&FD14
 DMAC_DATA_B=&FD17
 DMAC_ADDR_C=&FD18
 DMAC_DATA_C=&FD1B
-DMAC_ADDR_D=&FD1C
-DMAC_ADDR_E=&FD20
+DMAC_ADDR_E=&FD1C
+
 
 
 PROCSELDMAC:
 
 
 Y%=0
-FOR A%=0TO2:FOR X%=16TO19
-PROCBlitSprite(A%,X%,Y%)
-Y%=Y%+14
-NEXT:NEXT
+FOR X%=16TO28
+PROCBlitSprite(X%,Y%)
+Y%=Y%+16
+NEXT
 
 END
 
 :
-DEFPROCBlitSprite(A%,X%,Y%):LOCAL CC%,SA%,SHX%,W%
+DEFPROCBlitSprite(X%,Y%):LOCAL CC%,SA%,SHX%,W%
 SA%=&FF3000+(X% DIV 4)*8+(Y% DIV 8)*640 + (Y% MOD 8)
-SPA%=&20000 + (A% MOD 3) * &48
-W%=4
+W%=5
 SHX%=X% MOD 4:IFSHX%<>0 THEN W%=W%+1:REM if there's a shift we need to widen the blit
 REM plot a non masked sprite data is read from channel B, channel C is used to read 
 REM existing screen data. The A channel is not executed (no mask) but the A channel
@@ -73,21 +72,21 @@ REM address generator
 ?DMAC_BLITCON=BLITCON_EXEC_A+BLITCON_EXEC_B+BLITCON_EXEC_C+BLITCON_EXEC_D: REM bitmap from B, original screen C, write screen D
 ?DMAC_FUNCGEN=&CA:REM (A AND B) OR (NOT A AND C)
 ?DMAC_WIDTH=W%-1
-?DMAC_HEIGHT=12-1
-?DMAC_SHIFT_A=X% MOD 8:REM this also sets shift B
+?DMAC_HEIGHT=15-1
+?DMAC_SHIFT_A=SHX%:REM this also sets shift B
 REM as there may be a shift we need to mask off bits of the mask accordingly
 ?DMAC_MASK_FIRST=FNshr(&FF,SHX%)
-IF SHX%=0 THEN ?DMAC_MASK_LAST=&FF ELSE ?DMAC_MASK_LAST=FNshr(&FF00,SHX%)
+IF SHX%=0 THEN ?DMAC_MASK_LAST=&FF ELSE ?DMAC_MASK_LAST=FNshr(&FFF0,SHX%)
 
 REM poke these first in increasing order to use !
-!DMAC_STRIDE_A = 2
-!DMAC_STRIDE_B = 4
+!DMAC_STRIDE_A = 3
+!DMAC_STRIDE_B = 5
 ?DMAC_STRIDE_C = SCR_CHAR_ROW%: REM also sets STRIDE_D
 DMAC_STRIDE_C?1 = SCR_CHAR_ROW% DIV 256: REM also sets STRIDE_D
 
 
-!DMAC_ADDR_A = SPA%+&30
-!DMAC_ADDR_B = SPA%
+!DMAC_ADDR_A = &202F3:REM BOAT
+!DMAC_ADDR_B = &202A8
 !DMAC_ADDR_C = SA%: REM also sets ADDR_D
 
 ?DMAC_BLITCON=BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_2BPP

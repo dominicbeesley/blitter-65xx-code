@@ -12,7 +12,7 @@ my $symbols;
 my $help;
 GetOptions(
 	"mask" => \$mask,
-	"symbols" => \$symbols,
+	"symbols=s" => \$symbols,
 	"help" => \$help
 	) or Usage("Bad options $!");
 
@@ -22,17 +22,17 @@ if ($help) {
 
 my $fn_in = shift;
 my $fn_out = shift;
-my $fn_syms = ($symbols)?shift:undef;
 
 ($fn_in and -e $fn_in) or Usage(*STDERR, "Missing input filename", 10);
 $fn_out or Usage(*STDERR, "Missing output filename", 10);
-$fn_syms or !$symbols or Usage(*STDERR, "Missing symbols filename", 10);
 
 my $dom = XML::LibXML->load_xml(location => $fn_in) or die "Cannot open $fn_in : $!";
 
 open(my $fh_out, ">:raw:", $fn_out) or die "Cannot open \"$fn_out\" for output : $!";
 
 $dom->documentElement->nodeName eq "SpriteSheet" or die "That doesn't look like a SpriteSheet";
+
+my $fh_sym;
 
 my $mode = $dom->documentElement->getAttribute("Mode");
 my $bpp;
@@ -53,7 +53,9 @@ if ($mode eq "0") {
 my $bpp_mas = (1 << $bpp)-1;
 my $ppb = int(8 / $bpp);
 
-print "BPP: $bpp : $bpp_mas : $ppb\n";
+my @names=();
+my %info=();
+my $offs=0;
 
 foreach my $sprite ($dom->findnodes('/SpriteSheet/SpriteList/Sprite')) {
     my $s_name = $sprite->getAttribute("Name");
@@ -63,11 +65,16 @@ foreach my $sprite ($dom->findnodes('/SpriteSheet/SpriteList/Sprite')) {
     my $bytes_w = int(($s_w + $ppb - 1) / $ppb);
     my $bytes_wm = int(($s_w + 8 - 1) / 8);
     my $mask_w = int(($s_w + 7) / 8);
-    print "$s_name:\t$bytes_w x $s_h";
-    if ($mask) {
-    	print ", M:$mask_w x $s_h";
-    }
-    print "\n";
+
+	push @names, $s_name;
+	$info{$s_name} = {
+		name => $s_name,
+		width => $bytes_w,
+		height => $s_h,
+		offset => $offs,				
+	};
+
+
     my @bin = (0) x $bytes_w * $s_h;
     for (my $y = 0; $y < $s_h; $y++) {
     	for (my $x = 0; $x < $s_w; $x++) {
@@ -79,9 +86,12 @@ foreach my $sprite ($dom->findnodes('/SpriteSheet/SpriteList/Sprite')) {
     	}
     }
 	print $fh_out pack("C*", @bin);
+	$offs += scalar @bin;
 
 	# append sprite mask
 	if ($mask) {
+		$info{$s_name}->{offset_mask} = $offs;
+		$info{$s_name}->{width_mask} = $bytes_wm;
 	    my @binm = (0) x $bytes_wm * $s_h;
 	    for (my $y = 0; $y < $s_h; $y++) {
 	    	for (my $x = 0; $x < $s_w; $x++) {
@@ -93,6 +103,7 @@ foreach my $sprite ($dom->findnodes('/SpriteSheet/SpriteList/Sprite')) {
 	    	}
 	    }
 		print $fh_out pack("C*", @binm);
+		$offs += scalar @binm;
 	}    
 
 }
@@ -100,6 +111,31 @@ foreach my $sprite ($dom->findnodes('/SpriteSheet/SpriteList/Sprite')) {
 
 close $fh_out;
 
+
+if ($symbols) {
+	open($fh_sym, ">", $symbols) or die "cannot open symbols file \"$symbols\" : $!";
+
+	foreach my $k (@names) {
+		my $i = $info{$k};
+		print $fh_sym "; $i->{name}\n";
+		l("SPR_W_", $i->{name}, $i->{width});
+		if ($mask) {
+			l("SPR_WM_", $i->{name}, $i->{width_mask});
+		}
+		l("SPR_H_", $i->{name}, $i->{height});
+		l("SPR_OFFS_", $i->{name}, $i->{offset});
+		if ($mask) {
+			l("SPR_OFFS_M_", $i->{name},$i->{offset_mask});
+		}
+	}
+
+	close $fh_sym;
+}
+
+sub l($$$) {
+	my ($p, $n, $v) = @_;
+	printf $fh_sym "%-40s =\$%02X\n", $p.uc($n), $v;
+}
 
 
 sub Usage($$$) {
@@ -112,7 +148,8 @@ sub Usage($$$) {
 	print $fh "Usage: beebspriter2blit.pl [..options..] <input> <output> [<symbols>]
 
 Options:
-	--mask	Output masks after the 
+	--mask	Output masks after the sprites
+	--symbols <file> Make a ca65 include file
 ";
 
 	exit $ex;

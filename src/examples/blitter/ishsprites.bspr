@@ -19,9 +19,8 @@
   <ShouldExportSeparateMask>true</ShouldExportSeparateMask>
   <ShouldGenerateHeader>true</ShouldGenerateHeader>
   <AssemblerSyntax>{n} := ${v}</AssemblerSyntax>
-  <SelectedAssembler>BeebASM</SelectedAssembler>
   <SpriteList>
-    <Sprite Name="landy" Width="16" Height="12" Guid="bff3a6ce-b760-45f6-a2ff-eeee4c804b96">
+    <Sprite Name="landy" Width="16" Height="12">
       <Bitmap>//////////////////////////8AAAAAAAAAAAAAAP//////AAICAgICAgICAgD//////wACAAAAAgAAAAIAAP8AAAAAAgAAAAIAAAACAQD/AAICAgICAgICAgICAgEA/wACAgICAgICAgICAgIBAP8AAgIAAgICAgICAAICAAD/AAAAAAAAAAAAAAAAAAD/////AAAA/////wAAAP////////8A////////AP//////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -30,7 +29,7 @@
         <Colour>Yellow</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="family" Width="16" Height="12" Guid="f4075a29-6bc3-4718-b554-6e613bf5c2d2">
+    <Sprite Name="family" Width="16" Height="12">
       <Bitmap>/////////////////////////////wAAAAAAAP///////////wAAAQEBAQAA/////////wAAAQABAAABAAD///8AAAAAAQAAAQAAAQEAAP//AAEBAQEBAQEBAQEBAQD//wABAQEBAQEBAQEBAQEA//8AAQEBAAEBAQEBAAEBAP//AAAAAAAAAAAAAAAAAAD//////wAAAP///wAAAP//////////AP//////AP//////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -39,7 +38,7 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="weird" Width="16" Height="12" Guid="13bc35b2-bfb5-4fd4-8d03-89bf3c0930c7">
+    <Sprite Name="weird" Width="16" Height="12">
       <Bitmap>////////////////////////////////////////////////AAAAAAAAAAAAAP///////wADAwMDAwMDAwD///8AAAAAAwICAwMCAgMA//8AAAMDAwMDAwMDAwMDAP//AAMDAwMDAwMDAwMDAwD//wADAwMAAwMDAwMAAwMA//8AAAAAAAAAAAAAAAAAAP//////AAAA////AAAA//////////8A//////8A////////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -48,7 +47,7 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="man" Width="20" Height="16" Guid="34bf60a9-25e7-4098-bcf8-a4718e1f2172">
+    <Sprite Name="man" Width="20" Height="16">
       <Bitmap>/////wAAAAAAAAAAAP//////////////AAMDAwMDAwMA//////////////8AAwACAwACAwD//////////////wADAwMBAwMDAP//////////////AAMDAQEBAwMA//////////////8AAwMDAwMDAwD//////////////wADAQEBAQEDAP//////////////AAMDAwMDAwMA//////////////8AAAAAAAAAAAD/////////////////AAMDAwD/////////////////AAAAAAAAAAAA////////////AAAAAAAAAQAAAAAAAP////////8A//8AAAEBAQAA//8A/////////////wAAAAEAAAD/////////////////AAAAAAAAAP////////////////8AAAAAAAAA//////////8=</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -57,7 +56,7 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="van" Width="20" Height="12" Guid="ebcfcd6c-4f6e-4ab5-9c68-e28a5ee91af5">
+    <Sprite Name="van" Width="20" Height="12">
       <Bitmap>/////////////////////////////////////////////////////////wAAAAAAAAAAAAAAAAD/////////AAEBAQEBAQEBAQEBAP////////8AAQICAgEBAwMDAwEA/////wAAAAABAgICAQEDAwMDAQD/////AAEBAQEBAQEBAQEBAQEBAP////8AAQEBAQEAAQEBAQEAAQEA/////wAAAAAAAAAAAAAAAAAAAAD///////////8AAAD///8AAAD///////////////8A//////8A////////////////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -66,7 +65,7 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="lory" Width="24" Height="10" Guid="0dcdd2b1-e561-4dc5-bf59-bc22e695ca0a">
+    <Sprite Name="lory" Width="24" Height="10">
       <Bitmap>/////wAAAAAAAAD//wAAAAAAAAAAAAAA/////wACAgICAgD//wABAQEBAQEBAQEA/////wACAAAAAgD//wADAwMDAwMDAwMA/wAAAAACAAAAAgD//wADAwMDAwMDAwMA/wACAgICAgICAgAAAAABAQEBAQEBAQEA/wACAAICAgIAAgD//wABAQABAQEBAAEA/wAAAAAAAAAAAAD//wAAAAAAAAAAAAAA//8AAAD//wAAAP//////AAAA//8AAAD/////AP////8A/////////wD/////AP//////////////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -75,7 +74,7 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="pig" Width="8" Height="6" Guid="8f369d4b-5d8b-451c-b7b4-03cf63606a99">
+    <Sprite Name="pig" Width="8" Height="6">
       <Bitmap>/wAAAAD///8AAAIDAAAAAAADAwMDAwMAAAAAAAMDAwD///8AAwADAP///wAAAAAA</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -84,7 +83,7 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="truck" Width="27" Height="12" Guid="3591ee46-9730-4150-b731-8e0e614ea8a6">
+    <Sprite Name="truck" Width="27" Height="12">
       <Bitmap>/////////////////////////////////////////wAAAAAAAAAAAP//AAAAAAAAAAAAAAAA/////wACAgICAgICAP//AAMDAwMDAwMDAwMA/////wACAAAAAgICAP//AAMDAwEDAwMBAwMA/////wACAAAAAgICAP//AAMBAwMBAwMDAQMA/wAAAAACAgICAgICAP//AAMBAQEBAwEBAQMA/wACAgICAgICAgICAAAAAAMDAwMDAwMDAwMA/wACAgACAgICAAICAP//AAMDAAMDAwMAAwMA/wAAAAAAAAAAAAAAAP//AAAAAAAAAAAAAAAA////AAAA//8AAAD///////8AAAD//wAAAP///////wD/////AP//////////AP////8A////////////////////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -93,7 +92,7 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="boat" Width="20" Height="15" Guid="447f1445-c746-4aeb-9e43-137eb8331a27">
+    <Sprite Name="boat" Width="20" Height="15">
       <Bitmap>////////////////////////////////////////////////////////////////AAAAAP////////////////////8AAwIAAAD//////////////////wADAgICAAD/////////////////AAMCAgICAP////////////////8AAwICAgAA/////////////////wADAgAAAP//////////////////AAMAAP///////////wAAAAAAAAAAAwAAAAAAAAAA////AAEBAQEBAQEBAQEBAQEBAQEA////AAEBAQIBAQECAQEBAgEBAP//////AAECAgEBAgIBAQICAQD/////////AAAAAAAAAAAAAAAA////////////////////////////////</Bitmap>
       <Palette>
         <Colour>Black</Colour>
@@ -102,8 +101,8 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="sheep" Width="8" Height="6" Guid="c94dc66b-5131-495e-88b5-947a95aa50d6">
-      <Bitmap>//8A//////8AAAAA/////wAAAAAAAAAA//8A//8A/wD//wAAAAAAAP///wD//wD/</Bitmap>
+    <Sprite Name="sheep" Width="8" Height="6">
+      <Bitmap>//8A//////8AAAIA/////wAAAAAAAAAA//8AAgIAAgD//wAAAAAAAP///wD//wD/</Bitmap>
       <Palette>
         <Colour>Black</Colour>
         <Colour>Green</Colour>
@@ -111,8 +110,8 @@
         <Colour>Magenta</Colour>
       </Palette>
     </Sprite>
-    <Sprite Name="goat" Width="10" Height="10" Guid="e8c9a254-2dc4-45e1-abf1-367903c707fd">
-      <Bitmap>//////8AAP////////8AAP//////AAAAAAD//////wAAAAAA////////AAAAAAAAAP///wD///8A/wD///8A/wD///8A////AAAAAAAAAP////8A////AP///////////////w==</Bitmap>
+    <Sprite Name="goat" Width="10" Height="10">
+      <Bitmap>//////8AAP////////8AAP//////AAAAAgD//////wAAAAAA////////AAAAAAAAAP///wACAgIAAgD///8AAgACAgIA////AAAAAAAAAP////8A////AP///////////////w==</Bitmap>
       <Palette>
         <Colour>Black</Colour>
         <Colour>Red</Colour>
@@ -121,5 +120,4 @@
       </Palette>
     </Sprite>
   </SpriteList>
-  <AnimationSets />
 </SpriteSheet>
