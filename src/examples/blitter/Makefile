@@ -11,8 +11,8 @@ OBJS=	1bppfont/1bppfont.tok \
 		blit2/blit2.tok \
 		blit3/blit3.tok \
 		blit4/blit4.tok \
-		ishsprites.bin
-EXTRAS=$(basename $(wildcard extras/*.inf))
+		ishsprites.bin 
+EXTRAS=$(basename $(wildcard *.inf))
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 
@@ -57,4 +57,5 @@ $(SSD):	$(OBJS_O)
 	dfs form -80 $(SSD)
 	dfs title $(SSD) "examp blit"
 	dfs add $(SSD) $(addsuffix .inf, $(OBJS_O) $(EXTRAS))
+
 
