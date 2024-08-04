@@ -169,8 +169,27 @@ second half. This only occurs where the sprite data is so aligned.
 
 ## 6. BLIT 3
 
+This example reads in dimension data for all the sprites in the sprite file and
+plots the sprites at random positions on the screen.
 
+## 7. BLIT 4
 
+This example shows the use of the exta Channel E. This can be used to quickly
+and efficiently save the screen contents "underneath" a sprite as it is 
+blitted. The screen contents so streamed can be restored to the screen with 
+another blit operation.
+
+30 - allocate arrays to store a record of the widths and addresses of the 
+sprites before they are blitted to the screen.
+
+640-740 - each sprite is unblitted by doing a Channel B to Channel D unmasked
+blit. The addresses are those we store in the arrays as we blit the sprites
+below.
+
+860 - EXEC_E added
+
+1030 - the addresses for channels D/E are saved along with the width in bytes
+and height so that we know what to restore where.
 
 # References
 
