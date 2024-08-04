@@ -61,7 +61,7 @@ END
 :
 DEFPROCBlitSprite(X%,Y%):LOCAL CC%,SA%,SHX%,W%
 SA%=&FF3000+(X% DIV 4)*8+(Y% DIV 8)*640 + (Y% MOD 8)
-W%=5
+W%=5:WM%=3
 SHX%=X% MOD 4:IFSHX%<>0 THEN W%=W%+1:REM if there's a shift we need to widen the blit
 REM plot a non masked sprite data is read from channel B, channel C is used to read 
 REM existing screen data. The A channel is not executed (no mask) but the A channel
@@ -76,8 +76,8 @@ REM address generator
 ?DMAC_SHIFT_A=SHX%:REM this also sets shift B
 REM as there may be a shift we need to mask off bits of the mask accordingly
 ?DMAC_MASK_FIRST=FNshr(&FF,SHX%)
-IF SHX%=0 THEN ?DMAC_MASK_LAST=&FF ELSE ?DMAC_MASK_LAST=FNshr(&FFF0,SHX%)
-
+IF WM%<>(W%DIV2) THEN ML%=&FFF0 ELSE ML%=&FF00
+IF SHX%=0 THEN ?DMAC_MASK_LAST=&FF ELSE ?DMAC_MASK_LAST=FNshr(ML%,SHX%)
 REM poke these first in increasing order to use !
 !DMAC_STRIDE_A = 3
 !DMAC_STRIDE_B = 5
