@@ -18,11 +18,13 @@ OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 .DELETE_ON_ERROR:
 
 .PHONY: clean all $(SUBDIRS)
+.PRECIOUS: $(SSD)
 
 all: $(OBJS_O)
 ssd: all $(SSD)
 
 clean: $(SUBDIRS)
+	-rm $(OBJS_O)
 	-rm $(SSD)
 	-rm $(BUILD)/ishsprites.bin
 
