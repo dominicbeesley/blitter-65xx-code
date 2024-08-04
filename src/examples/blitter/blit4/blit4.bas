@@ -1,10 +1,11 @@
-REM >1BPPFO3 A BASIC example of 1BPP blits with horizontal and vertical shifts
+REM >BLIT4 - an example if using channel E to save the screen contents
+REM before a blit and then restore
+DIM S_SA%(10),S_RA%(10),S_W%(10),S_H%(10):REM save scr addr, save addr, width, height
 *VNVDU ON
-
 *XMLOAD S.ISHSPR #D1 20000
 MODE 1:BPP%=2:SCRX%=320:SCRY%=256
 COLOUR 129:CLS
-REMFORI%=0TO100:DRAW RND(1280),RND(1024):GCOL0,RND(4):NEXT
+FORI%=0TO100:DRAW RND(1280),RND(1024):GCOL0,RND(4):NEXT
 
 VDU 19,0,16,0,0,0
 VDU 19,1,16,50,190,0
@@ -54,14 +55,38 @@ DMAC_ADDR_E=&FD1C
 
 PROCSELDMAC:
 
-DMAC_ADDR_E=&30000:REM save screen contents here
+!DMAC_ADDR_E=&30000:REM save screen contents here
 
+N%=0
 READ W%
 REPEAT:
  READ WM%,H%, O%, M%
  PROCBlitSprite(O%,M%,RND(280),RND(200),W%,WM%,H%)
+ N%=N%+1
  READ W%:
 UNTIL W%=-1
+
+REPEAT:COLOURRND(4):P.TAB(0,30);"PRESS A KEY";:UNTIL INKEY$(0)<>""
+COLOUR3:COLOUR128
+
+P.TAB(0,0);
+N%=N%-1
+REPEAT
+ ?DMAC_BLITCON=BLITCON_EXEC_B+BLITCON_EXEC_D: REM restore data from channel B to channel D
+ ?DMAC_FUNCGEN=&CC:REM B
+ ?DMAC_WIDTH=S_W%(N%)-1
+ ?DMAC_HEIGHT=S_H%(N%)
+ ?DMAC_SHIFT_A=0
+ ?DMAC_MASK_FIRST=&FF:?DMAC_MASK_LAST=&FF:?DMAC_DATA_A=&FF:REM no mask
+ !DMAC_STRIDE_B = S_W%(N%)
+ !DMAC_STRIDE_C = SCR_CHAR_ROW% 
+ 
+ !DMAC_ADDR_B = S_RA%(N%)
+ !DMAC_ADDR_C = S_SA%(N%)
+ ?DMAC_BLITCON=BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_2BPP
+ N%=N%-1
+ A%=INKEY(40)
+UNTIL N%<0
 
 END
 
@@ -96,7 +121,11 @@ DMAC_STRIDE_C?1 = SCR_CHAR_ROW% DIV 256: REM also sets STRIDE_D
 !DMAC_ADDR_B = &20000+O%
 !DMAC_ADDR_C = SA%: REM also sets ADDR_D
 
+REM before starting the blit make a record of where to restore data to
+S_SA%(N%)=!DMAC_ADDR_C:S_RA%(N%)=!DMAC_ADDR_E:S_W%(N%)=?DMAC_WIDTH+1:S_H%(N%)=?DMAC_HEIGHT
+
 ?DMAC_BLITCON=BLITCON_ACT_ACT+BLITCON_ACT_CELL+BLITCON_ACT_MODE_2BPP
+
 ENDPROC
 :
 DEFPROCSELDMAC:?&EE=&D1:?&FCFF=&D1:?&FCFE=&FE:?&FCFD=&FE:ENDPROC:REM Select JIM device and set page to chipset
