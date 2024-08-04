@@ -132,6 +132,45 @@ correct number of bits per pixel.
 mask byte of a row, here it used to only show the bits that we want in the 
 left most pixels.
 
+## 4. BLIT1
+
+This example blits some sprite data contained in a sprite data file onto the 
+screen. The sprites are plotted without a mask. The dimensional information for
+the sprite is hard-coded.
+
+20 - load the sprite data file to memory this loads the data into bank 2
+
+30 - draw a random background
+
+580 - the EXEC_B is added to draw data through channel B
+
+660 - the DATA_A register is loaded with FF to allow all data to pass to the
+screen unmasked.
+
+It is possible, because this example is unmasked to change the FUNCGEN setting
+and completely ignore the Channel A masks. That is left as an exercise for the
+reader.
+
+## 5. BLIT2
+
+This example blits a sprite at different horizontal pixel alignments within
+a character cell and demonstrates an edge case that must be handled where there
+is a shift and the number of mask bytes in a row is not equal to the sprite 
+data width in bytes divided by the number of bits per pixel.
+
+520 the width of this sprite in bytes is 5 (20 pixels) the width of the mask
+is 3 bytes (24 pixels).
+
+590 EXEC_A is added
+
+660-670 because the mask width and sprite data width do not align we need to 
+add a fiddle to the LAST_MASK to always allow the first 4 bytes and mask the
+second half. This only occurs where the sprite data is so aligned. 
+
+## 6. BLIT 3
+
+
+
 
 # References
 
