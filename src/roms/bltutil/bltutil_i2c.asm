@@ -30,6 +30,7 @@
 		.include	"bltutil.inc"
 		.include "bltutil_romheader.inc"
 		.include "bltutil_jimstuff.inc"
+		.include	"cmos_alloc.inc"
 
 
 		.export i2c_writebyte
@@ -39,9 +40,6 @@
 		.export bltutil_firmCMOSWrite	
 		.export bltutil_firmCMOSRead
 
-
-CMOS_PAGE_FIRMWARE = $11		; page in CMOS / Flash EEPROM for BLTUTIL's config
-DEV_CMOS_EEPROM = $A0		; device number for CMOS/EEPROM
 
 	.macro I2C_WAIT
 		.local lp
@@ -200,12 +198,12 @@ i2c_OSWORD_13:	jsr	jimPageChipset
 bit_SEV:	.byte	$C0
 
 		; read single configuration byte at location $1100+Y to A, corrupts X, Y
-bltutil_firmCMOSRead:		
-		tya
+bltutil_firmCMOSRead:	
+		tya	
 		pha		; + 7 - address low byte
-		lda	#CMOS_PAGE_FIRMWARE	
+		lda	#BLTUTIL_CMOS_PAGE_FIRMWARE	
 		pha		; + 6 - address hi byte - firmware page
-		lda	#DEV_CMOS_EEPROM
+		lda	#DEV_BLTUTIL_CMOS_EEPROM
 		pha		; + 5 - dev no
 		lda	#1
 		pha		; + 4 - number to read
@@ -237,9 +235,9 @@ bltutil_firmCMOSWrite:
 		pha		; + 8 - data
 		tya
 		pha		; + 7 - address low byte
-		lda	#CMOS_PAGE_FIRMWARE	
+		lda	#BLTUTIL_CMOS_PAGE_FIRMWARE	
 		pha		; + 6 - address hi byte - firmware page
-		lda	#DEV_CMOS_EEPROM
+		lda	#DEV_BLTUTIL_CMOS_EEPROM
 		pha		; + 5 - dev no
 		lda	#0
 		pha		; + 4 - number to read

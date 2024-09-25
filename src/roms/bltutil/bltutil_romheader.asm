@@ -47,7 +47,7 @@
 		.import cmdRoms
 		.import cmdXMLoad
 		.import cmdXMSave
-		.import romThrottleInit
+		.import throttleInit
 
 		.import autohazel_boot_first
 		.import autohazel_boot_second
@@ -271,10 +271,8 @@ svc1_ClaimAbs:
 		bpl	@s2
 		jsr	cmdSRNUKE_lang
 		jmp	cmdSRNUKE_reboot
-		jsr	romThrottleInit
 @s2:		
-
-
+		jsr	throttleInit
 		jsr	cfgPrintVersionBoot
 		bcs	@nope
 

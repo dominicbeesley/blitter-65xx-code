@@ -39,14 +39,16 @@ $(BUILD)/%.e.o: 	%.asm $(DEPS)
 	$(AS) -D MACH_ELK -o $@ -g -l $(basename $@).lst $<
 
 $(BUILD)/%.rom: $(BBCOBJS_O) bltutil.cfg
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C bltutil.cfg $(BBCOBJS_O) $(LIBS)
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map --dbgfile $(basename $@).dbg -o $@ -C bltutil.cfg $(BBCOBJS_O) $(LIBS)
 	echo "$.BLTUTIL FF8000 FF8000" >$@.inf
 	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
+	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
 
 $(BUILD)/%.e.rom: $(ELKOBJS_O) bltutil.cfg
 	echo "E.BLTUTIL FF8000 FF8000" >$@.inf
-	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map -o $@ -C bltutil.cfg $(ELKOBJS_O) $(LIBS)
+	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map --dbgfile $(basename $@).dbg -o $@ -C bltutil.cfg $(ELKOBJS_O) $(LIBS)
 	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
+	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
 
 clean:
 	-rm $(TARGETS_O)

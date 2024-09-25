@@ -402,5 +402,12 @@ The mk.2 and mk.3 EEPROMs are 64kbit devices with device number A0 the addresses
 |---------------|-------------------------------------------------------------
 | 1100-1101     | Per-rom Throttle setting, 1 bit for each ROM, set #0 (reversed sense i.e. 0 = throttle)
 | 1102-1103     | Per-rom Throttle setting, 1 bit for each ROM, set #1 (reversed sense i.e. 0 = throttle)
+| 1104-1105     | Default Turbo/Throttle settings for map 0/1
 
 
+#### 1104/5 Default Turbo / Throttle settings
+
+| Bit   | Descriptions
+|-------|-----------------------------------------------------
+| 7     | Throttle CPU (for 65xx) to 2MHz
+| 6..0  | Future use, default to '1' if unsure

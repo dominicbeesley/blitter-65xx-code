@@ -24,7 +24,7 @@
 
 		
 		.include	"mosrom.inc"
-		.include "oslib.inc"
+		.include 	"oslib.inc"
 		.include	"common.inc"
 		.include	"hardware.inc"
 		.include	"bltutil.inc"
@@ -139,6 +139,18 @@ cfgGetRomMap:
 
 		.import str_Dossy		; from header
 
+mode7char:	pha		
+		lda	vduvar_MODE
+		cmp	#7
+		bne	@res
+		pla
+@o:		jsr	OSWRCH
+		rts
+@res:		pla
+		lda	#' '
+		bne	@o
+
+
 cfgPrintVersionBoot:
 		jsr	cfgGetAPILevel
 		bcs	@ret
@@ -147,12 +159,8 @@ cfgPrintVersionBoot:
 		ldx	#<str_Dossy
 		ldy	#>str_Dossy
 		jsr	PrintXY
-		lda	#' '
-		ldx	vduvar_MODE
-		cpx	#7
-		bne	@nm71
-		lda	#130		
-@nm71:		jsr	OSWRCH
+		lda	#130
+		jsr	mode7char
 
 		lda	zp_mos_jimdevsave
 		cmp	#JIM_DEVNO_HOG1MPAULA
@@ -179,6 +187,19 @@ cfgPrintVersionBoot:
 @skAPI0_1:	jsr	OSNEWL
 
 		jsr	printCPU
+		
+		; check for throttle
+		lda	sheila_MEM_TURBO2
+		and	#BITS_MEM_TURBO2_THROTTLE
+		beq	@nothrotl
+		lda	#131			; yellow
+		jsr	mode7char
+		jsr	PrintImmed
+		.byte	"@2MHz",0
+@nothrotl:
+		lda	#135			; white
+		jsr	mode7char
+
 
 		; show ROM Map
 		jsr	cfgGetRomMap
@@ -974,4 +995,4 @@ cputbl_mk3_len = * - cputbl_mk3
 str_cpu_MHz:		.byte	"Mhz",0
 
 str_Paula:		.byte  	"1M Paul", 'a' + $80
-str_map:		.byte	" ROM set ",0
+str_map:		.byte	"ROM set ",0

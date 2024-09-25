@@ -44,6 +44,7 @@
 		.include	"bltutil_romheader.inc"
 		.include	"bltutil_cfg.inc"
 		.include	"bltutil_i2c.inc"
+		.include	"cmos_alloc.inc"
 
 		.export cmdBLTurbo
 		.export cmdXMdump
@@ -56,7 +57,7 @@
 		.export cmdRoms
 		.export cmdXMLoad
 		.export cmdXMSave
-		.export romThrottleInit
+		.export throttleInit
 
 		.CODE
 
@@ -303,17 +304,75 @@ cmdBLTurbo_Next:
 		beq	cmdBLTurboEnd
 		jmp	brkBadCommand
 cmdBLTurboThrottle:
-		jsr	SkipSpacesPTR
-		cmp	#'-'
-		beq	@cmdBLTurboThrottle_off
+		ldx	#0
+		stx	zp_trans_tmp
+
+@lp:		jsr	SkipSpacesPTR
+		cmp	#'!'
+		bne	:+
+		lda	#$80
+		bne	@setf
+		bne	:-
+:		cmp	#'-'
+		bne	:+
+		lda	#$40
+		bne	@setf
+:		cmp	#$D
+		beq	@doit
+		jmp	brkBadCommand
+
+@setf:		iny
+		ora	zp_trans_tmp
+		sta	zp_trans_tmp
+		jmp	@lp
+
+@doit:		bit	zp_trans_tmp
+		bvs	@cmdBLTurboThrottle_off
+@cmdBLTurboThrottle_on:
 		lda	sheila_MEM_TURBO2
 		ora	#BITS_MEM_TURBO2_THROTTLE
 		bne	@s2
 @cmdBLTurboThrottle_off:
-		iny
 		lda	sheila_MEM_TURBO2
 		and	#BITS_MEM_TURBO2_THROTTLE ^ $FF
 @s2:		sta	sheila_MEM_TURBO2
+		
+		lda	zp_trans_tmp
+		bpl	@nocfg
+
+		tya
+		pha
+
+
+	; TODO: only do this on cold boot / ctrl break?
+
+	.assert CMOSBITS_CPU_THROT = $80, error, "Code assumes bit 7"
+	.assert BITS_MEM_TURBO2_THROTTLE = $80, error, "Code assumes bit 7"
+
+		jsr	cfgGetRomMap
+		and	#1
+		clc
+		adc	#BLTUTIL_CMOS_FW_CPU_THROT
+		pha
+		
+		lda	sheila_MEM_TURBO2
+		rol	A
+		php			; bit in Cy
+		tay	
+		jsr	bltutil_firmCMOSRead
+		rol	A
+		plp
+		ror	A
+		tax
+		pla
+		tay
+		txa
+		jsr	bltutil_firmCMOSWrite
+
+		pla
+		tay	; get back cmd line pointer
+
+@nocfg:
 		jmp	cmdBLTurbo_Next
 
 
@@ -506,12 +565,13 @@ cmdBLTurboRom:
 		beq	@nocmos
 
 
+	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
 @docmos:		; work out cmos address in Y
 		jsr	cfgGetRomMap
 		bit	zp_trans_tmp
 		bvc	@noswap
 		eor	#1
-@noswap:		and	#1
+@noswap:	and	#1
 		sta	zp_trans_acc+1
 		lda	zp_trans_tmp		; if >8 rol 1 into bottom bit
 		and	#$F
@@ -750,6 +810,7 @@ cmdRoms_lp:
 		and	#OSWORD_BLTUTIL_RET_ISCUR
 		bne	@st1a
 
+	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
 		; alt set - get from CMOS
 		lda	zp_ROMS_OS99ret
 		and	#1
@@ -1935,11 +1996,14 @@ cmdXMSave:	jsr	loadsavegetfn
 
 		rts
 
-romThrottleInit:
+throttleInit:
 		jsr	cfgGetAPISubLevel_1_2
 		bcc	@s3
 
 		jsr	cfgGetRomMap
+		pha				; for later
+
+	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
 		rol	A
 		and	#2
 		pha
@@ -1955,7 +2019,36 @@ romThrottleInit:
 		eor	#$FF
 		sta	sheila_ROM_THROTTLE_1
 
+
+		lda	#OSBYTE_253_VAR_LAST_RESET
+		ldx	#0
+		ldy	#$FF
+		jsr	OSBYTE
+		cpx	#1
+		bne	@notpup
+
+	.assert CMOSBITS_CPU_THROT = $80, error, "Code assumes bit 7"
+	.assert BITS_MEM_TURBO2_THROTTLE = $80, error, "Code assumes bit 7"
+
+		pla
+		clc
+		adc	#BLTUTIL_CMOS_FW_CPU_THROT
+		tay
+		jsr	bltutil_firmCMOSRead	; get from CMOS
+		and	#$80 
+		rol	A
+		php
+		lda	sheila_MEM_TURBO2
+		rol	A
+		plp
+		ror	A
+		sta	sheila_MEM_TURBO2
+
+
+
 @s3:		rts		
+@notpup:	pla
+		rts
 
 ;------------------------------------------------------------------------------
 ; Strings and tables
