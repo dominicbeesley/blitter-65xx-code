@@ -28,10 +28,6 @@
 		.include	"mosrom.inc"
 		.include	"oslib.inc"
 		.include	"bltutil.inc"
-		.include "bltutil_romheader.inc"
-		.include "bltutil_jimstuff.inc"
-		.include	"cmos_alloc.inc"
-
 
 		.export i2c_writebyte
 		.export i2c_readbyte

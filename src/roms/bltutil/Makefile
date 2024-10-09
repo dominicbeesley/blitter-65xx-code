@@ -1,6 +1,6 @@
 		include ../../Makefile.defs
 
-AS=ca65 -I $(TOP)/includes -I $(BUILD)
+AS=ca65 -U -I $(TOP)/includes -I $(BUILD)
 LD=ld65
 INCS=$(wildcard $(TOP)/includes/*.inc) $(filter-out version-date.inc, $(wildcard *.inc))
 DEPS=$(INCS) 

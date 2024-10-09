@@ -25,33 +25,8 @@
 		.include "oslib.inc"
 
 		.include "bltutil.inc"
-		.include "bltutil_utils.inc"
-		.include "bltutil_jimstuff.inc"
-		.include "bltutil_noice.inc"
-		.include "bltutil_flashutils.inc"
-		.include "bltutil_sound.inc"
-		.include "bltutil_heap.inc"
-		.include "bltutil_cfg.inc"
 
 		.include "version-date.inc"
-
-		.import oswordGetRomBase
-		.import cmdBLTurbo
-		.import cmdXMdump
-		.import cmdSRLOAD
-		.import cmdSRNUKE
-		.import cmdSRNUKE_reboot
-		.import cmdSRNUKE_lang
-		.import cmdSRERASE
-		.import cmdSRCOPY
-		.import cmdRoms
-		.import cmdXMLoad
-		.import cmdXMSave
-		.import throttleInit
-
-		.import autohazel_boot_first
-		.import autohazel_boot_second
-
 
 		.export	Copyright
 		.export strCmdBLTurbo
@@ -451,6 +426,11 @@ svc9_HELP_showbanner:
 		jmp	@skp2
 @skp2:
 
+		jsr	PrintImmed
+		.byte	"\tBLTUTIL",13,0
+
+
+
 		jmp	PrintNL
 
 
@@ -613,8 +593,11 @@ tbl_commands_General:
 			.word	strCmdXMLOAD, cmdXMLoad-1, strHelpXMLoad
 			.word	strCmdXMSAVE, cmdXMSave-1, strHelpXMSave
 			.word	strCmdXMDUMP, cmdXMdump-1, strHelpXMdump
-
 			.word	0
+
+
+
+
 
 str_HELP_KEY	:= 	utils_name
 strCmdRoms:		.byte	"ROMS", 0

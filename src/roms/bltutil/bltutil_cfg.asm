@@ -29,10 +29,6 @@
 		.include	"hardware.inc"
 		.include	"bltutil.inc"
 
-		.include	"bltutil_jimstuff.inc"
-		.include	"bltutil_utils.inc"
-
-
 		.export	printCPU
 		.export printHardCPU
 		.export cfgPrintVersionBoot

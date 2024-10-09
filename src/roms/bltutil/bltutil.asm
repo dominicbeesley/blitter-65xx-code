@@ -37,14 +37,6 @@
 		.include	"hardware.inc"
 		.include	"bltutil.inc"
 
-		.include	"bltutil_flashutils.inc"
-		.include	"bltutil_utils.inc"
-		.include	"bltutil_jimstuff.inc"
-		.include	"bltutil_noice.inc"
-		.include	"bltutil_romheader.inc"
-		.include	"bltutil_cfg.inc"
-		.include	"bltutil_i2c.inc"
-		.include	"cmos_alloc.inc"
 
 		.export cmdBLTurbo
 		.export cmdXMdump

@@ -24,13 +24,6 @@
                 .include "oslib.inc"
                 .include "mosrom.inc"
                 .include "bltutil.inc"
-                .include "bltutil_utils.inc"
-                .include "bltutil_jimstuff.inc"
-
-                .import         __CODE_WRITEMEM_RUN__
-                .import         __CODE_WRITEMEM_LOAD__
-                .import         __CODE_READMEM_RUN__
-                .import         __CODE_READMEM_LOAD__
 
                 .export noice_init
                 .export cmdNoIce

@@ -27,14 +27,6 @@
 		.include "hardware.inc"
 		.include "mosrom.inc"
 		.include "bltutil.inc"
-		.include "bltutil_jimstuff.inc"
-		.include "bltutil_romheader.inc"
-		.include "bltutil_utils.inc"
-		.include "bltutil_cfg.inc"
-		.include "bltutil_i2c.inc"
-		
-
-
 
 		.export heap_init
 		.export heap_OSWORD_bltutil
