@@ -47,12 +47,14 @@ $(BUILD)/includes/gen_vars.h:
 	touch $(BUILD)/includes/gen_vars.h
 
 $(BUILD)/loader.bin: $(LOADER_OBJS_O) loader.cfg
-	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJS_O) $(CLIB) -m $@.map
+	$(LD) $(LDOPT) -C loader.cfg -o $@ $(LOADER_OBJS_O) $(CLIB) --dbgfile $(basename $@).dbg -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/loader.bin.map >$(BUILD)/loader.noi
+	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
 
 $(BUILD)/demo.bin: $(DEMO_OBJS_O) demo.cfg
-	$(LD) $(LDOPT) -C demo.cfg -o $@ $(DEMO_OBJS_O) $(CLIB) -m $@.map
+	$(LD) $(LDOPT) -C demo.cfg -o $@ $(DEMO_OBJS_O) $(CLIB) --dbgfile $(basename $@).dbg -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/demo.bin.map >$(BUILD)/demo.noi
+	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
 
 
 $(patsubst %.c, $(BUILD)/%.s, $(wildcard *.c)): $(BUILD)/includes/gen_vars.h globals.h myos.h 
@@ -60,13 +62,13 @@ $(patsubst %.c, $(BUILD)/%.s, $(wildcard *.c)): $(BUILD)/includes/gen_vars.h glo
 $(patsubst %.s, $(BUILD)/%.o, $(wildcard *.s)): globals.inc
 
 $(BUILD)/%.s:	%.c
-		$(CC) $(CCOPT) -o $@ $<
+		$(CC) $(CCOPT) -g -o $@ $<
 
 $(BUILD)/%.o:	$(BUILD)/%.s 
-		$(AS) $(ASOPT) -l $(basename $@).lst -o $@ $<
+		$(AS) $(ASOPT) -g -l $(basename $@).lst -o $@ $<
 
 $(BUILD)/%.o:	%.s $(ASM_DEPS)
-		$(AS) $(ASOPT) -l $(basename $@).lst -o $@ $<
+		$(AS) $(ASOPT) -g -l $(basename $@).lst -o $@ $<
 
 
 $(BUILD)/fontmap.s: fontmap/ascii2font.txt fontmap/big_fontmap.tmx scripts/fontmap2asm.pl

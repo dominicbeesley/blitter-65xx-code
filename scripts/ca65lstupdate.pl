@@ -71,9 +71,9 @@ while (<$fh_dbg>) {
 close ($fh_dbg);
 
 for my $f (values %files) {
-	if ($f->{name} =~ /.asm$/) {
+	if ($f->{name} =~ /.(asm|s)$/) {
 		my $fnlst = $f->{name};
-		$fnlst =~ s/.asm$/.lst/;
+		$fnlst =~ s/.(asm|s)$/.lst/;
 		my $pfnlst = catfile($dirlst, $fnlst);
 		if (!-e $pfnlst) {
 			# not found try flattening directory
@@ -81,6 +81,7 @@ for my $f (values %files) {
 		}
 		if (-e $pfnlst) {
 
+#			print "PROCESSING $pfnlst\n";
 
 			my $pfnlstrel = "$pfnlst.rel";
 			open (my $fh_in, "<", $pfnlst) or die "Cannot open $pfnlst for input : $!";
@@ -116,7 +117,7 @@ for my $f (values %files) {
 				}
 			}
 		} else {
-			print "Missing listing file $pfnlst\n";
+			print STDERR "Missing listing file $pfnlst\n";
 		}
 	}
 
