@@ -584,9 +584,10 @@ searchCMDTab:
 		dey
 @cmd_match_lp:	iny
 		lda	(zp_mos_txtptr),Y
-		jsr	ToUpper
-		cmp	(zp_mos_error_ptr),Y
+		eor	(zp_mos_error_ptr),Y
+		and	#$DF				; ignore case
 		beq	@cmd_match_lp
+		lda	(zp_mos_txtptr),Y
 		cmp	#'.'
 		beq	@cmd_match2_sk
 		lda	(zp_mos_error_ptr),Y		; command name finished
@@ -738,12 +739,16 @@ strCmdSTATUS:		.byte	"STATUS", 0
 strHelpSTATUS:		.byte	0
 
 ; these are scanned if we're replacing non-master MOS
-tbl_configs_MOS:	.word	strDot,		confHelp-1, 	statHelp-1			
-			.word	strTV,		confTV-1,	statTV-1
+tbl_configs_MOS:	.word	strDot,		confHelp-1, 	0			
+			.word	strTV,		confTV-1,	confHelpDD
+			.word	strTube,	confTube-1,	0
 			.word	0
 
 strDot:			.byte	".",0
 strTV:			.byte	"TV",0
+strTube:		.byte	"Tube",0
+
+confHelpDD:		.byte	"[<D>[,<D>]]",0
 
 confHelp:	jsr	PrintImmed
 		.byte	"CONFHELP",0
@@ -756,6 +761,12 @@ confTV:		jsr	PrintImmed
 		rts
 statTV:	jsr	PrintImmed
 		.byte	"STAT TV",0
+		rts
+confTube:	jsr	PrintImmed
+		.byte	"CONF Tube",0
+		rts
+statTube:	jsr	PrintImmed
+		.byte	"STAT Tube",0
 		rts
 
 ; these are always scanned
