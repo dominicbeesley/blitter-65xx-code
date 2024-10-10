@@ -218,6 +218,14 @@ PrintXY:		lda	zp_tmp_ptr
 		ldy	#0
 		jsr	PrintPTR
 
+		clc
+		tya
+		adc	zp_tmp_ptr
+		tax
+		lda	#0
+		adc	zp_tmp_ptr+1
+		tay
+
 		pla
 		sta	zp_tmp_ptr+1
 		pla

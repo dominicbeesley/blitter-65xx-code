@@ -42,7 +42,7 @@
 		.export cfgGetAPISubLevel_1_3
 		.export cfgMemSize
 		.export cfgMemCheckAlias
-
+		.export cfgMasterMOS
 
 ; NOTE: sheila BLT_MK2_CFG0/1 registers are deprecated - now in JIM page FC 008x
 sheila_BLT_API0_CFG0			:= $FE3E
@@ -52,6 +52,29 @@ sheila_BLT_API0_CFG1			:= $FE3F
 
 		.CODE
 
+;-----------------------------------------------------------------------------
+; cfgMasterMOS
+;-----------------------------------------------------------------------------
+; returns with Cy=1 if Master/MOS is present as opposed to Elk/BBC B/B+
+; preserves AXY
+cfgMasterMOS:
+		pha
+		tya
+		pha
+		txa
+		pha
+		lda	#0
+		ldx	#$FF
+		jsr	OSBYTE
+		txa
+		and	#7
+		cmp	#3
+		pla
+		tax
+		pla
+		tay
+		pla
+		rts
 
 ;!!!!!!!!!!!!!!!!!!!!!!!!!!! SYNC WITH MODEL-C-MOS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

@@ -68,7 +68,6 @@ str_Dossy:	.byte   "Dossytronics"
 
 		.CODE
 
-
 ;* ---------------- 
 ;* SERVICE ROUTINES
 ;* ----------------
@@ -88,6 +87,8 @@ svcFE_TubeInit:
 		bcs	@s
 		jsr      cfgGetAPISubLevel_1_3
 		bcc	@s
+		jsr	cfgMasterMOS
+		bcs	@s
 		jsr	autohazel_boot_second
 @s:		jmp	plaServiceOut
 
@@ -219,6 +220,8 @@ svc1_ClaimAbs:
 		jsr      cfgGetAPISubLevel_1_3
 		bcc	@sh
 		; do autohazel for lower priority roms
+		jsr	cfgMasterMOS
+		bcs	@sh
 		jsr	autohazel_boot_first
 		@sh:
 
@@ -293,53 +296,73 @@ svc1_ClaimAbs:
 
 @nope:		jmp	ServiceOut
 
+; on entry (zp_mos_txtptr),Y is start of keys to match
+; zp_tmp_ptr is 0 terminated string to match
+; returns Cy=1 if any key matches
+; Y preserved
+; X, A corrupted
+
+keyMatch:	tya
+		pha
+		sty	zp_trans_tmp
+@nextcmd:	ldx	#$FF			; pointer into candidate key		
+		stx	zp_trans_tmp+1
+@l1:		inc	zp_trans_tmp+1		
+		ldy	zp_trans_tmp
+		lda	(zp_mos_txtptr), Y	; get char
+		inc	zp_trans_tmp
+		ldy	zp_trans_tmp+1
+		cmp	(zp_tmp_ptr),Y		
+		beq	@l1
+		cmp	#'.'
+		beq	@match
+		cmp	#' '+1
+		bcc	@keyend2		; ' ' or lower but was that the end of the key
+		ldy	zp_trans_tmp
+@3:		lda	(zp_mos_txtptr),Y		; not at end skip forwards to next space or lower
+		iny
+		cmp	#' '+1
+		bcs	@3
+		dey					; move back one to point at space or lower
+		jsr	SkipSpacesPTR
+		sty	zp_trans_tmp
+		cmp	#$D				
+		bne	@keyend
+@nomatch:	pla
+		tay
+		clc
+		rts
+
+@keyend2:	dec	zp_trans_tmp		; decrement back on command tail
+@keyend:	ldy	zp_trans_tmp+1
+		lda	(zp_tmp_ptr),Y
+		beq	@match			; end of key so it's a match!
+		ldy	zp_trans_tmp
+		jsr	SkipSpacesPTR
+		cmp	#' '
+		bcc	@nomatch
+		bcs	@nextcmd
+
+@match:		pla
+		tay
+		sec
+		rts
 
 ; -----------------
 ; SERVICE 9 - *Help
 ; -----------------
 ; help string is at (&F2),Y
 svc9_HELP:
-		lda	zp_mos_txtptr
-		sta	zp_tmp_ptr
-		lda	zp_mos_txtptr + 1
-		sta	zp_tmp_ptr + 1
-
 		jsr	SkipSpacesPTR
 		cmp	#$D
 		beq	svc9_HELP_nokey
 
-svc9_keyloop:
-		; keywords were included scan for our key
-		ldx	#0
-@1:		inx
-		lda	(zp_tmp_ptr),Y
-		iny
-		jsr	ToUpper				; to upper
-		cmp	str_HELP_KEY-1,X	
-		beq	@1
-		cmp	#'.'
-		beq	svc9_helptable
-		cmp	#' '+1
-		bcc	@keyend2			; <' ' - at end of keywords (on command line)
-@3:		lda	(zp_tmp_ptr),Y			; not at end skip forwards to next space or lower
-		iny
-		cmp	#' '+1
-		bcs	@3
-		dey					; move back one to point at space or lower
-		jsr	SkipSpacesPTR
-		cmp	#$D				
-		bne	@keyend
-		jmp	svc9_HELP_exit			; end of command line, done
-@keyend2:	dey
-@keyend:	lda	str_HELP_KEY-1,X
-		beq	svc9_helptable			; at end of keyword show table
-		jsr	SkipSpacesPTR			; try another
-		cmp	#$D
-		beq	svc9_HELP_exit
-		bne	svc9_keyloop
-
-svc9_helptable:	
-		jsr	svc9_HELP_showbanner
+		lda	#<strHELPKEY_BLTUTIL
+		sta	zp_tmp_ptr
+		lda	#>strHELPKEY_BLTUTIL
+		sta	zp_tmp_ptr+1
+		jsr	keyMatch
+		bcc	@s		
 		; got a match, dump out our commands help
 		ldx	#0
 		lda	zp_mos_jimdevsave
@@ -350,9 +373,36 @@ svc9_helptable:
 		beq	@2
 		ldx	#tbl_commands_General-tbl_commands
 @2:
+		jsr	svc9_helptable
+@s:
+		; if not a Master show our MOS replacement commands
+		jsr	cfgMasterMOS
+		bcs	@s2
+
+		lda	#<strHELPKEY_MOS
+		sta	zp_tmp_ptr
+		lda	#>strHELPKEY_MOS
+		sta	zp_tmp_ptr+1
+		jsr	keyMatch
+		bcc	@s2
+		ldx	#tbl_commands_MOS-tbl_commands
+		jsr	svc9_helptable		
+@s2:
+
+		jmp	svc9_HELP_exit
+
+svc9_helptable:	
+		txa
+		pha
+		ldx	zp_tmp_ptr
+		ldy	zp_tmp_ptr+1
+		jsr	PrintXY
+		jsr	OSNEWL
+		pla
+		tax
 @lp:
 		ldy	tbl_commands+1,X		; get hi byte of string
-		beq	svc9_HELP_exit			; if zero at end of table
+		beq	@rts				; if zero at end of table
 		jsr	PrintSpc
 		jsr	PrintSpc
 		txa
@@ -380,23 +430,21 @@ svc9_helptable:
 		inx
 		inx
 		bne	@lp
-
+@rts:		rts
 
 svc9_HELP_nokey:
 		jsr	svc9_HELP_showbanner
+		jsr	svc9_HELP_showkeys
 svc9_HELP_exit:	jmp	ServiceOut
 
 
 svc9_HELP_showbanner:
 		jsr	PrintNL
-		lda	#<utils_name
-		sta	zp_tmp_ptr
-		lda	#>utils_name			; point at name, version, copyright strings
-		sta	zp_tmp_ptr+1
+		ldx	#<utils_name
+		ldy	#>utils_name			; point at name, version, copyright strings
 		lda	#2
 		sta	zp_trans_tmp
-		ldy	#0
-@1:		jsr	PrintPTR
+@1:		jsr	PrintXY
 		jsr	PrintSpc
 		dec	zp_trans_tmp
 		bne	@1
@@ -423,14 +471,21 @@ svc9_HELP_showbanner:
 		ldx	#<cmdHelpPresent
 		ldy	#>cmdHelpPresent
 		jsr	PrintXY
-		jmp	@skp2
-@skp2:
+@skp2:		rts
 
+svc9_HELP_showkeys:
+		jsr	OSNEWL
+		lda	#9
+		jsr	OSASCI
+		ldx	#<strHELPKEY_BLTUTIL
+		ldy	#>strHELPKEY_BLTUTIL
+		jsr	PrintXY
+		jsr	OSNEWL
+		jsr	cfgMasterMOS
+		bcs	@s
 		jsr	PrintImmed
-		.byte	"\tBLTUTIL",13,0
-
-
-
+		.byte	9,"MOS",13,0			
+@s:
 		jmp	PrintNL
 
 
@@ -440,28 +495,77 @@ svc9_HELP_showbanner:
 
 svc4_COMMAND:	; scan command table for commands
 
-		; save begining of command pointer
-		tya
-		pha
 
 		lda	#<tbl_commands
 		sta	zp_mos_genPTR
 		lda	#>tbl_commands
 		sta	zp_mos_genPTR + 1
-
 		lda	zp_mos_jimdevsave
 		cmp	#JIM_DEVNO_HOG1MPAULA
-		bne	cmd_loop
-		ldx	tbl_commands_PAULA-tbl_commands
-
+		bne	@s1
 		lda	#<tbl_commands_PAULA
 		sta	zp_mos_genPTR
 		lda	#>tbl_commands_PAULA
 		sta	zp_mos_genPTR + 1
 
+@s1:		jsr	searchCMDTabExec
+
+		jsr	cfgMasterMOS
+		bcs	svc4_CMD_exit
+
+		lda	#<tbl_commands_MOS
+		sta	zp_mos_genPTR
+		lda	#>tbl_commands_MOS
+		sta	zp_mos_genPTR+1
+		jsr	searchCMDTabExec
 
 
-cmd_loop:	pla
+svc4_CMD_exit:	jmp	ServiceOut
+
+
+
+searchCMDTabExec:
+		jsr	searchCMDTab
+		bcc	anRTS
+
+		; discard return address -- we're not going to return
+		pla
+		pla
+
+cmdTabExec:
+		; push address of ServiceOutA0 to stack for return
+		lda	#>(ServiceOutA0-1)
+		pha
+		lda	#<(ServiceOutA0-1)
+		pha
+		sty	zp_mos_error_ptr		; command tail save
+		; push address of Command Routine to stack for rts
+		ldy	#3
+		lda	(zp_mos_genPTR),Y
+		pha
+		dey
+		lda	(zp_mos_genPTR),Y
+		pha
+		ldy	zp_mos_error_ptr
+		rts					; execute command
+
+anRTS:		rts
+
+
+; search the command table at zp_mos_genPTR for match to string at (zp_mos_genPTR)
+; return Cy=1 for match:
+;	 zp_mos_genPTR points at entry
+;	 Y points at tail
+;   else Cy=0
+;	 Y points at command start
+
+
+searchCMDTab:
+		; save begining of command pointer
+		tya
+		pha
+
+@cmd_loop:	pla
 		pha
 		tay					; restore zp_mos_txtptr and Y from stack
 		jsr	SkipSpacesPTR
@@ -473,7 +577,7 @@ cmd_loop:	pla
 		sta	zp_mos_error_ptr
 		iny
 		lda	(zp_mos_genPTR),Y		
-		beq	svc4_CMD_exit			; no more commands
+		beq	@r				; no more commands
 		sbc	#0
 		ldy	zp_mos_error_ptr+1		; get back Y
 		sta	zp_mos_error_ptr+1		; point to command name - Y
@@ -483,40 +587,28 @@ cmd_loop:	pla
 		jsr	ToUpper
 		cmp	(zp_mos_error_ptr),Y
 		beq	@cmd_match_lp
+		cmp	#'.'
+		beq	@cmd_match2_sk
 		lda	(zp_mos_error_ptr),Y		; command name finished
 		beq	@cmd_match_sk
 @cmd_match_nxt:	lda	zp_mos_genPTR
 		clc
 		adc	#6
 		sta	zp_mos_genPTR
-		bcc	cmd_loop			; try next table entry
+		bcc	@cmd_loop			; try next table entry
 		inc	zp_mos_genPTR+1
-		bne	cmd_loop
+		bne	@cmd_loop
 
 @cmd_match_sk:	lda	(zp_mos_txtptr),Y
 		cmp	#' '+1
 		bcs	@cmd_match_nxt		
-
-svc4_CMD_exec:	pla					; discard stacked y
-		; push address of ServiceOutA0 to stack for return
-		lda	#>(ServiceOutA0-1)
-		pha
-		lda	#<(ServiceOutA0-1)
-		pha
-		sty	zp_mos_error_ptr
-		; push address of Command Routine to stack for rts
-		ldy	#3
-		lda	(zp_mos_genPTR),Y
-		pha
-		dey
-		lda	(zp_mos_genPTR),Y
-		pha
-		ldy	zp_mos_error_ptr
-		rts					; execute command
-
-
-svc4_CMD_exit:	pla					; discard stacked Y
-		jmp	ServiceOut
+@cmd_match2_sk:	pla					; discard stacked Y
+		sec
+		rts
+@r:		pla					
+		tay
+		clc
+		rts
 
 
 ; --------------------
@@ -595,11 +687,14 @@ tbl_commands_General:
 			.word	strCmdXMDUMP, cmdXMdump-1, strHelpXMdump
 			.word	0
 
+	; Master/MOS substitute commands
+tbl_commands_MOS:	.word	strCmdCONFIG, cmdCONFIG-1, strHelpCONFIG
+			.word	strCmdSTATUS, cmdSTATUS-1, strHelpSTATUS
+			.word	0
 
+strHELPKEY_BLTUTIL:	.byte	"BLTUTIL",0
+strHELPKEY_MOS:		.byte	"MOS",0
 
-
-
-str_HELP_KEY	:= 	utils_name
 strCmdRoms:		.byte	"ROMS", 0
 helpRoms:		.byte	"[V][A][C][I][X|0|1]", 0
 strCmdSRCOPY:		.byte	"SRCOPY",0
@@ -636,4 +731,77 @@ strHelpXMSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
 cmdHelpPresent:		.byte	130,"(Blitter present)",0
 cmdHelpPaulaPresent:		.byte	130," (1M Paula present)",0
 cmdHelpNotPresent:	.byte	129,"(Blitter/1M Paula not present)",0
+
+strCmdCONFIG:		.byte	"CONFIGURE", 0
+strHelpCONFIG:		.byte	0
+strCmdSTATUS:		.byte	"STATUS", 0
+strHelpSTATUS:		.byte	0
+
+; these are scanned if we're replacing non-master MOS
+tbl_configs_MOS:	.word	strDot,		confHelp-1, 	statHelp-1			
+			.word	strTV,		confTV-1,	statTV-1
+			.word	0
+
+strDot:			.byte	".",0
+strTV:			.byte	"TV",0
+
+confHelp:	jsr	PrintImmed
+		.byte	"CONFHELP",0
+		rts
+statHelp:	jsr	PrintImmed
+		.byte	"STATHELP",0
+		rts
+confTV:		jsr	PrintImmed
+		.byte	"CONF TV",0
+		rts
+statTV:	jsr	PrintImmed
+		.byte	"STAT TV",0
+		rts
+
+; these are always scanned
+tbl_configs_BLTUTIL:
+
+cmdCONFIG:	jsr	findConfigMOS			; look for the item in the MOS table
+		bcs	@f				; found
+		ldx	#SERVICE_28_CONFIGURE
+		lda	#OSBYTE_143_SERVICE_CALL
+		jsr	OSBYTE				; if not found pass round ROMs (including our own)
+		cpx	#0
+		beq	@ok
+		jmp	brkBadCommand
+@ok:		rts
+		
+		; found in table, execute from table
+
+@f:		pla					; discard our own return address 
+		pla					; (pushed when processing Svc4)
+
+		jmp	cmdTabExec			
+cmdSTATUS:	jsr	PrintImmed
+		.byte	"DOSTATUS",0
+		rts
+
+.scope
+dotagain:
+		iny
+::findConfigMOS:	
+		lda	#<tbl_configs_MOS
+		sta	zp_mos_genPTR
+		lda	#>tbl_configs_MOS
+		sta	zp_mos_genPTR+1
+
+		jsr	SkipSpacesPTR
+		cmp	#'.'
+		beq	dotagain
+		cmp	#$D
+		beq	empty
+
+		jmp	searchCMDTab
+		;
+empty:		sec
+		rts
+.endscope
+		
+
+
 
