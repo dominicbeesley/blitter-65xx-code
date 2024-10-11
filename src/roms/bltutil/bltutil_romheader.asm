@@ -526,8 +526,9 @@ svc4_CMD_exit:	jmp	ServiceOut
 
 searchCMDTabExec:
 		jsr	searchCMDTab
-		bcc	anRTS
+		bvc	anRTS
 
+cmdTabExecPlaPla:
 		; discard return address -- we're not going to return
 		pla
 		pla
@@ -538,7 +539,7 @@ cmdTabExec:
 		pha
 		lda	#<(ServiceOutA0-1)
 		pha
-		sty	zp_mos_error_ptr		; command tail save
+		sty	zp_trans_tmp			; command tail save
 		; push address of Command Routine to stack for rts
 		ldy	#3
 		lda	(zp_mos_genPTR),Y
@@ -546,7 +547,7 @@ cmdTabExec:
 		dey
 		lda	(zp_mos_genPTR),Y
 		pha
-		ldy	zp_mos_error_ptr
+		ldy	zp_trans_tmp
 		rts					; execute command
 
 anRTS:		rts
@@ -561,36 +562,39 @@ anRTS:		rts
 
 
 searchCMDTab:
-		; save begining of command pointer
+		php					; save flags on entry (config/status pass through Cy)		
 		tya
-		pha
+		pha					; save begining of command pointer
 
 @cmd_loop:	pla
 		pha
 		tay					; restore zp_mos_txtptr and Y from stack
 		jsr	SkipSpacesPTR
-		sty	zp_mos_error_ptr + 1		; we have to subtract the start Y from the string pointer!
+		sty	zp_trans_tmp + 1		; we have to subtract the start Y from the string pointer!
 		ldy	#0
 		sec
 		lda	(zp_mos_genPTR),Y
-		sbc	zp_mos_error_ptr + 1
-		sta	zp_mos_error_ptr
+		sbc	zp_trans_tmp + 1
+		sta	zp_trans_tmp
 		iny
 		lda	(zp_mos_genPTR),Y		
 		beq	@r				; no more commands
 		sbc	#0
-		ldy	zp_mos_error_ptr+1		; get back Y
-		sta	zp_mos_error_ptr+1		; point to command name - Y
+		ldy	zp_trans_tmp+1			; get back Y
+		sta	zp_trans_tmp+1			; point to command name - Y
 		dey
 @cmd_match_lp:	iny
 		lda	(zp_mos_txtptr),Y
-		eor	(zp_mos_error_ptr),Y
-		and	#$DF				; ignore case
+		jsr	ToUpper
+		sta	zp_trans_tmp+2
+		lda	(zp_trans_tmp),Y
+		jsr	ToUpper
+		eor	zp_trans_tmp+2
 		beq	@cmd_match_lp
 		lda	(zp_mos_txtptr),Y
 		cmp	#'.'
 		beq	@cmd_match2_sk
-		lda	(zp_mos_error_ptr),Y		; command name finished
+		lda	(zp_trans_tmp),Y		; command name finished
 		beq	@cmd_match_sk
 @cmd_match_nxt:	lda	zp_mos_genPTR
 		clc
@@ -603,12 +607,16 @@ searchCMDTab:
 @cmd_match_sk:	lda	(zp_mos_txtptr),Y
 		cmp	#' '+1
 		bcs	@cmd_match_nxt		
-@cmd_match2_sk:	pla					; discard stacked Y
-		sec
+		dey
+@cmd_match2_sk:	iny
+		pla					; discard stacked Y
+		plp
+		bit	bitSEV				; indicate pass
 		rts
 @r:		pla					
 		tay
-		clc
+		plp
+		clv					; indicate fail
 		rts
 
 
@@ -730,7 +738,7 @@ strCmdXMSAVE:		.byte	"XMSAVE",0
 strHelpXMSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
 
 cmdHelpPresent:		.byte	130,"(Blitter present)",0
-cmdHelpPaulaPresent:		.byte	130," (1M Paula present)",0
+cmdHelpPaulaPresent:	.byte	130," (1M Paula present)",0
 cmdHelpNotPresent:	.byte	129,"(Blitter/1M Paula not present)",0
 
 strCmdCONFIG:		.byte	"CONFIGURE", 0
@@ -743,6 +751,9 @@ tbl_configs_MOS:	.word	strDot,		confHelp-1, 	0
 			.word	strTV,		confTV-1,	confHelpDD
 			.word	strTube,	confTube-1,	0
 			.word	0
+; these are always scanned
+tbl_configs_BLTUTIL:	.word	0
+
 
 strDot:			.byte	".",0
 strTV:			.byte	"TV",0
@@ -750,31 +761,37 @@ strTube:		.byte	"Tube",0
 
 confHelpDD:		.byte	"[<D>[,<D>]]",0
 
-confHelp:	jsr	PrintImmed
+confHelp:	bcs	statHelp
+		jsr	PrintImmed
 		.byte	"CONFHELP",0
 		rts
 statHelp:	jsr	PrintImmed
 		.byte	"STATHELP",0
 		rts
-confTV:		jsr	PrintImmed
+confTV:		bcs	statTV
+		jsr	PrintImmed
 		.byte	"CONF TV",0
 		rts
-statTV:	jsr	PrintImmed
+statTV:		jsr	PrintImmed
 		.byte	"STAT TV",0
 		rts
-confTube:	jsr	PrintImmed
+confTube:	bcs	statTube
+		jsr	PrintImmed
 		.byte	"CONF Tube",0
 		rts
 statTube:	jsr	PrintImmed
 		.byte	"STAT Tube",0
 		rts
 
-; these are always scanned
-tbl_configs_BLTUTIL:
 
-cmdCONFIG:	jsr	findConfigMOS			; look for the item in the MOS table
-		bcs	@f				; found
-		ldx	#SERVICE_28_CONFIGURE
+cmdSTATUS:	sec
+		bcs	doConfStat
+cmdCONFIG:	clc					; this will come through in findCMOS result
+doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
+		bvs	@f				; found
+		lda	#SERVICE_28_CONFIGURE>1
+		rol	A
+		tax					; set to 28/29 depending on carry
 		lda	#OSBYTE_143_SERVICE_CALL
 		jsr	OSBYTE				; if not found pass round ROMs (including our own)
 		cpx	#0
@@ -784,18 +801,14 @@ cmdCONFIG:	jsr	findConfigMOS			; look for the item in the MOS table
 		
 		; found in table, execute from table
 
-@f:		pla					; discard our own return address 
-		pla					; (pushed when processing Svc4)
-
-		jmp	cmdTabExec			
-cmdSTATUS:	jsr	PrintImmed
-		.byte	"DOSTATUS",0
-		rts
+@f:		jmp	cmdTabExecPlaPla
 
 .scope
 dotagain:
 		iny
+		plp
 ::findConfigMOS:	
+		php
 		lda	#<tbl_configs_MOS
 		sta	zp_mos_genPTR
 		lda	#>tbl_configs_MOS
@@ -807,12 +820,15 @@ dotagain:
 		cmp	#$D
 		beq	empty
 
+		plp
 		jmp	searchCMDTab
 		;
-empty:		sec
+empty:		plp
+		bit	bitSEV				; indicate found (first entry!)
 		rts
 .endscope
 		
+bitSEV:		.byte	$40
 
 
 
