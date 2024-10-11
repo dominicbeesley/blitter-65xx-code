@@ -292,7 +292,7 @@ svc1_ClaimAbs:
 @s1:		pla
 		jsr	heap_init
 		jsr	sound_boot
-		jsr	OSNEWL
+		jsr	PrintNL
 
 @nope:		jmp	ServiceOut
 
@@ -397,7 +397,7 @@ svc9_helptable:
 		ldx	zp_tmp_ptr
 		ldy	zp_tmp_ptr+1
 		jsr	PrintXY
-		jsr	OSNEWL
+		jsr	PrintNL
 		pla
 		tax
 @lp:
@@ -448,7 +448,7 @@ svc9_HELP_showbanner:
 		jsr	PrintSpc
 		dec	zp_trans_tmp
 		bne	@1
-		jsr	OSNEWL
+		jsr	PrintNL
 
 		jsr	CheckBlitterPresent
 		bcc	@skp
@@ -474,13 +474,13 @@ svc9_HELP_showbanner:
 @skp2:		rts
 
 svc9_HELP_showkeys:
-		jsr	OSNEWL
+		jsr	PrintNL
 		lda	#9
-		jsr	OSASCI
+		jsr	PrintA
 		ldx	#<strHELPKEY_BLTUTIL
 		ldy	#>strHELPKEY_BLTUTIL
 		jsr	PrintXY
-		jsr	OSNEWL
+		jsr	PrintNL
 		jsr	cfgMasterMOS
 		bcs	@s
 		jsr	PrintImmed
@@ -747,9 +747,10 @@ strCmdSTATUS:		.byte	"STATUS", 0
 strHelpSTATUS:		.byte	0
 
 ; these are scanned if we're replacing non-master MOS
-tbl_configs_MOS:	.word	strDot,		confHelp-1, 	0			
+tbl_configs_MOS:	.word	strDot,		confHelp-1, 	0		
+			.word	strTube,	confTube-1,	$C000
+			.word	strNoTube,	confTube-1,	$4000				
 			.word	strTV,		confTV-1,	confHelpDD
-			.word	strTube,	confTube-1,	0
 			.word	0
 ; these are always scanned
 tbl_configs_BLTUTIL:	.word	0
@@ -757,13 +758,97 @@ tbl_configs_BLTUTIL:	.word	0
 
 strDot:			.byte	".",0
 strTV:			.byte	"TV",0
+strNoTube:		.byte	"No"
 strTube:		.byte	"Tube",0
 
 confHelpDD:		.byte	"[<D>[,<D>]]",0
 
-confHelp:	bcs	statHelp
+; print the string pointed to by (zp_tmp_ptr),Y
+; preserves all regs and flags, saves string length in zp_tmp_ptr+3
+PrintAtPtrPtrY:
+		php
+		pha
+		tya
+		pha
+		txa
+		pha
+		lda	(zp_tmp_ptr),Y
+		tax
+		stx	zp_tmp_ptr+3		; save start of string
+		iny
+		lda	(zp_tmp_ptr),Y
+		tay
+		beq	@nos			; invalid pointer, skip
+		jsr	PrintXY		
+@nos:		txa
+		sec
+		sbc	zp_tmp_ptr+3		; length of string
+		sta	zp_tmp_ptr+3
+		pla
+		tax
+		pla
+		tay
+		pla
+		plp
+		rts
+
+
+confHelp:	bcc	@s
+		jmp	statHelp
+@s:		jsr	PrintImmed
+		.byte	"Configuration options:",13,0
+		; scan through table and print options, skipping first option which is "."
+		lda	#<(tbl_configs_MOS+6)
+		sta	zp_tmp_ptr
+		lda	#>(tbl_configs_MOS+6)
+		sta	zp_tmp_ptr+1
+		
+@lp:
+		ldy	#5
+		lda	(zp_tmp_ptr),Y
+		sta	zp_tmp_ptr+2
+		bit	zp_tmp_ptr+2
+		bvc	@nono
+		bpl	@next			; don't display the "no" string
+
 		jsr	PrintImmed
-		.byte	"CONFHELP",0
+		.byte	"[No]",0
+
+@nono:		ldy	#0
+		lda	(zp_tmp_ptr),Y
+		beq	@done
+		jsr	PrintAtPtrPtrY
+
+		; check to see if this a Yes/No
+		bit	zp_tmp_ptr+2
+		bvs	@nextNL
+@shohelp:	; pad to column 16
+		lda	#17
+		sec
+		sbc	zp_tmp_ptr+3		; length of key
+		tax
+@l:		jsr	PrintXSpc
+
+		ldy	#4
+		jsr	PrintAtPtrPtrY		; print help
+
+@nextNL:	jsr	PrintNL
+@next:
+		clc
+		lda	zp_tmp_ptr
+		adc	#6
+		sta	zp_tmp_ptr
+		bcc	@lp
+		inc	zp_tmp_ptr+1
+		bne	@lp
+
+@done:		jsr	PrintImmed
+                .byte 	"Where:",13
+                .byte 	"D is a decimal number, or",13
+                .byte 	"a hexadecimal number preceded by &",13
+                .byte 	"Items within [ ] are optional",13
+                .byte 	0
+
 		rts
 statHelp:	jsr	PrintImmed
 		.byte	"STATHELP",0

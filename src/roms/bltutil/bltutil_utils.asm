@@ -42,6 +42,7 @@
 		.export	PrintXYTB
 		.export	PrintPTR
 		.export PrintImmed
+		.export PrintXSpc
 		.export	PromptYN
 		.export	PromptNo
 		.export	PromptYes
@@ -115,6 +116,15 @@ Print2Spc:	jsr	PrintSpc
 PrintSpc:	lda	#' '
 PrintA:		jmp	OSASCI
 PrintNL:	jmp	OSNEWL
+
+PrintXSpc:	lda	#' '
+		cpx	#0
+		beq	@r
+@l:		jsr	PrintA
+		dex
+		bne	@l
+@r:		rts
+
 
 PrintHexA:	pha
 		lsr	a
@@ -208,7 +218,7 @@ PrintImmed:	pha
 		rts
 
 		; zero terminated string at XY
-PrintXY:		lda	zp_tmp_ptr
+PrintXY:	lda	zp_tmp_ptr
 		pha
 		lda	zp_tmp_ptr+1
 		pha
@@ -232,6 +242,7 @@ PrintXY:		lda	zp_tmp_ptr
 		sta	zp_tmp_ptr
 		rts
 
+	; returns length of string + 1 in Y (i.e. counts zero terminator)
 PrintPTR:
 @lp:		lda	(zp_tmp_ptr),Y
 		iny
