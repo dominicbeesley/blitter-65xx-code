@@ -39,9 +39,15 @@
 		.export	PrintHexXY
 		.export	PrintMsgXYThenHexNyb
 		.export	PrintXY
-		.export	PrintXYTB
+		.export	PrintXY16
+		.export	PrintXYT
+		.export	PrintXYT16
 		.export	PrintPTR
-		.export PrintImmed
+		.export PrintAtPtrPtrY16
+		.export PrintAtPtrPtrY
+		.export	PrintPTRT
+		.export PrintImmedT
+		.export PrintImmedT16
 		.export PrintXSpc
 		.export	PromptYN
 		.export	PromptNo
@@ -181,7 +187,43 @@ PrintMsgXYThenHexNyb:
 		jmp	PrintNL
 
 
-PrintImmed:	pha
+PrintImmedT16:
+		pha
+		txa
+		pha
+		tya
+		pha
+
+		jsr	PrintNL
+
+		lda	zp_tmp_ptr
+		pha
+		lda	zp_tmp_ptr+1
+		pha
+
+		tsx
+		lda	$106, X
+		sta	zp_tmp_ptr
+		lda	$107, X
+		sta	zp_tmp_ptr + 1
+		ldy	#1
+		jsr	PrintPTRT
+		tya
+		pha
+@l:		cpy	#17
+		bcs	@s
+		jsr	PrintSpc
+		iny
+		bne	@l
+@s:		pla
+		tay
+		jmp	exImmedT
+
+
+
+
+PrintImmedT:
+		pha
 		txa
 		pha
 		tya
@@ -197,10 +239,10 @@ PrintImmed:	pha
 		lda	$107, X
 		sta	zp_tmp_ptr + 1
 		ldy	#1
-		jsr	PrintPTR
+		jsr	PrintPTRT
 
-		clc
-		dey
+exImmedT:	clc
+		dey			; we started with Y=1!
 		tya
 		adc	zp_tmp_ptr
 		sta	$106,X
@@ -217,8 +259,55 @@ PrintImmed:	pha
 		pla
 		rts
 
+; print the string pointed to by (zp_tmp_ptr),Y
+; preserves all regs and flags, saves string length in zp_tmp_ptr+3
+
+PrintAtPtrPtrY16:
+		php
+		clc
+		bcc	PrintAtPtrPtrY_int
+
+PrintAtPtrPtrY:
+		php
+		sec				; indicate normal (not 16 col)
+PrintAtPtrPtrY_int:		
+
+		pha
+		tya
+		pha
+		txa
+		pha
+		lda	(zp_tmp_ptr),Y
+		tax
+		stx	zp_tmp_ptr+3		; save start of string
+		iny
+		lda	(zp_tmp_ptr),Y
+		tay
+		beq	@nos			; invalid pointer, skip
+		jsr	PrintXY_int
+@nos:		txa
+		sec
+		sbc	zp_tmp_ptr+3		; length of string
+		sta	zp_tmp_ptr+3
+		pla
+		tax
+		pla
+		tay
+		pla
+		plp
+		rts
+
+
+
+PrintXY16:
+		clc
+		bcc	PrintXY_int	
+
 		; zero terminated string at XY
-PrintXY:	lda	zp_tmp_ptr
+PrintXY:	sec
+
+PrintXY_int:
+		lda	zp_tmp_ptr
 		pha
 		lda	zp_tmp_ptr+1
 		pha
@@ -226,10 +315,20 @@ PrintXY:	lda	zp_tmp_ptr
 		stx	zp_tmp_ptr
 		sty	zp_tmp_ptr + 1
 		ldy	#0
-		jsr	PrintPTR
 
-		clc
+		php
+		jsr	PrintPTR
 		tya
+		plp
+		bcs	@no16
+		pha
+@l:		cpy	#16
+		bcs	@s
+		jsr	PrintSpc
+		iny
+		bne	@l
+@s:		pla		
+@no16:		clc
 		adc	zp_tmp_ptr
 		tax
 		lda	#0
@@ -242,6 +341,18 @@ PrintXY:	lda	zp_tmp_ptr
 		sta	zp_tmp_ptr
 		rts
 
+	; returns length of string in Y 
+PrintPTRT:
+@lp:		lda	(zp_tmp_ptr),Y
+		php
+		iny
+		and	#$7F
+		jsr	OSASCI
+		plp
+		bpl	@lp		
+@out:		rts
+
+
 	; returns length of string + 1 in Y (i.e. counts zero terminator)
 PrintPTR:
 @lp:		lda	(zp_tmp_ptr),Y
@@ -253,9 +364,13 @@ PrintPTR:
 		bne	@lp
 @out:		rts
 
+bitSEV:		.byte 	$FF
 
+PrintXYT16:	bit	bitSEV
+		bvs	PrintXYT_int
 		; to-bit terminated string at XY
-PrintXYTB:	lda	zp_tmp_ptr
+PrintXYT:	clv
+PrintXYT_int:	lda	zp_tmp_ptr
 		pha
 		lda	zp_tmp_ptr+1
 		pha
@@ -263,26 +378,34 @@ PrintXYTB:	lda	zp_tmp_ptr
 		stx	zp_tmp_ptr
 		sty	zp_tmp_ptr + 1
 		ldy	#0
-		jsr	PrintPTRTB
+		php
+		jsr	PrintPTRT
+		plp
+		bvc	@s
+
+		; pad to 16
+		tya
+		pha
+@l:		cpy	#16
+		bcs	@s2
+		jsr	PrintSpc
+		iny
+		bne	@l
+@s2:		pla
+		tay
+@s:		clc
+		tya
+		adc	zp_tmp_ptr
+		tax
+		lda	#0
+		adc	zp_tmp_ptr+1
+		tay
 
 		pla
 		sta	zp_tmp_ptr+1
 		pla
 		sta	zp_tmp_ptr
 		rts
-
-PrintPTRTB:
-@lp:		lda	(zp_tmp_ptr),Y
-		pha
-		iny		
-		and	#$7F
-		jsr	OSASCI
-		pla
-		bmi	@out
-		cpy	#0
-		bne	@lp
-@out:		rts
-
 
 PrintBytesAndK:
 		jsr	PushAcc

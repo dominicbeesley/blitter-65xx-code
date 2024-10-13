@@ -73,12 +73,14 @@ str_Dossy:	.byte   "Dossytronics"
 ;* ----------------
 	;TODO make this relative!
 Serv_jump_table:
-		SJTE	$01, svc1_ClaimAbs
-		SJTE	$04, svc4_COMMAND
-		SJTE	$05, svc5_UKIRQ
-		SJTE	$08, svc8_OSWORD
-		SJTE	$09, svc9_HELP
-		SJTE	$FE, svcFE_TubeInit
+		SJTE	SERVICE_1_ABSWKSP_REQ, 	svc1_ClaimAbs
+		SJTE	SERVICE_4_UKCMD, 	svc4_COMMAND
+		SJTE	SERVICE_5_UKINT,	svc5_UKIRQ
+		SJTE	SERVICE_8_UKOSWORD,	svc8_OSWORD
+		SJTE	SERVICE_9_HELP,		svc9_HELP
+		SJTE	SERVICE_28_CONFIGURE, 	svc28_CONFIG
+		SJTE	SERVICE_29_STATUS, 	svc29_STATUS
+		SJTE	SERVICE_FE_TUBEINIT, 	svcFE_TubeInit
 Serv_jump_table_Len	:= 	* - Serv_jump_table	
 
 svcFE_TubeInit:
@@ -483,8 +485,10 @@ svc9_HELP_showkeys:
 		jsr	PrintNL
 		jsr	cfgMasterMOS
 		bcs	@s
-		jsr	PrintImmed
-		.byte	9,"MOS",13,0			
+		jsr	PrintImmedT
+		.byte	9
+		.byte	"MOS"
+		.byte	13|$80
 @s:
 		jmp	PrintNL
 
@@ -747,63 +751,96 @@ strCmdSTATUS:		.byte	"STATUS", 0
 strHelpSTATUS:		.byte	0
 
 ; these are scanned if we're replacing non-master MOS
-tbl_configs_MOS:	.word	strDot,		confHelp-1, 	0		
-			.word	strTube,	confTube-1,	$C000
-			.word	strNoTube,	confTube-1,	$4000				
-			.word	strTV,		confTV-1,	confHelpDD
+tbl_configs_MOS:	.word	strDot,		confHelp-1, 		0		
+			.word	strTube,	confTube-1,		$C000
+			.word	strNoTube,	confTube-1,		$4000				
+			.word	strTV,		confTV-1,		confHelpDD
 			.word	0
 ; these are always scanned
-tbl_configs_BLTUTIL:	.word	0
+tbl_configs_BLTUTIL:	.word	strDot,			confBLHelp-1, 		0		
+			.word	strBLThrottle,		confBLThrottle-1,	$C000
+			.word	strNoBLThrottle,	confBLThrottle-1,	$4000
+			.word	strBLThrottleMOS,	confBLThrottleMOS-1,	$C000
+			.word	strNoBLThrottleMOS,	confBLThrottleMOS-1,	$4000
+			.word	strBLThrottleROMS,	confBLThrottleROMS-1,	confHelpBLThrottleROMS
+			.word	0
 
 
 strDot:			.byte	".",0
 strTV:			.byte	"TV",0
 strNoTube:		.byte	"No"
 strTube:		.byte	"Tube",0
+strNoBLThrottle:	.byte	"No"
+strBLThrottle:		.byte	"BLThrottle",0
+strNoBLThrottleMOS:	.byte	"No"
+strBLThrottleMOS:	.byte	"BLThrottleMOS",0
+strBLThrottleROMS:	.byte	"BLThrottleROMS",0
+
+confHelpBLThrottleROMS:	.byte	"[+|-<D>[,...]]",0
 
 confHelpDD:		.byte	"[<D>[,<D>]]",0
 
-; print the string pointed to by (zp_tmp_ptr),Y
-; preserves all regs and flags, saves string length in zp_tmp_ptr+3
-PrintAtPtrPtrY:
-		php
-		pha
-		tya
-		pha
-		txa
-		pha
-		lda	(zp_tmp_ptr),Y
-		tax
-		stx	zp_tmp_ptr+3		; save start of string
-		iny
-		lda	(zp_tmp_ptr),Y
-		tay
-		beq	@nos			; invalid pointer, skip
-		jsr	PrintXY		
-@nos:		txa
-		sec
-		sbc	zp_tmp_ptr+3		; length of string
-		sta	zp_tmp_ptr+3
+		.code
+		; TODO: move to another files (move commands table parse too?)
+
+
+
+confBLHelp:	bcc	@s
+		jmp	statBLHelp
+@s:		lda	#<(tbl_configs_BLTUTIL+6)
+		sta	zp_tmp_ptr
+		lda	#>(tbl_configs_BLTUTIL+6)
+		sta	zp_tmp_ptr+1
+		jsr	ShowConfsHelpTable
+		; we need to pass on to other roms, we were entered with ServiceOutA0 pushed.
+		; pop it and jump to serviceOut
 		pla
-		tax
+		jmp	plaServiceOut
+
+statBLHelp:	jsr	PrintImmedT
+		TOPTERM	"STATBLHELP"
+		; we need to pass on to other roms, we were entered with ServiceOutA0 pushed.
+		; pop it and jump to serviceOut
 		pla
-		tay
-		pla
-		plp
-		rts
+		jmp	plaServiceOut
 
 
 confHelp:	bcc	@s
 		jmp	statHelp
-@s:		jsr	PrintImmed
-		.byte	"Configuration options:",13,0
+@s:		jsr	PrintImmedT
+		.byte 	"Config. options:"
+		.byte	13|$80
 		; scan through table and print options, skipping first option which is "."
 		lda	#<(tbl_configs_MOS+6)
 		sta	zp_tmp_ptr
 		lda	#>(tbl_configs_MOS+6)
 		sta	zp_tmp_ptr+1
-		
+	
+		tya				; preserve text pointer (for later pass on to ROMs)
+		pha
+		jsr	ShowConfsHelpTable	; show the help table
+		pla
+		tay
+		lda	#OSBYTE_143_SERVICE_CALL
+		ldx	#SERVICE_28_CONFIGURE
+		jsr	OSBYTE			; pass on to ROMS
+
+		jsr	PrintImmedT
+                .byte 	"Where:",13
+                .byte 	"D is a decimal number, or",13
+                .byte 	"a hexadecimal number preceded by &",13
+                .byte	"Items within [ ] are optional"
+		.byte	13|$80
+                
+
+		rts
+
+ShowConfsHelpTable:
 @lp:
+		ldy	#0
+		lda	(zp_tmp_ptr),Y
+		beq	@done
+		
 		ldy	#5
 		lda	(zp_tmp_ptr),Y
 		sta	zp_tmp_ptr+2
@@ -811,24 +848,15 @@ confHelp:	bcc	@s
 		bvc	@nono
 		bpl	@next			; don't display the "no" string
 
-		jsr	PrintImmed
-		.byte	"[No]",0
-
-@nono:		ldy	#0
-		lda	(zp_tmp_ptr),Y
-		beq	@done
+		ldy	#0
+		jsr	PrintImmedT
+		TOPTERM	"No"
 		jsr	PrintAtPtrPtrY
-
-		; check to see if this a Yes/No
-		bit	zp_tmp_ptr+2
-		bvs	@nextNL
-@shohelp:	; pad to column 16
-		lda	#17
-		sec
-		sbc	zp_tmp_ptr+3		; length of key
-		tax
-@l:		jsr	PrintXSpc
-
+		jsr	PrintNL
+		jsr	PrintAtPtrPtrY
+		jmp	@nextNL
+@nono:		ldy	#0
+		jsr	PrintAtPtrPtrY16
 		ldy	#4
 		jsr	PrintAtPtrPtrY		; print help
 
@@ -841,39 +869,61 @@ confHelp:	bcc	@s
 		bcc	@lp
 		inc	zp_tmp_ptr+1
 		bne	@lp
+@done:		rts
 
-@done:		jsr	PrintImmed
-                .byte 	"Where:",13
-                .byte 	"D is a decimal number, or",13
-                .byte 	"a hexadecimal number preceded by &",13
-                .byte 	"Items within [ ] are optional",13
-                .byte 	0
-
-		rts
-statHelp:	jsr	PrintImmed
-		.byte	"STATHELP",0
+statHelp:	jsr	PrintImmedT
+		TOPTERM	"STATHELP"
 		rts
 confTV:		bcs	statTV
-		jsr	PrintImmed
-		.byte	"CONF TV",0
+		jsr	PrintImmedT
+		TOPTERM	"CONF TV"
 		rts
-statTV:		jsr	PrintImmed
-		.byte	"STAT TV",0
+statTV:		jsr	PrintImmedT
+		TOPTERM	"STAT TV"
 		rts
 confTube:	bcs	statTube
-		jsr	PrintImmed
-		.byte	"CONF Tube",0
+		jsr	PrintImmedT
+		TOPTERM	"CONF Tube"
 		rts
-statTube:	jsr	PrintImmed
-		.byte	"STAT Tube",0
+statTube:	jsr	PrintImmedT
+		TOPTERM "STAT Tube"
 		rts
+
+confBLThrottle:
+		bcs	statBLThrottle
+		jsr	PrintImmedT
+		TOPTERM	"CONF BL THROT"
+		rts
+statBLThrottle:
+		jsr	PrintImmedT
+		TOPTERM	"STAT BL THROT"
+		rts
+confBLThrottleROMS:
+		bcs	statBLThrottleROMS
+		jsr	PrintImmedT
+		TOPTERM	"CONF BL ROMS"
+		rts
+statBLThrottleROMS:
+		jsr	PrintImmedT
+		TOPTERM	"STAT BL ROMS"
+		rts
+confBLThrottleMOS:
+		bcs	statBLThrottleMOS
+		jsr	PrintImmedT
+		TOPTERM "CONF BL MOS"
+		rts
+statBLThrottleMOS:
+		jsr	PrintImmedT
+		TOPTERM	"STAT BL ROMS"
+		rts
+
 
 
 cmdSTATUS:	sec
 		bcs	doConfStat
 cmdCONFIG:	clc					; this will come through in findCMOS result
 doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
-		bvs	@f				; found
+		bvs	jcmdexecpp			; found
 		lda	#SERVICE_28_CONFIGURE>1
 		rol	A
 		tax					; set to 28/29 depending on carry
@@ -886,9 +936,25 @@ doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
 		
 		; found in table, execute from table
 
-@f:		jmp	cmdTabExecPlaPla
+jcmdexecpp:	jmp	cmdTabExecPlaPla
+jcmdexec:	jmp	cmdTabExec
+
+svc28_CONFIG:	clc
+		bcc	svc28x
+svc29_STATUS:	sec
+svc28x:		jsr	findConfigBL
+		bvs	jcmdexec
+		jmp	ServiceOut			; pass on to other handlers
+
 
 .scope
+::findConfigBL:
+		php
+		lda	#<tbl_configs_BLTUTIL
+		sta	zp_mos_genPTR
+		lda	#>tbl_configs_BLTUTIL
+		sta	zp_mos_genPTR+1	
+		bne	e2
 dotagain:
 		iny
 		plp
@@ -899,7 +965,7 @@ dotagain:
 		lda	#>tbl_configs_MOS
 		sta	zp_mos_genPTR+1
 
-		jsr	SkipSpacesPTR
+e2:		jsr	SkipSpacesPTR
 		cmp	#'.'
 		beq	dotagain
 		cmp	#$D

@@ -87,6 +87,26 @@ OSWORD_BLTUTIL_RET_MAP1		:= $01
 .endmacro
 
 
+		; place a string in memory with the last character's top bit set
+.macro		TOPTERM s
+	.if (.strlen(s) = 0)
+		.byte	$80
+	.elseif (.strlen(s) = 1)
+		.byte	.strat(s, 0) | $80
+	.else
+		.repeat	.strlen(s)-1, I
+		.byte	.strat(s, I)
+		.endrepeat
+		.byte	.strat(s, .strlen(s)-1) | $80
+	.endif
+.endmacro
+
+.macro		HEAD16	s
+		jsr	PrintImmedT16
+		TOPTERM s
+.endmacro
+
+
 zp_trans_tmp	:=	$A8				; transient command buffer
 zp_trans_acc	:=	$AC				; 4 byte accumulator used in hex parsers
 zp_tmp_ptr	:=	$AC				; !! NOTE: overlaps acc

@@ -188,13 +188,13 @@ cfgPrintVersionBoot:
 		pla				; Discard API
 		ldx	#<str_Paula
 		ldy	#>str_Paula
-		jsr	PrintXYTB		; Print banner and Exit
+		jsr	PrintXYT		; Print banner and Exit
 		clc
 		rts
 
 @skP:		ldx	#<str_Blitter
 		ldy	#>str_Blitter
-		jsr	PrintXYTB
+		jsr	PrintXYT
 
 		pla
 		pha
@@ -213,8 +213,8 @@ cfgPrintVersionBoot:
 		beq	@nothrotl
 		lda	#131			; yellow
 		jsr	mode7char
-		jsr	PrintImmed
-		.byte	"@2MHz",0
+		jsr	PrintImmedT
+		TOPTERM	"@2MHz"
 @nothrotl:
 		lda	#135			; white
 		jsr	mode7char
@@ -431,7 +431,7 @@ printCPU2:	php
 		ldy	cputbl_mk2+1,X
 		lda	cputbl_mk2,X
 		tax
-		jsr	PrintXYTB
+		jsr	PrintXYT
 		jsr	PrintSpc
 		pla
 		tax
@@ -475,12 +475,10 @@ brk_NoBlitter:
 ; *BLINFO : cmdInfo
 ;------------------------------------------------------------------------------
 
-cmdInfo_API0:	jsr	PrintImmed
-		.byte   13,"Build info   : ",0
+cmdInfo_API0:	HEAD16   "Build info"
 		ldy	#0
 		jsr	cfgPrintStringY
-		jsr	PrintImmed
-		.byte	13,"mk.2 bootbits: ",0
+		HEAD16   "mk.2 bootbits: "
 		lda	sheila_BLT_API0_CFG1
 		jsr	PrintHexA
 		lda	sheila_BLT_API0_CFG0
@@ -496,16 +494,14 @@ cmdInfo:	jsr	cfgGetAPILevel
 		cmp	#JIM_DEVNO_HOG1MPAULA
 		bne	@Blit
 		pla
-		jsr	PrintImmed
-		.byte	"Paula",0
+		jsr	PrintImmedT
+		TOPTERM	"Paula"
 		jmp	_justChipRAM
 
 
-@Blit:		jsr	PrintImmed
-		.byte	   "Hard CPU     : ",0
+@Blit:		HEAD16	"Hard CPU"
 		jsr	printHardCPU
-		jsr	PrintImmed
-		.byte	13,"Active CPU   : ",0
+		HEAD16	"Active CPU"
 		jsr	printCPU
 
 		pla				;API level
@@ -541,8 +537,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 		cpx	#8
 		bcc	@verlp
 
-		jsr	PrintImmed
-		.byte	13,"Boot config #: ",0
+		HEAD16  "Boot config #"
 		ldx	#3
 @bblp:		lda	JIM+jim_offs_VERSION_cfg_bits,X
 		jsr	PrintHexA
@@ -551,8 +546,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		; show board level / api 
 
-		jsr	PrintImmed
-		.byte	13,"Lvl/API      : ",0
+		HEAD16  "Lvl/API"
 		lda	JIM+jim_offs_VERSION_Board_level
 		jsr	PrintDecA
 		lda	#'/'
@@ -564,8 +558,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 		lda	JIM+jim_offs_VERSION_API_sublevel
 		jsr	PrintDecA
 
-		jsr	PrintImmed
-		.byte	13,"Boot jumpers : ",0
+		HEAD16	"Boot jumpers"
 
 		ldx	#tbl_boot_cfg_mk2-tbl_bld
 		lda	JIM+jim_offs_VERSION_Board_level
@@ -600,8 +593,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 		bpl	@flaglp
 @flags_done:	
 
-		jsr	PrintImmed
-		.byte	13,"Host System  : ",0
+		HEAD16	"Host System"
 
 		lda	JIM+jim_offs_VERSION_cfg_bits		; get MK.3 host in bit 2..0 inverted
 		ldx	JIM+jim_offs_VERSION_Board_level
@@ -623,8 +615,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		; capabilities
 
-		jsr	PrintImmed
-		.byte	13,"Capabilities : ",0
+		HEAD16	"Caps"
 
 		ldx	#tbl_capbits - tbl_bld
 		ldy	#0
@@ -688,8 +679,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		; capabilities
 
-		jsr	PrintImmed
-		.byte	13,"Cap. bits    : ",0
+		HEAD16	"Cap. bits"
 		lda	JIM + jim_offs_VERSION_cap_bits+2
 		jsr	PrintHexA
 		lda	JIM + jim_offs_VERSION_cap_bits+1
@@ -706,8 +696,7 @@ cmdInfo_API0_mem:
 		bne	@BBRAM_test			;skip forwards if 60 is not aliased at 0
 
 		; print combined
-		jsr	PrintImmed			;shared BB/ChipRAM
-		.byte	13, "Chip/BB RAM  : ",0
+		HEAD16	"Chip/BB RAM"
 		jmp	@noBB
 
 
@@ -717,14 +706,12 @@ cmdInfo_API0_mem:
 		jsr	zeroAcc
 		sta	zp_trans_acc+2
 
-		jsr	PrintImmed
-		.byte	13, "BB RAM       : ",0
+		HEAD16	"BB RAM"
 
 		jsr	PrintSizeK
 
 @justChipRAM:
-		jsr	PrintImmed
-		.byte	13, "Chip RAM     : ",0
+		HEAD16	"Chip RAM"
 
 
 @noBB:
@@ -829,8 +816,13 @@ cfgMemCheckAlias:
 		rts
 
 
-
+cfgBldTblPrintX2_16:		
+		sec
+		jmp	cfgBldTblPrintXInt
 cfgBldTblPrintX2:
+		clc
+cfgBldTblPrintXInt:
+		php
 		ldy	#>str_bld_base
 		lda	tbl_bld,X
 		clc
@@ -838,12 +830,13 @@ cfgBldTblPrintX2:
 		tax
 		bcc	@sk2
 		iny
-@sk2:		jmp	PrintXYTB
+@sk2:		plp
+		bcs	@sk3
+		jmp	PrintXYT
+@sk3:		jmp	PrintXYT16
 
 cfgBldTblPrintX:
-		jsr	cfgBldTblPrintX2
-		jsr	PrintImmed
-		.byte	" : ",0		
+		jsr	cfgBldTblPrintX2_16
 		rts
 
 
@@ -932,42 +925,42 @@ CAP_IX_MAX=20
 
 
 str_bld_base:
-str_bld_bran:		.byte	"Repository ", ' '+$80
-str_bld_ver:		.byte	"Repo. ver  ", ' '+$80
-str_bld_date:		.byte	"Build date ", ' '+$80
-str_bld_name:		.byte	"Board name ", ' '+$80
-str_bld_swromx:		.byte	"Swap Rom", 's'+$80
-str_bld_mosram:		.byte	"MOSRA", 'M'+$80
-str_bld_memi:		.byte	"ROM inhibi", 't'+$80
-str_sys_B:		.byte	"Model ", 'B'+$80
-str_sys_Elk:		.byte	"Electro", 'n'+$80
-str_sys_BPlus:		.byte	"Model B", '+'+$80
-str_sys_M128:		.byte	"Master 12", '8'+$80
-str_sys_UK:		.byte	"Unknow", 'n'+$80
-str_cap_CS:		.byte   "Chipse", 't'+$80
-str_cap_DMA:		.byte   "DM", 'A'+$80
-str_Blitter:		.byte  	"Blitte", 'r'+$80
-str_cap_AERIS:		.byte   "Aeri", 's'+$80
-str_cap_I2C:		.byte   "i2", 'c'+$80
-str_cap_SND:		.byte   "Paul", 'a'+$80
-str_cap_HDMI:		.byte   "HDM", 'I'+$80
-str_bld_T65:		.byte	"T6", '5'+$80
-str_cpu_6502A:		.byte	"6502",'A'+$80
-str_cpu_65c02:		.byte	"65C0", '2'+$80
-str_cpu_6800:		.byte	"680", '0'+$80
-str_cpu_80188:		.byte	"8018", '8'+$80
-str_cpu_80186:		.byte	"8018", '6'+$80
-str_cpu_80386ex:	.byte	"80386e", 'x'+$80
-str_cpu_65816:		.byte	"6581", '6'+$80
-str_cpu_6x09:		.byte	"6x0", '9'+$80
-str_cpu_z80:		.byte	"z8", '0'+$80
-str_cpu_68008:		.byte	"6800", '8'+$80
-str_cpu_68000:		.byte	"6800", '0'+$80
-str_cpu_ARM2:		.byte	"ARM", '2'+$80
-str_cpu_Z180:		.byte	"Z18", '0'+$80
-str_cpu_SuperShadow:	.byte	"SuperShado", 'w'+$80
-str_10ns_ChipRAM:	.byte	"10ns ChipRA", 'M'+$80
-str_45ns_BBRAM:		.byte	"45ns BB RA", 'M'+$80
+str_bld_bran:		TOPTERM	"Repository"
+str_bld_ver:		TOPTERM	"Repo. ver"
+str_bld_date:		TOPTERM	"Build date"
+str_bld_name:		TOPTERM	"Board name"
+str_bld_swromx:		TOPTERM	"Swap Roms"
+str_bld_mosram:		TOPTERM	"MOSRAM"
+str_bld_memi:		TOPTERM	"ROM inhibit"
+str_sys_B:		TOPTERM	"Model B"
+str_sys_Elk:		TOPTERM	"Electron"
+str_sys_BPlus:		TOPTERM	"Model B+"
+str_sys_M128:		TOPTERM	"Master 128"
+str_sys_UK:		TOPTERM	"Unknown"
+str_cap_CS:		TOPTERM "Chipset"
+str_cap_DMA:		TOPTERM "DMA"
+str_Blitter:		TOPTERM "Blitter"
+str_cap_AERIS:		TOPTERM "Aeris"
+str_cap_I2C:		TOPTERM "i2c"
+str_cap_SND:		TOPTERM "Paula"
+str_cap_HDMI:		TOPTERM "HDMI"
+str_bld_T65:		TOPTERM	"T65"
+str_cpu_6502A:		TOPTERM	"6502A"
+str_cpu_65c02:		TOPTERM	"65C02"
+str_cpu_6800:		TOPTERM	"6800"
+str_cpu_80188:		TOPTERM	"80188"
+str_cpu_80186:		TOPTERM	"80186"
+str_cpu_80386ex:	TOPTERM	"80386ex"
+str_cpu_65816:		TOPTERM	"65816"
+str_cpu_6x09:		TOPTERM	"6x09"
+str_cpu_z80:		TOPTERM	"z80"
+str_cpu_68008:		TOPTERM	"68008"
+str_cpu_68000:		TOPTERM	"68000"
+str_cpu_ARM2:		TOPTERM	"ARM2"
+str_cpu_Z180:		TOPTERM	"Z180"
+str_cpu_SuperShadow:	TOPTERM	"SuperShadow"
+str_10ns_ChipRAM:	TOPTERM	"10ns ChipRAM"
+str_45ns_BBRAM:		TOPTERM	"45ns BB RAM"
 
 
 		; these are in the order of bits 3..1 of the config byte for the 1st 8 then followed by the mk.3 specifics

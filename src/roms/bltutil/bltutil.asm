@@ -158,8 +158,9 @@ cmdSRLOAD:	jsr	CheckBlitterPresentBrk
 		jsr	ParseIX01Flags
 
 
-		jsr	PrintImmed
-		.byte	"Loading ROM...",13,0
+		jsr	PrintImmedT
+		.byte	"Loading ROM..."
+		.byte 	13|$80
 
 		; setup OSFILE block to point at $FFFF4000 and load there
 		lda	#SRLOAD_buffer_page
@@ -175,8 +176,8 @@ cmdSRLOAD:	jsr	CheckBlitterPresentBrk
 		ldy	#>ADDR_ERRBUF
 		jsr	OSFILE				; load file
 
-		jsr	PrintImmed
-		.byte	"Writing",0
+		jsr	PrintImmedT
+		TOPTERM	"Writing"
 
 		; now copy to flash/sram
 		jsr	romWriteInit			; initialise the ROM writer - any error will trash this!
@@ -408,7 +409,9 @@ cmdBLTurboMos:
 		; This is map one, the MOS is already from a fast chip
 		lda	#OSWORD_BLTUTIL_RET_FLASH|OSWORD_BLTUTIL_RET_SYS
 		and	zp_blturbo_fl
-		bne	cmdBLTurbo_MOSBadSlot
+		beq	:+
+		jmp	cmdBLTurbo_MOSBadSlot
+:
 
 		lda	#OSWORD_BLTUTIL_RET_MEMI
 		and	zp_blturbo_fl
@@ -474,9 +477,10 @@ cmdBLTurbo_NextMOS:
 		tay
 		jmp	cmdBLTurbo_Next
 cmdBLTurbo_MOSWarnAlready:
-		ldx	#<str_BLTURBOMOS_ALREADY
-		ldy	#>str_BLTURBOMOS_ALREADY
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte	"Map 1: MOS already turbo"
+		.byte 	13|$80
+
 		jmp	cmdBLTurbo_NextMOS
 cmdBLTurbo_MOSBadSlot:
 		M_ERROR
@@ -2075,7 +2079,6 @@ str_FailedAt:		.byte	"failed at ",0
 strErrsDet:		.byte	" errors detected", 0
 str_NukeFl:		.byte	"Erasing flash...", $D, 0
 str_NukeRa:		.byte	"Erasing SRAM $E00000 to $0FFFFF, please wait...", $D, 0
-str_BLTURBOMOS_ALREADY:	.byte	"Map 1, MOS is already turbo",13,10,0
 
 
 cmdSRNUKE_menu:
