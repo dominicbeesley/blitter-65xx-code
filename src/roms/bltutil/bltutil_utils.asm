@@ -36,7 +36,7 @@
 		.export	PrintHexNybA
 		.export PrintDecA
 		.export PrintDec
-		.export	PrintHexXY
+		.export	PrintHexAmpXY
 		.export	PrintMsgXYThenHexNyb
 		.export	PrintXY
 		.export	PrintXY16
@@ -151,8 +151,10 @@ PrintHexNybA:	and	#$0F
 		jsr	PrintA
 		rts
 
-PrintHexXY:	pha
-		tya
+PrintHexAmpXY:	pha
+		lda	#'&'
+		jsr	PrintA
+		tya		
 		jsr	PrintHexA
 		txa
 		jsr	PrintHexA
@@ -416,9 +418,8 @@ PrintBytesAndK:
 
 		jsr	PopAcc
 
-		jsr	PrintSizeK
+		jmp	PrintSizeK
 
-		jmp	OSNEWL
 
 
 PrintSizeK:

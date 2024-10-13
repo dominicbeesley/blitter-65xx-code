@@ -670,47 +670,31 @@ cmdHeapInfo:	jsr	CheckEitherPresentBrk
 		bne	@s1
 		dec	JIM+SCRATCH_TMP+0
 @s1:
-
-		ldx	#<str_HINFT
-		ldy	#>str_HINFT
-		jsr	PrintXY
+		HEAD16  "Heap Top"
 
 		ldx	JIM+SCRATCH_HEAPTOP
 		ldy	JIM+SCRATCH_HEAPTOP+1
-		jsr	PrintHexXY
+		jsr	PrintHexAmpXY
 		lda	#0
 		jsr	PrintHexA
 
-		jsr	OSNEWL
-
-		ldx	#<str_HINFB
-		ldy	#>str_HINFB
-		jsr	PrintXY
+		HEAD16  "Heap Bottom"
 
 		ldx	JIM+SCRATCH_HEAPBOT
 		ldy	JIM+SCRATCH_HEAPBOT+1
-		jsr	PrintHexXY
+		jsr	PrintHexAmpXY
 		lda	#0
 		jsr	PrintHexA
 
-		jsr	OSNEWL
-
-		ldx	#<str_HINFL
-		ldy	#>str_HINFL
-		jsr	PrintXY
+		HEAD16  "Heap Low"
 
 		ldx	JIM+SCRATCH_HEAPLIM
 		ldy	JIM+SCRATCH_HEAPLIM+1
-		jsr	PrintHexXY
+		jsr	PrintHexAmpXY
 		lda	#0
 		jsr	PrintHexA
 
-		jsr	OSNEWL
-
-
-		ldx	#<str_HINFFree
-		ldy	#>str_HINFFree
-		jsr	PrintXY
+		HEAD16	"Total free"
 
 		; print free space in bytes	 
 		sec
@@ -751,11 +735,7 @@ cmdHeapInfo:	jsr	CheckEitherPresentBrk
 
 		jsr	PrintBytesAndK
 
-
-
-		ldx	#<str_HINFMax
-		ldy	#>str_HINFMax
-		jsr	PrintXY
+		HEAD16	"Largest free"
 
 
 		; find largest allocation block free
@@ -799,6 +779,7 @@ cmdHeapInfo:	jsr	CheckEitherPresentBrk
 		jsr	jimPageWorkspace
 
 		jsr	PrintBytesAndK
+		jsr	PrintNL
 
 		lda	JIM+SCRATCH_TMP+0
 		bpl	@exit				; not verbose
@@ -833,9 +814,8 @@ cmdHeapInfo:	jsr	CheckEitherPresentBrk
 		beq	@nf
 		txa
 		pha
-		ldx	#<str_free
-		ldy	#>str_free
-		jsr	PrintXY
+		jsr	PrintImmedT
+		TOPTERM  " (free)"
 		pla
 		tax
 
@@ -848,11 +828,4 @@ cmdHeapInfo:	jsr	CheckEitherPresentBrk
 
 @exit:		rts
 
-		.SEGMENT "RODATA"
 
-str_HINFT:	.byte "Heap Top	      ",131,'&',0
-str_HINFB:	.byte "Heap Bottom    ",131,'&',0
-str_HINFL:	.byte "Heap Low Limit ",131,'&',0
-str_HINFFree:	.byte "Total free     ",131,0
-str_HINFMax:	.byte "Largest free   ",131,0
-str_free:	.byte " (free)",0
