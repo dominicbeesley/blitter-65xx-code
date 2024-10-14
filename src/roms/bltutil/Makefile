@@ -45,12 +45,14 @@ $(BUILD)/%.rom: $(BBCOBJS_O) bltutil.cfg
 	echo "$.BLTUTIL FF8000 FF8000" >$@.inf
 	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
 	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
+	$(SCRIPTS)/ld65free.pl bltutil.cfg $(basename $@).map >$(basename $@).free.txt
 
 $(BUILD)/%.e.rom: $(ELKOBJS_O) bltutil.cfg
 	echo "E.BLTUTIL FF8000 FF8000" >$@.inf
 	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map --dbgfile $(basename $@).dbg -o $@ -C bltutil.cfg $(ELKOBJS_O) $(LIBS)
 	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
 	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)/E
+	$(SCRIPTS)/ld65free.pl bltutil.cfg $(basename $@).map >$(basename $@).free.txt
 
 clean:
 	-rm $(TARGETS_O)
