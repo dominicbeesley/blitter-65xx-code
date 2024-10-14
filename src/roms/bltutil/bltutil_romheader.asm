@@ -350,6 +350,44 @@ keyMatch:	tya
 		sec
 		rts
 
+svc9_helptable:	
+		txa
+		pha
+		ldx	zp_tmp_ptr
+		ldy	zp_tmp_ptr+1
+		jsr	PrintXY
+		jsr	PrintNL
+		pla
+		tax
+@lp:
+		ldy	tbl_commands+1,X		; get hi byte of string
+		beq	@rts				; if zero at end of table
+		jsr	PrintSpc
+		jsr	PrintSpc
+		txa
+		pha
+		lda	tbl_commands,X			; lo byte
+		tax
+		jsr	PrintXY
+		jsr	PrintSpc
+		pla
+		clc
+		adc	#4
+		tax
+		ldy	tbl_commands+1,X		; hi byte of args string
+		beq	@sk3
+		pha
+		lda	tbl_commands,X
+		tax
+		jsr	PrintXY
+		pla
+		tax
+@sk3:		jsr	PrintNL
+		inx
+		inx
+		bne	@lp
+@rts:		rts
+
 ; -----------------
 ; SERVICE 9 - *Help
 ; -----------------
@@ -380,6 +418,8 @@ svc9_HELP:
 		; if not a Master show our MOS replacement commands
 		jsr	cfgMasterMOS
 		bcs	@s2
+		jsr	CheckBlitterPresent
+		bcs	@s2
 
 		lda	#<strHELPKEY_MOS
 		sta	zp_tmp_ptr
@@ -392,47 +432,6 @@ svc9_HELP:
 @s2:
 
 		jmp	svc9_HELP_exit
-
-svc9_helptable:	
-		txa
-		pha
-		ldx	zp_tmp_ptr
-		ldy	zp_tmp_ptr+1
-		jsr	PrintXY
-		jsr	PrintNL
-		pla
-		tax
-@lp:
-		ldy	tbl_commands+1,X		; get hi byte of string
-		beq	@rts				; if zero at end of table
-		jsr	PrintSpc
-		jsr	PrintSpc
-		txa
-		pha
-		lda	tbl_commands,X			; lo byte
-		tax
-		jsr	PrintXY
-		jsr	PrintSpc
-		pla
-		tax
-		inx
-		inx
-		inx
-		inx					; point at help args string
-		ldy	tbl_commands+1,X		; hi byte of args string
-		beq	@sk3
-		txa
-		pha
-		lda	tbl_commands,X
-		tax
-		jsr	PrintXY
-		pla
-		tax
-@sk3:		jsr	PrintNL
-		inx
-		inx
-		bne	@lp
-@rts:		rts
 
 svc9_HELP_nokey:
 		jsr	svc9_HELP_showbanner
@@ -491,20 +490,18 @@ svc9_HELP_showbanner:
 
 svc9_HELP_showkeys:
 		jsr	PrintNL
-		lda	#9
-		jsr	PrintA
+		jsr	Print2Spc
 		ldx	#<strHELPKEY_BLTUTIL
 		ldy	#>strHELPKEY_BLTUTIL
 		jsr	PrintXY
-		jsr	PrintNL
 		jsr	cfgMasterMOS
 		bcs	@s
+		jsr	CheckBlitterPresent
+		bcs	@s
 		jsr	PrintImmedT
-		.byte	9
-		.byte	"MOS"
-		.byte	13|$80
-@s:
-		jmp	PrintNL
+		.byte	13
+		TOPTERM	"  MOS"
+@s:		jmp	PrintNL
 
 
 ; --------------------
@@ -529,6 +526,8 @@ svc4_COMMAND:	; scan command table for commands
 @s1:		jsr	searchCMDTabExec
 
 		jsr	cfgMasterMOS
+		bcs	svc4_CMD_exit
+		jsr	CheckBlitterPresent
 		bcs	svc4_CMD_exit
 
 		lda	#<tbl_commands_MOS
@@ -653,30 +652,10 @@ svc5_UKIRQ:
 @exit:		jmp	ServiceOut
 
 
+
 ; --------------------
 ; SERVICE 8 - OSWORD
 ; --------------------
-
-;		A = $99
-;	XY?0 <16 - Get SWROM base address
-;	---------------------------------
-;	On Entry:
-;		XY?0 	= Rom #
-;		XY?1	= flags: (combination of)
-;			$80	= current set
-;			$C0	= alternate set
-;			$20	= ignore memi (ignore inhibit)
-;			$01	= map 1 (map 0 if unset)
-;		XY?2	?
-;	On Exit:
-;		XY?0	= return flags
-;			$80	= set if On board Flash
-;			$40	= set if SYS
-;			$20	= memi (swrom/ram inhibited)
-;			$01	= map 1 (map 0 if not set)
-;		XY?1	= rom base page lo ($80 if SYS)
-;		XY?2	= rom base page hi ($FF if SYS)
-
 
 svc8_OSWORD:
 		lda	zp_mos_OSBW_A

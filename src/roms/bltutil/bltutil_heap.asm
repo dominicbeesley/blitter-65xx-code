@@ -141,6 +141,27 @@ jimPageAllocTable:					; TODO return error if no alloc table!
 		rts
 
 
+;		A = $99
+;	XY?0 <16 - Get SWROM base address
+;	---------------------------------
+;	On Entry:
+;		XY?0 	= Rom #
+;		XY?1	= flags: (combination of)
+;			$80	= current set
+;			$C0	= alternate set
+;			$20	= ignore memi (ignore inhibit)
+;			$01	= map 1 (map 0 if unset)
+;		XY?2	?
+;	On Exit:
+;		XY?0	= return flags
+;			$80	= set if On board Flash
+;			$40	= set if SYS
+;			$20	= memi (swrom/ram inhibited)
+;			$01	= map 1 (map 0 if not set)
+;		XY?1	= rom base page lo ($80 if SYS)
+;		XY?2	= rom base page hi ($FF if SYS)
+
+
 
 heap_OSWORD_bltutil:	
 	;	+0	params len
