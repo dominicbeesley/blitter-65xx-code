@@ -439,6 +439,19 @@ svc9_HELP_nokey:
 		jsr	svc9_HELP_showkeys
 svc9_HELP_exit:	jmp	ServiceOut
 
+Print129:	lda	#129
+		bne	PP
+Print130:	lda	#130
+PP:		jsr	PrintA
+		lda	#'('
+		jmp	PrintA
+Print130Blitter:jsr	Print130
+PrintBlitter:	jsr	PrintImmedT
+		TOPTERM "Blitter"
+		rts
+PrintPaula:	jsr	PrintImmedT
+		TOPTERM "1M Paula"
+		rts
 
 svc9_HELP_showbanner:
 		jsr	PrintNL
@@ -457,23 +470,24 @@ svc9_HELP_showbanner:
 		jsr	CheckPaulaPresent
 		bcs	@skp_notp
 
-		ldx	#<cmdHelpPaulaPresent
-		ldy	#>cmdHelpPaulaPresent
-		jsr	PrintXY
+		jsr	Print130
+		jsr	PrintPaula
 		jmp	@skp2
 
-@skp_notp:
-		ldx	#<cmdHelpNotPresent
-		ldy	#>cmdHelpNotPresent
-		jsr	PrintXY
+@skp_notp:	jsr	Print129
+		jsr	PrintBlitter
+		lda	#'/'
+		jsr	PrintA
+		jsr	PrintPaula
+		jsr	PrintImmedT
+		TOPTERM " not"
 		jmp	@skp2
 
 @skp:
-
-		ldx	#<cmdHelpPresent
-		ldy	#>cmdHelpPresent
-		jsr	PrintXY
-@skp2:		rts
+		jsr	Print130Blitter
+@skp2:		jsr	PrintImmedT
+		TOPTERM	" present)"
+		rts
 
 svc9_HELP_showkeys:
 		jsr	PrintNL
@@ -740,10 +754,6 @@ strCmdXMLOAD:		.byte	"XMLOAD",0
 strHelpXMLoad:		.byte	"<file> [#dev] [<start>]",0
 strCmdXMSAVE:		.byte	"XMSAVE",0
 strHelpXMSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
-
-cmdHelpPresent:		.byte	130,"(Blitter present)",0
-cmdHelpPaulaPresent:	.byte	130," (1M Paula present)",0
-cmdHelpNotPresent:	.byte	129,"(Blitter/1M Paula not present)",0
 
 strCmdCONFIG:		.byte	"CONFIGURE", 0
 strHelpCONFIG:		.byte	0

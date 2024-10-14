@@ -51,11 +51,16 @@ noice_init:
                 ; check to see if NoICE is responding
                 ; TODO:?
 
+				lda		#'A'
+				sta		$FE09
+
+
                 ; print banner
 
-                ldx     #<str_NoICE
-                ldy     #>str_NoICE
-                jmp     PrintXY         
+                jsr     PrintImmedT
+				.byte   $D, "NoICE debugging active"
+				.byte	$D|$80
+				rts
 
 cmdNoIce:       
                 jsr     CheckBlitterPresentBrk          
@@ -83,9 +88,10 @@ cmdNoICEOff:
                 sta     sheila_MEM_CTL
                 plp
 
-                ldx     #<str_NoICEOff
-                ldy     #>str_NoICEOff
-                jmp     PrintXY         
+                jmp     PrintImmedT
+				.byte   "NoICE debugging disabled"
+				.byte   $D|$80
+				rts
 
 cmdNoIce_BRK:
                 jsr     CheckBlitterPresentBrk
@@ -99,10 +105,6 @@ cmdNoIce_BRK:
                 rts
 
 
-                .SEGMENT "RODATA"
-
-str_NoICE:      .byte   $D, "NoICE debugging active",$D,0
-str_NoICEOff:   .byte   "NoICE debugging disabled",$D,0
 
 
 ; 6502 family Debug monitor for use with NOICE02

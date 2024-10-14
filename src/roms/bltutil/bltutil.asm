@@ -764,9 +764,10 @@ cmdRomsNextArg:
 
 
 cmdRoms_Go:		
-		ldx	#<strRomsHeadVer		; verbose headings		
-		ldy	#>strRomsHeadVer
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte	"  # act  crc typ ver Title", 13
+		.byte	" == === ==== === === ====="
+		.byte	$D|$80
 
 		lda	#0
 		sta	zp_ROMS_ctr
@@ -926,9 +927,9 @@ cmdRoms_fullcheck:
 		cmp 	#OSWORD_BLTUTIL_RET_SYS
 		bne	@notsys1
 
-		ldx	#<str_SYS
-		ldy	#>str_SYS
-		jsr	PrintXY
+		jsr	PrintImmedT
+		TOPTERM "-- SYS"
+
 		jmp	cmdRoms_sk_nextrom
 
 
@@ -953,9 +954,8 @@ cmdRoms_sk_notrom:
 		bit	zp_ROMS_flags
 		beq	@1				; not VA
 		jsr	cmdRoms_DoCRC
-@1:		ldx	#<strNoRom
-		ldy	#>strNoRom
-		jsr	PrintXY
+@1:		jsr	PrintImmedT
+		TOPTERM "--"
 
 cmdRoms_sk_nextrom:
 		jsr	PrintNL
@@ -1074,24 +1074,28 @@ cmdSRERASE:
 		ora	zp_ERASE_flags
 		sta	zp_ERASE_flags
 
+		jsr	PrintErase
+
 		; check for EEPROM
 		and	#OSWORD_BLTUTIL_RET_FLASH
 		beq	cmdSRERASE_RAM
 
-		ldx	#<strSRERASEFLASH
-		ldy	#>strSRERASEFLASH
-		lda	zp_ERASE_dest
-		jsr	PrintMsgXYThenHexNyb
 
-		ldy	zp_ERASE_dest
+		jsr	PrintFlash
+		jsr	PrintAt
+		lda	zp_ERASE_dest
+		tay
+		jsr	PrintHexNybA
+		jsr	PrintElip
 		jmp	FlashEraseROM
 
 cmdSRERASE_RAM:
 
-		ldx	#<strSRERASERAM
-		ldy	#>strSRERASERAM
+		jsr	PrintSRAM
+		jsr	PrintAt
 		lda	zp_ERASE_dest
-		jsr	PrintMsgXYThenHexNyb
+		jsr	PrintHexNybA
+		jsr	PrintElip
 
 		lda	#0
 		sta	zp_ERASE_errct			; fail counter
@@ -1115,9 +1119,7 @@ cmdSRERASE_RAM:
 		lda	zp_ERASE_errct
 		ora	zp_ERASE_errct+1
 		bne	@4
-		ldx	#<str_OK
-		ldy	#>str_OK
-		jsr	PrintXY
+		jsr	PrintOK
 		rts
 @4:		; got to end with errors
 		lda	#'&'
@@ -1126,18 +1128,16 @@ cmdSRERASE_RAM:
 		jsr	PrintHexA
 		lda	zp_ERASE_errct
 		jsr	PrintHexA
-		ldx	#<strErrsDet
-		ldy	#>strErrsDet
-		jmp	PrintXY
+		jmp	PrintImmedT
+		TOPTERM	" errors detected"
 @2:		inc	zp_ERASE_errct
 		bne	@s
 		inc	zp_ERASE_errct + 1
 @s:		lda	ERASE_FLAG_FORCE
 		bit	zp_ERASE_flags
 		bne	@3				; continue - F switch in force		
-		ldx	#<str_FailedAt
-		ldy	#>str_FailedAt
-		jsr	PrintXY
+		jsr	PrintImmedT
+		TOPTERM	"failed at "
 		lda	zp_SRLOAD_bank
 		jsr	PrintHexA
 		lda	zp_mos_genPTR + 1
@@ -1177,7 +1177,8 @@ cmdSRCOPY:
 ;X;
 ;X;		ldx	#strSRCOPY2FLASH
 ;X;		lda	zp_SRCOPY_dest
-;X;		jsr	PrintMsgThenHexNyb
+;X;		jsr	PrintMsgThenHexNybImmed
+;X;		
 ;X;
 ;X;		clra
 ;X;		ldb	zp_SRCOPY_dest
@@ -1310,15 +1311,16 @@ cmdSRNUKE_mainloop:
 		jsr	cmdRoms_Go
 		
 		; SHOW MENU
-		ldx	#<cmdSRNUKE_menu
-		ldy	#>cmdSRNUKE_menu
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte	13, "0) Exit	1) Erase Flash	2) Erase RAM	3) Show CRC	4) Erase #"
+		.byte   13|$80
 
 		jsr	CheckBlitterPresent
 		bcc	@s
-		ldx	#<cmdSRNUKE_nodevwarn
-		ldy	#>cmdSRNUKE_nodevwarn
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte 	"WARNING: blitter not detected!!!"
+		.byte	13|$80
+
 @s:
 
 
@@ -1351,16 +1353,17 @@ cmdSRNUKE_crctoggle:
 		jmp	cmdSRNUKE_mainloop
 
 cmdSRNUKE_erase_rom:
-		ldx	#<str_WhichRom
-		ldy	#>str_WhichRom
-		jsr	PrintXY
+		jsr	PrintErase
+		jsr	PrintImmedT
+		TOPTERM "which ROM?"
 		jsr	inkey_clear
 		txa
 		sta	STR_NUKE_CMD			; enter the keyed number as a phoney param to cmdSRERASE
 		jsr	OSASCI
 		jsr	OSNEWL
-		bcs	cmdSRNUKE_mainloop
-		lda	#13
+		bcc	:+
+		jmp	cmdSRNUKE_mainloop
+:		lda	#13
 		sta	STR_NUKE_CMD+1			; terminate command buffer
 		lda	#<STR_NUKE_CMD
 		sta	zp_mos_txtptr
@@ -1373,14 +1376,16 @@ cmdSRNUKE_mainloop2:
 
 
 cmdSRNUKE_flash:
-		ldx	#<str_NukePrAllFl
-		ldy	#>str_NukePrAllFl
+		jsr	PrintErase
+		jsr	PrintWhole
+		jsr	PrintFlash
 		jsr	PromptYN
 		bne	cmdSRNUKE_mainloop2
 
-		ldx	#<str_NukeFl
-		ldy	#>str_NukeFl
-		jsr	PrintXY
+str_NukeFl:	
+		jsr	PrintErase
+		jsr	PrintFlash
+		jsr	PrintElip
 
 		; erase entire flash chip
 		jsr	FlashReset
@@ -1391,15 +1396,18 @@ cmdSRNUKE_flash:
 		jmp	cmdSRNUKE_reboot
 
 
-cmdSRNUKE_ram:	ldx	#<str_NukePrAllRa
-		ldy	#>str_NukePrAllRa
+cmdSRNUKE_ram:	jsr	PrintErase
+		jsr	PrintWhole
+		jsr	PrintSRAM
 		jsr	PromptYN
 		beq	@s
 		jmp	cmdSRNUKE_mainloop
 @s:
-		ldx	#<str_NukeRa
-		ldy	#>str_NukeRa
-		jsr	PrintXY
+		jsr	PrintErase
+		jsr	PrintSRAM
+		jsr	PrintImmedT
+		TOPTERM " $7C0000-$7FFFFF"
+		jsr	PrintElip
 
 		; enable JIM, setup paging regs
 		jsr	jimSetDEV_blitter
@@ -2050,40 +2058,40 @@ throttleInit:
 ; Strings and tables
 ;------------------------------------------------------------------------------
 
+PrintErase:	jsr	PrintImmedT
+		TOPTERM "Erase "
+		rts
+PrintWhole:	jsr	PrintImmedT
+		TOPTERM "whole "
+		rts
+PrintFlash:	jsr	PrintImmedT
+		TOPTERM "Flash"
+		rts
+PrintSRAM:	jsr	PrintImmedT
+		TOPTERM "SRAM"
+		rts
+PrintAt:	jsr	PrintImmedT
+		TOPTERM " at "
+		rts
+PrintElip:	jsr	PrintImmedT
+		.byte	"..."
+		.byte	13|$80
+		rts
+PrintOK:	jsr	PrintImmedT
+		.byte	13, "OK."
+		.byte	13|$80
+		rts
+
+
 		.SEGMENT "RODATA"
 
 
-str_WhichRom:		.byte	"Erase Which Rom", 0
 
-strRomsHeadVer:		.byte	"  # act  crc typ ver Title", 13
-			.byte	" == === ==== === === =====", 13, 0 
-
-strRomsHead:		.byte	"  # typ ver Title", 13
-			.byte	" == === === =====", 13, 0 
-
-strNoRom:		.byte	"--",0
-str_SYS:		.byte	"-- SYS ",0
-
-strSRCOPY2RAM:		.byte	"Copying to SROM/SRAM at ",0
-strSRCOPY2FLASH:	.byte	"Copying to Flash at ",0
-strSRERASEFLASH:	.byte	"Erasing Flash at ",0
-strSRERASERAM:		.byte	"Erasing SRAM at ",0
+;X;	strSRCOPY2RAM:		.byte	"Copying to SROM/SRAM at ",0
+;X;	strSRCOPY2FLASH:	.byte	"Copying to Flash at ",0
 
 
-str_Copying:		.byte	"Copying...", 0
-str_OK:			.byte	$D, "OK.", $D, 0
-str_NukePrAllFl:	.byte	"Erase whole Flash", 0
-str_NukePrAllRa:	.byte	"Erase whole SRAM", 0
-str_NukePrRom:		.byte	"Erase rom ",0
-str_FailedAt:		.byte	"failed at ",0
-strErrsDet:		.byte	" errors detected", 0
-str_NukeFl:		.byte	"Erasing flash...", $D, 0
-str_NukeRa:		.byte	"Erasing SRAM $E00000 to $0FFFFF, please wait...", $D, 0
-
-
-cmdSRNUKE_menu:
-		.byte	13, "0) Exit	1) Erase Flash	2) Erase RAM	3) Show CRC	4) Erase #", 13, 0
-cmdSRNUKE_nodevwarn:
-		.byte   13, 131, "WARNING: blitter not detected:",13,10," this probably won't work", 13,0
+;X;	str_Copying:		.byte	"Copying...", 0
+	
 
 

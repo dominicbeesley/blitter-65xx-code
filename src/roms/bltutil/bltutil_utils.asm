@@ -48,7 +48,7 @@
 		.export	PrintPTRT
 		.export PrintImmedT
 		.export PrintImmedT16
-		.export PrintXSpc
+; unused;	.export PrintXSpc
 		.export	PromptYN
 		.export	PromptNo
 		.export	PromptYes
@@ -123,13 +123,13 @@ PrintSpc:	lda	#' '
 PrintA:		jmp	OSASCI
 PrintNL:	jmp	OSNEWL
 
-PrintXSpc:	lda	#' '
-		cpx	#0
-		beq	@r
-@l:		jsr	PrintA
-		dex
-		bne	@l
-@r:		rts
+;unused;PrintXSpc:	lda	#' '
+;unused;		cpx	#0
+;unused;		beq	@r
+;unused;@l:		jsr	PrintA
+;unused;		dex
+;unused;		bne	@l
+;unused;@r:		rts
 
 
 PrintHexA:	pha
