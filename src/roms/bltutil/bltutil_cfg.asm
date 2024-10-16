@@ -156,7 +156,6 @@ cfgGetRomMap:
 @ovset:		.byte 	$40
 
 
-		.import str_Dossy		; from header
 
 mode7char:	pha		
 		lda	vduvar_MODE

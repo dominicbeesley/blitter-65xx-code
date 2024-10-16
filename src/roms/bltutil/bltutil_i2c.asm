@@ -33,8 +33,12 @@
 		.export i2c_readbyte
 		.export i2c_write_devaddr		
 		.export i2c_OSWORD_13
-		.export bltutil_firmCMOSWrite	
-		.export bltutil_firmCMOSRead
+		.export CMOS_ReadYX
+		.export CMOS_WriteYX
+		.export CMOS_WriteFirmX	
+		.export CMOS_ReadFirmX
+		.export CMOS_WriteMosX	
+		.export CMOS_ReadMosX
 
 
 	.macro I2C_WAIT
@@ -193,11 +197,41 @@ i2c_OSWORD_13:	jsr	jimPageChipset
 
 bit_SEV:	.byte	$C0
 
-		; read single configuration byte at location $1100+Y to A, corrupts X, Y
-bltutil_firmCMOSRead:	
-		tya	
+
+	.scope
+	; add $80 to A if map 1
+CMOS_addRomOffs:	rol	A
+		pha
+		jsr	cfgGetRomMap
+		ror	A		; map in Cy
+		pla
+		ror	A
+		rts
+
+
+; CMOS read / write 
+; on entry X contains an offset in either MOS or BLTUTIL page
+; if romset = 1 then $80 is added
+
+
+		; read single configuration byte at location $1100+X to A, corrupts X, Y
+::CMOS_ReadMosX:	
+		ldy	#BLTUTIL_CMOS_PAGE_MOS
+		bne	CMOS_ReadYX
+::CMOS_ReadFirmX:	
+		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE
+
+; Y = page in CMOS
+; X = offset in page in CMOS
+; on Exit
+; X preserved
+; A,Y = byte read
+; note OSBYTE_X,Y,A registers are blammed by calling OSWORD!
+
+::CMOS_ReadYX:	txa
+		jsr	CMOS_addRomOffs
 		pha		; + 7 - address low byte
-		lda	#BLTUTIL_CMOS_PAGE_FIRMWARE	
+		tya
 		pha		; + 6 - address hi byte - firmware page
 		lda	#DEV_BLTUTIL_CMOS_EEPROM
 		pha		; + 5 - dev no
@@ -227,11 +261,16 @@ bltutil_firmCMOSRead:
 		txa
 		rts
 
-bltutil_firmCMOSWrite:		
-		pha		; + 8 - data
-		tya
+::CMOS_WriteMosX:		
+		ldy	#BLTUTIL_CMOS_PAGE_MOS
+		bne	CMOS_WriteYX
+::CMOS_WriteFirmX:		
+		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE	
+::CMOS_WriteYX:	pha		; + 8 - data
+		txa		
+		jsr	CMOS_addRomOffs		
 		pha		; + 7 - address low byte
-		lda	#BLTUTIL_CMOS_PAGE_FIRMWARE	
+		tya
 		pha		; + 6 - address hi byte - firmware page
 		lda	#DEV_BLTUTIL_CMOS_EEPROM
 		pha		; + 5 - dev no
@@ -256,3 +295,5 @@ bltutil_firmCMOSWrite:
 		tax
 		txs
 		rts
+
+	.endscope

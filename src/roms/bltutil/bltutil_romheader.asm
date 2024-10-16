@@ -32,6 +32,7 @@
 		.export strCmdBLTurbo
 		.export ServiceOut
 		.export ServiceOutA0
+		.export ServiceOutA0retY
 		.export str_Dossy
 
 		.SEGMENT "CODE_ROMHEADER"
@@ -76,6 +77,7 @@ Serv_jump_table:
 		SJTE	SERVICE_1_ABSWKSP_REQ, 	svc1_ClaimAbs
 		SJTE	SERVICE_4_UKCMD, 	svc4_COMMAND
 		SJTE	SERVICE_5_UKINT,	svc5_UKIRQ
+		SJTE	SERVICE_7_UKOSBYTE,	svc7_OSBYTE
 		SJTE	SERVICE_8_UKOSWORD,	svc8_OSWORD
 		SJTE	SERVICE_9_HELP,		svc9_HELP
 		SJTE	SERVICE_28_CONFIGURE, 	svc28_CONFIG
@@ -146,8 +148,13 @@ ServiceOutA0:	ldx	zp_mos_curROM
 		pla
 		lda	#0				; Don't pass to other service routines
 		rts
-
-
+ServiceOutA0retY:
+		ldx	zp_mos_curROM
+		pla
+		; don't restore Y!
+		pla
+		lda	#0				; Don't pass to other service routines
+		rts
 ; -------------------------------
 ; SERVICE 1 - Claim Abs Workspace
 ; -------------------------------
@@ -652,6 +659,63 @@ svc5_UKIRQ:
 @exit:		jmp	ServiceOut
 
 
+; --------------------
+; SERVICE 7 - OSBYTE
+; --------------------
+
+svc7_OSBYTE:
+		jsr	CheckBlitterPresent
+		bcs	noCMOShere
+		lda	zp_mos_OSBW_A
+		cmp	#OSBYTE_161_READ_CMOS
+		beq	dMOS_OSBYTE_161_READ_CMOS
+		cmp	#OSBYTE_162_WRITE_CMOS
+		beq	dMOS_OSBYTE_162_WRITE_CMOS
+		
+
+noCMOShere:
+		jmp	ServiceOut
+
+dMOS_OSBYTE_161_READ_CMOS:
+		; TODO: this assumes all Blitters have CMOS RAM/i2c - TODO: checks throughout? (safe for all Mk.2/3 built so far)
+		ldy	zp_mos_OSBW_Y
+		ldx	zp_mos_OSBW_X
+		cpx	#$FF
+		beq	@size
+
+		cpx	#$80
+		txa
+		pha
+		bcs	noCMOShere		; >= $80 - pass on
+		jsr	CMOS_ReadMosX
+		tay
+		pla
+		tax
+@out:		
+		; we need to restore all these as OSWORD may have goosed them
+		stx	zp_mos_OSBW_X
+		sty	zp_mos_OSBW_Y
+		lda	#OSBYTE_161_READ_CMOS
+		sta	zp_mos_OSBW_A
+		jmp	ServiceOutA0retY
+
+
+@size:		ldy	#$7F		
+		bne	@out
+
+dMOS_OSBYTE_162_WRITE_CMOS:
+		ldx	zp_mos_OSBW_X
+		cpx	#$80
+		txa
+		pha
+		bcs	noCMOShere		; >= $80 - pass on
+		lda	zp_mos_OSBW_Y
+		jsr	CMOS_WriteMosX
+		pla
+		tax
+		stx	zp_mos_OSBW_X
+		jmp	ServiceOutA0
+
 
 ; --------------------
 ; SERVICE 8 - OSWORD
@@ -717,7 +781,7 @@ strHelpNoIce:		.byte	"[ON|OFF]",0
 strCmdNOICE_BRK:	.byte	"NOICEBRK",0
 strHelpNoIce_BRK:	.byte	0
 strCmdBLTurbo:		.byte	"BLTURBO",0
-strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[-][X][!]] [?]",0
+strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[-]] [T[-]] [?]",0
 strCmdSound:		.byte	"BLSOUND", 0
 strHelpSound:		.byte	"[ON|OFF|DETUNE]", 0
 strCmdHeapInfo:		.byte	"BLHINF",0
@@ -965,10 +1029,9 @@ e2:		jsr	SkipSpacesPTR
 		;
 empty:		plp
 		bit	bitSEV				; indicate found (first entry!)
-		rts
+::bitSEV:	rts
 .endscope
 		
-bitSEV:		.byte	$40
 
 
 

@@ -301,12 +301,7 @@ cmdBLTurboThrottle:
 		stx	zp_trans_tmp
 
 @lp:		jsr	SkipSpacesPTR
-		cmp	#'!'
-		bne	:+
-		lda	#$80
-		bne	@setf
-		bne	:-
-:		cmp	#'-'
+		cmp	#'-'
 		bne	:+
 		lda	#$40
 		bne	@setf
@@ -330,42 +325,6 @@ cmdBLTurboThrottle:
 		and	#BITS_MEM_TURBO2_THROTTLE ^ $FF
 @s2:		sta	sheila_MEM_TURBO2
 		
-		lda	zp_trans_tmp
-		bpl	@nocfg
-
-		tya
-		pha
-
-
-	; TODO: only do this on cold boot / ctrl break?
-
-	.assert CMOSBITS_CPU_THROT = $80, error, "Code assumes bit 7"
-	.assert BITS_MEM_TURBO2_THROTTLE = $80, error, "Code assumes bit 7"
-
-		jsr	cfgGetRomMap
-		and	#1
-		clc
-		adc	#BLTUTIL_CMOS_FW_CPU_THROT
-		pha
-		
-		lda	sheila_MEM_TURBO2
-		rol	A
-		php			; bit in Cy
-		tay	
-		jsr	bltutil_firmCMOSRead
-		rol	A
-		plp
-		ror	A
-		tax
-		pla
-		tay
-		txa
-		jsr	bltutil_firmCMOSWrite
-
-		pla
-		tay	; get back cmd line pointer
-
-@nocfg:
 		jmp	cmdBLTurbo_Next
 
 
@@ -506,7 +465,7 @@ cmdBLTurboRom:
 		jmp	brkInvalidArgument
 @ok1:		sta	zp_trans_tmp			; rom # and flags 
 
-		; check for [-][X][!]
+		; check for [-]
 @lpfl:		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#$D
@@ -518,16 +477,8 @@ cmdBLTurboRom:
 		lda	zp_trans_tmp
 
 		cpx	#'-'
-		bne	@ckX
-		ora	#$80				; add minus flag
 		bne	@rnxtflag
-@ckX:		cpx	#'X'
-		bne	@ckPling
-		ora	#$40				; X flag
-		bne	@rnxtflag
-@ckPling:	cpx	#'!'
-		bne	brkInvalidArgument2
-		ora	#$20
+		ora	#$80				; add minus flag		
 @rnxtflag:	sta	zp_trans_tmp
 		iny
 		bne	@lpfl
@@ -537,7 +488,6 @@ cmdBLTurboRom:
 		ldy	#0
 		lda	#8
 		bit	zp_trans_tmp
-		bvs	@altset
 		beq	@sk
 		ldy	#2				; X now contains 0 or 2
 @sk:		lda	zp_trans_tmp
@@ -551,52 +501,9 @@ cmdBLTurboRom:
 		and	sheila_ROM_THROTTLE_0,Y
 		jmp	@s
 @pl:		ora	sheila_ROM_THROTTLE_0,Y
-@s:		sta	sheila_ROM_THROTTLE_0,Y
-		
-
-@altset:		;check for write to CMOS
-		lda	#$20
-		bit	zp_trans_tmp
-		bvs	@docmos			; X implies !
-		beq	@nocmos
-
-
-	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
-@docmos:		; work out cmos address in Y
-		jsr	cfgGetRomMap
-		bit	zp_trans_tmp
-		bvc	@noswap
-		eor	#1
-@noswap:	and	#1
-		sta	zp_trans_acc+1
-		lda	zp_trans_tmp		; if >8 rol 1 into bottom bit
-		and	#$F
-		cmp	#8
-		rol	zp_trans_acc+1
-		ldy	zp_trans_acc+1
-		; y now contains the CMOS address - $1100
-		jsr	bltutil_firmCMOSRead
-		sta	zp_trans_acc
-
-		lda	zp_trans_tmp
-		and	#7
-		tax
-		jsr	bitX
-
-		bit	zp_trans_tmp
-		bmi	@pl2
-		eor	#$ff
-		and	zp_trans_acc
-		jmp	@s2
-@pl2:		ora	zp_trans_acc
-@s2:		sta	zp_trans_acc
-		lda	zp_trans_acc+1
-		tay
-		lda	zp_trans_acc
-		jsr	bltutil_firmCMOSWrite
-
-
-@nocmos:		pla
+@s:		sta	sheila_ROM_THROTTLE_0,Y		
+	
+		pla
 		tay
 
 
@@ -811,11 +718,15 @@ cmdRoms_lp:
 		; alt set - get from CMOS
 		lda	zp_ROMS_OS99ret
 		and	#1
+		clc
+		ror	A
+		ror	A
+		ror	A			; get map 0/1 into bit 6
 		ldy	zp_ROMS_ctr
 		cpy	#8
-		rol	A
-		tay
-		jsr	bltutil_firmCMOSRead
+		rol	A			; bit 0 = 1 if >8 bit 7 = 1 if map 1
+		tax
+		jsr	CMOS_ReadYX
 		eor	#$FF
 		tay
 		lda	zp_ROMS_ctr
@@ -1318,7 +1229,7 @@ cmdSRNUKE_mainloop:
 		jsr	CheckBlitterPresent
 		bcc	@s
 		jsr	PrintImmedT
-		.byte 	"WARNING: blitter not detected!!!"
+		.byte 	"WARNING: blitter not detected!"
 		.byte	13|$80
 
 @s:
@@ -2002,24 +1913,15 @@ cmdXMSave:	jsr	loadsavegetfn
 
 throttleInit:
 		jsr	cfgGetAPISubLevel_1_2
-		bcc	@s3
+		bcc	@notpup
 
-		jsr	cfgGetRomMap
-		pha				; for later
 
-	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
-		rol	A
-		and	#2
-		pha
-
-		tay
-		jsr	bltutil_firmCMOSRead	; get from CMOS 1100,Y
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x0,Y
 		eor	#$FF
 		sta	sheila_ROM_THROTTLE_0
-		pla
-		tay
-		iny
-		jsr	bltutil_firmCMOSRead	; get from CMOS 1101,Y
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+1
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x1,Y
 		eor	#$FF
 		sta	sheila_ROM_THROTTLE_1
 
@@ -2034,11 +1936,8 @@ throttleInit:
 	.assert CMOSBITS_CPU_THROT = $80, error, "Code assumes bit 7"
 	.assert BITS_MEM_TURBO2_THROTTLE = $80, error, "Code assumes bit 7"
 
-		pla
-		clc
-		adc	#BLTUTIL_CMOS_FW_CPU_THROT
-		tay
-		jsr	bltutil_firmCMOSRead	; get from CMOS
+		ldx	#BLTUTIL_CMOS_FW_CPU_THROT
+		jsr	CMOS_ReadFirmX			; get from CMOS
 		and	#$80 
 		rol	A
 		php
@@ -2050,9 +1949,7 @@ throttleInit:
 
 
 
-@s3:		rts		
-@notpup:	pla
-		rts
+@notpup:	rts
 
 ;------------------------------------------------------------------------------
 ; Strings and tables
