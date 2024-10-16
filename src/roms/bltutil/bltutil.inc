@@ -62,7 +62,7 @@ OSWORD_BLTUTIL_RET_MAP1		:= $01
 .endmacro
 
 .macro		VERSION_STRING
-		.byte	"0.06"
+		.byte	"0.07"
 .endmacro
 
 .macro		M_ERROR
@@ -239,6 +239,8 @@ SCRATCH_TMP		:=	$80			; 128 bytes of scratch space for the current
 ; Blitter mk.2/3 CMOS chip locations
 
 DEV_BLTUTIL_CMOS_EEPROM		= $A0	; device number for CMOS/EEPROM
+	; the MOS and FIRMWARE PAGES are split into two halves, 0..7F for rom set 0, 80..FF for set 1
+BLTUTIL_CMOS_PAGE_MOS	 	= $10	; page in CMOS / Flash EEPROM for Ersatz MOS config
 BLTUTIL_CMOS_PAGE_FIRMWARE 	= $11	; page in CMOS / Flash EEPROM for BLTUTIL's config
 
 BLTUTIL_CMOS_FW_ROM_THROT	= $00	; offset to per-rom-throttle arranged as map 0 0..7, map 0 8..15, map 1 0..7, map 1 8..15

@@ -92,7 +92,7 @@ for the 65816 this is a WDM instruction.
 
 ## \*BLTURBO {B}
 
-        *BLTURBO [M[-]] [L<pagemask>] [R<n>[-][X][!]] [T[-][!]] [?]
+        *BLTURBO [M[-]] [L<pagemask>] [R<n>[-]] [T[-]] [?]
 
         M/M-    Enable/Disable MOS at maximum speed
         L<n>    The hexadecimal number following L forms a bit mask of pages in 
@@ -100,11 +100,9 @@ for the 65816 this is a WDM instruction.
         R<n>    The ROM in slot n is "throttled" i.e. its instructions are
                 executed at 2MHz, regardless of where the ROM is located.
                 "X" can be used to throttle ROMs in the opposing map
-                "!" writes the update to CMOS - deprecated, use *CONFIGURE
                 "-" reverses i.e. un-throttles the ROM slot.
         T       The CPU is throttled at all times to 2MHz
                 "-" reverses i.e. un-throttles the CPU.
-                "!" writes the update to CMOS - deprecated, use *CONFIGURE
 
 ### Low RAM Turbo
 BLTURBO copies the contents of memory to Chip RAM and causes the CPU to execute
@@ -120,16 +118,25 @@ from Chip RAM which can give a useful boost to many programs
 Some ROMs contain timing sensitive code that doesn't work when run at full-speed
 these settings allow a 2MHz speed throttle to be placed on such ROM banks.
 
+Typically these settings will be read from CMOS RAM at power-up but may be 
+altered temporarily with this command. See \*CONFIG 
+
 ### CPU Throttle
 
 This is often useful to bring the whole system to 2MHz running games. This will
 also disable the VIA access hacks which should make timing-sensitive games and
 demos work as on a normal 6502.
 
+Typically these settings will be read from CMOS RAM at power-up but may be 
+altered temporarily with this command. See \*CONFIG 
+
+
 The format of this command's arguments is likely to change in future to allow:
 - speed throttling of ROM's/MOS
 - speed throttling of shadow memory
 
+Note: It used to be possible to set per-rom and cpu throttle CMOS settings 
+with this command, these options are now set using the *\CONFIG command
 
 ## \*BLSOUND
         
