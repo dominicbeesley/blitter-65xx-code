@@ -179,8 +179,9 @@ and add 48 (an octave) to the SOUND pitch to avoid aliasing.
         CH      Channel number 0..7
         SN      Sample number 0..1F (hex)
 
-Set the default sample number for each channel. If no sample number is specified in the high byte of the volume SOUND
-parameter then the default specified here will be used.
+Set the default sample number for each channel. If no sample number is specified
+in the high byte of the volume SOUND parameter then the default specified here 
+will be used.
 
 ## \*BLSAMCLR
 
@@ -247,7 +248,8 @@ This call returns the base address of the given ROM in chip RAM
         
         Return Flags
                 &80     Is in flash rom
-                &40     Is in a system socket or blitter inhibited or not present
+                &40     Is in a system socket or blitter inhibited or not 
+                        present
                 &20     Blitter has been inhibited
                 &02     Is in current ROM set
                 &01     Map 1
@@ -280,15 +282,16 @@ can't be found or a zero length block is requested.
 ## OSWORD 99, OP=&11 Free a block of memory
 
 A previously allocated block will be freed. The block will be returned either to
-the list of free blocks or merged with any neighbouring blocks. If the block is at
-the bottom of the heap the heap will close up.
+the list of free blocks or merged with any neighbouring blocks. If the block is
+at the bottom of the heap the heap will close up.
 
         Input
                 +3..4   Page number of the block to free.
 
 --TODO-- move this to a general discussion of the heap
-This call will attempt to allocate a block of memory on the heap. The heap is limited to 64 blocks of memory but
-can allocate any size block that will fit in memory between the low heap limit and the top of memory.
+This call will attempt to allocate a block of memory on the heap. The heap is
+limited to 64 blocks of memory but can allocate any size block that will fit in
+memory between the low heap limit and the top of memory.
 
 By default the heap can grow all the way down to the top of the 
 
@@ -307,7 +310,8 @@ with already allocated heap an error will be indicated in the return value)
 
 ## OSWORD 99, OP=&13 Read/Write i2c
 
-This call can be used to do writes, reads or combined write followed by reads to/from and attached i2c device
+This call can be used to do writes, reads or combined write followed by reads 
+to or from and attached i2c device.
 
         + 3     Number of bytes to write
         + 4     Number of bytes to read
@@ -453,7 +457,8 @@ SOUND sample pointer table
         00 8104..5      Sample 0 repeat offset bytes
         00 8006         -
         00 8107         Sample 0 flags
-                        - $80 present i.e. if not set there's nothing loaded here                       
+                        - $80 present i.e. if not set there's nothing loaded 
+                              here                       
         ...above repeats for 31 samples
         00 81FF
 
