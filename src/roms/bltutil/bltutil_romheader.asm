@@ -803,19 +803,33 @@ strHelpCONFIG:		.byte	0
 strCmdSTATUS:		.byte	"STATUS", 0
 strHelpSTATUS:		.byte	0
 
+	.macro ConfYN Name, Func, Yes, Flip, Bit, Offs
+		.word	Name
+		.word	Func-1
+		.word	$4000 + ($8000*(Yes && 1)) + ($0800*(Flip && 1)) + ($0100*(Bit & 7)) + (Offs & $7F)
+	.endmacro
+
+	.macro Conf	Name, Func, Help
+		.word	Name
+		.word	Func-1
+		.word	Help
+	.endmacro
+
+
+
 ; these are scanned if we're replacing non-master MOS
-tbl_configs_MOS:	.word	strDot,		confHelp-1, 		0		
-			.word	strTube,	confTube-1,		$C000
-			.word	strNoTube,	confTube-1,		$4000				
-			.word	strTV,		confTV-1,		confHelpDD
+tbl_configs_MOS:	Conf	strDot,			confHelp, 		0		
+			ConfYN	strTube,		confYN,			1,	0,	0,	$F
+			ConfYN	strNoTube,		confYN,			0,	1,	0,	$F
+			Conf	strTV,			confTV,			confHelpDD
 			.word	0
 ; these are always scanned
-tbl_configs_BLTUTIL:	.word	strDot,			confBLHelp-1, 		0		
-			.word	strBLThrottle,		confBLThrottle-1,	$C000
-			.word	strNoBLThrottle,	confBLThrottle-1,	$4000
-			.word	strBLThrottleMOS,	confBLThrottleMOS-1,	$C000
-			.word	strNoBLThrottleMOS,	confBLThrottleMOS-1,	$4000
-			.word	strBLThrottleROMS,	confBLThrottleROMS-1,	confHelpBLThrottleROMS
+tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0		
+			ConfYN	strBLThrottle,		confYN,			1,	1,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strNoBLThrottle,	confYN,			0,	0,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strBLThrottleMOS,	confYN,			1,	1,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strNoBLThrottleMOS,	confYN,			0,	0,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
+			Conf	strBLThrottleROMS,	confBLThrottleROMS,	confHelpBLThrottleROMS
 			.word	0
 
 
@@ -838,20 +852,19 @@ confHelpDD:		.byte	"[<D>[,<D>]]",0
 
 
 
-confBLHelp:	bcc	@s
-		jmp	statBLHelp
-@s:		lda	#<(tbl_configs_BLTUTIL+6)
+confBLHelp:	lda	#<(tbl_configs_BLTUTIL+6)
 		sta	zp_tmp_ptr
 		lda	#>(tbl_configs_BLTUTIL+6)
 		sta	zp_tmp_ptr+1
-		jsr	ShowConfsHelpTable
+		bcc	@s
+		jmp	statBLHelp
+@s:		jsr	ShowConfsHelpTable
 		; we need to pass on to other roms, we were entered with ServiceOutA0 pushed.
 		; pop it and jump to serviceOut
 		pla
 		jmp	plaServiceOut
 
-statBLHelp:	jsr	PrintImmedT
-		TOPTERM	"STATBLHELP"
+statBLHelp:	jsr	ShowStatsHelpTableBLT
 		; we need to pass on to other roms, we were entered with ServiceOutA0 pushed.
 		; pop it and jump to serviceOut
 		pla
@@ -883,10 +896,9 @@ confHelp:	bcc	@s
                 .byte 	"D is a decimal number, or",13
                 .byte 	"a hexadecimal number preceded by &",13
                 .byte	"Items within [ ] are optional"
-		.byte	13|$80
-                
-
+		.byte	13|$80              
 		rts
+
 
 ShowConfsHelpTable:
 @lp:
@@ -899,13 +911,8 @@ ShowConfsHelpTable:
 		sta	zp_tmp_ptr+2
 		bit	zp_tmp_ptr+2
 		bvc	@nono
-		bpl	@next			; don't display the "no" string
 
 		ldy	#0
-		jsr	PrintImmedT
-		TOPTERM	"No"
-		jsr	PrintAtPtrPtrY
-		jsr	PrintNL
 		jsr	PrintAtPtrPtrY
 		jmp	@nextNL
 @nono:		ldy	#0
@@ -924,48 +931,151 @@ ShowConfsHelpTable:
 		bne	@lp
 @done:		rts
 
-statHelp:	jsr	PrintImmedT
-		TOPTERM	"STATHELP"
+ShowStatsHelpTableBLT:
+		bit	bitSEV
+		jmp	ShowStatsHelpTableInt
+ShowStatsHelpTableMOS:
+		clv
+ShowStatsHelpTableInt:
+		php
+@lp:
+		ldy	#0
+		lda	(zp_tmp_ptr),Y
+		beq	@done
+
+		ldy	#5
+		lda	(zp_tmp_ptr),Y
+		and	#$40
+		bne	@nolbl			; skip if a YN statYN will print this if set
+		ldy	#0
+		jsr	PrintAtPtrPtrY16	
+
+@nolbl:
+		plp
+		php				; get back V flag passed in
+		lda	#>(@next-1)
+		pha
+		lda	#<(@next-1)
+		pha				; return to @nextNL
+		ldy	#3
+		lda	(zp_tmp_ptr),Y
+		pha
+		dey
+		lda	(zp_tmp_ptr),Y		; push routine address
+		pha
+		sec				; indicate status
+		rts				; call pushed routine
+
+@next:
+		ldy	#5
+		lda	(zp_tmp_ptr),Y
+		and	#$40
+		bne	@nonl			; skip if a YN statYN will print this if set
+		jsr	PrintNL
+@nonl:
+
+		clc
+		lda	zp_tmp_ptr
+		adc	#6
+		sta	zp_tmp_ptr
+		bcc	@lp
+		inc	zp_tmp_ptr+1
+		bne	@lp
+@done:		plp
 		rts
+
+statHelp:	jsr	PrintImmedT
+		.byte	"Configuration Status:"
+		.byte	13|$80
+
+		lda	#<(tbl_configs_MOS+6)
+		sta	zp_tmp_ptr
+		lda	#>(tbl_configs_MOS+6)
+		sta	zp_tmp_ptr+1
+	
+		tya				; preserve text pointer (for later pass on to ROMs)
+		pha
+
+		jsr	ShowStatsHelpTableMOS
+
+		pla
+		tay
+		lda	#OSBYTE_143_SERVICE_CALL
+		ldx	#SERVICE_29_STATUS
+		jsr	OSBYTE			; pass on to ROMS
+		rts
+
 confTV:		bcs	statTV
 		jsr	PrintImmedT
 		TOPTERM	"CONF TV"
 		rts
-statTV:		jsr	PrintImmedT
-		TOPTERM	"STAT TV"
-		rts
-confTube:	bcs	statTube
-		jsr	PrintImmedT
-		TOPTERM	"CONF Tube"
-		rts
-statTube:	jsr	PrintImmedT
-		TOPTERM "STAT Tube"
+statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
+
+		ldx	#10
+		jsr	CMOS_ReadMosX
+		ror	A
+		ror	A
+		ror	A
+		ror	A
+		pha
+		ror	A
+		and	#3
+		jsr	PrintDecA
+		jsr	PrintComma
+		pla
+		and	#1
+		jsr	PrintDecA
+		jsr	PopAcc
 		rts
 
-confBLThrottle:
-		bcs	statBLThrottle
-		jsr	PrintImmedT
-		TOPTERM	"CONF BL THROT"
+confYN:		bcs	statYN
 		rts
-statBLThrottle:
-		jsr	PrintImmedT
-		TOPTERM	"STAT BL THROT"
+
+statYN:		php
+		ldy	#5
+		lda	(zp_tmp_ptr),Y
+		ldx	#0
+		and	#$8
+		beq	@nonono
+		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
+@nonono:	stx	zp_tmp_ptr+3		; store flip mask, used to swap senses of bit
+		lda	zp_tmp_ptr+2
+		and	#$7			; the bit position used to store the config
+		tay
+		lda	#0
+		sec
+		; make a mask from bits in 
+@ml:		rol	A
+		dey
+		bpl	@ml
+		sta	zp_tmp_ptr+2		; store mask
+		
+		ldy	#4
+		lda	(zp_tmp_ptr),Y		; get index in CMOS
+		tax
+		plp
+		php
+		bvs	@blt
+		jsr	CMOS_ReadMosX
+		jmp	@nob
+@blt:		jsr	CMOS_ReadFirmX
+@nob:		eor	zp_tmp_ptr+3
+		and	zp_tmp_ptr+2
+		beq	@nono
+
+		ldy	#0
+		jsr	PrintAtPtrPtrY
+		jsr	PrintNL
+
+@nono:		plp
 		rts
+
 confBLThrottleROMS:
 		bcs	statBLThrottleROMS
 		jsr	PrintImmedT
 		TOPTERM	"CONF BL ROMS"
 		rts
 statBLThrottleROMS:
-		jsr	PrintImmedT
-		TOPTERM	"STAT BL ROMS"
-		rts
-confBLThrottleMOS:
-		bcs	statBLThrottleMOS
-		jsr	PrintImmedT
-		TOPTERM "CONF BL MOS"
-		rts
-statBLThrottleMOS:
 		jsr	PrintImmedT
 		TOPTERM	"STAT BL ROMS"
 		rts

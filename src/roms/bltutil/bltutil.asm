@@ -1915,6 +1915,13 @@ throttleInit:
 		jsr	cfgGetAPISubLevel_1_2
 		bcc	@notpup
 
+		lda	#OSBYTE_253_VAR_LAST_RESET
+		ldx	#0
+		ldy	#$FF
+		jsr	OSBYTE
+		cpx	#1
+		bne	@notpup
+
 
 		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
 		jsr	CMOS_ReadFirmX			; get from CMOS 11x0,Y
@@ -1926,17 +1933,11 @@ throttleInit:
 		sta	sheila_ROM_THROTTLE_1
 
 
-		lda	#OSBYTE_253_VAR_LAST_RESET
-		ldx	#0
-		ldy	#$FF
-		jsr	OSBYTE
-		cpx	#1
-		bne	@notpup
-
-	.assert CMOSBITS_CPU_THROT = $80, error, "Code assumes bit 7"
+		; load CPU throttle from CMOS
+	.assert BLTUTIL_CMOS_FW_THROT_BIT_CPU = $7, error, "Code assumes bit 7"
 	.assert BITS_MEM_TURBO2_THROTTLE = $80, error, "Code assumes bit 7"
 
-		ldx	#BLTUTIL_CMOS_FW_CPU_THROT
+		ldx	#BLTUTIL_CMOS_FW_THROT
 		jsr	CMOS_ReadFirmX			; get from CMOS
 		and	#$80 
 		rol	A
@@ -1947,7 +1948,7 @@ throttleInit:
 		ror	A
 		sta	sheila_MEM_TURBO2
 
-
+		; TODO: MOS Turbo/Throttle
 
 @notpup:	rts
 

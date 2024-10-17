@@ -28,6 +28,7 @@
 
 		.export	BounceErrorOffStack
 		.export	Print2Spc
+		.export PrintComma
 		.export PrintCommaSpace
 		.export	PrintSpc
 		.export	PrintA
@@ -115,8 +116,9 @@ BounceErrorOffStack:
 ;------------------------------------------------------------------------------
 ; Printing
 ;------------------------------------------------------------------------------
-PrintCommaSpace:lda	#','
-		jsr	PrintA
+PrintComma:	lda	#','
+		jmp	PrintA
+PrintCommaSpace:jsr	PrintComma
 		jmp	PrintSpc
 Print2Spc:	jsr	PrintSpc
 PrintSpc:	lda	#' '
