@@ -1029,6 +1029,11 @@ statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
 		rts
 
 confYN:		bcs	statYN
+
+		
+		jsr PrintImmedT
+		TOPTERM "CONFYN"
+
 		rts
 
 statYN:		php
@@ -1039,15 +1044,11 @@ statYN:		php
 		beq	@nonono
 		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
 @nonono:	stx	zp_tmp_ptr+3		; store flip mask, used to swap senses of bit
-		lda	zp_tmp_ptr+2
+		lda	(zp_tmp_ptr),Y
 		and	#$7			; the bit position used to store the config
-		tay
-		lda	#0
-		sec
-		; make a mask from bits in 
-@ml:		rol	A
-		dey
-		bpl	@ml
+		
+		jsr	MaskBitA
+
 		sta	zp_tmp_ptr+2		; store mask
 		
 		ldy	#4

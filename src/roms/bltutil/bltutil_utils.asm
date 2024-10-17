@@ -89,6 +89,8 @@
 		.export brkBadCommand
 		.export brkInvalidArgument
 
+		.export MaskBitA
+
 		.export bitX
 ;
 ; -----------------------------
@@ -981,6 +983,17 @@ bitX:		; bit A of A is set to 1, return X=0
 		bne	@lp
 		rts
 
+
+	; return's A with the Ath bit set's the bit A in
+	; corrupts Y
+MaskBitA:	tay		
+		lda	#0
+		sec
+		; make a mask from bits in 
+@ml:		rol	A
+		dey
+		bpl	@ml
+		rts
 
 		.SEGMENT "RODATA"
 str_YN:			.byte	" (Y/N)?",0
