@@ -557,7 +557,9 @@ cmdTabExecPlaPla:
 		pla
 		pla
 
-cmdTabExec:
+cmdTabExec:	php
+		pla
+		tax					; preserve flags
 		; push address of ServiceOutA0 to stack for return
 		lda	#>(ServiceOutA0-1)
 		pha
@@ -572,6 +574,9 @@ cmdTabExec:
 		lda	(zp_mos_genPTR),Y
 		pha
 		ldy	zp_trans_tmp
+		txa
+		pha
+		plp					; flags as passed in
 		rts					; execute command
 
 anRTS:		rts
@@ -803,10 +808,10 @@ strHelpCONFIG:		.byte	0
 strCmdSTATUS:		.byte	"STATUS", 0
 strHelpSTATUS:		.byte	0
 
-	.macro ConfYN Name, Func, Yes, Flip, Bit, Offs
+	.macro ConfYN Name, Func, Flip, Bit, Offs
 		.word	Name
 		.word	Func-1
-		.word	$4000 + ($8000*(Yes && 1)) + ($0800*(Flip && 1)) + ($0100*(Bit & 7)) + (Offs & $7F)
+		.word	$4000 + ($0800*(Flip && 1)) + ($0100*(Bit & 7)) + (Offs & $7F)
 	.endmacro
 
 	.macro Conf	Name, Func, Help
@@ -819,27 +824,21 @@ strHelpSTATUS:		.byte	0
 
 ; these are scanned if we're replacing non-master MOS
 tbl_configs_MOS:	Conf	strDot,			confHelp, 		0		
-			ConfYN	strTube,		confYN,			1,	0,	0,	$F
-			ConfYN	strNoTube,		confYN,			0,	1,	0,	$F
+			ConfYN	strTube,		confYN,			0,	0,	$F
 			Conf	strTV,			confTV,			confHelpDD
 			.word	0
 ; these are always scanned
 tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0		
-			ConfYN	strBLThrottle,		confYN,			1,	1,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
-			ConfYN	strNoBLThrottle,	confYN,			0,	0,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
-			ConfYN	strBLThrottleMOS,	confYN,			1,	1,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
-			ConfYN	strNoBLThrottleMOS,	confYN,			0,	0,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strBLThrottle,		confYN,			1,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strBLThrottleMOS,	confYN,			1,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
 			Conf	strBLThrottleROMS,	confBLThrottleROMS,	confHelpBLThrottleROMS
 			.word	0
 
 
 strDot:			.byte	".",0
 strTV:			.byte	"TV",0
-strNoTube:		.byte	"No"
 strTube:		.byte	"Tube",0
-strNoBLThrottle:	.byte	"No"
 strBLThrottle:		.byte	"BLThrottle",0
-strNoBLThrottleMOS:	.byte	"No"
 strBLThrottleMOS:	.byte	"BLThrottleMOS",0
 strBLThrottleROMS:	.byte	"BLThrottleROMS",0
 
@@ -913,6 +912,10 @@ ShowConfsHelpTable:
 
 		ldy	#0
 		jsr	PrintAtPtrgenPtrY
+		jsr	PrintNL
+		jsr	PrintNo
+		ldy	#0
+		jsr	PrintAtPtrgenPtrY
 		jmp	@nextNL
 @nono:		ldy	#0
 		jsr	PrintAtPtrgenPtrY16
@@ -960,7 +963,7 @@ ShowStatsHelpTableInt:
 		lda	(zp_mos_genPTR),Y
 		pha
 		dey
-		lda	(zp_mos_genPTR),Y		; push routine address
+		lda	(zp_mos_genPTR),Y	; push routine address
 		pha
 		sec				; indicate status
 		rts				; call pushed routine
@@ -1042,13 +1045,13 @@ statYN:		php
 		and	#$8
 		beq	@nonono
 		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
-@nonono:	stx	zp_mos_genPTR+3		; store flip mask, used to swap senses of bit
+@nonono:	stx	zp_trans_tmp		; store flip mask, used to swap senses of bit
 		lda	(zp_mos_genPTR),Y
 		and	#$7			; the bit position used to store the config
 		
 		jsr	MaskBitA
 
-		sta	zp_mos_genPTR+2		; store mask
+		sta	zp_trans_tmp+1		; store mask
 		
 		ldy	#4
 		lda	(zp_mos_genPTR),Y		; get index in CMOS
@@ -1059,15 +1062,15 @@ statYN:		php
 		jsr	CMOS_ReadMosX
 		jmp	@nob
 @blt:		jsr	CMOS_ReadFirmX
-@nob:		eor	zp_mos_genPTR+3
-		and	zp_mos_genPTR+2
-		beq	@nono
-
-		ldy	#0
+@nob:		eor	zp_trans_tmp
+		and	zp_trans_tmp+1
+		bne	@nono
+		jsr	PrintNo
+@nono:		ldy	#0
 		jsr	PrintAtPtrgenPtrY
 		jsr	PrintNL
 
-@nono:		plp
+		plp
 		rts
 
 confBLThrottleROMS:
@@ -1081,13 +1084,13 @@ statBLThrottleROMS:
 		rts
 
 
-
+	; We enter here if the *STATUS command is executed and we are a MOS substitute
 cmdSTATUS:	sec
 		bcs	doConfStat
 cmdCONFIG:	clc					; this will come through in findCMOS result
 doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
-		bvs	jcmdexecpp			; found
-		lda	#SERVICE_28_CONFIGURE>1
+		bvs	clvjcmdexecpp			; matched skip forward
+		lda	#SERVICE_28_CONFIGURE>>1
 		rol	A
 		tax					; set to 28/29 depending on carry
 		lda	#OSBYTE_143_SERVICE_CALL
@@ -1098,7 +1101,9 @@ doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
 @ok:		rts
 		
 		; found in table, execute from table
-
+clvjcmdexecpp:
+		clv					; clear V - indicate to handlers that we are
+							; doing MOS stuff (as opposed to blitter area of CMOS)
 jcmdexecpp:	jmp	cmdTabExecPlaPla
 jcmdexec:	jmp	cmdTabExec
 
@@ -1134,10 +1139,23 @@ e2:		jsr	SkipSpacesPTR
 		cmp	#$D
 		beq	empty
 
+		jsr	ToUpper
+		cmp	#'N'
+		bne	@nono
+		iny
+		lda	(zp_mos_txtptr),Y
+		jsr	ToUpper
+		cmp	#'O'
+		bne	@nono
+		iny
 		plp
-		jmp	searchCMDTab
+		lda	#$FF				; set Z=0, S=1
+		bne	@noyes
+@nono:		plp
+@noyes:		jmp	searchCMDTab
 		;
 empty:		plp
+		lda	#0				; set Z=1, S=0
 		bit	bitSEV				; indicate found (first entry!)
 ::bitSEV:	rts
 .endscope
