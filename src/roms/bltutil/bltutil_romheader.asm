@@ -306,7 +306,7 @@ svc1_ClaimAbs:
 @nope:		jmp	ServiceOut
 
 ; on entry (zp_mos_txtptr),Y is start of keys to match
-; zp_tmp_ptr is 0 terminated string to match
+; zp_mos_genPTR is 0 terminated string to match
 ; returns Cy=1 if any key matches
 ; Y preserved
 ; X, A corrupted
@@ -321,7 +321,7 @@ keyMatch:	tya
 		lda	(zp_mos_txtptr), Y	; get char
 		inc	zp_trans_tmp
 		ldy	zp_trans_tmp+1
-		cmp	(zp_tmp_ptr),Y		
+		cmp	(zp_mos_genPTR),Y		
 		beq	@l1
 		cmp	#'.'
 		beq	@match
@@ -344,7 +344,7 @@ keyMatch:	tya
 
 @keyend2:	dec	zp_trans_tmp		; decrement back on command tail
 @keyend:	ldy	zp_trans_tmp+1
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		beq	@match			; end of key so it's a match!
 		ldy	zp_trans_tmp
 		jsr	SkipSpacesPTR
@@ -405,9 +405,9 @@ svc9_HELP:
 		beq	svc9_HELP_nokey
 
 		lda	#<strHELPKEY_BLTUTIL
-		sta	zp_tmp_ptr
+		sta	zp_mos_genPTR
 		lda	#>strHELPKEY_BLTUTIL
-		sta	zp_tmp_ptr+1
+		sta	zp_mos_genPTR+1
 		jsr	keyMatch
 		bcc	@s		
 		; got a match, dump out our commands help
@@ -429,9 +429,9 @@ svc9_HELP:
 		bcs	@s2
 
 		lda	#<strHELPKEY_MOS
-		sta	zp_tmp_ptr
+		sta	zp_mos_genPTR
 		lda	#>strHELPKEY_MOS
-		sta	zp_tmp_ptr+1
+		sta	zp_mos_genPTR+1
 		jsr	keyMatch
 		bcc	@s2
 		ldx	#tbl_commands_MOS-tbl_commands
@@ -853,9 +853,9 @@ confHelpDD:		.byte	"[<D>[,<D>]]",0
 
 
 confBLHelp:	lda	#<(tbl_configs_BLTUTIL+6)
-		sta	zp_tmp_ptr
+		sta	zp_mos_genPTR
 		lda	#>(tbl_configs_BLTUTIL+6)
-		sta	zp_tmp_ptr+1
+		sta	zp_mos_genPTR+1
 		bcc	@s
 		jmp	statBLHelp
 @s:		jsr	ShowConfsHelpTable
@@ -878,9 +878,9 @@ confHelp:	bcc	@s
 		.byte	13|$80
 		; scan through table and print options, skipping first option which is "."
 		lda	#<(tbl_configs_MOS+6)
-		sta	zp_tmp_ptr
+		sta	zp_mos_genPTR
 		lda	#>(tbl_configs_MOS+6)
-		sta	zp_tmp_ptr+1
+		sta	zp_mos_genPTR+1
 	
 		tya				; preserve text pointer (for later pass on to ROMs)
 		pha
@@ -903,31 +903,30 @@ confHelp:	bcc	@s
 ShowConfsHelpTable:
 @lp:
 		ldy	#0
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		beq	@done
 		
 		ldy	#5
-		lda	(zp_tmp_ptr),Y
-		sta	zp_tmp_ptr+2
-		bit	zp_tmp_ptr+2
-		bvc	@nono
+		lda	(zp_mos_genPTR),Y
+		and	#$40
+		beq	@nono
 
 		ldy	#0
-		jsr	PrintAtPtrPtrY
+		jsr	PrintAtPtrgenPtrY
 		jmp	@nextNL
 @nono:		ldy	#0
-		jsr	PrintAtPtrPtrY16
+		jsr	PrintAtPtrgenPtrY16
 		ldy	#4
-		jsr	PrintAtPtrPtrY		; print help
+		jsr	PrintAtPtrgenPtrY		; print help
 
 @nextNL:	jsr	PrintNL
 @next:
 		clc
-		lda	zp_tmp_ptr
+		lda	zp_mos_genPTR
 		adc	#6
-		sta	zp_tmp_ptr
+		sta	zp_mos_genPTR
 		bcc	@lp
-		inc	zp_tmp_ptr+1
+		inc	zp_mos_genPTR+1
 		bne	@lp
 @done:		rts
 
@@ -940,15 +939,15 @@ ShowStatsHelpTableInt:
 		php
 @lp:
 		ldy	#0
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		beq	@done
 
 		ldy	#5
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		and	#$40
 		bne	@nolbl			; skip if a YN statYN will print this if set
 		ldy	#0
-		jsr	PrintAtPtrPtrY16	
+		jsr	PrintAtPtrgenPtrY16	
 
 @nolbl:
 		plp
@@ -958,28 +957,28 @@ ShowStatsHelpTableInt:
 		lda	#<(@next-1)
 		pha				; return to @nextNL
 		ldy	#3
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		pha
 		dey
-		lda	(zp_tmp_ptr),Y		; push routine address
+		lda	(zp_mos_genPTR),Y		; push routine address
 		pha
 		sec				; indicate status
 		rts				; call pushed routine
 
 @next:
 		ldy	#5
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		and	#$40
 		bne	@nonl			; skip if a YN statYN will print this if set
 		jsr	PrintNL
 @nonl:
 
 		clc
-		lda	zp_tmp_ptr
+		lda	zp_mos_genPTR
 		adc	#6
-		sta	zp_tmp_ptr
+		sta	zp_mos_genPTR
 		bcc	@lp
-		inc	zp_tmp_ptr+1
+		inc	zp_mos_genPTR+1
 		bne	@lp
 @done:		plp
 		rts
@@ -989,9 +988,9 @@ statHelp:	jsr	PrintImmedT
 		.byte	13|$80
 
 		lda	#<(tbl_configs_MOS+6)
-		sta	zp_tmp_ptr
+		sta	zp_mos_genPTR
 		lda	#>(tbl_configs_MOS+6)
-		sta	zp_tmp_ptr+1
+		sta	zp_mos_genPTR+1
 	
 		tya				; preserve text pointer (for later pass on to ROMs)
 		pha
@@ -1038,21 +1037,21 @@ confYN:		bcs	statYN
 
 statYN:		php
 		ldy	#5
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		ldx	#0
 		and	#$8
 		beq	@nonono
 		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
-@nonono:	stx	zp_tmp_ptr+3		; store flip mask, used to swap senses of bit
-		lda	(zp_tmp_ptr),Y
+@nonono:	stx	zp_mos_genPTR+3		; store flip mask, used to swap senses of bit
+		lda	(zp_mos_genPTR),Y
 		and	#$7			; the bit position used to store the config
 		
 		jsr	MaskBitA
 
-		sta	zp_tmp_ptr+2		; store mask
+		sta	zp_mos_genPTR+2		; store mask
 		
 		ldy	#4
-		lda	(zp_tmp_ptr),Y		; get index in CMOS
+		lda	(zp_mos_genPTR),Y		; get index in CMOS
 		tax
 		plp
 		php
@@ -1060,12 +1059,12 @@ statYN:		php
 		jsr	CMOS_ReadMosX
 		jmp	@nob
 @blt:		jsr	CMOS_ReadFirmX
-@nob:		eor	zp_tmp_ptr+3
-		and	zp_tmp_ptr+2
+@nob:		eor	zp_mos_genPTR+3
+		and	zp_mos_genPTR+2
 		beq	@nono
 
 		ldy	#0
-		jsr	PrintAtPtrPtrY
+		jsr	PrintAtPtrgenPtrY
 		jsr	PrintNL
 
 @nono:		plp

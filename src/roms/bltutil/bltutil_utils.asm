@@ -44,8 +44,8 @@
 		.export	PrintXYT
 		.export	PrintXYT16
 		.export	PrintPTR
-		.export PrintAtPtrPtrY16
-		.export PrintAtPtrPtrY
+		.export PrintAtPtrgenPtrY16
+		.export PrintAtPtrgenPtrY
 		.export	PrintPTRT
 		.export PrintImmedT
 		.export PrintImmedT16
@@ -268,12 +268,12 @@ exImmedT:	clc
 ; print the string pointed to by (zp_tmp_ptr),Y
 ; preserves all regs and flags, saves string length in zp_tmp_ptr+3
 
-PrintAtPtrPtrY16:
+PrintAtPtrgenPtrY16:
 		php
 		clc
 		bcc	PrintAtPtrPtrY_int
 
-PrintAtPtrPtrY:
+PrintAtPtrgenPtrY:
 		php
 		sec				; indicate normal (not 16 col)
 PrintAtPtrPtrY_int:		
@@ -283,18 +283,22 @@ PrintAtPtrPtrY_int:
 		pha
 		txa
 		pha
-		lda	(zp_tmp_ptr),Y
+		lda	zp_trans_tmp
+		pha
+		lda	(zp_mos_genPTR),Y
 		tax
-		stx	zp_tmp_ptr+3		; save start of string
+		stx	zp_trans_tmp		; save start of string
 		iny
-		lda	(zp_tmp_ptr),Y
+		lda	(zp_mos_genPTR),Y
 		tay
 		beq	@nos			; invalid pointer, skip
 		jsr	PrintXY_int
 @nos:		txa
 		sec
-		sbc	zp_tmp_ptr+3		; length of string
-		sta	zp_tmp_ptr+3
+		sbc	zp_trans_tmp		; length of string
+		sta	zp_trans_tmp
+		pla
+		sta	zp_trans_tmp
 		pla
 		tax
 		pla
