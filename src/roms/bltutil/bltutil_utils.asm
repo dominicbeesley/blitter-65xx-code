@@ -49,6 +49,8 @@
 		.export	PrintPTRT
 		.export PrintImmedT
 		.export PrintImmedT16
+		.export PrintNo
+		.export PrintYes
 ; unused;	.export PrintXSpc
 		.export	PromptYN
 		.export	PromptNo
@@ -450,11 +452,15 @@ PrintSizeK:
 		lda	#'k'
 		jmp	OSWRCH
 
+PrintNo:	jsr	PrintImmedT
+		TOPTERM "No"
+		rts
+PrintYes:	jsr	PrintImmedT
+		TOPTERM "Yes"
+		rts
 
-
-PromptYN:	jsr	PrintXY
-		ldx	#<str_YN
-		ldy	#>str_YN
+PromptYN:	jsr	PrintImmedT
+		TOPTERM " (Y/N)?"
 		jsr	PrintXY
 @1:		jsr	WaitKey
 		bcs	PromptRTS
@@ -462,15 +468,13 @@ PromptYN:	jsr	PrintXY
 		beq	PromptYes
 		cmp	#'N'
 		bne	@1
-PromptNo:	ldx	#<strNo
-		ldy	#>strNo
-		jsr	PrintXY
+PromptNo:	jsr	PrintNo
+		jsr	PrintNL
 		lda	#$FF
 		clc
 		rts
-PromptYes:	ldx	#<strYes
-		ldy	#>strYes
-		jsr	PrintXY
+PromptYes:	jsr	PrintYes
+		jsr	PrintNL
 		lda	#0
 		clc
 PromptRTS:	rts
@@ -999,7 +1003,3 @@ MaskBitA:	tay
 		bpl	@ml
 		rts
 
-		.SEGMENT "RODATA"
-str_YN:			.byte	" (Y/N)?",0
-strNo:			.byte	"No", $D, 0
-strYes:			.byte	"Yes", $D, 0
