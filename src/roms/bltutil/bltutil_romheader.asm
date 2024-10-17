@@ -553,15 +553,18 @@ searchCMDTabExec:
 		bvc	anRTS
 
 cmdTabExecPlaPla:
+		php
+		pla
+		tax
 		; discard return address -- we're not going to return
 		pla
 		pla
-
+		jmp	cmdT1
 cmdTabExec:	php
 		pla
 		tax					; preserve flags
 		; push address of ServiceOutA0 to stack for return
-		lda	#>(ServiceOutA0-1)
+cmdT1:		lda	#>(ServiceOutA0-1)
 		pha
 		lda	#<(ServiceOutA0-1)
 		pha
@@ -639,8 +642,10 @@ searchCMDTab:
 		dey
 @cmd_match2_sk:	iny
 		pla					; discard stacked Y
+		pla
+		ora	#$40				; indicate pass
+		pha
 		plp
-		bit	bitSEV				; indicate pass
 		rts
 @r:		pla					
 		tay
@@ -1032,6 +1037,17 @@ statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
 
 confYN:		bcs	statYN
 
+		php
+		pla
+		jsr	PrintHexA
+		jsr	PrintSpc
+		ldy	#5
+		lda	(zp_mos_genPTR),Y
+		jsr	PrintHexA
+		dey
+		lda	(zp_mos_genPTR),Y
+		jsr	PrintHexA
+		jsr	PrintSpc
 		
 		jsr PrintImmedT
 		TOPTERM "CONFYN"
@@ -1126,7 +1142,8 @@ svc28x:		jsr	findConfigBL
 dotagain:
 		iny
 		plp
-::findConfigMOS:	
+::findConfigMOS:
+		lda	#0				; set Z=1, S=0
 		php
 		lda	#<tbl_configs_MOS
 		sta	zp_mos_genPTR
@@ -1146,16 +1163,22 @@ e2:		jsr	SkipSpacesPTR
 		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#'O'
-		bne	@nono
+		bne	@nono1
 		iny
 		plp
 		lda	#$FF				; set Z=0, S=1
 		bne	@noyes
+@nono1:		dey
 @nono:		plp
-@noyes:		jmp	searchCMDTab
+@noyes:		jsr	searchCMDTab
+		bpl	@ok
+		php					; we skipped a no skip back
+		dey
+		dey
+		plp
+@ok:		rts
 		;
 empty:		plp
-		lda	#0				; set Z=1, S=0
 		bit	bitSEV				; indicate found (first entry!)
 ::bitSEV:	rts
 .endscope
