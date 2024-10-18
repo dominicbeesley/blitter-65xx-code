@@ -795,7 +795,7 @@ strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[-]] [T[-]] [?]",0
 strCmdSound:		.byte	"BLSOUND", 0
 strHelpSound:		.byte	"[ON|OFF|DETUNE]", 0
 strCmdHeapInfo:		.byte	"BLHINF",0
-strHelpHeapInfo:		.byte	"[V]",0
+strHelpHeapInfo:	.byte	"[V]",0
 strCmdSoundSamLoad:	.byte	"BLSAMLD",0
 strHelpSoundSamLoad:	.byte	"<filename> <SN> [reploffs]",0
 strCmdSoundSamMap:	.byte	"BLSAMMAP",0
@@ -834,8 +834,8 @@ tbl_configs_MOS:	Conf	strDot,			confHelp, 		0
 			.word	0
 ; these are always scanned
 tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0		
-			ConfYN	strBLThrottle,		confYN,			1,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
-			ConfYN	strBLThrottleMOS,	confYN,			1,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strBLThrottle,		confYN,			0,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strBLThrottleMOS,	confYN,			0,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
 			Conf	strBLThrottleROMS,	confBLThrottleROMS,	confHelpBLThrottleROMS
 			.word	0
 
@@ -1037,31 +1037,71 @@ statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
 
 confYN:		bcs	statYN
 
-		php
-		pla
-		jsr	PrintHexA
-		jsr	PrintSpc
+		php				; save flags for later (sign contains Y/N)
 		ldy	#5
 		lda	(zp_mos_genPTR),Y
-		jsr	PrintHexA
-		dey
+		ldx	#0
+		and	#$8
+		beq	@nflip
+		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
+@nflip:		txa
+		; flip again if a "yes" passed in
+		plp
+		php
+		bmi	@s
+		eor	#$FF		
+@s:		sta	zp_trans_tmp		; store flip mask, used to swap senses of bit
 		lda	(zp_mos_genPTR),Y
-		jsr	PrintHexA
-		jsr	PrintSpc
+		and	#$7			; the bit position used to store the config
 		
-		jsr PrintImmedT
-		TOPTERM "CONFYN"
+		jsr	MaskBitA
 
+		sta	zp_trans_tmp+1		; store mask
+		and	zp_trans_tmp
+		sta	zp_trans_tmp		; set bit to store
+		
+		ldy	#4
+		lda	(zp_mos_genPTR),Y		; get index in CMOS
+		tax
+		plp
+		php
+		bvs	@blt
+		jsr	CMOS_ReadMosX
+		jmp	@nob
+@blt:		jsr	CMOS_ReadFirmX
+@nob:		eor	#$FF				; flip all bits
+		ora	zp_trans_tmp+1			; set mask bit
+		eor	#$FF				; flip all again - 0 in masked bit
+		ora	zp_trans_tmp
+
+		pha
+		jsr	PrintHexA
+		ldy	#4
+		lda	(zp_mos_genPTR),Y		; get index in CMOS
+		tax
+		jsr	PrintHexA
+		pla
+
+		plp
+		php
+		bvs	@blt2
+		jsr	CMOS_WriteMosX
+		jmp	@nob2
+@blt2:		jsr	CMOS_WriteFirmX
+@nob2:
+
+		plp
 		rts
+
 
 statYN:		php
 		ldy	#5
 		lda	(zp_mos_genPTR),Y
 		ldx	#0
 		and	#$8
-		beq	@nonono
+		beq	@nflip
 		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
-@nonono:	stx	zp_trans_tmp		; store flip mask, used to swap senses of bit
+@nflip:		stx	zp_trans_tmp		; store flip mask, used to swap senses of bit
 		lda	(zp_mos_genPTR),Y
 		and	#$7			; the bit position used to store the config
 		
@@ -1133,7 +1173,6 @@ svc28x:		jsr	findConfigBL
 
 .scope
 ::findConfigBL:
-		php
 		lda	#<tbl_configs_BLTUTIL
 		sta	zp_mos_genPTR
 		lda	#>tbl_configs_BLTUTIL
@@ -1143,14 +1182,16 @@ dotagain:
 		iny
 		plp
 ::findConfigMOS:
-		lda	#0				; set Z=1, S=0
-		php
 		lda	#<tbl_configs_MOS
 		sta	zp_mos_genPTR
 		lda	#>tbl_configs_MOS
 		sta	zp_mos_genPTR+1
 
-e2:		jsr	SkipSpacesPTR
+e2:
+		lda	#0				; set Z=1, S=0
+		php
+
+		jsr	SkipSpacesPTR
 		cmp	#'.'
 		beq	dotagain
 		cmp	#$D
@@ -1172,8 +1213,8 @@ e2:		jsr	SkipSpacesPTR
 @nono:		plp
 @noyes:		jsr	searchCMDTab
 		bpl	@ok
-		php					; we skipped a no skip back
-		dey
+		php					
+		dey					; we skipped a no skip back
 		dey
 		plp
 @ok:		rts

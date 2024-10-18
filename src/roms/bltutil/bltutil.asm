@@ -1900,7 +1900,7 @@ cmdXMSave:	jsr	loadsavegetfn
 		jsr	OSFILE
 
 
-		; remove OSGBPB, filenamepointer and ack from stack
+		; remove OSGBPB, filename pointer and ack from stack
 		tsx
 		txa
 		clc
@@ -1913,14 +1913,14 @@ cmdXMSave:	jsr	loadsavegetfn
 
 throttleInit:
 		jsr	cfgGetAPISubLevel_1_2
-		bcc	@notpup
+		bcc	@nothardres
 
 		lda	#OSBYTE_253_VAR_LAST_RESET
 		ldx	#0
 		ldy	#$FF
 		jsr	OSBYTE
 		cpx	#1
-		bne	@notpup
+		bcc	@nothardres
 
 
 		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
@@ -1950,7 +1950,7 @@ throttleInit:
 
 		; TODO: MOS Turbo/Throttle
 
-@notpup:	rts
+@nothardres:	rts
 
 ;------------------------------------------------------------------------------
 ; Strings and tables
