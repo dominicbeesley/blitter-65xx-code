@@ -864,11 +864,10 @@ tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0
 strDot:			.byte	".",0
 strTV:			.byte	"TV",0
 strTube:		.byte	"Tube",0
-strBLThrottle:		.byte	"BLThrottle",0
-strBLThrottleMOS:	.byte	"BLThrottleMOS",0
-strBLThrottleROMS:	.byte	"BLThrottleROMS",0
+strBLThrottle:		.byte	"BLSlow",0
+strBLThrottleROMS:	.byte	"BLSlowROMs",0
 
-confHelpBLThrottleROMS:	.byte	"[+|-<D>[,...]]",0
+confHelpBLThrottleROMS:	.byte	"[[+|-]<D>[,...]]",0
 
 confHelpDD:		.byte	"[<D>[,<D>]]",0
 
