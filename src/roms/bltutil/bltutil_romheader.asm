@@ -82,19 +82,40 @@ Serv_jump_table:
 		SJTE	SERVICE_9_HELP,		svc9_HELP
 		SJTE	SERVICE_28_CONFIGURE, 	svc28_CONFIG
 		SJTE	SERVICE_29_STATUS, 	svc29_STATUS
-		SJTE	SERVICE_FE_TUBEINIT, 	svcFE_TubeInit
+		SJTE	SERVICE_FE_TUBEEXPLODE,	svcFE_TubeExplode
+		SJTE	SERVICE_FF_TUBEINIT, 	svcFF_TubeInit
 Serv_jump_table_Len	:= 	* - Serv_jump_table	
 
-svcFE_TubeInit:
-		pha
+svcFF_TubeInit:
+		ldx	#$F
+		jsr	CMOS_ReadMosX
+		and	#1
+		beq	@dis
+		jmp	ServiceOut
+		; inhibit tube
+@dis:		lda	#0
+		sta	sysvar_TUBE_PRESENT		; disable tube
+		jmp	ServiceOutA0
+
+svcFE_TubeExplode:
 		jsr	CheckBlitterPresent
 		bcs	@s
-		jsr      cfgGetAPISubLevel_1_3
+		jsr     cfgGetAPISubLevel_1_3
 		bcc	@s
 		jsr	cfgMasterMOS
 		bcs	@s
 		jsr	autohazel_boot_second
-@s:		jmp	plaServiceOut
+@s:		ldx	#$F
+		jsr	CMOS_ReadMosX
+		and	#1
+		bne	@s2
+		lda	#0				; disable tube
+		sta	sysvar_TUBE_PRESENT		; disable tube
+		ldy	#0				; pass on tube disabled		
+		pla					; discard passed in Y		
+		pla					
+		rts
+@s2:		jmp	ServiceOut
 
 
 Service:
