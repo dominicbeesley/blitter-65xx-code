@@ -1095,14 +1095,6 @@ confYN:		bcs	statYN
 		eor	#$FF				; flip all again - 0 in masked bit
 		ora	zp_trans_tmp
 
-		pha
-		jsr	PrintHexA
-		ldy	#4
-		lda	(zp_mos_genPTR),Y		; get index in CMOS
-		tax
-		jsr	PrintHexA
-		pla
-
 		plp
 		php
 		bvs	@blt2
