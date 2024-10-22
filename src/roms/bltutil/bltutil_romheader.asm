@@ -1106,7 +1106,11 @@ confYN:		bcs	statYN
 		ora	zp_trans_tmp+1			; set mask bit
 		eor	#$FF				; flip all again - 0 in masked bit
 		ora	zp_trans_tmp
-
+		pha
+		ldy	#4
+		lda	(zp_mos_genPTR),Y		; get index in CMOS
+		tax
+		pla
 		plp
 		php
 		bvs	@blt2
