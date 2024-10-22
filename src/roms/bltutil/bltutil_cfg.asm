@@ -63,7 +63,7 @@ cfgMasterMOS:
 		pha
 		txa
 		pha
-		lda	#0
+		lda	#OSBYTE_0_HOST_OS
 		ldx	#$FF
 		jsr	OSBYTE
 		txa

@@ -66,11 +66,7 @@
 		.export parseONOFF_ck
 		.export parseONOFF_ON
 		.export ParseHex
-		.export ParseHexLp
-		.export ParseHexShAd
-		.export ParseHexAlpha
-		.export ParseHexErr
-		.export ParseHexDone
+		.export ParseDecOrHex
 		.export zeroAcc
 		.export asl4Acc
 		.export addAAcc
@@ -128,15 +124,6 @@ Print2Spc:	jsr	PrintSpc
 PrintSpc:	lda	#' '
 PrintA:		jmp	OSASCI
 PrintNL:	jmp	OSNEWL
-
-;unused;PrintXSpc:	lda	#' '
-;unused;		cpx	#0
-;unused;		beq	@r
-;unused;@l:		jsr	PrintA
-;unused;		dex
-;unused;		bne	@l
-;unused;@r:		rts
-
 
 PrintHexA:	pha
 		lsr	a
@@ -527,26 +514,26 @@ parseONOFF:	jsr	SkipSpacesPTR
 		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#'O'
-		bne	ParseHexErr
+		bne	ParseRetSec
 		iny
 		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#'N'
 		beq	parseONOFF_ON
 		cmp	#'F'
-		bne	ParseHexErr
+		bne	ParseRetSec
 		iny
 		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#'F'
-		bne	ParseHexErr
+		bne	ParseRetSec
 		lda	#0
 parseONOFF_ck:						; check for space or &D
 		pha
 		iny
 		lda	(zp_mos_txtptr),Y
 		cmp	#' '+1
-		bcs	ParseHexErr		
+		bcs	ParsePlaRetSec		
 		clc
 		pla
 		rts
@@ -561,8 +548,6 @@ ParseHex:
 		ldx	#$FF				; indicates first char
 		jsr	zeroAcc
 		jsr	SkipSpacesPTR
-		cmp	#$D
-		beq	ParseHexErr
 ParseHexLp:	lda	(zp_mos_txtptr),Y
 		iny
 		jsr	ToUpper
@@ -582,12 +567,12 @@ ParseHexAlpha:	cmp	#'A'
 		bcs	ParseHexErr
 		sbc	#'A'-11				; note carry clear 'A'-'F' => 10-15
 		jmp	ParseHexShAd
-ParseHexErr:	inx
+ParseHexErr:	inx					; check for error (i.e. no digits accepted)
 		bne	ParseHexDone
-		sec
 		pla
 		tax
-		pla
+ParsePlaRetSec:	pla
+ParseRetSec:	sec
 		rts
 ParseHexDone:	dey
 		pla
@@ -595,6 +580,30 @@ ParseHexDone:	dey
 		pla
 		clc
 		rts
+
+ParseDecOrHex:	pha
+		txa
+		pha
+		ldx	#$FF				; indicates 1st char
+		jsr	zeroAcc
+		jsr	SkipSpacesPTR
+		cmp	#'&'
+		bne	@lp
+		iny
+		bne	ParseHexLp
+@lp:		lda	(zp_mos_txtptr),Y
+		iny
+		sec
+		sbc	#'0'
+		bcc	ParseHexErr
+		cmp	#10
+		bcs	ParseHexErr
+		inx
+		jsr	mul10Acc
+		jsr	addAAcc
+		jmp	@lp
+
+
 
 ;------------------------------------------------------------------------------
 ; Stackery
@@ -727,21 +736,35 @@ zeroAcc:	pha
 		pla
 		rts
 
-asl4Acc:
-		pha
-		txa
-		pha
-		ldx	#4
-@1:		asl	zp_trans_acc + 0
+asl4Acc:	jsr	asl2Acc
+asl2Acc:	jsr	asl1Acc
+asl1Acc:	asl	zp_trans_acc + 0
 		rol	zp_trans_acc + 1
 		rol	zp_trans_acc + 2
 		rol	zp_trans_acc + 3
-		dex
-		bne	@1
-		pla
-		tax
+		rts
+
+
+mul10Acc:	pha
+		jsr	asl1Acc			; Acc = * 2
+		jsr	PushAcc			; Stack =  * 2
+		jsr	asl2Acc			; Acc = * 8
+		clc
+		pla	
+		adc	zp_trans_acc+0
+		sta	zp_trans_acc+0
+		pla	
+		adc	zp_trans_acc+1
+		sta	zp_trans_acc+1
+		pla	
+		adc	zp_trans_acc+2
+		sta	zp_trans_acc+2
+		pla	
+		adc	zp_trans_acc+3
+		sta	zp_trans_acc+3
 		pla
 		rts
+
 
 addAAcc:
 		pha

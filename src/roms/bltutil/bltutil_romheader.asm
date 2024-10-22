@@ -87,11 +87,15 @@ Serv_jump_table:
 Serv_jump_table_Len	:= 	* - Serv_jump_table	
 
 svcFF_TubeInit:
+		jsr	CheckBlitterPresent
+		bcs	@s
+		jsr	cfgMasterMOS
+		bcs	@s
 		ldx	#$F
 		jsr	CMOS_ReadMosX
 		and	#1
 		beq	@dis
-		jmp	ServiceOut
+@s:		jmp	ServiceOut
 		; inhibit tube
 @dis:		lda	#0
 		sta	sysvar_TUBE_PRESENT		; disable tube
@@ -103,7 +107,7 @@ svcFE_TubeExplode:
 		jsr     cfgGetAPISubLevel_1_3
 		bcc	@s
 		jsr	cfgMasterMOS
-		bcs	@s
+		bcs	@s2
 		jsr	autohazel_boot_second
 @s:		ldx	#$F
 		jsr	CMOS_ReadMosX
@@ -245,15 +249,16 @@ svc1_ClaimAbs:
 
 @rok:
 		jsr	CheckBlitterPresent
-		bcs	@s2
-
+		bcc	@ok1
+		jmp	@nope
+@ok1:
 		jsr      cfgGetAPISubLevel_1_3
 		bcc	@sh
 		; do autohazel for lower priority roms
 		jsr	cfgMasterMOS
 		bcs	@sh
 		jsr	autohazel_boot_first
-		@sh:
+@sh:
 
 
 		; belt and braces write $f0 to flash to clear soft id mode
@@ -271,7 +276,7 @@ svc1_ClaimAbs:
 		jsr	noice_init
 @notromf:
 
-		lda	#$79
+		lda	#OSBYTE_121_KEYB_SCAN
 		ldy	#0
 		ldx	#$A8
 		jsr	OSBYTE				; check if _/£ key down
@@ -280,9 +285,31 @@ svc1_ClaimAbs:
 		jsr	cmdSRNUKE_lang
 		jmp	cmdSRNUKE_reboot
 @s2:		
+
+
+		lda	#0
+		pha					; indicate no reset
+
+		lda	#OSBYTE_121_KEYB_SCAN
+		ldy	#0
+		ldx	#$B3
+		jsr	OSBYTE				; check if R key down
+		txa
+		bpl	@s3
+		jsr	configReset
+		bcs	@s3
+		pla
+		lda	#$FF
+		pha
+@s3:		jsr	configMOSInit
 		jsr	throttleInit
+
+
 		jsr	cfgPrintVersionBoot
-		bcs	@nope
+		bcc	@sok1
+		jmp	@nope
+@sok1:
+
 
 		; work out memory size (depends on board type)
 		; get BB RAM size (assume starts at bank 60 and is at most 20 banks long)		
@@ -323,7 +350,14 @@ svc1_ClaimAbs:
 		jsr	heap_init
 		jsr	sound_boot
 		jsr	PrintNL
-
+		pla	
+		beq	@nores
+		jsr	PrintImmedT
+		.byte  "CMOS RAM RESET",13
+		TOPTERM "PRESS CTRL BREAK"
+		sei
+@H:		jmp	@H
+@nores:
 @nope:		jmp	ServiceOut
 
 ; on entry (zp_mos_txtptr),Y is start of keys to match
@@ -849,14 +883,14 @@ strHelpSTATUS:		.byte	0
 
 
 ; these are scanned if we're replacing non-master MOS
-tbl_configs_MOS:	Conf	strDot,			confHelp, 		0		
+tbl_configs_MOS:	Conf	strDot,			confHelp, 		0	
+			Conf	strMode,		confMode,		confHelpD	
 			ConfYN	strTube,		confYN,			0,	0,	$F
 			Conf	strTV,			confTV,			confHelpDD
 			.word	0
 ; these are always scanned
 tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0		
 			ConfYN	strBLThrottle,		confYN,			0,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
-			ConfYN	strBLThrottleMOS,	confYN,			0,	BLTUTIL_CMOS_FW_THROT_BIT_MOS, BLTUTIL_CMOS_FW_THROT
 			Conf	strBLThrottleROMS,	confBLThrottleROMS,	confHelpBLThrottleROMS
 			.word	0
 
@@ -866,10 +900,12 @@ strTV:			.byte	"TV",0
 strTube:		.byte	"Tube",0
 strBLThrottle:		.byte	"BLSlow",0
 strBLThrottleROMS:	.byte	"BLSlowROMs",0
+strMode:		.byte	"Mode",0
 
 confHelpBLThrottleROMS:	.byte	"[[+|-]<D>[,...]]",0
 
 confHelpDD:		.byte	"[<D>[,<D>]]",0
+confHelpD:		.byte	"[<D>]",0
 
 		.code
 		; TODO: move to another files (move commands table parse too?)
@@ -1032,29 +1068,6 @@ statHelp:	jsr	PrintImmedT
 		jsr	OSBYTE			; pass on to ROMS
 		rts
 
-confTV:		bcs	statTV
-		jsr	PrintImmedT
-		TOPTERM	"CONF TV"
-		rts
-statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
-
-		ldx	#10
-		jsr	CMOS_ReadMosX
-		ror	A
-		ror	A
-		ror	A
-		ror	A
-		pha
-		ror	A
-		and	#3
-		jsr	PrintDecA
-		jsr	PrintComma
-		pla
-		and	#1
-		jsr	PrintDecA
-		jsr	PopAcc
-		rts
-
 confYN:		bcs	statYN
 
 		php				; save flags for later (sign contains Y/N)
@@ -1152,10 +1165,65 @@ statBLThrottleROMS:
 		rts
 
 
+confTV:		bcs	statTV
+		jsr	ParseDecOrHex
+		bcs	jbrkBadCommand
+		lda	zp_trans_acc+0
+		pha
+		jsr	SkipSpacesPTR
+		cmp	#$D
+		bne	@s2
+		clc
+		bcc	@s
+@s2:		cmp	#','
+		bne	jbrkBadCommand
+		iny
+		jsr	ParseDecOrHex
+		bcs	jbrkBadCommand
+		lda	zp_trans_acc+0
+		ror	A			; get into Cy
+@s:		pla
+		rol	A
+		asl	A
+		asl	A
+		asl	A
+		asl	A
+		sta	zp_trans_tmp
+
+		ldx	#10	
+		jsr	CMOS_ReadMosX		; get existing value
+		and	#$0F
+		ora	zp_trans_tmp
+		ldx	#10	
+		jsr	CMOS_WriteMosX
+		rts
+
+statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
+
+		ldx	#10
+		jsr	CMOS_ReadMosX		
+		ror	A
+		ror	A
+		ror	A
+		ror	A
+		pha
+		ror	A
+		and	#7
+		jsr	PrintDecA
+		jsr	PrintComma
+		pla
+		and	#1
+		jsr	PrintDecA
+		jsr	PopAcc
+		rts
+
+
+
 	; We enter here if the *STATUS command is executed and we are a MOS substitute
-cmdSTATUS:	sec
+	.scope
+::cmdSTATUS:	sec
 		bcs	doConfStat
-cmdCONFIG:	clc					; this will come through in findCMOS result
+::cmdCONFIG:	clc					; this will come through in findCMOS result
 doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
 		bvs	clvjcmdexecpp			; matched skip forward
 		lda	#SERVICE_28_CONFIGURE>>1
@@ -1164,9 +1232,11 @@ doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
 		lda	#OSBYTE_143_SERVICE_CALL
 		jsr	OSBYTE				; if not found pass round ROMs (including our own)
 		cpx	#0
-		beq	@ok
+		beq	ok
+::jbrkBadCommand:
 		jmp	brkBadCommand
-@ok:		rts
+ok:		rts
+	.endscope
 		
 		; found in table, execute from table
 clvjcmdexecpp:
@@ -1181,6 +1251,29 @@ svc29_STATUS:	sec
 svc28x:		jsr	findConfigBL
 		bvs	jcmdexec
 		jmp	ServiceOut			; pass on to other handlers
+
+
+confMode:	bcs	statMode
+		jsr	ParseDecOrHex
+		bcs	jbrkBadCommand
+		lda	zp_trans_acc+0
+		and	#$7
+		sta	zp_trans_tmp		
+		ldx	#10	
+		jsr	CMOS_ReadMosX		; get existing value
+		and	#$F0
+		ora	zp_trans_tmp
+		ldx	#10	
+		jsr	CMOS_WriteMosX
+		rts
+statMode:	jsr	PushAcc			; we're about to use acc which crashes pointers
+		ldx	#10
+		jsr	CMOS_ReadMosX
+		and	#$7
+		jsr	PrintDecA
+		jsr	PopAcc		
+		rts
+
 
 
 .scope
@@ -1235,7 +1328,106 @@ empty:		plp
 		bit	bitSEV				; indicate found (first entry!)
 ::bitSEV:	rts
 .endscope
-		
+		.rodata
+confDefaults:
+		.word	CMOS_WriteMosX
+		.word	$0A00
+		.word	CMOS_WriteFirmX
+		.word	$0000
+		.word	$0100
+		.word	$0200
+		.word	$FFFF
+
+		.code
+configReset:
+		jsr	cfgMasterMOS
+		bcs	@nomos
+
+		; we've been told to reset, set MOS and BLT pages to FF then see with value from tables
+		ldy	#0			;index into tables
+
+@l1:
+		lda	confDefaults,Y		; get CMOS write routine
+		sta	zp_trans_tmp
+		iny
+		lda	confDefaults,Y
+		sta	zp_trans_tmp+1	
+		iny	
+		cmp	#$FF			; marker for end of table
+		beq	@end			; past end of table
+
+		sty	zp_trans_tmp+2		; save pointer
+		; first use routine to clear all locations 0..127
+		ldx	#0		
+@clp:		stx	zp_trans_tmp+3
+		lda	#$FF
+		jsr	@r
+		inc	zp_trans_tmp+3
+		inx
+		bpl	@clp
+
+		; parse table
+@l2:		ldy	zp_trans_tmp+2
+		lda	confDefaults+1,Y	; get hi byte
+		bmi	@l1			; if -ve then next routine/end
+		tax				; it's the index
+		lda	confDefaults,Y
+		iny
+		iny
+		sty	zp_trans_tmp+2
+		jsr	@r
+		jmp	@l2
+
+
+@end:		clc
+@nomos:		rts
+@r:		jmp	(zp_trans_tmp)		; call indirect
 
 
 
+	; perform, if applicable, the Ersatz MOS configurations
+configMOSInit:
+		jsr	cfgMasterMOS
+		bcs	@nothardres
+
+		lda	#OSBYTE_253_VAR_LAST_RESET
+		ldx	#0
+		ldy	#$FF
+		jsr	OSBYTE
+		cpx	#1
+		bcc	@nothardres
+
+		; poke config values into startup options 
+		lda	sysvar_STARTUP_OPT
+		and	#$F8
+		sta	zp_trans_tmp
+		ldx	#10		
+		jsr	CMOS_ReadMosX			; get VDU opts
+		pha
+
+		lsr	A
+		lsr	A
+		lsr	A
+		lsr	A
+		; A contains interlace flag
+		pha
+		and	#1
+		sta	oswksp_VDU_INTERLACE
+		pla	
+		lsr	A
+		sta	oswksp_VDU_VERTADJ		
+
+		pla
+		and	#7
+		ora	zp_trans_tmp
+		sta	sysvar_STARTUP_OPT
+		and	#7
+		pha
+		lda	#22				; MODE
+		jsr	OSWRCH
+		pla
+		jsr	OSWRCH
+
+
+@nothardres:
+		rts		
