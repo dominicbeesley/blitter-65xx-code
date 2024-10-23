@@ -50,6 +50,9 @@
 		.export cmdXMLoad
 		.export cmdXMSave
 		.export throttleInit
+		.export cmdBLTurbo_PrintRomsInit
+		.export cmdBLTurbo_PrintRomsA
+		.export cmdBLTurbo_PrintRomsDone
 
 		.CODE
 
@@ -234,48 +237,81 @@ cmdBLTurboQry:
 		bcc	cmdBLTurboEnd
 
 		; Throttled ROMS
-		ldx	#0
-		stx	zp_trans_tmp			; flags $80 had hit
-
 		lda	sheila_ROM_THROTTLE_0
-		jsr	@bltrom8
-		lda	sheila_ROM_THROTTLE_1
-		jsr	@bltrom8
+		ora	sheila_ROM_THROTTLE_1
+		beq	@noroms
+		jsr	PrintSpc
 
-		jsr	OSNEWL
+		jsr	cmdBLTurbo_PrintRomsInit
+		lda	sheila_ROM_THROTTLE_0
+		jsr	cmdBLTurbo_PrintRomsA
+		lda	sheila_ROM_THROTTLE_1
+		jsr	cmdBLTurbo_PrintRomsA
+		jsr	cmdBLTurbo_PrintRomsDone
+
+@noroms:	jsr	OSNEWL
 
 		pla
 		tay					; restore command pointer
-		jmp	cmdBLTurbo_Next
+		jmp	cmdBLTurbo_NextClr
 
+cmdBLTurbo_PrintRomsInit:
+		ldx	#0
+		stx	zp_trans_tmp			; flags $80 had hit
+		rts
 
-@bltrom8:	sta	zp_trans_acc
+cmdBLTurbo_PrintRomsA:
+
+@bltrom8:	sta	zp_trans_tmp+2
 		ldy	#8
-@bltrom8lp:	ror	zp_trans_acc
-		bcc	@bltrom8nxt
+@bltrom8lp:	ror	zp_trans_tmp+2
+		bcc	@no
 		bit	zp_trans_tmp
+		bvs	@bltrom8nxt
 		bmi	@already
-		lda	#$80
-		sta	zp_trans_tmp			; mark already
-		jsr	PrintSpc
 		lda	#'R'
 		bne	@blsk1
 @already:	lda	#','
-@blsk1:		jsr	OSWRCH
+@blsk1:		jsr	PrintA
 		txa
-		jsr	PrintHexNybA
+		jsr	PrintDecA
+		lda	#$C0
+		sta	zp_trans_tmp			; mark already
+		stx	zp_trans_tmp+1			; first in range
 @bltrom8nxt:	inx
 		dey
 		bne	@bltrom8lp
 		rts
+@no:		jsr	@checkclose
+		jmp	@bltrom8nxt
+
+@checkclose:
+cmdBLTurbo_PrintRomsDone:
+		bit	zp_trans_tmp
+		bpl	@r
+		bvc	@r				; no range open
+		lda	#$80
+		sta	zp_trans_tmp
+		dex
+		cpx	zp_trans_tmp+1			; check if range
+		beq	@s
+		lda	#'-'
+		jsr	PrintA
+		txa
+		jsr	PrintDecA
+@s:		inx
+@r:		rts
 
 
 
 cmdBLTurboEnd:
 		rts
 cmdBLTurbo:	
-		jsr	CheckBlitterPresentBrk		
-cmdBLTurbo_Next:
+		jsr	CheckBlitterPresentBrk	
+cmdBLTurbo_NextClr:					; return here after doing a command to clear flags
+		lda	#0
+		sta	zp_trans_tmp	
+cmdBLTurbo_Next:					; return here to retain flags
 
 		jsr	SkipSpacesPTR
 		iny
@@ -295,26 +331,25 @@ cmdBLTurbo_Next:
 		jmp	cmdBLTurboQry
 :		cmp	#13
 		beq	cmdBLTurboEnd
-		jmp	brkBadCommand
-cmdBLTurboThrottle:
-		ldx	#0
-		stx	zp_trans_tmp
-
-@lp:		jsr	SkipSpacesPTR
 		cmp	#'-'
 		bne	:+
 		lda	#$40
-		bne	@setf
-:		cmp	#$D
-		beq	@doit
-		jmp	brkBadCommand
-
-@setf:		iny
-		ora	zp_trans_tmp
+		jsr	setf
+		bne	cmdBLTurbo_Next
+:		jmp	brkBadCommand
+setf:		ora	zp_trans_tmp
 		sta	zp_trans_tmp
-		jmp	@lp
+		rts
 
-@doit:		bit	zp_trans_tmp
+cmdBLTCheckEnd:
+		jsr	SkipSpacesPTR
+		cmp	#' '+1
+		bcc	:+
+		jmp	brkBadCommand
+:		bit	zp_trans_tmp
+		rts
+cmdBLTurboThrottle:
+		jsr	cmdBLTCheckEnd
 		bvs	@cmdBLTurboThrottle_off
 @cmdBLTurboThrottle_on:
 		lda	sheila_MEM_TURBO2
@@ -323,16 +358,12 @@ cmdBLTurboThrottle:
 @cmdBLTurboThrottle_off:
 		lda	sheila_MEM_TURBO2
 		and	#BITS_MEM_TURBO2_THROTTLE ^ $FF
-@s2:		sta	sheila_MEM_TURBO2
-		
-		jmp	cmdBLTurbo_Next
+@s2:		sta	sheila_MEM_TURBO2		
+		jmp	cmdBLTurbo_NextClr
 
 
-cmdBLTurboMos:
-
-		jsr	SkipSpacesPTR
-		cmp	#'-'
-		beq	cmdBLTurboMos_off
+cmdBLTurboMos:	jsr	cmdBLTCheckEnd
+		bvs	cmdBLTurboMos_off
 
 		tya
 		pha	
@@ -382,7 +413,7 @@ cmdBLTurboMos:
 		; check to see if rom #8 is booted
 		lda	oswksp_ROMTYPE_TAB+8
 		beq	:+
-		jmp	cmdBLTurbo_MOSSlotBusy
+		jmp	cmdBLTurbo_MOSBadSlot
 :
 
 
@@ -434,7 +465,7 @@ cmdBLTurbo_NextMOS:
 		plp
 		pla
 		tay
-		jmp	cmdBLTurbo_Next
+		jmp	cmdBLTurbo_NextClr
 cmdBLTurbo_MOSWarnAlready:
 		jsr	PrintImmedT
 		.byte	"Map 1: MOS already turbo"
@@ -447,67 +478,145 @@ cmdBLTurbo_MOSBadSlot:
 cmdBLTurbo_MOSInhib:
 		M_ERROR
 		.byte	$FF, "Blitter inhibited",0
-cmdBLTurbo_MOSSlotBusy:
+
+cmdBLTurbo_NotSupp:
 		M_ERROR
-		.byte	$FF, "Slot #8 is in use cannot BLTURBO MOS",0
+		.byte	$FF, "Not supported",0
+
 
 cmdBLTurboRom:
-		jsr	ParseHex				
-		bcs	@brkInvalidArgument3
-	
 		jsr	cfgGetAPISubLevel_1_2
-		bcc	@brkInvalidArgument3
+		bcc	cmdBLTurbo_NotSupp
+		
+		jsr	cmdBLTurboRomsParse
 
-		lda	zp_trans_acc
-		cmp	#16
-		bcc	@ok1
-@brkInvalidArgument3:
-		jmp	brkInvalidArgument
-@ok1:		sta	zp_trans_tmp			; rom # and flags 
-
-		; check for [-]
-@lpfl:		lda	(zp_mos_txtptr),Y
-		jsr	ToUpper
-		cmp	#$D
-		beq	@rgo
-		cmp	#' '
-		beq	@rgo
-
-		tax
-		lda	zp_trans_tmp
-
-		cpx	#'-'
-		bne	@rnxtflag
-		ora	#$80				; add minus flag		
-@rnxtflag:	sta	zp_trans_tmp
-		iny
-		bne	@lpfl
-
-@rgo:		tya
+		tya
 		pha
+		bit	zp_trans_tmp		; get V flag for V=1 clear, V=0 set
 		ldy	#0
-		lda	#8
-		bit	zp_trans_tmp
-		beq	@sk
-		ldy	#2				; X now contains 0 or 2
-@sk:		lda	zp_trans_tmp
-		and	#7
-		tax
-		jsr	bitX
+		lda	zp_trans_tmp+1
+		jsr	@setclr
+		lda	zp_trans_tmp+2
+		ldy	#2
+		jsr	@setclr
 
-		bit	zp_trans_tmp
-		bpl	@pl
-		eor	#$ff
-		and	sheila_ROM_THROTTLE_0,Y
-		jmp	@s
-@pl:		ora	sheila_ROM_THROTTLE_0,Y
-@s:		sta	sheila_ROM_THROTTLE_0,Y		
-	
 		pla
 		tay
 
+		jmp	cmdBLTurbo_NextClr
 
-		jmp	cmdBLTurbo_Next
+@setclr:	sta	zp_trans_tmp		; we don't need this any more for flags use as temp
+		lda	sheila_ROM_THROTTLE_0,Y
+		bvc	@f1
+		eor	#$FF
+@f1:		ora	zp_trans_tmp
+		bvc	@f2
+		eor	#$FF
+@f2:		sta	sheila_ROM_THROTTLE_0,Y
+		rts
+
+	; on entry zp_tran_tmp contains the +/- flag in $40
+	; but should be otherwise empty
+	;
+	; enabled/disabled roms set in zp_trans_tmp+1,2
+	; 
+
+cmdBLTurboRomsParse:
+		clc
+		ror	zp_trans_tmp			; move +/- flag into $20
+		lda	#0
+		sta	zp_trans_tmp+1
+		sta	zp_trans_tmp+2
+
+@lp:		lda	(zp_mos_txtptr),Y
+		cmp	#' '+1
+		bcc	@endcheck
+		cmp	#'-'
+		beq	@range
+		cmp	#','
+		beq	@sep
+		
+		jsr	ParseDecOrHex
+		bcs	@brkInvalidArgument3
+		
+		; check for 0..15
+		lda	zp_trans_acc+3
+		ora	zp_trans_acc+2
+		ora	zp_trans_acc+1
+		bne	@brkInvalidArgument3
+		lda	zp_trans_acc+0
+		cmp	#16
+		bcs	@brkInvalidArgument3
+
+		; we have a number, if we just had a hyphen close range
+		lda	#1
+		bit	zp_trans_tmp
+		bne	@closerange
+		
+		; flag we've had a number
+		lda	#$C0
+		jsr	setf				; had number, open number ready for '-'
+		lda	zp_trans_acc
+		sta	zp_trans_tmp+3			; remember last number (for ranges)
+		jsr	@setA
+
+		jmp	@lp
+
+@closerange:	; had a range 
+		ldx	zp_trans_acc		
+@closerangenxt:
+		cpx	zp_trans_tmp+3
+		bcc	@clearng			; if end of range exit and reset range flags
+		txa
+		jsr	@setA
+		dex
+		bne	@closerangenxt
+
+@setA:		cmp	#$8
+		php					; set Cy if in 2nd byte
+		and	#$7
+		jsr	MaskBitA
+		plp
+		bcs	@h
+		ora	zp_trans_tmp+1
+		sta	zp_trans_tmp+1
+		rts
+@h:		ora	zp_trans_tmp+2
+		sta	zp_trans_tmp+2
+		rts
+@clearng:	lda	#$FE
+		bne	@nextF
+
+@sep:		iny
+		bit	zp_trans_tmp
+		bpl	@brkInvalidArgument3		; not had a number error
+		bvc	@brkInvalidArgument3		; range not open
+		lda	#$A0
+@nextF:		and	zp_trans_tmp			; clear range open, had hyphen flags
+		bne	@nxt		
+
+@range:		iny
+		bit	zp_trans_tmp
+		bpl	@brkInvalidArgument3		; not had a number error
+		bvc	@brkInvalidArgument3		; range not open
+		lda	#1
+		ora	zp_trans_tmp			; indicate we've had a -
+@nxt:		sta	zp_trans_tmp
+		bne	@lp				
+
+
+
+
+@endcheck:	lda	#1
+		bit	zp_trans_tmp			
+		bpl	@brkInvalidArgument3		; we've not had anything throw error
+		bne	@brkInvalidArgument3		; range left hanging
+		rol	zp_trans_tmp
+		rts
+
+
+@brkInvalidArgument3:
+		jmp	brkInvalidArgument
 		
 
 

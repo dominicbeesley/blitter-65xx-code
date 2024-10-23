@@ -215,59 +215,122 @@ CMOS_addRomOffs:	rol	A
 
 
 		; read single configuration byte at location $1100+X to A, corrupts X, Y
-::CMOS_ReadMosX:	
+::CMOS_ReadMosX:	pha					; space for return value
+		tya
+		pha
 		ldy	#BLTUTIL_CMOS_PAGE_MOS
-		bne	CMOS_ReadYX
-::CMOS_ReadFirmX:	
+		bne	CMOS_ReadYX_int
+::CMOS_ReadFirmX:	pha					; space for return value
+		tya
+		pha
 		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE
+		bne	CMOS_ReadYX_int
 
 ; Y = page in CMOS
 ; X = offset in page in CMOS
 ; on Exit
-; X preserved
-; A,Y = byte read
+; X,Y preserved
+; A = byte read
 ; note OSBYTE_X,Y,A registers are blammed by calling OSWORD!
 
-::CMOS_ReadYX:	txa
-		jsr	CMOS_addRomOffs
-		pha		; + 7 - address low byte
+::CMOS_ReadYX:	pha
 		tya
-		pha		; + 6 - address hi byte - firmware page
+		pha
+CMOS_ReadYX_int:	txa
+		pha
+
+		pha				; pointless - to make same as write
+
+		; stack
+		;	+4	return A
+		;	+3	caller Y
+		;	+2	caller X
+		;	+1	-pad-
+
+
+		jsr	CMOS_addRomOffs
+		pha		; block + 7 - address low byte
+		tya
+		pha		; block + 6 - address hi byte - firmware page
 		lda	#DEV_BLTUTIL_CMOS_EEPROM
-		pha		; + 5 - dev no
+		pha		; block + 5 - dev no
 		lda	#1
-		pha		; + 4 - number to read
+		pha		; block + 4 - number to read
 		lda	#2
-		pha		; + 3 - number to write
+		pha		; block + 3 - number to write
 		lda	#OSWORD_OP_I2C
-		pha		; + 2 - I2C opcode
+		pha		; block + 2 - I2C opcode
 		lda	#7
-		pha		; + 1 - len out
+		pha		; block + 1 - len out
 		lda	#8
 		tsx
-		pha		; + 0 - len in
+		pha		; block + 0 - len in
 		ldy	#1
+
+		;     stack     block 
+		;	+C		return A
+		;	+B		caller Y
+		;	+A		caller X
+		;	+9		-pad-
+		;	+8	+7	addr lo
+		;	+7	+6	addr hi
+		;	+6	+5	i2c dev no
+		;	+5	+4	n read
+		;	+4	+3	n write
+		;	+3	+2	i2c op
+		;	+2	+1	len out
+		;	+1	+0	len in
+
 		lda	#OSWORD_BLTUTIL
 		jsr	OSWORD
-		pla
-		pla
-		pla
-		pla
-		pla
-		pla
-		pla
+
+		;     stack    block 
+		;	+C		return A
+		;	+B		caller Y
+		;	+A		caller X
+		;	+9		-pad-
+		;	+8	+7	-
+		;	+7	+6	d ret
+		;	+6	+5	-
+		;	+5	+4	-
+		;	+4	+3	-
+		;	+3	+2	-
+		;	+2	+1	-
+		;	+1	+0	-
+
+		tsx
+		lda	$107,X		
+		sta	$10C,X			; return A
+cmos_exit:	tsx
+		txa
+		clc
+		adc	#9
+		tax
+		txs
+
+		pla	
 		tax
 		pla
-		txa
+		tay
+		pla
 		rts
 
-::CMOS_WriteMosX:		
+::CMOS_WriteMosX:	pha
+		tya
+		pha	
 		ldy	#BLTUTIL_CMOS_PAGE_MOS
-		bne	CMOS_WriteYX
-::CMOS_WriteFirmX:		
+		bne	CMOS_WriteYX_int
+::CMOS_WriteFirmX:pha
+		tya
+		pha		
 		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE	
-::CMOS_WriteYX:	pha		; + 8 - data
-		txa		
+		bne	CMOS_WriteYX_int
+::CMOS_WriteYX:	pha
+		tya
+		pha
+CMOS_WriteYX_int:	txa		
+		pha			; save caller X
+		pha		; + 8 - room for data
 		jsr	CMOS_addRomOffs		
 		pha		; + 7 - address low byte
 		tya
@@ -286,14 +349,26 @@ CMOS_addRomOffs:	rol	A
 		tsx
 		pha		; + 0 - len in
 		ldy	#1
+
+		;    stack     block 
+		;	+C		caller A
+		;	+B		caller Y
+		;	+A		caller X
+		;	+9	+8	data
+		;	+8	+7	addr lo
+		;	+7	+6	addr hi
+		;	+6	+5	i2c dev no
+		;	+5	+4	n read
+		;	+4	+3	n write
+		;	+3	+2	i2c op
+		;	+2	+1	len out
+		;	+1	+0	len in
+
+		lda	$10B,X
+		sta	$108,X			; move data into block from stacked A
+
 		lda	#OSWORD_BLTUTIL
 		jsr	OSWORD
-		tsx
-		txa
-		clc
-		adc	#9
-		tax
-		txs
-		rts
+		jmp	cmos_exit
 
 	.endscope

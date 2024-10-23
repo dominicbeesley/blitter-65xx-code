@@ -749,13 +749,9 @@ dMOS_OSBYTE_161_READ_CMOS:
 		beq	@size
 
 		cpx	#$80
-		txa
-		pha
 		bcs	noCMOShere		; >= $80 - pass on
 		jsr	CMOS_ReadMosX
 		tay
-		pla
-		tax
 @out:		
 		; we need to restore all these as OSWORD may have goosed them
 		stx	zp_mos_OSBW_X
@@ -771,13 +767,9 @@ dMOS_OSBYTE_161_READ_CMOS:
 dMOS_OSBYTE_162_WRITE_CMOS:
 		ldx	zp_mos_OSBW_X
 		cpx	#$80
-		txa
-		pha
 		bcs	noCMOShere		; >= $80 - pass on
 		lda	zp_mos_OSBW_Y
 		jsr	CMOS_WriteMosX
-		pla
-		tax
 		stx	zp_mos_OSBW_X
 		jmp	ServiceOutA0
 
@@ -1106,11 +1098,6 @@ confYN:		bcs	statYN
 		ora	zp_trans_tmp+1			; set mask bit
 		eor	#$FF				; flip all again - 0 in masked bit
 		ora	zp_trans_tmp
-		pha
-		ldy	#4
-		lda	(zp_mos_genPTR),Y		; get index in CMOS
-		tax
-		pla
 		plp
 		php
 		bvs	@blt2
@@ -1164,8 +1151,24 @@ confBLThrottleROMS:
 		TOPTERM	"CONF BL ROMS"
 		rts
 statBLThrottleROMS:
-		jsr	PrintImmedT
-		TOPTERM	"STAT BL ROMS"
+		jsr	PushAcc
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+1
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x1,Y
+		eor	#$FF
+		pha
+		dex
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+0
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x0,Y
+		eor	#$FF
+		pha
+		jsr	cmdBLTurbo_PrintRomsInit
+		pla	
+		jsr	cmdBLTurbo_PrintRomsA
+		pla	
+		jsr	cmdBLTurbo_PrintRomsA
+		jsr	cmdBLTurbo_PrintRomsDone
+		jsr	PopAcc
+		jsr	PrintNL
 		rts
 
 

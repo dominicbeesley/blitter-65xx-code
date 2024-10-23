@@ -157,7 +157,13 @@ PrintHexAmpXY:	pha
 PrintDecA:	jsr	zeroAcc
 		sta	zp_trans_acc
 
-PrintDec:	; acc is number to print (destroyed)
+PrintDec:	lda	zp_trans_tmp
+		pha
+		lda	zp_trans_tmp+1
+		pha
+		
+
+		; acc is number to print (destroyed)
 		; zp_trans_tmp+0,+1 destroyed
 		lda	#0
 		sta	zp_trans_tmp+1		
@@ -171,6 +177,10 @@ PrintDec:	; acc is number to print (destroyed)
 		jsr	PrintHexNybA
 		dec	zp_trans_tmp+1
 		bne	@l2
+		pla
+		sta	zp_trans_tmp+1
+		pla
+		sta	zp_trans_tmp
 		rts
 
 
@@ -783,7 +793,9 @@ addAAcc:
 
 		; found at http://nparker.llx.com/a2/mult.html
 
-div10Acc:
+div10Acc:	pha
+		txa
+		pha
 		lda	#0      	;Initialize REM to 0
         	sta	zp_trans_tmp
         	ldx	#32     	;There are 32 bits in NUM1
@@ -800,6 +812,9 @@ div10Acc:
         	inc	zp_trans_acc   	;and record a 1 in the quotient
 @l2:      	dex	        	
 		bne	@l1
+		pla
+		tax
+		pla
         	rts
 
 isAcc0:		lda	zp_trans_acc
@@ -1016,13 +1031,22 @@ bitX:		; bit A of A is set to 1, return X=0
 
 
 	; return's A with the Ath bit set's the bit A in
-	; corrupts Y
-MaskBitA:	tay		
+MaskBitA:	pha			; room for result
+		txa
+		pha
+		tsx
+		lda	$102,X
+		tax
 		lda	#0
 		sec
 		; make a mask from bits in 
 @ml:		rol	A
-		dey
+		dex
 		bpl	@ml
+		tsx
+		sta	$102,X
+		pla
+		tax
+		pla
 		rts
 
