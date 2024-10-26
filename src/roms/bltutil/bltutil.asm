@@ -53,6 +53,7 @@
 		.export cmdBLTurbo_PrintRomsInit
 		.export cmdBLTurbo_PrintRomsA
 		.export cmdBLTurbo_PrintRomsDone
+		.export cmdBLTurboRomsParse
 
 		.CODE
 
@@ -342,7 +343,7 @@ setf:		ora	zp_trans_tmp
 		rts
 
 cmdBLTCheckEnd:
-		jsr	SkipSpacesPTR
+		lda	(zp_mos_txtptr),Y
 		cmp	#' '+1
 		bcc	:+
 		jmp	brkBadCommand
@@ -362,12 +363,14 @@ cmdBLTurboThrottle:
 		jmp	cmdBLTurbo_NextClr
 
 
-cmdBLTurboMos:	jsr	cmdBLTCheckEnd
-		bvs	cmdBLTurboMos_off
-
+cmdBLTurboMos:	
 		tya
 		pha	
 		php					; preserve command pointer and interrupts
+
+		jsr	cmdBLTCheckEnd
+		bvs	cmdBLTurboMos_off
+
 
 		; check to find the ROM slot to use
 		pha					; + 4	reserve for return value
@@ -570,7 +573,7 @@ cmdBLTurboRomsParse:
 		txa
 		jsr	@setA
 		dex
-		bne	@closerangenxt
+		bpl	@closerangenxt
 
 @setA:		cmp	#$8
 		php					; set Cy if in 2nd byte
@@ -584,6 +587,8 @@ cmdBLTurboRomsParse:
 @h:		ora	zp_trans_tmp+2
 		sta	zp_trans_tmp+2
 		rts
+
+
 @clearng:	lda	#$FE
 		bne	@nextF
 

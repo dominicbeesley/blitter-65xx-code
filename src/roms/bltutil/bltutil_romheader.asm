@@ -1147,10 +1147,54 @@ statYN:		php
 
 confBLThrottleROMS:
 		bcs	statBLThrottleROMS
-		jsr	PrintImmedT
-		TOPTERM	"CONF BL ROMS"
+		php
+		ldx	#0
+@a:		jsr	SkipSpacesPTR
+		cmp	#$D
+		beq	@r	
+		cmp	#'-'
+		bne	:+
+		iny
+		ldx	#$40
+		bne	@a
+:		jsr	ToUpper
+		cmp	#'R'
+		bne	jbrkBadCommand2
+		iny
+		stx	zp_trans_tmp		; set flags
+		bit	zp_trans_tmp
+		php
+		jsr	cmdBLTurboRomsParse
+		
+		plp				; get flag back
+		lda	zp_trans_tmp+2
+		pha
+		lda	zp_trans_tmp+1
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
+		jsr	@set
+		pla
+		inx
+		jsr	@set
+
+@r:		plp
 		rts
+
+@set:		sta	zp_trans_tmp
+		php
+		jsr	CMOS_ReadFirmX
+		plp
+		php
+		bvs	@f1
+		eor	#$FF
+@f1:		ora	zp_trans_tmp
+		bvs	@f2
+		eor	#$FF
+@f2:		jsr	CMOS_WriteFirmX
+		plp
+		rts
+
 statBLThrottleROMS:
+		php
 		jsr	PushAcc
 		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+1
 		jsr	CMOS_ReadFirmX			; get from CMOS 11x1,Y
@@ -1169,8 +1213,11 @@ statBLThrottleROMS:
 		jsr	cmdBLTurbo_PrintRomsDone
 		jsr	PopAcc
 		jsr	PrintNL
+		plp
 		rts
 
+
+jbrkBadCommand2:jmp	brkBadCommand
 
 confTV:		bcs	statTV
 		jsr	ParseDecOrHex

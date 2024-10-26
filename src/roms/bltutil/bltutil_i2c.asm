@@ -51,7 +51,7 @@ lp:		bit	jim_I2C_STAT
 i2c_writebyte:	; on entry A contains byte to write, Cy = start, Ov = stop
 		; on exit VS if not ACK
 		php
-		I2C_WAIT		
+		I2C_WAIT	
 		plp
 		sta	jim_I2C_DATA
 		lda	#I2C_BUSY
@@ -224,7 +224,9 @@ CMOS_addRomOffs:	rol	A
 		tya
 		pha
 		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE
-		bne	CMOS_ReadYX_int
+CMOS_ReadYX_int:	txa
+		jsr	CMOS_addRomOffs
+		jmp	CMOS_ReadYX_int2
 
 ; Y = page in CMOS
 ; X = offset in page in CMOS
@@ -236,8 +238,8 @@ CMOS_addRomOffs:	rol	A
 ::CMOS_ReadYX:	pha
 		tya
 		pha
-CMOS_ReadYX_int:	txa
-		pha
+		txa
+CMOS_ReadYX_int2:	pha
 
 		pha				; pointless - to make same as write
 
@@ -324,14 +326,15 @@ cmos_exit:	tsx
 		tya
 		pha		
 		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE	
-		bne	CMOS_WriteYX_int
+CMOS_WriteYX_int:	txa
+		jsr	CMOS_addRomOffs		
+		jmp	CMOS_WriteYX_int2
 ::CMOS_WriteYX:	pha
 		tya
 		pha
-CMOS_WriteYX_int:	txa		
-		pha			; save caller X
+		txa		
+CMOS_WriteYX_int2:pha		; save caller X
 		pha		; + 8 - room for data
-		jsr	CMOS_addRomOffs		
 		pha		; + 7 - address low byte
 		tya
 		pha		; + 6 - address hi byte - firmware page
@@ -369,6 +372,16 @@ CMOS_WriteYX_int:	txa
 
 		lda	#OSWORD_BLTUTIL
 		jsr	OSWORD
+
+		jsr	jimPageChipset
+
+		; we need to poll for write to finish
+@poll:		lda	#DEV_BLTUTIL_CMOS_EEPROM
+		bit	bit_SEV				; set V = STOP
+		sec
+		jsr	i2c_writebyte
+		bvs	@poll
+
 		jmp	cmos_exit
 
 	.endscope
