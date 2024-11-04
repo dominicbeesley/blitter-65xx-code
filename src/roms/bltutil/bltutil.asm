@@ -538,8 +538,11 @@ cmdBLTurboRomsParse:
 		beq	@range
 		cmp	#','
 		beq	@sep
-		
-		jsr	ParseDecOrHex
+		jsr	ToUpper
+		cmp	#'R'
+		bne	:+
+		iny		
+:		jsr	ParseDecOrHex
 		bcs	@brkInvalidArgument3
 		
 		; check for 0..15
@@ -2039,11 +2042,9 @@ throttleInit:
 
 		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
 		jsr	CMOS_ReadFirmX			; get from CMOS 11x0,Y
-		eor	#$FF
 		sta	sheila_ROM_THROTTLE_0
 		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+1
 		jsr	CMOS_ReadFirmX			; get from CMOS 11x1,Y
-		eor	#$FF
 		sta	sheila_ROM_THROTTLE_1
 
 

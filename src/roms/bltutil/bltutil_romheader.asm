@@ -285,11 +285,12 @@ svc1_ClaimAbs:
 		jsr	cmdSRNUKE_lang
 		jmp	cmdSRNUKE_reboot
 @s2:		
-
-
 		lda	#0
-		pha					; indicate no reset
+		pha					; indicate CMOS not reset
 
+		lda	sysvar_BREAK_LAST_TYPE
+		cmp	#1
+		bne	@s3				; only perform on power-on-R-reset?!
 		lda	#OSBYTE_121_KEYB_SCAN
 		ldy	#0
 		ldx	#$B3
@@ -297,10 +298,9 @@ svc1_ClaimAbs:
 		txa
 		bpl	@s3
 		jsr	configReset
-		bcs	@s3
 		pla
 		lda	#$FF
-		pha
+		pha					; indicate CMOS reset
 @s3:		jsr	configMOSInit
 		jsr	throttleInit
 
@@ -350,7 +350,7 @@ svc1_ClaimAbs:
 		jsr	heap_init
 		jsr	sound_boot
 		jsr	PrintNL
-		pla	
+		pla				; get back the CMOS reset value from above
 		beq	@nores
 		jsr	PrintImmedT
 		.byte  "CMOS RAM RESET",13
@@ -894,7 +894,7 @@ strBLThrottle:		.byte	"BLSlow",0
 strBLThrottleROMS:	.byte	"BLSlowROMs",0
 strMode:		.byte	"Mode",0
 
-confHelpBLThrottleROMS:	.byte	"[[+|-]<D>[,...]]",0
+confHelpBLThrottleROMS:	.byte	"[[-]R<D>[-<D>][,...]]",0
 
 confHelpDD:		.byte	"[<D>[,<D>]]",0
 confHelpD:		.byte	"[<D>]",0
@@ -962,11 +962,12 @@ ShowConfsHelpTable:
 		lda	(zp_mos_genPTR),Y
 		and	#$40
 		beq	@nono
-
-		ldy	#0
-		jsr	PrintAtPtrgenPtrY
-		jsr	PrintNL
+		
+		lda	#'['
+		jsr	PrintA
 		jsr	PrintNo
+		lda	#']'
+		jsr	PrintA
 		ldy	#0
 		jsr	PrintAtPtrgenPtrY
 		jmp	@nextNL
@@ -1184,10 +1185,10 @@ confBLThrottleROMS:
 		jsr	CMOS_ReadFirmX
 		plp
 		php
-		bvs	@f1
+		bvc	@f1
 		eor	#$FF
 @f1:		ora	zp_trans_tmp
-		bvs	@f2
+		bvc	@f2
 		eor	#$FF
 @f2:		jsr	CMOS_WriteFirmX
 		plp

@@ -119,7 +119,7 @@ Some ROMs contain timing sensitive code that doesn't work when run at full-speed
 these settings allow a 2MHz speed throttle to be placed on such ROM banks.
 
 Typically these settings will be read from CMOS RAM at power-up but may be 
-altered temporarily with this command. See \*CONFIG 
+altered temporarily with this command. See [\*CONFIGURE, \*STATUS](#configuration-options) 
 
 ### CPU Throttle
 
@@ -128,7 +128,7 @@ also disable the VIA access hacks which should make timing-sensitive games and
 demos work as on a normal 6502.
 
 Typically these settings will be read from CMOS RAM at power-up but may be 
-altered temporarily with this command. See \*CONFIG 
+altered temporarily with this command. See [\*CONFIGURE, \*STATUS](#configuration-options)
 
 
 The format of this command's arguments is likely to change in future to allow:
@@ -136,7 +136,7 @@ The format of this command's arguments is likely to change in future to allow:
 - speed throttling of shadow memory
 
 Note: It used to be possible to set per-rom and cpu throttle CMOS settings 
-with this command, these options are now set using the *\CONFIG command
+with this command, these options are now set using the [\*CONFIGURE, \*STATUS](#configuration-options) command
 
 ## \*BLSOUND
         
@@ -373,7 +373,7 @@ BLTUTIL ROM*
 
 ### MOS Replacement OSBYTE A1,A2
 
-The BLTUTIL ROM provides ersatz versions of OSBYTEs A1, A2, \*CONFIGURE, 
+The BLTUTIL ROM provides ersatz versions of OSBYTEs A1, A2, [\*CONFIGURE, \*STATUS](#configuration-options), 
 \*STATUS that use this area. The range 1000-107F is accessed in map 0 and the 
 range 1080-10FF in map 1.
 
@@ -392,6 +392,42 @@ range 1080-10FF in map 1.
 |-------|-----------------------------------------------------
 | 7     | Throttle CPU (for 65xx) to 2MHz
 | 6..0  | Future use, default to '1' if unsure
+
+
+# Configuration Options
+
+The ROM provides some extended \*CONFIGURE and \*STATUS options on all machines
+to control Blitter enhancements. These are described in the section 
+[Blitter Configuration Options](#blitter-configuration-options). In addition
+there are Ersatz versions of some of the Master configuration options that can
+be used on the BBC Micro and Electron which are described in the following
+section.
+
+## Model B / Electron Configuration
+
+The Mk.2 and 3 Blitter boards contain a CMOS EEPROM which can be used to hold
+configuration options to allow these to be accessed the BLTUTIL ROM on Model B
+Electron systems provides the following services described below.
+
+There is a set of configuration stored in the CMOS for each of the two ROM maps.
+Which applies to the Hard CPU (if it is a 65xx CPU) or the T65 soft-core.
+
+To reset the CMOS for the current map, hold down "R" when powering up.
+ 
+### Reset CMOS
+
+The CMOS for the current RO
+
+### \*CONFIGURE
+
+This command works in a similar way to on the Master series and can be used to
+set configuration options.
+
+### Service Calls &28, &29
+
+These are provided to 
+
+
 
 
 ChipRAM memory map 
