@@ -364,41 +364,42 @@ below are in bytes.
 *NB: These allocations have been altered since the Oct 2024, 0.07 release of the
 BLTUTIL ROM*
 
-| Address       | Description
-|---------------|-------------------------------------------------------------
-| 0000-0FFF     | User applications, please update this document with details
-| 1000-10FF     | OSBYTE A1/A2 - for the Model B / Electron the BLTUTIL rom provides an OSBYTE A1,A2 MOS replacement
-| 1100-11FF     | BLTUTILs firmware (see table below)
-| 1200-1FFF     | Reserved please do not use
+
+| Address       | Description                                                   |
+|---------------|---------------------------------------------------------------|
+| 0000-0FFF     | User applications, please update this document with details   |
+| 1000-10FF     | OSBYTE A1/A2 - for the Model B / Electron the BLTUTIL rom provides an OSBYTE A1,A2 MOS replacement|
+| 1100-11FF     | BLTUTILs firmware (see table below)                           |
+| 1200-1FFF     | Reserved please do not use                                    |
 
 ### MOS Replacement OSBYTE A1,A2
 
-The BLTUTIL ROM provides ersatz versions of OSBYTEs A1, A2, [\*CONFIGURE, \*STATUS](#configuration-options), 
+The BLTUTIL ROM provides ersatz versions of OSBYTEs A1, A2, [\*CONFIGURE, \*STATUS](#configurationoptions), 
 \*STATUS that use this area. The range 1000-107F is accessed in map 0 and the 
 range 1080-10FF in map 1.
 
 ### BLTUTIL ROM CMOS usage
 
-| Address       | Description
-|---------------|-------------------------------------------------------------
-| 1100-1101     | Per-rom Throttle setting, 1 bit for each ROM, set #0 (reversed sense i.e. 0 = throttle)
-| 1102-1103     | Per-rom Throttle setting, 1 bit for each ROM, set #1 (reversed sense i.e. 0 = throttle)
-| 1104-1105     | Default Turbo/Throttle settings for map 0/1
+| Address       | Description                                                   |
+|---------------|---------------------------------------------------------------|
+| 1100-1101     | Per-rom Throttle setting, 1 bit for each ROM, set #0 (reversed sense i.e. 0 = throttle) |
+| 1102-1103     | Per-rom Throttle setting, 1 bit for each ROM, set #1 (reversed sense i.e. 0 = throttle) |
+| 1104-1105     | Default Turbo/Throttle settings for map 0/1                   |
 
 
 #### 1104/5 Default Turbo / Throttle settings
 
-| Bit   | Descriptions
-|-------|-----------------------------------------------------
-| 7     | Throttle CPU (for 65xx) to 2MHz
-| 6..0  | Future use, default to '1' if unsure
+| Bit   | Descriptions                                        |
+|-------|-----------------------------------------------------|
+| 7     | Throttle CPU (for 65xx) to 2MHz                     |
+| 6..0  | Future use, default to '1' if unsure                |
 
 
 # Configuration Options
 
 The ROM provides some extended \*CONFIGURE and \*STATUS options on all machines
 to control Blitter enhancements. These are described in the section 
-[Blitter Configuration Options](#blitter-configuration-options). In addition
+[Blitter Configuration Options](#blitterconfigurationoptions). In addition
 there are Ersatz versions of some of the Master configuration options that can
 be used on the BBC Micro and Electron which are described in the following
 section.
@@ -455,7 +456,7 @@ Syntax: ```[[-]R<D>[-<D>][,...]]```
 With this option each ROM can be configured to be run at 2MHz - some ROMs 
 contain speed-sensitive hardware access code which can only run at 2MHz
 
-Ranges of ROMs can be made slow i.e.:
+Ranges and lists of ROMs can be made slow i.e.:
 
         *CON. R0-8,10
 
@@ -463,6 +464,12 @@ Or made fast using -:
 
         *CON -R4-12
 
+
+The maximum speed at which a ROM slot may run will depend on several factors:
+ - whether it is in Flash / Fast RAM / Battery backed RAM
+ - mk.2 / mk.3
+ - the firmware build
+ - the CPU
 
 Default: All ROMs slow
 Address: 1100-1/1180-1, 1 bit for each rom (1=slow)
@@ -500,7 +507,7 @@ ChipRAM memory map
 ChipRAM can be accessed using the FRED/JIM paging mechanism on all processors or 
 directly by processors that support >64k addressing i.e. 65816, 68008
 
-
+```
         00 0000         +-----------------------+----+
                         | BLTURBO shadow memory | B  |see BLTURBO command
         00 8000         +-----------------------+----+
@@ -540,7 +547,7 @@ directly by processors that support >64k addressing i.e. 65816, 68008
         FF 0000 (B)     +-----------------------+----+  
                         + BBC Micro main board  | B  |
                         +-----------------------+----+
-
+```
 
 
 TODO: Add info on VERSION banks and repeating chipset/version
@@ -549,16 +556,18 @@ TODO: Add info on VERSION banks and repeating chipset/version
 ROM Workspace 
 =============
 
+```
         00 8000..3      CHECKSUM                        ; reserved for checksum
         00 8004..5      HEAPTOP         (pages)         ; memory limit
         00 8006..7      HEAPBOT         (pages)         ; user memory top
         00 8008..9      HEAPLIM         (pages)         ; lower limit for heap
         00 800A..B      HEAPFREE        (pages)         ; first free heap block 
-
+```
 
 SOUND sample pointer table
 --------------------------
 
+```
         00 8100..1      Sample 0 start page number
         00 8102..3      Sample 0 length bytes
         00 8104..5      Sample 0 repeat offset bytes
@@ -568,10 +577,12 @@ SOUND sample pointer table
                               here                       
         ...above repeats for 31 samples
         00 81FF
+```
 
 SOUND workspace PAGE
 --------------------
 
+```
         00 8300         SOUND Enabled
         00 8301         --- spare ---
         00 8302         old INSV
@@ -580,13 +591,15 @@ SOUND workspace PAGE
         00 8308         old BYTEV
 
         --- see bltutil.inc TODO: update here when bltutil.inc settled --
-
+```
 
 
 SOUND buffers
 -------------
 
+```
         00 8400..A7     SOUND BUFFERS
+```
 
 65816 native vectors
 --------------------
@@ -599,12 +612,16 @@ HEAP BLOCK
 
 The topmost page of the heap area is reserved to contain heap allocation table 
 entries:
+```
         Blitter=1DFF00, Paula=07FF00
+```
 
 The allocation table is a single page of 64 entries each entry is
 
+```
         +0      16bit   PageNum
         +2      16bit   Flags | Number of pages
                 Flags are in top two bits of Number of pages
         $80     Entry is used
         $40     Entry is a free "hole" in the map        
+```
