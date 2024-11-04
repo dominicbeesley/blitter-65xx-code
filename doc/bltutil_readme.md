@@ -412,23 +412,87 @@ Electron systems provides the following services described below.
 There is a set of configuration stored in the CMOS for each of the two ROM maps.
 Which applies to the Hard CPU (if it is a 65xx CPU) or the T65 soft-core.
 
-To reset the CMOS for the current map, hold down "R" when powering up.
  
 ### Reset CMOS
 
-The CMOS for the current RO
+To reset the CMOS for the current map, hold down "R" when powering up.
+
+TODO!
 
 ### \*CONFIGURE
 
 This command works in a similar way to on the Master series and can be used to
-set configuration options.
+set configuration options. See C.5-2 of the Master Reference Manual. After this
+section are tables containing the configuration options
+
+### \*STATUS
+
+This command works in a similar way to on the Master series and can be used to
+view configuration options. See C.5-2 of the Master Reference Manual. After this
+section are tables containing the configuration options
 
 ### Service Calls &28, &29
 
 These are provided to 
 
+# Blitter Configuration Options
+
+These options are used to control the extended capabilities of the Blitter 
+board.
+
+## BLSlow / NoBLSlow
+
+When this options is enabled the 65xx series CPU is throttled to at most 2MHz 
+at all times to allow games and demos to work as the would on a BBC or Master
+
+Default: BLSlow
+Address: 1102/1182, bit 0 (1=slow)
+
+## BLSlowROMs
+
+Syntax: ```[[-]R<D>[-<D>][,...]]```
+
+With this option each ROM can be configured to be run at 2MHz - some ROMs 
+contain speed-sensitive hardware access code which can only run at 2MHz
+
+Ranges of ROMs can be made slow i.e.:
+
+        *CON. R0-8,10
+
+Or made fast using -:
+
+        *CON -R4-12
 
 
+Default: All ROMs slow
+Address: 1100-1/1180-1, 1 bit for each rom (1=slow)
+
+# Ersatz MOS Configuration Options
+
+On Electron and Model B hosts the BLTUTIL ROM provides its own versions of the
+Master MOS configuration options:
+
+## Tube / NoTube
+
+This allows the Tube to be enabled/disabled
+
+Default: NoTube
+Address: 100F/108F bit 0 (1 = enabled)
+
+## Mode
+
+This allows the initial screen mode to be selected (the keyboard links are 
+ignored).
+
+Default: Mode 7
+Address: 100A/108A bits 0-2, 7
+
+## TV
+
+This sets the initial \*TV parameters
+
+Default: 0,0
+Address: 100A/108A bit 4 (interlace), 5-6 (offset)
 
 ChipRAM memory map 
 ------------------
