@@ -327,14 +327,15 @@ cmos_exit:	tsx
 		pha		
 		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE	
 CMOS_WriteYX_int:	txa
+		pha		; save caller X
 		jsr	CMOS_addRomOffs		
 		jmp	CMOS_WriteYX_int2
 ::CMOS_WriteYX:	pha
 		tya
 		pha
 		txa		
-CMOS_WriteYX_int2:pha		; save caller X
-		pha		; + 8 - room for data
+		pha		; save caller X
+CMOS_WriteYX_int2:pha		; + 8 - room for data
 		pha		; + 7 - address low byte
 		tya
 		pha		; + 6 - address hi byte - firmware page

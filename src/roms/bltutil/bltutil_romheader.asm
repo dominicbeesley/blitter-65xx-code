@@ -1386,11 +1386,9 @@ empty:		plp
 		.rodata
 confDefaults:
 		.word	CMOS_WriteMosX
-		.word	$0A00
-		.word	CMOS_WriteFirmX
-		.word	$0000
-		.word	$0100
-		.word	$0200
+		.word	$0A07				; *TV 0,0 ; MODE 7
+		.word	$0F00				; NoTube
+		.word	$0
 		.word	$FFFF
 
 		.code
@@ -1398,7 +1396,7 @@ configReset:
 		jsr	cfgMasterMOS
 		bcs	@nomos
 
-		; we've been told to reset, set MOS and BLT pages to FF then see with value from tables
+		; we've been told to reset, set MOS and BLT pages to FF then seed with value from tables
 		ldy	#0			;index into tables
 
 @l1:
@@ -1414,10 +1412,8 @@ configReset:
 		sty	zp_trans_tmp+2		; save pointer
 		; first use routine to clear all locations 0..127
 		ldx	#0		
-@clp:		stx	zp_trans_tmp+3
-		lda	#$FF
+@clp:		lda	#$FF
 		jsr	@r
-		inc	zp_trans_tmp+3
 		inx
 		bpl	@clp
 
