@@ -2042,9 +2042,11 @@ throttleInit:
 
 		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
 		jsr	CMOS_ReadFirmX			; get from CMOS 11x0,Y
+		eor	#$FF
 		sta	sheila_ROM_THROTTLE_0
 		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+1
 		jsr	CMOS_ReadFirmX			; get from CMOS 11x1,Y
+		eor	#$FF
 		sta	sheila_ROM_THROTTLE_1
 
 
@@ -2054,7 +2056,7 @@ throttleInit:
 
 		ldx	#BLTUTIL_CMOS_FW_THROT
 		jsr	CMOS_ReadFirmX			; get from CMOS
-		and	#$80 
+		eor	#$80
 		rol	A
 		php
 		lda	sheila_MEM_TURBO2

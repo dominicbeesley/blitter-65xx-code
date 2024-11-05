@@ -882,7 +882,7 @@ tbl_configs_MOS:	Conf	strDot,			confHelp, 		0
 			.word	0
 ; these are always scanned
 tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0		
-			ConfYN	strBLThrottle,		confYN,			0,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
+			ConfYN	strBLThrottle,		confYN,			1,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
 			Conf	strBLThrottleROMS,	confBLThrottleROMS,	confHelpBLThrottleROMS
 			.word	0
 
@@ -1185,10 +1185,10 @@ confBLThrottleROMS:
 		jsr	CMOS_ReadFirmX
 		plp
 		php
-		bvc	@f1
+		bvs	@f1
 		eor	#$FF
 @f1:		ora	zp_trans_tmp
-		bvc	@f2
+		bvs	@f2
 		eor	#$FF
 @f2:		jsr	CMOS_WriteFirmX
 		plp
@@ -1387,8 +1387,7 @@ empty:		plp
 confDefaults:
 		.word	CMOS_WriteMosX
 		.word	$0A07				; *TV 0,0 ; MODE 7
-		.word	$0F00				; NoTube
-		.word	$0
+		.word	CMOS_WriteFirmX
 		.word	$FFFF
 
 		.code
@@ -1412,7 +1411,7 @@ configReset:
 		sty	zp_trans_tmp+2		; save pointer
 		; first use routine to clear all locations 0..127
 		ldx	#0		
-@clp:		lda	#$FF
+@clp:		lda	#0
 		jsr	@r
 		inx
 		bpl	@clp
