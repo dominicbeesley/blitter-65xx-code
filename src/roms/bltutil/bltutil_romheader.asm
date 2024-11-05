@@ -290,7 +290,7 @@ svc1_ClaimAbs:
 
 		lda	sysvar_BREAK_LAST_TYPE
 		cmp	#1
-		bne	@s3				; only perform on power-on-R-reset?!
+		bcc	@s3				; only perform on power-on-R-reset?!
 		lda	#OSBYTE_121_KEYB_SCAN
 		ldy	#0
 		ldx	#$B3
