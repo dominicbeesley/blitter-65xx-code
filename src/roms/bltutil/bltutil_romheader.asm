@@ -25,38 +25,14 @@
 		.include "oslib.inc"
 
 		.include "bltutil.inc"
-		.include "bltutil_utils.inc"
-		.include "bltutil_jimstuff.inc"
-		.include "bltutil_noice.inc"
-		.include "bltutil_flashutils.inc"
-		.include "bltutil_sound.inc"
-		.include "bltutil_heap.inc"
-		.include "bltutil_cfg.inc"
 
 		.include "version-date.inc"
-
-		.import oswordGetRomBase
-		.import cmdBLTurbo
-		.import cmdXMdump
-		.import cmdSRLOAD
-		.import cmdSRNUKE
-		.import cmdSRNUKE_reboot
-		.import cmdSRNUKE_lang
-		.import cmdSRERASE
-		.import cmdSRCOPY
-		.import cmdRoms
-		.import cmdXMLoad
-		.import cmdXMSave
-		.import throttleInit
-
-		.import autohazel_boot_first
-		.import autohazel_boot_second
-
 
 		.export	Copyright
 		.export strCmdBLTurbo
 		.export ServiceOut
 		.export ServiceOutA0
+		.export ServiceOutA0retY
 		.export str_Dossy
 
 		.SEGMENT "CODE_ROMHEADER"
@@ -93,28 +69,57 @@ str_Dossy:	.byte   "Dossytronics"
 
 		.CODE
 
-
 ;* ---------------- 
 ;* SERVICE ROUTINES
 ;* ----------------
 	;TODO make this relative!
 Serv_jump_table:
-		SJTE	$01, svc1_ClaimAbs
-		SJTE	$04, svc4_COMMAND
-		SJTE	$05, svc5_UKIRQ
-		SJTE	$08, svc8_OSWORD
-		SJTE	$09, svc9_HELP
-		SJTE	$FE, svcFE_TubeInit
+		SJTE	SERVICE_1_ABSWKSP_REQ, 	svc1_ClaimAbs
+		SJTE	SERVICE_4_UKCMD, 	svc4_COMMAND
+		SJTE	SERVICE_5_UKINT,	svc5_UKIRQ
+		SJTE	SERVICE_7_UKOSBYTE,	svc7_OSBYTE
+		SJTE	SERVICE_8_UKOSWORD,	svc8_OSWORD
+		SJTE	SERVICE_9_HELP,		svc9_HELP
+		SJTE	SERVICE_28_CONFIGURE, 	svc28_CONFIG
+		SJTE	SERVICE_29_STATUS, 	svc29_STATUS
+		SJTE	SERVICE_FE_TUBEEXPLODE,	svcFE_TubeExplode
+		SJTE	SERVICE_FF_TUBEINIT, 	svcFF_TubeInit
 Serv_jump_table_Len	:= 	* - Serv_jump_table	
 
-svcFE_TubeInit:
-		pha
+svcFF_TubeInit:
 		jsr	CheckBlitterPresent
 		bcs	@s
-		jsr      cfgGetAPISubLevel_1_3
+		jsr	cfgMasterMOS
+		bcs	@s
+		ldx	#$F
+		jsr	CMOS_ReadMosX
+		and	#1
+		beq	@dis
+@s:		jmp	ServiceOut
+		; inhibit tube
+@dis:		lda	#0
+		sta	sysvar_TUBE_PRESENT		; disable tube
+		jmp	ServiceOutA0
+
+svcFE_TubeExplode:
+		jsr	CheckBlitterPresent
+		bcs	@s
+		jsr     cfgGetAPISubLevel_1_3
 		bcc	@s
+		jsr	cfgMasterMOS
+		bcs	@s2
 		jsr	autohazel_boot_second
-@s:		jmp	plaServiceOut
+@s:		ldx	#$F
+		jsr	CMOS_ReadMosX
+		and	#1
+		bne	@s2
+		lda	#0				; disable tube
+		sta	sysvar_TUBE_PRESENT		; disable tube
+		ldy	#0				; pass on tube disabled		
+		pla					; discard passed in Y		
+		pla					
+		rts
+@s2:		jmp	ServiceOut
 
 
 Service:
@@ -168,8 +173,13 @@ ServiceOutA0:	ldx	zp_mos_curROM
 		pla
 		lda	#0				; Don't pass to other service routines
 		rts
-
-
+ServiceOutA0retY:
+		ldx	zp_mos_curROM
+		pla
+		; don't restore Y!
+		pla
+		lda	#0				; Don't pass to other service routines
+		rts
 ; -------------------------------
 ; SERVICE 1 - Claim Abs Workspace
 ; -------------------------------
@@ -239,13 +249,16 @@ svc1_ClaimAbs:
 
 @rok:
 		jsr	CheckBlitterPresent
-		bcs	@s2
-
+		bcc	@ok1
+		jmp	@nope
+@ok1:
 		jsr      cfgGetAPISubLevel_1_3
 		bcc	@sh
 		; do autohazel for lower priority roms
+		jsr	cfgMasterMOS
+		bcs	@sh
 		jsr	autohazel_boot_first
-		@sh:
+@sh:
 
 
 		; belt and braces write $f0 to flash to clear soft id mode
@@ -263,7 +276,7 @@ svc1_ClaimAbs:
 		jsr	noice_init
 @notromf:
 
-		lda	#$79
+		lda	#OSBYTE_121_KEYB_SCAN
 		ldy	#0
 		ldx	#$A8
 		jsr	OSBYTE				; check if _/£ key down
@@ -272,9 +285,31 @@ svc1_ClaimAbs:
 		jsr	cmdSRNUKE_lang
 		jmp	cmdSRNUKE_reboot
 @s2:		
+		lda	#0
+		pha					; indicate CMOS not reset
+
+		lda	sysvar_BREAK_LAST_TYPE
+		cmp	#1
+		bcc	@s3				; only perform on power-on-R-reset?!
+		lda	#OSBYTE_121_KEYB_SCAN
+		ldy	#0
+		ldx	#$B3
+		jsr	OSBYTE				; check if R key down
+		txa
+		bpl	@s3
+		jsr	configReset
+		pla
+		lda	#$FF
+		pha					; indicate CMOS reset
+@s3:		jsr	configMOSInit
 		jsr	throttleInit
+
+
 		jsr	cfgPrintVersionBoot
-		bcs	@nope
+		bcc	@sok1
+		jmp	@nope
+@sok1:
+
 
 		; work out memory size (depends on board type)
 		; get BB RAM size (assume starts at bank 60 and is at most 20 banks long)		
@@ -314,70 +349,81 @@ svc1_ClaimAbs:
 @s1:		pla
 		jsr	heap_init
 		jsr	sound_boot
-		jsr	OSNEWL
-
+		jsr	PrintNL
+		pla				; get back the CMOS reset value from above
+		beq	@nores
+		jsr	PrintImmedT
+		.byte  "CMOS RAM RESET",13
+		TOPTERM "PRESS CTRL BREAK"
+		sei
+@H:		jmp	@H
+@nores:
 @nope:		jmp	ServiceOut
 
+; on entry (zp_mos_txtptr),Y is start of keys to match
+; zp_mos_genPTR is 0 terminated string to match
+; returns Cy=1 if any key matches
+; Y preserved
+; X, A corrupted
 
-; -----------------
-; SERVICE 9 - *Help
-; -----------------
-; help string is at (&F2),Y
-svc9_HELP:
-		lda	zp_mos_txtptr
-		sta	zp_tmp_ptr
-		lda	zp_mos_txtptr + 1
-		sta	zp_tmp_ptr + 1
-
-		jsr	SkipSpacesPTR
-		cmp	#$D
-		beq	svc9_HELP_nokey
-
-svc9_keyloop:
-		; keywords were included scan for our key
-		ldx	#0
-@1:		inx
-		lda	(zp_tmp_ptr),Y
-		iny
-		jsr	ToUpper				; to upper
-		cmp	str_HELP_KEY-1,X	
-		beq	@1
+keyMatch:	tya
+		pha
+		sty	zp_trans_tmp
+@nextcmd:	ldx	#$FF			; pointer into candidate key		
+		stx	zp_trans_tmp+1
+@l1:		inc	zp_trans_tmp+1		
+		ldy	zp_trans_tmp
+		lda	(zp_mos_txtptr), Y	; get char
+		inc	zp_trans_tmp
+		ldy	zp_trans_tmp+1
+		cmp	(zp_mos_genPTR),Y		
+		beq	@l1
 		cmp	#'.'
-		beq	svc9_helptable
+		beq	@match
 		cmp	#' '+1
-		bcc	@keyend2			; <' ' - at end of keywords (on command line)
-@3:		lda	(zp_tmp_ptr),Y			; not at end skip forwards to next space or lower
+		bcc	@keyend2		; ' ' or lower but was that the end of the key
+		ldy	zp_trans_tmp
+@3:		lda	(zp_mos_txtptr),Y		; not at end skip forwards to next space or lower
 		iny
 		cmp	#' '+1
 		bcs	@3
 		dey					; move back one to point at space or lower
 		jsr	SkipSpacesPTR
+		sty	zp_trans_tmp
 		cmp	#$D				
 		bne	@keyend
-		jmp	svc9_HELP_exit			; end of command line, done
-@keyend2:	dey
-@keyend:	lda	str_HELP_KEY-1,X
-		beq	svc9_helptable			; at end of keyword show table
-		jsr	SkipSpacesPTR			; try another
-		cmp	#$D
-		beq	svc9_HELP_exit
-		bne	svc9_keyloop
+@nomatch:	pla
+		tay
+		clc
+		rts
+
+@keyend2:	dec	zp_trans_tmp		; decrement back on command tail
+@keyend:	ldy	zp_trans_tmp+1
+		lda	(zp_mos_genPTR),Y
+		beq	@match			; end of key so it's a match!
+		ldy	zp_trans_tmp
+		jsr	SkipSpacesPTR
+		cmp	#' '
+		bcc	@nomatch
+		bcs	@nextcmd
+
+@match:		pla
+		tay
+		sec
+		rts
 
 svc9_helptable:	
-		jsr	svc9_HELP_showbanner
-		; got a match, dump out our commands help
-		ldx	#0
-		lda	zp_mos_jimdevsave
-		cmp	#JIM_DEVNO_HOG1MPAULA
-		bne	@1
-		ldx	#tbl_commands_PAULA-tbl_commands
-@1:		cmp	#JIM_DEVNO_BLITTER
-		beq	@2
-		ldx	#tbl_commands_General-tbl_commands
-@2:
+		txa
+		pha
+		ldx	zp_tmp_ptr
+		ldy	zp_tmp_ptr+1
+		jsr	PrintXY
+		jsr	PrintNL
+		pla
+		tax
 @lp:
 		ldy	tbl_commands+1,X		; get hi byte of string
-		beq	svc9_HELP_exit			; if zero at end of table
+		beq	@rts				; if zero at end of table
 		jsr	PrintSpc
 		jsr	PrintSpc
 		txa
@@ -387,14 +433,11 @@ svc9_helptable:
 		jsr	PrintXY
 		jsr	PrintSpc
 		pla
+		clc
+		adc	#4
 		tax
-		inx
-		inx
-		inx
-		inx					; point at help args string
 		ldy	tbl_commands+1,X		; hi byte of args string
 		beq	@sk3
-		txa
 		pha
 		lda	tbl_commands,X
 		tax
@@ -405,53 +448,122 @@ svc9_helptable:
 		inx
 		inx
 		bne	@lp
+@rts:		rts
 
+; -----------------
+; SERVICE 9 - *Help
+; -----------------
+; help string is at (&F2),Y
+svc9_HELP:
+		jsr	SkipSpacesPTR
+		cmp	#$D
+		beq	svc9_HELP_nokey
+
+		lda	#<strHELPKEY_BLTUTIL
+		sta	zp_mos_genPTR
+		lda	#>strHELPKEY_BLTUTIL
+		sta	zp_mos_genPTR+1
+		jsr	keyMatch
+		bcc	@s		
+		; got a match, dump out our commands help
+		ldx	#0
+		lda	zp_mos_jimdevsave
+		cmp	#JIM_DEVNO_HOG1MPAULA
+		bne	@1
+		ldx	#tbl_commands_PAULA-tbl_commands
+@1:		cmp	#JIM_DEVNO_BLITTER
+		beq	@2
+		ldx	#tbl_commands_General-tbl_commands
+@2:
+		jsr	svc9_helptable
+@s:
+		; if not a Master show our MOS replacement commands
+		jsr	cfgMasterMOS
+		bcs	@s2
+		jsr	CheckBlitterPresent
+		bcs	@s2
+
+		lda	#<strHELPKEY_MOS
+		sta	zp_mos_genPTR
+		lda	#>strHELPKEY_MOS
+		sta	zp_mos_genPTR+1
+		jsr	keyMatch
+		bcc	@s2
+		ldx	#tbl_commands_MOS-tbl_commands
+		jsr	svc9_helptable		
+@s2:
+
+		jmp	svc9_HELP_exit
 
 svc9_HELP_nokey:
 		jsr	svc9_HELP_showbanner
+		jsr	svc9_HELP_showkeys
 svc9_HELP_exit:	jmp	ServiceOut
 
+Print129:	lda	#129
+		bne	PP
+Print130:	lda	#130
+PP:		jsr	PrintA
+		lda	#'('
+		jmp	PrintA
+Print130Blitter:jsr	Print130
+PrintBlitter:	jsr	PrintImmedT
+		TOPTERM "Blitter"
+		rts
+PrintPaula:	jsr	PrintImmedT
+		TOPTERM "1M Paula"
+		rts
 
 svc9_HELP_showbanner:
 		jsr	PrintNL
-		lda	#<utils_name
-		sta	zp_tmp_ptr
-		lda	#>utils_name			; point at name, version, copyright strings
-		sta	zp_tmp_ptr+1
+		ldx	#<utils_name
+		ldy	#>utils_name			; point at name, version, copyright strings
 		lda	#2
 		sta	zp_trans_tmp
-		ldy	#0
-@1:		jsr	PrintPTR
+@1:		jsr	PrintXY
 		jsr	PrintSpc
 		dec	zp_trans_tmp
 		bne	@1
-		jsr	OSNEWL
+		jsr	PrintNL
 
 		jsr	CheckBlitterPresent
 		bcc	@skp
 		jsr	CheckPaulaPresent
 		bcs	@skp_notp
 
-		ldx	#<cmdHelpPaulaPresent
-		ldy	#>cmdHelpPaulaPresent
-		jsr	PrintXY
+		jsr	Print130
+		jsr	PrintPaula
 		jmp	@skp2
 
-@skp_notp:
-		ldx	#<cmdHelpNotPresent
-		ldy	#>cmdHelpNotPresent
-		jsr	PrintXY
+@skp_notp:	jsr	Print129
+		jsr	PrintBlitter
+		lda	#'/'
+		jsr	PrintA
+		jsr	PrintPaula
+		jsr	PrintImmedT
+		TOPTERM " not"
 		jmp	@skp2
 
 @skp:
+		jsr	Print130Blitter
+@skp2:		jsr	PrintImmedT
+		TOPTERM	" present)"
+		rts
 
-		ldx	#<cmdHelpPresent
-		ldy	#>cmdHelpPresent
+svc9_HELP_showkeys:
+		jsr	PrintNL
+		jsr	Print2Spc
+		ldx	#<strHELPKEY_BLTUTIL
+		ldy	#>strHELPKEY_BLTUTIL
 		jsr	PrintXY
-		jmp	@skp2
-@skp2:
-
-		jmp	PrintNL
+		jsr	cfgMasterMOS
+		bcs	@s
+		jsr	CheckBlitterPresent
+		bcs	@s
+		jsr	PrintImmedT
+		.byte	13
+		TOPTERM	"  MOS"
+@s:		jmp	PrintNL
 
 
 ; --------------------
@@ -460,70 +572,58 @@ svc9_HELP_showbanner:
 
 svc4_COMMAND:	; scan command table for commands
 
-		; save begining of command pointer
-		tya
-		pha
 
 		lda	#<tbl_commands
 		sta	zp_mos_genPTR
 		lda	#>tbl_commands
 		sta	zp_mos_genPTR + 1
-
 		lda	zp_mos_jimdevsave
 		cmp	#JIM_DEVNO_HOG1MPAULA
-		bne	cmd_loop
-		ldx	tbl_commands_PAULA-tbl_commands
-
+		bne	@s1
 		lda	#<tbl_commands_PAULA
 		sta	zp_mos_genPTR
 		lda	#>tbl_commands_PAULA
 		sta	zp_mos_genPTR + 1
 
+@s1:		jsr	searchCMDTabExec
 
+		jsr	cfgMasterMOS
+		bcs	svc4_CMD_exit
+		jsr	CheckBlitterPresent
+		bcs	svc4_CMD_exit
 
-cmd_loop:	pla
-		pha
-		tay					; restore zp_mos_txtptr and Y from stack
-		jsr	SkipSpacesPTR
-		sty	zp_mos_error_ptr + 1		; we have to subtract the start Y from the string pointer!
-		ldy	#0
-		sec
-		lda	(zp_mos_genPTR),Y
-		sbc	zp_mos_error_ptr + 1
-		sta	zp_mos_error_ptr
-		iny
-		lda	(zp_mos_genPTR),Y		
-		beq	svc4_CMD_exit			; no more commands
-		sbc	#0
-		ldy	zp_mos_error_ptr+1		; get back Y
-		sta	zp_mos_error_ptr+1		; point to command name - Y
-		dey
-@cmd_match_lp:	iny
-		lda	(zp_mos_txtptr),Y
-		jsr	ToUpper
-		cmp	(zp_mos_error_ptr),Y
-		beq	@cmd_match_lp
-		lda	(zp_mos_error_ptr),Y		; command name finished
-		beq	@cmd_match_sk
-@cmd_match_nxt:	lda	zp_mos_genPTR
-		clc
-		adc	#6
+		lda	#<tbl_commands_MOS
 		sta	zp_mos_genPTR
-		bcc	cmd_loop			; try next table entry
-		inc	zp_mos_genPTR+1
-		bne	cmd_loop
+		lda	#>tbl_commands_MOS
+		sta	zp_mos_genPTR+1
+		jsr	searchCMDTabExec
 
-@cmd_match_sk:	lda	(zp_mos_txtptr),Y
-		cmp	#' '+1
-		bcs	@cmd_match_nxt		
 
-svc4_CMD_exec:	pla					; discard stacked y
+svc4_CMD_exit:	jmp	ServiceOut
+
+
+
+searchCMDTabExec:
+		jsr	searchCMDTab
+		bvc	anRTS
+
+cmdTabExecPlaPla:
+		php
+		pla
+		tax
+		; discard return address -- we're not going to return
+		pla
+		pla
+		jmp	cmdT1
+cmdTabExec:	php
+		pla
+		tax					; preserve flags
 		; push address of ServiceOutA0 to stack for return
-		lda	#>(ServiceOutA0-1)
+cmdT1:		lda	#>(ServiceOutA0-1)
 		pha
 		lda	#<(ServiceOutA0-1)
 		pha
-		sty	zp_mos_error_ptr
+		sty	zp_trans_tmp			; command tail save
 		; push address of Command Routine to stack for rts
 		ldy	#3
 		lda	(zp_mos_genPTR),Y
@@ -531,12 +631,82 @@ svc4_CMD_exec:	pla					; discard stacked y
 		dey
 		lda	(zp_mos_genPTR),Y
 		pha
-		ldy	zp_mos_error_ptr
+		ldy	zp_trans_tmp
+		txa
+		pha
+		plp					; flags as passed in
 		rts					; execute command
 
+anRTS:		rts
 
-svc4_CMD_exit:	pla					; discard stacked Y
-		jmp	ServiceOut
+
+; search the command table at zp_mos_genPTR for match to string at (zp_mos_genPTR)
+; return Cy=1 for match:
+;	 zp_mos_genPTR points at entry
+;	 Y points at tail
+;   else Cy=0
+;	 Y points at command start
+
+
+searchCMDTab:
+		php					; save flags on entry (config/status pass through Cy)		
+		tya
+		pha					; save begining of command pointer
+
+@cmd_loop:	pla
+		pha
+		tay					; restore zp_mos_txtptr and Y from stack
+		jsr	SkipSpacesPTR
+		sty	zp_trans_tmp + 1		; we have to subtract the start Y from the string pointer!
+		ldy	#0
+		sec
+		lda	(zp_mos_genPTR),Y
+		sbc	zp_trans_tmp + 1
+		sta	zp_trans_tmp
+		iny
+		lda	(zp_mos_genPTR),Y		
+		beq	@r				; no more commands
+		sbc	#0
+		ldy	zp_trans_tmp+1			; get back Y
+		sta	zp_trans_tmp+1			; point to command name - Y
+		dey
+@cmd_match_lp:	iny
+		lda	(zp_mos_txtptr),Y
+		jsr	ToUpper
+		sta	zp_trans_tmp+2
+		lda	(zp_trans_tmp),Y
+		jsr	ToUpper
+		eor	zp_trans_tmp+2
+		beq	@cmd_match_lp
+		lda	(zp_mos_txtptr),Y
+		cmp	#'.'
+		beq	@cmd_match2_sk
+		lda	(zp_trans_tmp),Y		; command name finished
+		beq	@cmd_match_sk
+@cmd_match_nxt:	lda	zp_mos_genPTR
+		clc
+		adc	#6
+		sta	zp_mos_genPTR
+		bcc	@cmd_loop			; try next table entry
+		inc	zp_mos_genPTR+1
+		bne	@cmd_loop
+
+@cmd_match_sk:	lda	(zp_mos_txtptr),Y
+		cmp	#' '+1
+		bcs	@cmd_match_nxt		
+		dey
+@cmd_match2_sk:	iny
+		pla					; discard stacked Y
+		pla
+		ora	#$40				; indicate pass
+		pha
+		plp
+		rts
+@r:		pla					
+		tay
+		plp
+		clv					; indicate fail
+		rts
 
 
 ; --------------------
@@ -555,29 +725,58 @@ svc5_UKIRQ:
 
 
 ; --------------------
-; SERVICE 8 - OSWORD
+; SERVICE 7 - OSBYTE
 ; --------------------
 
-;		A = $99
-;	XY?0 <16 - Get SWROM base address
-;	---------------------------------
-;	On Entry:
-;		XY?0 	= Rom #
-;		XY?1	= flags: (combination of)
-;			$80	= current set
-;			$C0	= alternate set
-;			$20	= ignore memi (ignore inhibit)
-;			$01	= map 1 (map 0 if unset)
-;		XY?2	?
-;	On Exit:
-;		XY?0	= return flags
-;			$80	= set if On board Flash
-;			$40	= set if SYS
-;			$20	= memi (swrom/ram inhibited)
-;			$01	= map 1 (map 0 if not set)
-;		XY?1	= rom base page lo ($80 if SYS)
-;		XY?2	= rom base page hi ($FF if SYS)
+svc7_OSBYTE:
+		jsr	CheckBlitterPresent
+		bcs	noCMOShere
+		lda	zp_mos_OSBW_A
+		cmp	#OSBYTE_161_READ_CMOS
+		beq	dMOS_OSBYTE_161_READ_CMOS
+		cmp	#OSBYTE_162_WRITE_CMOS
+		beq	dMOS_OSBYTE_162_WRITE_CMOS
+		
 
+noCMOShere:
+		jmp	ServiceOut
+
+dMOS_OSBYTE_161_READ_CMOS:
+		; TODO: this assumes all Blitters have CMOS RAM/i2c - TODO: checks throughout? (safe for all Mk.2/3 built so far)
+		ldy	zp_mos_OSBW_Y
+		ldx	zp_mos_OSBW_X
+		cpx	#$FF
+		beq	@size
+
+		cpx	#$80
+		bcs	noCMOShere		; >= $80 - pass on
+		jsr	CMOS_ReadMosX
+		tay
+@out:		
+		; we need to restore all these as OSWORD may have goosed them
+		stx	zp_mos_OSBW_X
+		sty	zp_mos_OSBW_Y
+		lda	#OSBYTE_161_READ_CMOS
+		sta	zp_mos_OSBW_A
+		jmp	ServiceOutA0retY
+
+
+@size:		ldy	#$7F		
+		bne	@out
+
+dMOS_OSBYTE_162_WRITE_CMOS:
+		ldx	zp_mos_OSBW_X
+		cpx	#$80
+		bcs	noCMOShere		; >= $80 - pass on
+		lda	zp_mos_OSBW_Y
+		jsr	CMOS_WriteMosX
+		stx	zp_mos_OSBW_X
+		jmp	ServiceOutA0
+
+
+; --------------------
+; SERVICE 8 - OSWORD
+; --------------------
 
 svc8_OSWORD:
 		lda	zp_mos_OSBW_A
@@ -613,10 +812,16 @@ tbl_commands_General:
 			.word	strCmdXMLOAD, cmdXMLoad-1, strHelpXMLoad
 			.word	strCmdXMSAVE, cmdXMSave-1, strHelpXMSave
 			.word	strCmdXMDUMP, cmdXMdump-1, strHelpXMdump
-
 			.word	0
 
-str_HELP_KEY	:= 	utils_name
+	; Master/MOS substitute commands
+tbl_commands_MOS:	.word	strCmdCONFIG, cmdCONFIG-1, strHelpCONFIG
+			.word	strCmdSTATUS, cmdSTATUS-1, strHelpSTATUS
+			.word	0
+
+strHELPKEY_BLTUTIL:	.byte	"BLTUTIL",0
+strHELPKEY_MOS:		.byte	"MOS",0
+
 strCmdRoms:		.byte	"ROMS", 0
 helpRoms:		.byte	"[V][A][C][I][X|0|1]", 0
 strCmdSRCOPY:		.byte	"SRCOPY",0
@@ -633,11 +838,11 @@ strHelpNoIce:		.byte	"[ON|OFF]",0
 strCmdNOICE_BRK:	.byte	"NOICEBRK",0
 strHelpNoIce_BRK:	.byte	0
 strCmdBLTurbo:		.byte	"BLTURBO",0
-strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[-][X][!]] [?]",0
+strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[-]] [T[-]] [?]",0
 strCmdSound:		.byte	"BLSOUND", 0
 strHelpSound:		.byte	"[ON|OFF|DETUNE]", 0
 strCmdHeapInfo:		.byte	"BLHINF",0
-strHelpHeapInfo:		.byte	"[V]",0
+strHelpHeapInfo:	.byte	"[V]",0
 strCmdSoundSamLoad:	.byte	"BLSAMLD",0
 strHelpSoundSamLoad:	.byte	"<filename> <SN> [reploffs]",0
 strCmdSoundSamMap:	.byte	"BLSAMMAP",0
@@ -650,7 +855,629 @@ strHelpXMLoad:		.byte	"<file> [#dev] [<start>]",0
 strCmdXMSAVE:		.byte	"XMSAVE",0
 strHelpXMSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
 
-cmdHelpPresent:		.byte	130,"(Blitter present)",0
-cmdHelpPaulaPresent:		.byte	130," (1M Paula present)",0
-cmdHelpNotPresent:	.byte	129,"(Blitter/1M Paula not present)",0
+strCmdCONFIG:		.byte	"CONFIGURE", 0
+strHelpCONFIG:		.byte	0
+strCmdSTATUS:		.byte	"STATUS", 0
+strHelpSTATUS:		.byte	0
 
+	.macro ConfYN Name, Func, Flip, Bit, Offs
+		.word	Name
+		.word	Func-1
+		.word	$4000 + ($0800*(Flip && 1)) + ($0100*(Bit & 7)) + (Offs & $7F)
+	.endmacro
+
+	.macro Conf	Name, Func, Help
+		.word	Name
+		.word	Func-1
+		.word	Help
+	.endmacro
+
+
+
+; these are scanned if we're replacing non-master MOS
+tbl_configs_MOS:	Conf	strDot,			confHelp, 		0	
+			Conf	strMode,		confMode,		confHelpD	
+			ConfYN	strTube,		confYN,			0,	0,	$F
+			Conf	strTV,			confTV,			confHelpDD
+			.word	0
+; these are always scanned
+tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0		
+			ConfYN	strBLThrottle,		confYN,			1,	BLTUTIL_CMOS_FW_THROT_BIT_CPU, BLTUTIL_CMOS_FW_THROT
+			Conf	strBLThrottleROMS,	confBLThrottleROMS,	confHelpBLThrottleROMS
+			.word	0
+
+
+strDot:			.byte	".",0
+strTV:			.byte	"TV",0
+strTube:		.byte	"Tube",0
+strBLThrottle:		.byte	"BLSlow",0
+strBLThrottleROMS:	.byte	"BLSlowROMs",0
+strMode:		.byte	"Mode",0
+
+confHelpBLThrottleROMS:	.byte	"[[-]R<D>[-<D>][,...]]",0
+
+confHelpDD:		.byte	"[<D>[,<D>]]",0
+confHelpD:		.byte	"[<D>]",0
+
+		.code
+		; TODO: move to another files (move commands table parse too?)
+
+
+
+confBLHelp:	lda	#<(tbl_configs_BLTUTIL+6)
+		sta	zp_mos_genPTR
+		lda	#>(tbl_configs_BLTUTIL+6)
+		sta	zp_mos_genPTR+1
+		bcc	@s
+		jmp	statBLHelp
+@s:		jsr	ShowConfsHelpTable
+		; we need to pass on to other roms, we were entered with ServiceOutA0 pushed.
+		; pop it and jump to serviceOut
+		pla
+		jmp	plaServiceOut
+
+statBLHelp:	jsr	ShowStatsHelpTableBLT
+		; we need to pass on to other roms, we were entered with ServiceOutA0 pushed.
+		; pop it and jump to serviceOut
+		pla
+		jmp	plaServiceOut
+
+
+confHelp:	bcc	@s
+		jmp	statHelp
+@s:		jsr	PrintImmedT
+		.byte 	"Config. options:"
+		.byte	13|$80
+		; scan through table and print options, skipping first option which is "."
+		lda	#<(tbl_configs_MOS+6)
+		sta	zp_mos_genPTR
+		lda	#>(tbl_configs_MOS+6)
+		sta	zp_mos_genPTR+1
+	
+		tya				; preserve text pointer (for later pass on to ROMs)
+		pha
+		jsr	ShowConfsHelpTable	; show the help table
+		pla
+		tay
+		lda	#OSBYTE_143_SERVICE_CALL
+		ldx	#SERVICE_28_CONFIGURE
+		jsr	OSBYTE			; pass on to ROMS
+
+		jsr	PrintImmedT
+                .byte 	"Where:",13
+                .byte 	"D is a decimal number, or",13
+                .byte 	"a hexadecimal number preceded by &",13
+                .byte	"Items within [ ] are optional"
+		.byte	13|$80              
+		rts
+
+
+ShowConfsHelpTable:
+@lp:
+		ldy	#0
+		lda	(zp_mos_genPTR),Y
+		beq	@done
+		
+		ldy	#5
+		lda	(zp_mos_genPTR),Y
+		and	#$40
+		beq	@nono
+		
+		lda	#'['
+		jsr	PrintA
+		jsr	PrintNo
+		lda	#']'
+		jsr	PrintA
+		ldy	#0
+		jsr	PrintAtPtrgenPtrY
+		jmp	@nextNL
+@nono:		ldy	#0
+		jsr	PrintAtPtrgenPtrY16
+		ldy	#4
+		jsr	PrintAtPtrgenPtrY		; print help
+
+@nextNL:	jsr	PrintNL
+@next:
+		clc
+		lda	zp_mos_genPTR
+		adc	#6
+		sta	zp_mos_genPTR
+		bcc	@lp
+		inc	zp_mos_genPTR+1
+		bne	@lp
+@done:		rts
+
+ShowStatsHelpTableBLT:
+		bit	bitSEV
+		jmp	ShowStatsHelpTableInt
+ShowStatsHelpTableMOS:
+		clv
+ShowStatsHelpTableInt:
+		php
+@lp:
+		ldy	#0
+		lda	(zp_mos_genPTR),Y
+		beq	@done
+
+		ldy	#5
+		lda	(zp_mos_genPTR),Y
+		and	#$40
+		bne	@nolbl			; skip if a YN statYN will print this if set
+		ldy	#0
+		jsr	PrintAtPtrgenPtrY16	
+
+@nolbl:
+		plp
+		php				; get back V flag passed in
+		lda	#>(@next-1)
+		pha
+		lda	#<(@next-1)
+		pha				; return to @nextNL
+		ldy	#3
+		lda	(zp_mos_genPTR),Y
+		pha
+		dey
+		lda	(zp_mos_genPTR),Y	; push routine address
+		pha
+		sec				; indicate status
+		rts				; call pushed routine
+
+@next:
+		ldy	#5
+		lda	(zp_mos_genPTR),Y
+		and	#$40
+		bne	@nonl			; skip if a YN statYN will print this if set
+		jsr	PrintNL
+@nonl:
+
+		clc
+		lda	zp_mos_genPTR
+		adc	#6
+		sta	zp_mos_genPTR
+		bcc	@lp
+		inc	zp_mos_genPTR+1
+		bne	@lp
+@done:		plp
+		rts
+
+statHelp:	jsr	PrintImmedT
+		.byte	"Configuration Status:"
+		.byte	13|$80
+
+		lda	#<(tbl_configs_MOS+6)
+		sta	zp_mos_genPTR
+		lda	#>(tbl_configs_MOS+6)
+		sta	zp_mos_genPTR+1
+	
+		tya				; preserve text pointer (for later pass on to ROMs)
+		pha
+
+		jsr	ShowStatsHelpTableMOS
+
+		pla
+		tay
+		lda	#OSBYTE_143_SERVICE_CALL
+		ldx	#SERVICE_29_STATUS
+		jsr	OSBYTE			; pass on to ROMS
+		rts
+
+confYN:		bcs	statYN
+
+		php				; save flags for later (sign contains Y/N)
+		ldy	#5
+		lda	(zp_mos_genPTR),Y
+		ldx	#0
+		and	#$8
+		beq	@nflip
+		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
+@nflip:		txa
+		; flip again if a "yes" passed in
+		plp
+		php
+		bmi	@s
+		eor	#$FF		
+@s:		sta	zp_trans_tmp		; store flip mask, used to swap senses of bit
+		lda	(zp_mos_genPTR),Y
+		and	#$7			; the bit position used to store the config
+		
+		jsr	MaskBitA
+
+		sta	zp_trans_tmp+1		; store mask
+		and	zp_trans_tmp
+		sta	zp_trans_tmp		; set bit to store
+		
+		ldy	#4
+		lda	(zp_mos_genPTR),Y		; get index in CMOS
+		tax
+		plp
+		php
+		bvs	@blt
+		jsr	CMOS_ReadMosX
+		jmp	@nob
+@blt:		jsr	CMOS_ReadFirmX
+@nob:		eor	#$FF				; flip all bits
+		ora	zp_trans_tmp+1			; set mask bit
+		eor	#$FF				; flip all again - 0 in masked bit
+		ora	zp_trans_tmp
+		plp
+		php
+		bvs	@blt2
+		jsr	CMOS_WriteMosX
+		jmp	@nob2
+@blt2:		jsr	CMOS_WriteFirmX
+@nob2:
+
+		plp
+		rts
+
+
+statYN:		php
+		ldy	#5
+		lda	(zp_mos_genPTR),Y
+		ldx	#0
+		and	#$8
+		beq	@nflip
+		dex				; bit 7=1 causes X=0, bit 7=0 causes X=$FF
+@nflip:		stx	zp_trans_tmp		; store flip mask, used to swap senses of bit
+		lda	(zp_mos_genPTR),Y
+		and	#$7			; the bit position used to store the config
+		
+		jsr	MaskBitA
+
+		sta	zp_trans_tmp+1		; store mask
+		
+		ldy	#4
+		lda	(zp_mos_genPTR),Y		; get index in CMOS
+		tax
+		plp
+		php
+		bvs	@blt
+		jsr	CMOS_ReadMosX
+		jmp	@nob
+@blt:		jsr	CMOS_ReadFirmX
+@nob:		eor	zp_trans_tmp
+		and	zp_trans_tmp+1
+		bne	@nono
+		jsr	PrintNo
+@nono:		ldy	#0
+		jsr	PrintAtPtrgenPtrY
+		jsr	PrintNL
+
+		plp
+		rts
+
+confBLThrottleROMS:
+		bcs	statBLThrottleROMS
+		php
+		ldx	#0
+@a:		jsr	SkipSpacesPTR
+		cmp	#$D
+		beq	@r	
+		cmp	#'-'
+		bne	:+
+		iny
+		ldx	#$40
+		bne	@a
+:		jsr	ToUpper
+		cmp	#'R'
+		bne	jbrkBadCommand2
+		iny
+		stx	zp_trans_tmp		; set flags
+		bit	zp_trans_tmp
+		php
+		jsr	cmdBLTurboRomsParse
+		
+		plp				; get flag back
+		lda	zp_trans_tmp+2
+		pha
+		lda	zp_trans_tmp+1
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
+		jsr	@set
+		pla
+		inx
+		jsr	@set
+
+@r:		plp
+		rts
+
+@set:		sta	zp_trans_tmp
+		php
+		jsr	CMOS_ReadFirmX
+		plp
+		php
+		bvs	@f1
+		eor	#$FF
+@f1:		ora	zp_trans_tmp
+		bvs	@f2
+		eor	#$FF
+@f2:		jsr	CMOS_WriteFirmX
+		plp
+		rts
+
+statBLThrottleROMS:
+		php
+		jsr	PushAcc
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+1
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x1,Y
+		eor	#$FF
+		pha
+		dex
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+0
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x0,Y
+		eor	#$FF
+		pha
+		jsr	cmdBLTurbo_PrintRomsInit
+		pla	
+		jsr	cmdBLTurbo_PrintRomsA
+		pla	
+		jsr	cmdBLTurbo_PrintRomsA
+		jsr	cmdBLTurbo_PrintRomsDone
+		jsr	PopAcc
+		jsr	PrintNL
+		plp
+		rts
+
+
+jbrkBadCommand2:jmp	brkBadCommand
+
+confTV:		bcs	statTV
+		jsr	ParseDecOrHex
+		bcs	jbrkBadCommand
+		lda	zp_trans_acc+0
+		pha
+		jsr	SkipSpacesPTR
+		cmp	#$D
+		bne	@s2
+		clc
+		bcc	@s
+@s2:		cmp	#','
+		bne	jbrkBadCommand
+		iny
+		jsr	ParseDecOrHex
+		bcs	jbrkBadCommand
+		lda	zp_trans_acc+0
+		ror	A			; get into Cy
+@s:		pla
+		rol	A
+		asl	A
+		asl	A
+		asl	A
+		asl	A
+		sta	zp_trans_tmp
+
+		ldx	#10	
+		jsr	CMOS_ReadMosX		; get existing value
+		and	#$0F
+		ora	zp_trans_tmp
+		ldx	#10	
+		jsr	CMOS_WriteMosX
+		rts
+
+statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
+
+		ldx	#10
+		jsr	CMOS_ReadMosX		
+		ror	A
+		ror	A
+		ror	A
+		ror	A
+		pha
+		ror	A
+		and	#7
+		jsr	PrintDecA
+		jsr	PrintComma
+		pla
+		and	#1
+		jsr	PrintDecA
+		jsr	PopAcc
+		rts
+
+
+
+	; We enter here if the *STATUS command is executed and we are a MOS substitute
+	.scope
+::cmdSTATUS:	sec
+		bcs	doConfStat
+::cmdCONFIG:	clc					; this will come through in findCMOS result
+doConfStat:	jsr	findConfigMOS			; look for the item in the MOS table
+		bvs	clvjcmdexecpp			; matched skip forward
+		lda	#SERVICE_28_CONFIGURE>>1
+		rol	A
+		tax					; set to 28/29 depending on carry
+		lda	#OSBYTE_143_SERVICE_CALL
+		jsr	OSBYTE				; if not found pass round ROMs (including our own)
+		cpx	#0
+		beq	ok
+::jbrkBadCommand:
+		jmp	brkBadCommand
+ok:		rts
+	.endscope
+		
+		; found in table, execute from table
+clvjcmdexecpp:
+		clv					; clear V - indicate to handlers that we are
+							; doing MOS stuff (as opposed to blitter area of CMOS)
+jcmdexecpp:	jmp	cmdTabExecPlaPla
+jcmdexec:	jmp	cmdTabExec
+
+svc28_CONFIG:	clc
+		bcc	svc28x
+svc29_STATUS:	sec
+svc28x:		jsr	findConfigBL
+		bvs	jcmdexec
+		jmp	ServiceOut			; pass on to other handlers
+
+
+confMode:	bcs	statMode
+		jsr	ParseDecOrHex
+		bcs	jbrkBadCommand
+		lda	zp_trans_acc+0
+		and	#$7
+		sta	zp_trans_tmp		
+		ldx	#10	
+		jsr	CMOS_ReadMosX		; get existing value
+		and	#$F0
+		ora	zp_trans_tmp
+		ldx	#10	
+		jsr	CMOS_WriteMosX
+		rts
+statMode:	jsr	PushAcc			; we're about to use acc which crashes pointers
+		ldx	#10
+		jsr	CMOS_ReadMosX
+		and	#$7
+		jsr	PrintDecA
+		jsr	PopAcc		
+		rts
+
+
+
+.scope
+::findConfigBL:
+		lda	#<tbl_configs_BLTUTIL
+		sta	zp_mos_genPTR
+		lda	#>tbl_configs_BLTUTIL
+		sta	zp_mos_genPTR+1	
+		bne	e2
+dotagain:
+		iny
+		plp
+::findConfigMOS:
+		lda	#<tbl_configs_MOS
+		sta	zp_mos_genPTR
+		lda	#>tbl_configs_MOS
+		sta	zp_mos_genPTR+1
+
+e2:
+		lda	#0				; set Z=1, S=0
+		php
+
+		jsr	SkipSpacesPTR
+		cmp	#'.'
+		beq	dotagain
+		cmp	#$D
+		beq	empty
+
+		jsr	ToUpper
+		cmp	#'N'
+		bne	@nono
+		iny
+		lda	(zp_mos_txtptr),Y
+		jsr	ToUpper
+		cmp	#'O'
+		bne	@nono1
+		iny
+		plp
+		lda	#$FF				; set Z=0, S=1
+		bne	@noyes
+@nono1:		dey
+@nono:		plp
+@noyes:		jsr	searchCMDTab
+		bpl	@ok
+		php					
+		dey					; we skipped a no skip back
+		dey
+		plp
+@ok:		rts
+		;
+empty:		plp
+		bit	bitSEV				; indicate found (first entry!)
+::bitSEV:	rts
+.endscope
+		.rodata
+confDefaults:
+		.word	CMOS_WriteMosX
+		.word	$0A07				; *TV 0,0 ; MODE 7
+		.word	CMOS_WriteFirmX
+		.word	$FFFF
+
+		.code
+configReset:
+		jsr	cfgMasterMOS
+		bcs	@nomos
+
+		; we've been told to reset, set MOS and BLT pages to FF then seed with value from tables
+		ldy	#0			;index into tables
+
+@l1:
+		lda	confDefaults,Y		; get CMOS write routine
+		sta	zp_trans_tmp
+		iny
+		lda	confDefaults,Y
+		sta	zp_trans_tmp+1	
+		iny	
+		cmp	#$FF			; marker for end of table
+		beq	@end			; past end of table
+
+		sty	zp_trans_tmp+2		; save pointer
+		; first use routine to clear all locations 0..127
+		ldx	#0		
+@clp:		lda	#0
+		jsr	@r
+		inx
+		bpl	@clp
+
+		; parse table
+@l2:		ldy	zp_trans_tmp+2
+		lda	confDefaults+1,Y	; get hi byte
+		bmi	@l1			; if -ve then next routine/end
+		tax				; it's the index
+		lda	confDefaults,Y
+		iny
+		iny
+		sty	zp_trans_tmp+2
+		jsr	@r
+		jmp	@l2
+
+
+@end:		clc
+@nomos:		rts
+@r:		jmp	(zp_trans_tmp)		; call indirect
+
+
+
+	; perform, if applicable, the Ersatz MOS configurations
+configMOSInit:
+		jsr	cfgMasterMOS
+		bcs	@nothardres
+
+		lda	#OSBYTE_253_VAR_LAST_RESET
+		ldx	#0
+		ldy	#$FF
+		jsr	OSBYTE
+		cpx	#1
+		bcc	@nothardres
+
+		; poke config values into startup options 
+		lda	sysvar_STARTUP_OPT
+		and	#$F8
+		sta	zp_trans_tmp
+		ldx	#10		
+		jsr	CMOS_ReadMosX			; get VDU opts
+		pha
+
+		lsr	A
+		lsr	A
+		lsr	A
+		lsr	A
+		; A contains interlace flag
+		pha
+		and	#1
+		sta	oswksp_VDU_INTERLACE
+		pla	
+		lsr	A
+		sta	oswksp_VDU_VERTADJ		
+
+		pla
+		and	#7
+		ora	zp_trans_tmp
+		sta	sysvar_STARTUP_OPT
+		and	#7
+		pha
+		lda	#22				; MODE
+		jsr	OSWRCH
+		pla
+		jsr	OSWRCH
+
+
+@nothardres:
+		rts		

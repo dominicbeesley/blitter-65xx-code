@@ -1,6 +1,6 @@
 		include ../../Makefile.defs
 
-AS=ca65 -I $(TOP)/includes -I $(BUILD)
+AS=ca65 -U -I $(TOP)/includes -I $(BUILD)
 LD=ld65
 INCS=$(wildcard $(TOP)/includes/*.inc) $(filter-out version-date.inc, $(wildcard *.inc))
 DEPS=$(INCS) 
@@ -13,9 +13,11 @@ ROMNO=F
 TARGETS=bltutil bltutil.e
 
 BBCOBJS_O = $(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
-ELKOBJS_O = $(addprefix $(BUILD)/, $(addsuffix .e.o, $(OBJS)))
+ELKOBJS_O = $(addprefix $(BUILD)/E/, $(addsuffix .o, $(OBJS)))
 ALLOBJS_O = $(BBCOBJS_O) $(ELKOBJS_O)
 TARGETS_O = $(addprefix $(BUILD)/, $(addsuffix .rom, $(TARGETS)))
+
+X:=$(shell mkdir $(BUILD)/E)
 
 .PHONY: all clean
 
@@ -24,18 +26,18 @@ ssd:	all
 deploy:	all
 
 #dont know why I need this but otherwise gnu make deletes the .o files!
-poo: $(ALLOBJS_O)
+.PRECIOUS: $(ALLOBJS_O)
 
 $(BUILD)/version-date.inc: $(DEPS) $(filter-out %.da.asm, $(wildcard *.asm))
 	$(SCRIPTS)/gendate.sh $@
 
 $(BUILD)/bltutil_romheader.o: $(BUILD)/version-date.inc
-$(BUILD)/bltutil_romheader.e.o: $(BUILD)/version-date.inc
+$(BUILD)/E/bltutil_romheader.o: $(BUILD)/version-date.inc
 
 $(BUILD)/%.o: 	%.asm $(DEPS) 
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
-$(BUILD)/%.e.o: 	%.asm $(DEPS) 
+$(BUILD)/E/%.o: 	%.asm $(DEPS) 
 	$(AS) -D MACH_ELK -o $@ -g -l $(basename $@).lst $<
 
 $(BUILD)/%.rom: $(BBCOBJS_O) bltutil.cfg
@@ -43,12 +45,16 @@ $(BUILD)/%.rom: $(BBCOBJS_O) bltutil.cfg
 	echo "$.BLTUTIL FF8000 FF8000" >$@.inf
 	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
 	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
+	$(SCRIPTS)/ld65free.pl bltutil.cfg $(basename $@).map >$(basename $@).free.txt
+	cat $(basename $@).free.txt
 
 $(BUILD)/%.e.rom: $(ELKOBJS_O) bltutil.cfg
 	echo "E.BLTUTIL FF8000 FF8000" >$@.inf
 	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map --dbgfile $(basename $@).dbg -o $@ -C bltutil.cfg $(ELKOBJS_O) $(LIBS)
 	$(SCRIPTS)/getsymbols.pl $(ROMNO) <$(basename $@).sy2 >$(basename $@).noi
-	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
+	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)/E
+	$(SCRIPTS)/ld65free.pl bltutil.cfg $(basename $@).map >$(basename $@).free.txt
+	cat $(basename $@).free.txt
 
 clean:
 	-rm $(TARGETS_O)
@@ -56,8 +62,10 @@ clean:
 	-rm $(patsubst %.rom, %.sy2, $(TARGETS_O))
 	-rm $(patsubst %.rom, %.map, $(TARGETS_O))
 	-rm $(patsubst %.rom, %.noi, $(TARGETS_O))
+	-rm $(patsubst %.rom, %.dbg, $(TARGETS_O))
 	-rm $(ALLOBJS_O)
 	-rm $(patsubst %.o, %.lst, $(ALLOBJS_O))
+	-rm $(patsubst %.o, %.lst.rel, $(ALLOBJS_O))
 	-rm $(BUILD)/version-date.inc
 
 

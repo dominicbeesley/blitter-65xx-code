@@ -25,10 +25,10 @@
 		.include "oslib.inc"
 
 		.include "bltutil.inc"
-		.include "bltutil_jimstuff.inc"
 
 		.export	BounceErrorOffStack
 		.export	Print2Spc
+		.export PrintComma
 		.export PrintCommaSpace
 		.export	PrintSpc
 		.export	PrintA
@@ -37,12 +37,21 @@
 		.export	PrintHexNybA
 		.export PrintDecA
 		.export PrintDec
-		.export	PrintHexXY
+		.export	PrintHexAmpXY
 		.export	PrintMsgXYThenHexNyb
 		.export	PrintXY
-		.export	PrintXYTB
+		.export	PrintXY16
+		.export	PrintXYT
+		.export	PrintXYT16
 		.export	PrintPTR
-		.export PrintImmed
+		.export PrintAtPtrgenPtrY16
+		.export PrintAtPtrgenPtrY
+		.export	PrintPTRT
+		.export PrintImmedT
+		.export PrintImmedT16
+		.export PrintNo
+		.export PrintYes
+; unused;	.export PrintXSpc
 		.export	PromptYN
 		.export	PromptNo
 		.export	PromptYes
@@ -57,11 +66,7 @@
 		.export parseONOFF_ck
 		.export parseONOFF_ON
 		.export ParseHex
-		.export ParseHexLp
-		.export ParseHexShAd
-		.export ParseHexAlpha
-		.export ParseHexErr
-		.export ParseHexDone
+		.export ParseDecOrHex
 		.export zeroAcc
 		.export asl4Acc
 		.export addAAcc
@@ -81,6 +86,8 @@
 
 		.export brkBadCommand
 		.export brkInvalidArgument
+
+		.export MaskBitA
 
 		.export bitX
 ;
@@ -109,8 +116,9 @@ BounceErrorOffStack:
 ;------------------------------------------------------------------------------
 ; Printing
 ;------------------------------------------------------------------------------
-PrintCommaSpace:lda	#','
-		jsr	PrintA
+PrintComma:	lda	#','
+		jmp	PrintA
+PrintCommaSpace:jsr	PrintComma
 		jmp	PrintSpc
 Print2Spc:	jsr	PrintSpc
 PrintSpc:	lda	#' '
@@ -136,8 +144,10 @@ PrintHexNybA:	and	#$0F
 		jsr	PrintA
 		rts
 
-PrintHexXY:	pha
-		tya
+PrintHexAmpXY:	pha
+		lda	#'&'
+		jsr	PrintA
+		tya		
 		jsr	PrintHexA
 		txa
 		jsr	PrintHexA
@@ -147,7 +157,13 @@ PrintHexXY:	pha
 PrintDecA:	jsr	zeroAcc
 		sta	zp_trans_acc
 
-PrintDec:	; acc is number to print (destroyed)
+PrintDec:	lda	zp_trans_tmp
+		pha
+		lda	zp_trans_tmp+1
+		pha
+		
+
+		; acc is number to print (destroyed)
 		; zp_trans_tmp+0,+1 destroyed
 		lda	#0
 		sta	zp_trans_tmp+1		
@@ -161,6 +177,10 @@ PrintDec:	; acc is number to print (destroyed)
 		jsr	PrintHexNybA
 		dec	zp_trans_tmp+1
 		bne	@l2
+		pla
+		sta	zp_trans_tmp+1
+		pla
+		sta	zp_trans_tmp
 		rts
 
 
@@ -172,7 +192,43 @@ PrintMsgXYThenHexNyb:
 		jmp	PrintNL
 
 
-PrintImmed:	pha
+PrintImmedT16:
+		pha
+		txa
+		pha
+		tya
+		pha
+
+		jsr	PrintNL
+
+		lda	zp_tmp_ptr
+		pha
+		lda	zp_tmp_ptr+1
+		pha
+
+		tsx
+		lda	$106, X
+		sta	zp_tmp_ptr
+		lda	$107, X
+		sta	zp_tmp_ptr + 1
+		ldy	#1
+		jsr	PrintPTRT
+		tya
+		pha
+@l:		cpy	#17
+		bcs	@s
+		jsr	PrintSpc
+		iny
+		bne	@l
+@s:		pla
+		tay
+		jmp	exImmedT
+
+
+
+
+PrintImmedT:
+		pha
 		txa
 		pha
 		tya
@@ -188,10 +244,10 @@ PrintImmed:	pha
 		lda	$107, X
 		sta	zp_tmp_ptr + 1
 		ldy	#1
-		jsr	PrintPTR
+		jsr	PrintPTRT
 
-		clc
-		dey
+exImmedT:	clc
+		dey			; we started with Y=1!
 		tya
 		adc	zp_tmp_ptr
 		sta	$106,X
@@ -208,8 +264,59 @@ PrintImmed:	pha
 		pla
 		rts
 
+; print the string pointed to by (zp_tmp_ptr),Y
+; preserves all regs and flags, saves string length in zp_tmp_ptr+3
+
+PrintAtPtrgenPtrY16:
+		php
+		clc
+		bcc	PrintAtPtrPtrY_int
+
+PrintAtPtrgenPtrY:
+		php
+		sec				; indicate normal (not 16 col)
+PrintAtPtrPtrY_int:		
+
+		pha
+		tya
+		pha
+		txa
+		pha
+		lda	zp_trans_tmp
+		pha
+		lda	(zp_mos_genPTR),Y
+		tax
+		stx	zp_trans_tmp		; save start of string
+		iny
+		lda	(zp_mos_genPTR),Y
+		tay
+		beq	@nos			; invalid pointer, skip
+		jsr	PrintXY_int
+@nos:		txa
+		sec
+		sbc	zp_trans_tmp		; length of string
+		sta	zp_trans_tmp
+		pla
+		sta	zp_trans_tmp
+		pla
+		tax
+		pla
+		tay
+		pla
+		plp
+		rts
+
+
+
+PrintXY16:
+		clc
+		bcc	PrintXY_int	
+
 		; zero terminated string at XY
-PrintXY:		lda	zp_tmp_ptr
+PrintXY:	sec
+
+PrintXY_int:
+		lda	zp_tmp_ptr
 		pha
 		lda	zp_tmp_ptr+1
 		pha
@@ -217,7 +324,25 @@ PrintXY:		lda	zp_tmp_ptr
 		stx	zp_tmp_ptr
 		sty	zp_tmp_ptr + 1
 		ldy	#0
+
+		php
 		jsr	PrintPTR
+		tya
+		plp
+		bcs	@no16
+		pha
+@l:		cpy	#16
+		bcs	@s
+		jsr	PrintSpc
+		iny
+		bne	@l
+@s:		pla		
+@no16:		clc
+		adc	zp_tmp_ptr
+		tax
+		lda	#0
+		adc	zp_tmp_ptr+1
+		tay
 
 		pla
 		sta	zp_tmp_ptr+1
@@ -225,6 +350,19 @@ PrintXY:		lda	zp_tmp_ptr
 		sta	zp_tmp_ptr
 		rts
 
+	; returns length of string in Y 
+PrintPTRT:
+@lp:		lda	(zp_tmp_ptr),Y
+		php
+		iny
+		and	#$7F
+		jsr	OSASCI
+		plp
+		bpl	@lp		
+@out:		rts
+
+
+	; returns length of string + 1 in Y (i.e. counts zero terminator)
 PrintPTR:
 @lp:		lda	(zp_tmp_ptr),Y
 		iny
@@ -235,9 +373,13 @@ PrintPTR:
 		bne	@lp
 @out:		rts
 
+bitSEV:		.byte 	$FF
 
+PrintXYT16:	bit	bitSEV
+		bvs	PrintXYT_int
 		; to-bit terminated string at XY
-PrintXYTB:	lda	zp_tmp_ptr
+PrintXYT:	clv
+PrintXYT_int:	lda	zp_tmp_ptr
 		pha
 		lda	zp_tmp_ptr+1
 		pha
@@ -245,26 +387,34 @@ PrintXYTB:	lda	zp_tmp_ptr
 		stx	zp_tmp_ptr
 		sty	zp_tmp_ptr + 1
 		ldy	#0
-		jsr	PrintPTRTB
+		php
+		jsr	PrintPTRT
+		plp
+		bvc	@s
+
+		; pad to 16
+		tya
+		pha
+@l:		cpy	#16
+		bcs	@s2
+		jsr	PrintSpc
+		iny
+		bne	@l
+@s2:		pla
+		tay
+@s:		clc
+		tya
+		adc	zp_tmp_ptr
+		tax
+		lda	#0
+		adc	zp_tmp_ptr+1
+		tay
 
 		pla
 		sta	zp_tmp_ptr+1
 		pla
 		sta	zp_tmp_ptr
 		rts
-
-PrintPTRTB:
-@lp:		lda	(zp_tmp_ptr),Y
-		pha
-		iny		
-		and	#$7F
-		jsr	OSASCI
-		pla
-		bmi	@out
-		cpy	#0
-		bne	@lp
-@out:		rts
-
 
 PrintBytesAndK:
 		jsr	PushAcc
@@ -275,9 +425,8 @@ PrintBytesAndK:
 
 		jsr	PopAcc
 
-		jsr	PrintSizeK
+		jmp	PrintSizeK
 
-		jmp	OSNEWL
 
 
 PrintSizeK:
@@ -300,11 +449,15 @@ PrintSizeK:
 		lda	#'k'
 		jmp	OSWRCH
 
+PrintNo:	jsr	PrintImmedT
+		TOPTERM "No"
+		rts
+PrintYes:	jsr	PrintImmedT
+		TOPTERM "Yes"
+		rts
 
-
-PromptYN:	jsr	PrintXY
-		ldx	#<str_YN
-		ldy	#>str_YN
+PromptYN:	jsr	PrintImmedT
+		TOPTERM " (Y/N)?"
 		jsr	PrintXY
 @1:		jsr	WaitKey
 		bcs	PromptRTS
@@ -312,15 +465,13 @@ PromptYN:	jsr	PrintXY
 		beq	PromptYes
 		cmp	#'N'
 		bne	@1
-PromptNo:	ldx	#<strNo
-		ldy	#>strNo
-		jsr	PrintXY
+PromptNo:	jsr	PrintNo
+		jsr	PrintNL
 		lda	#$FF
 		clc
 		rts
-PromptYes:	ldx	#<strYes
-		ldy	#>strYes
-		jsr	PrintXY
+PromptYes:	jsr	PrintYes
+		jsr	PrintNL
 		lda	#0
 		clc
 PromptRTS:	rts
@@ -373,26 +524,26 @@ parseONOFF:	jsr	SkipSpacesPTR
 		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#'O'
-		bne	ParseHexErr
+		bne	ParseRetSec
 		iny
 		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#'N'
 		beq	parseONOFF_ON
 		cmp	#'F'
-		bne	ParseHexErr
+		bne	ParseRetSec
 		iny
 		lda	(zp_mos_txtptr),Y
 		jsr	ToUpper
 		cmp	#'F'
-		bne	ParseHexErr
+		bne	ParseRetSec
 		lda	#0
 parseONOFF_ck:						; check for space or &D
 		pha
 		iny
 		lda	(zp_mos_txtptr),Y
 		cmp	#' '+1
-		bcs	ParseHexErr		
+		bcs	ParsePlaRetSec		
 		clc
 		pla
 		rts
@@ -407,8 +558,6 @@ ParseHex:
 		ldx	#$FF				; indicates first char
 		jsr	zeroAcc
 		jsr	SkipSpacesPTR
-		cmp	#$D
-		beq	ParseHexErr
 ParseHexLp:	lda	(zp_mos_txtptr),Y
 		iny
 		jsr	ToUpper
@@ -428,12 +577,12 @@ ParseHexAlpha:	cmp	#'A'
 		bcs	ParseHexErr
 		sbc	#'A'-11				; note carry clear 'A'-'F' => 10-15
 		jmp	ParseHexShAd
-ParseHexErr:	inx
+ParseHexErr:	inx					; check for error (i.e. no digits accepted)
 		bne	ParseHexDone
-		sec
 		pla
 		tax
-		pla
+ParsePlaRetSec:	pla
+ParseRetSec:	sec
 		rts
 ParseHexDone:	dey
 		pla
@@ -441,6 +590,30 @@ ParseHexDone:	dey
 		pla
 		clc
 		rts
+
+ParseDecOrHex:	pha
+		txa
+		pha
+		ldx	#$FF				; indicates 1st char
+		jsr	zeroAcc
+		jsr	SkipSpacesPTR
+		cmp	#'&'
+		bne	@lp
+		iny
+		bne	ParseHexLp
+@lp:		lda	(zp_mos_txtptr),Y
+		iny
+		sec
+		sbc	#'0'
+		bcc	ParseHexErr
+		cmp	#10
+		bcs	ParseHexErr
+		inx
+		jsr	mul10Acc
+		jsr	addAAcc
+		jmp	@lp
+
+
 
 ;------------------------------------------------------------------------------
 ; Stackery
@@ -573,21 +746,35 @@ zeroAcc:	pha
 		pla
 		rts
 
-asl4Acc:
-		pha
-		txa
-		pha
-		ldx	#4
-@1:		asl	zp_trans_acc + 0
+asl4Acc:	jsr	asl2Acc
+asl2Acc:	jsr	asl1Acc
+asl1Acc:	asl	zp_trans_acc + 0
 		rol	zp_trans_acc + 1
 		rol	zp_trans_acc + 2
 		rol	zp_trans_acc + 3
-		dex
-		bne	@1
-		pla
-		tax
+		rts
+
+
+mul10Acc:	pha
+		jsr	asl1Acc			; Acc = * 2
+		jsr	PushAcc			; Stack =  * 2
+		jsr	asl2Acc			; Acc = * 8
+		clc
+		pla	
+		adc	zp_trans_acc+0
+		sta	zp_trans_acc+0
+		pla	
+		adc	zp_trans_acc+1
+		sta	zp_trans_acc+1
+		pla	
+		adc	zp_trans_acc+2
+		sta	zp_trans_acc+2
+		pla	
+		adc	zp_trans_acc+3
+		sta	zp_trans_acc+3
 		pla
 		rts
+
 
 addAAcc:
 		pha
@@ -606,7 +793,9 @@ addAAcc:
 
 		; found at http://nparker.llx.com/a2/mult.html
 
-div10Acc:
+div10Acc:	pha
+		txa
+		pha
 		lda	#0      	;Initialize REM to 0
         	sta	zp_trans_tmp
         	ldx	#32     	;There are 32 bits in NUM1
@@ -623,6 +812,9 @@ div10Acc:
         	inc	zp_trans_acc   	;and record a 1 in the quotient
 @l2:      	dex	        	
 		bne	@l1
+		pla
+		tax
+		pla
         	rts
 
 isAcc0:		lda	zp_trans_acc
@@ -838,7 +1030,23 @@ bitX:		; bit A of A is set to 1, return X=0
 		rts
 
 
-		.SEGMENT "RODATA"
-str_YN:			.byte	" (Y/N)?",0
-strNo:			.byte	"No", $D, 0
-strYes:			.byte	"Yes", $D, 0
+	; return's A with the Ath bit set's the bit A in
+MaskBitA:	pha			; room for result
+		txa
+		pha
+		tsx
+		lda	$102,X
+		tax
+		lda	#0
+		sec
+		; make a mask from bits in 
+@ml:		rol	A
+		dex
+		bpl	@ml
+		tsx
+		sta	$102,X
+		pla
+		tax
+		pla
+		rts
+

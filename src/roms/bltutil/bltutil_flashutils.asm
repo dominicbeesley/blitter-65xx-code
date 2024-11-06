@@ -24,12 +24,6 @@
 		.include "mosrom.inc"
 		.include "oslib.inc"
 		.include "bltutil.inc"
-		.include "bltutil_utils.inc"
-
-		.import		__CODE_FLASH_LOAD__
-		.import		__CODE_FLASH_RUN__
-		.import		__RAM_TRANS_FL_START__
-		.import		__RAM_TRANS_FL_LAST__
 
 		.export FlashReset
 		.export FlashReset_Q

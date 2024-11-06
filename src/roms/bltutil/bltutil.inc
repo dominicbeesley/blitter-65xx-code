@@ -62,7 +62,7 @@ OSWORD_BLTUTIL_RET_MAP1		:= $01
 .endmacro
 
 .macro		VERSION_STRING
-		.byte	"0.06"
+		.byte	"0.07"
 .endmacro
 
 .macro		M_ERROR
@@ -84,6 +84,26 @@ OSWORD_BLTUTIL_RET_MAP1		:= $01
 		.byte	serv
 		.byte	>(addr - 1)			; bytes here in order ready to be stacked then rts'd to
 		.byte 	<(addr - 1)
+.endmacro
+
+
+		; place a string in memory with the last character's top bit set
+.macro		TOPTERM s
+	.if (.strlen(s) = 0)
+		.byte	$80
+	.elseif (.strlen(s) = 1)
+		.byte	.strat(s, 0) | $80
+	.else
+		.repeat	.strlen(s)-1, I
+		.byte	.strat(s, I)
+		.endrepeat
+		.byte	.strat(s, .strlen(s)-1) | $80
+	.endif
+.endmacro
+
+.macro		HEAD16	s
+		jsr	PrintImmedT16
+		TOPTERM s
 .endmacro
 
 
@@ -215,3 +235,15 @@ SNDBUF_BUF_0		:=	$00			; sound buffers 21 bytes per channel
 SCRATCH_TMP		:=	$80			; 128 bytes of scratch space for the current
 							; command - do not use in service routines
 
+
+; Blitter mk.2/3 CMOS chip locations
+
+DEV_BLTUTIL_CMOS_EEPROM		= $A0	; device number for CMOS/EEPROM
+	; the MOS and FIRMWARE PAGES are split into two halves, 0..7F for rom set 0, 80..FF for set 1
+BLTUTIL_CMOS_PAGE_MOS	 	= $10	; page in CMOS / Flash EEPROM for Ersatz MOS config
+BLTUTIL_CMOS_PAGE_FIRMWARE 	= $11	; page in CMOS / Flash EEPROM for BLTUTIL's config
+
+BLTUTIL_CMOS_FW_ROM_THROT	= $00	; offset to per-rom-throttle arranged as 0..7, 8..15
+BLTUTIL_CMOS_FW_THROT   	= $02   ; offset to one byte:
+BLTUTIL_CMOS_FW_THROT_BIT_CPU	= $7
+BLTUTIL_CMOS_FW_THROT_BIT_MOS	= $6

@@ -28,17 +28,17 @@
 		.include	"mosrom.inc"
 		.include	"oslib.inc"
 		.include	"bltutil.inc"
-		.include "bltutil_romheader.inc"
-		.include "bltutil_jimstuff.inc"
-		.include	"cmos_alloc.inc"
-
 
 		.export i2c_writebyte
 		.export i2c_readbyte
 		.export i2c_write_devaddr		
 		.export i2c_OSWORD_13
-		.export bltutil_firmCMOSWrite	
-		.export bltutil_firmCMOSRead
+		.export CMOS_ReadYX
+		.export CMOS_WriteYX
+		.export CMOS_WriteFirmX	
+		.export CMOS_ReadFirmX
+		.export CMOS_WriteMosX	
+		.export CMOS_ReadMosX
 
 
 	.macro I2C_WAIT
@@ -51,7 +51,7 @@ lp:		bit	jim_I2C_STAT
 i2c_writebyte:	; on entry A contains byte to write, Cy = start, Ov = stop
 		; on exit VS if not ACK
 		php
-		I2C_WAIT		
+		I2C_WAIT	
 		plp
 		sta	jim_I2C_DATA
 		lda	#I2C_BUSY
@@ -197,45 +197,145 @@ i2c_OSWORD_13:	jsr	jimPageChipset
 
 bit_SEV:	.byte	$C0
 
-		; read single configuration byte at location $1100+Y to A, corrupts X, Y
-bltutil_firmCMOSRead:	
-		tya	
-		pha		; + 7 - address low byte
-		lda	#BLTUTIL_CMOS_PAGE_FIRMWARE	
-		pha		; + 6 - address hi byte - firmware page
-		lda	#DEV_BLTUTIL_CMOS_EEPROM
-		pha		; + 5 - dev no
-		lda	#1
-		pha		; + 4 - number to read
-		lda	#2
-		pha		; + 3 - number to write
-		lda	#OSWORD_OP_I2C
-		pha		; + 2 - I2C opcode
-		lda	#7
-		pha		; + 1 - len out
-		lda	#8
-		tsx
-		pha		; + 0 - len in
-		ldy	#1
-		lda	#OSWORD_BLTUTIL
-		jsr	OSWORD
+
+	.scope
+	; add $80 to A if map 1
+CMOS_addRomOffs:	rol	A
+		pha
+		jsr	cfgGetRomMap
+		ror	A		; map in Cy
 		pla
-		pla
-		pla
-		pla
-		pla
-		pla
-		pla
-		tax
-		pla
-		txa
+		ror	A
 		rts
 
-bltutil_firmCMOSWrite:		
-		pha		; + 8 - data
+
+; CMOS read / write 
+; on entry X contains an offset in either MOS or BLTUTIL page
+; if romset = 1 then $80 is added
+
+
+		; read single configuration byte at location $1100+X to A, corrupts X, Y
+::CMOS_ReadMosX:	pha					; space for return value
 		tya
+		pha
+		ldy	#BLTUTIL_CMOS_PAGE_MOS
+		bne	CMOS_ReadYX_int
+::CMOS_ReadFirmX:	pha					; space for return value
+		tya
+		pha
+		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE
+CMOS_ReadYX_int:	txa
+		jsr	CMOS_addRomOffs
+		jmp	CMOS_ReadYX_int2
+
+; Y = page in CMOS
+; X = offset in page in CMOS
+; on Exit
+; X,Y preserved
+; A = byte read
+; note OSBYTE_X,Y,A registers are blammed by calling OSWORD!
+
+::CMOS_ReadYX:	pha
+		tya
+		pha
+		txa
+CMOS_ReadYX_int2:	pha
+
+		pha				; pointless - to make same as write
+
+		; stack
+		;	+4	return A
+		;	+3	caller Y
+		;	+2	caller X
+		;	+1	-pad-
+
+		pha		; block + 7 - address low byte
+		tya
+		pha		; block + 6 - address hi byte - firmware page
+		lda	#DEV_BLTUTIL_CMOS_EEPROM
+		pha		; block + 5 - dev no
+		lda	#1
+		pha		; block + 4 - number to read
+		lda	#2
+		pha		; block + 3 - number to write
+		lda	#OSWORD_OP_I2C
+		pha		; block + 2 - I2C opcode
+		lda	#7
+		pha		; block + 1 - len out
+		lda	#8
+		tsx
+		pha		; block + 0 - len in
+		ldy	#1
+
+		;     stack     block 
+		;	+C		return A
+		;	+B		caller Y
+		;	+A		caller X
+		;	+9		-pad-
+		;	+8	+7	addr lo
+		;	+7	+6	addr hi
+		;	+6	+5	i2c dev no
+		;	+5	+4	n read
+		;	+4	+3	n write
+		;	+3	+2	i2c op
+		;	+2	+1	len out
+		;	+1	+0	len in
+
+		lda	#OSWORD_BLTUTIL
+		jsr	OSWORD
+
+		;     stack    block 
+		;	+C		return A
+		;	+B		caller Y
+		;	+A		caller X
+		;	+9		-pad-
+		;	+8	+7	-
+		;	+7	+6	d ret
+		;	+6	+5	-
+		;	+5	+4	-
+		;	+4	+3	-
+		;	+3	+2	-
+		;	+2	+1	-
+		;	+1	+0	-
+
+		tsx
+		lda	$107,X		
+		sta	$10C,X			; return A
+cmos_exit:	tsx
+		txa
+		clc
+		adc	#9
+		tax
+		txs
+
+		pla	
+		tax
+		pla
+		tay
+		pla
+		rts
+
+::CMOS_WriteMosX:	pha
+		tya
+		pha	
+		ldy	#BLTUTIL_CMOS_PAGE_MOS
+		bne	CMOS_WriteYX_int
+::CMOS_WriteFirmX:pha
+		tya
+		pha		
+		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE	
+CMOS_WriteYX_int:	txa
+		pha		; save caller X
+		jsr	CMOS_addRomOffs		
+		jmp	CMOS_WriteYX_int2
+::CMOS_WriteYX:	pha
+		tya
+		pha
+		txa		
+		pha		; save caller X
+CMOS_WriteYX_int2:pha		; + 8 - room for data
 		pha		; + 7 - address low byte
-		lda	#BLTUTIL_CMOS_PAGE_FIRMWARE	
+		tya
 		pha		; + 6 - address hi byte - firmware page
 		lda	#DEV_BLTUTIL_CMOS_EEPROM
 		pha		; + 5 - dev no
@@ -251,12 +351,36 @@ bltutil_firmCMOSWrite:
 		tsx
 		pha		; + 0 - len in
 		ldy	#1
+
+		;    stack     block 
+		;	+C		caller A
+		;	+B		caller Y
+		;	+A		caller X
+		;	+9	+8	data
+		;	+8	+7	addr lo
+		;	+7	+6	addr hi
+		;	+6	+5	i2c dev no
+		;	+5	+4	n read
+		;	+4	+3	n write
+		;	+3	+2	i2c op
+		;	+2	+1	len out
+		;	+1	+0	len in
+
+		lda	$10B,X
+		sta	$108,X			; move data into block from stacked A
+
 		lda	#OSWORD_BLTUTIL
 		jsr	OSWORD
-		tsx
-		txa
-		clc
-		adc	#9
-		tax
-		txs
-		rts
+
+		jsr	jimPageChipset
+
+		; we need to poll for write to finish
+@poll:		lda	#DEV_BLTUTIL_CMOS_EEPROM
+		bit	bit_SEV				; set V = STOP
+		sec
+		jsr	i2c_writebyte
+		bvs	@poll
+
+		jmp	cmos_exit
+
+	.endscope

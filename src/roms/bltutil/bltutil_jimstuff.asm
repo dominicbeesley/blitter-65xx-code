@@ -25,7 +25,6 @@
 		.include "mosrom.inc"
 
 		.include "bltutil.inc"
-		.include "bltutil_utils.inc"
 
 		.export	CheckBlitterPresent
 		.export	CheckPaulaPresent

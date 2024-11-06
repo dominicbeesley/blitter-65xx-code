@@ -24,7 +24,6 @@
 		.include "mosrom.inc"
 		.include "oslib.inc"
 		.include "bltutil.inc"
-		.include "bltutil_utils.inc"
 
 		.export autohazel_boot_first
 		.export autohazel_boot_second

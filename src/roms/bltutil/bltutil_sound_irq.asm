@@ -24,9 +24,6 @@
 		.include "oslib.inc"
 		.include "mosrom.inc"
 		.include "bltutil.inc"
-		.include "bltutil_utils.inc"
-		.include "bltutil_romheader.inc"
-		.include "bltutil_jimstuff.inc"
 
 		.CODE
 

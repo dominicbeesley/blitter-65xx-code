@@ -37,14 +37,6 @@
 		.include	"hardware.inc"
 		.include	"bltutil.inc"
 
-		.include	"bltutil_flashutils.inc"
-		.include	"bltutil_utils.inc"
-		.include	"bltutil_jimstuff.inc"
-		.include	"bltutil_noice.inc"
-		.include	"bltutil_romheader.inc"
-		.include	"bltutil_cfg.inc"
-		.include	"bltutil_i2c.inc"
-		.include	"cmos_alloc.inc"
 
 		.export cmdBLTurbo
 		.export cmdXMdump
@@ -58,6 +50,10 @@
 		.export cmdXMLoad
 		.export cmdXMSave
 		.export throttleInit
+		.export cmdBLTurbo_PrintRomsInit
+		.export cmdBLTurbo_PrintRomsA
+		.export cmdBLTurbo_PrintRomsDone
+		.export cmdBLTurboRomsParse
 
 		.CODE
 
@@ -166,8 +162,9 @@ cmdSRLOAD:	jsr	CheckBlitterPresentBrk
 		jsr	ParseIX01Flags
 
 
-		jsr	PrintImmed
-		.byte	"Loading ROM...",13,0
+		jsr	PrintImmedT
+		.byte	"Loading ROM..."
+		.byte 	13|$80
 
 		; setup OSFILE block to point at $FFFF4000 and load there
 		lda	#SRLOAD_buffer_page
@@ -183,8 +180,8 @@ cmdSRLOAD:	jsr	CheckBlitterPresentBrk
 		ldy	#>ADDR_ERRBUF
 		jsr	OSFILE				; load file
 
-		jsr	PrintImmed
-		.byte	"Writing",0
+		jsr	PrintImmedT
+		TOPTERM	"Writing"
 
 		; now copy to flash/sram
 		jsr	romWriteInit			; initialise the ROM writer - any error will trash this!
@@ -241,48 +238,81 @@ cmdBLTurboQry:
 		bcc	cmdBLTurboEnd
 
 		; Throttled ROMS
-		ldx	#0
-		stx	zp_trans_tmp			; flags $80 had hit
-
 		lda	sheila_ROM_THROTTLE_0
-		jsr	@bltrom8
-		lda	sheila_ROM_THROTTLE_1
-		jsr	@bltrom8
+		ora	sheila_ROM_THROTTLE_1
+		beq	@noroms
+		jsr	PrintSpc
 
-		jsr	OSNEWL
+		jsr	cmdBLTurbo_PrintRomsInit
+		lda	sheila_ROM_THROTTLE_0
+		jsr	cmdBLTurbo_PrintRomsA
+		lda	sheila_ROM_THROTTLE_1
+		jsr	cmdBLTurbo_PrintRomsA
+		jsr	cmdBLTurbo_PrintRomsDone
+
+@noroms:	jsr	OSNEWL
 
 		pla
 		tay					; restore command pointer
-		jmp	cmdBLTurbo_Next
+		jmp	cmdBLTurbo_NextClr
 
+cmdBLTurbo_PrintRomsInit:
+		ldx	#0
+		stx	zp_trans_tmp			; flags $80 had hit
+		rts
 
-@bltrom8:	sta	zp_trans_acc
+cmdBLTurbo_PrintRomsA:
+
+@bltrom8:	sta	zp_trans_tmp+2
 		ldy	#8
-@bltrom8lp:	ror	zp_trans_acc
-		bcc	@bltrom8nxt
+@bltrom8lp:	ror	zp_trans_tmp+2
+		bcc	@no
 		bit	zp_trans_tmp
+		bvs	@bltrom8nxt
 		bmi	@already
-		lda	#$80
-		sta	zp_trans_tmp			; mark already
-		jsr	PrintSpc
 		lda	#'R'
 		bne	@blsk1
 @already:	lda	#','
-@blsk1:		jsr	OSWRCH
+@blsk1:		jsr	PrintA
 		txa
-		jsr	PrintHexNybA
+		jsr	PrintDecA
+		lda	#$C0
+		sta	zp_trans_tmp			; mark already
+		stx	zp_trans_tmp+1			; first in range
 @bltrom8nxt:	inx
 		dey
 		bne	@bltrom8lp
 		rts
+@no:		jsr	@checkclose
+		jmp	@bltrom8nxt
+
+@checkclose:
+cmdBLTurbo_PrintRomsDone:
+		bit	zp_trans_tmp
+		bpl	@r
+		bvc	@r				; no range open
+		lda	#$80
+		sta	zp_trans_tmp
+		dex
+		cpx	zp_trans_tmp+1			; check if range
+		beq	@s
+		lda	#'-'
+		jsr	PrintA
+		txa
+		jsr	PrintDecA
+@s:		inx
+@r:		rts
 
 
 
 cmdBLTurboEnd:
 		rts
 cmdBLTurbo:	
-		jsr	CheckBlitterPresentBrk		
-cmdBLTurbo_Next:
+		jsr	CheckBlitterPresentBrk	
+cmdBLTurbo_NextClr:					; return here after doing a command to clear flags
+		lda	#0
+		sta	zp_trans_tmp	
+cmdBLTurbo_Next:					; return here to retain flags
 
 		jsr	SkipSpacesPTR
 		iny
@@ -302,31 +332,25 @@ cmdBLTurbo_Next:
 		jmp	cmdBLTurboQry
 :		cmp	#13
 		beq	cmdBLTurboEnd
-		jmp	brkBadCommand
-cmdBLTurboThrottle:
-		ldx	#0
-		stx	zp_trans_tmp
-
-@lp:		jsr	SkipSpacesPTR
-		cmp	#'!'
-		bne	:+
-		lda	#$80
-		bne	@setf
-		bne	:-
-:		cmp	#'-'
+		cmp	#'-'
 		bne	:+
 		lda	#$40
-		bne	@setf
-:		cmp	#$D
-		beq	@doit
-		jmp	brkBadCommand
-
-@setf:		iny
-		ora	zp_trans_tmp
+		jsr	setf
+		bne	cmdBLTurbo_Next
+:		jmp	brkBadCommand
+setf:		ora	zp_trans_tmp
 		sta	zp_trans_tmp
-		jmp	@lp
+		rts
 
-@doit:		bit	zp_trans_tmp
+cmdBLTCheckEnd:
+		lda	(zp_mos_txtptr),Y
+		cmp	#' '+1
+		bcc	:+
+		jmp	brkBadCommand
+:		bit	zp_trans_tmp
+		rts
+cmdBLTurboThrottle:
+		jsr	cmdBLTCheckEnd
 		bvs	@cmdBLTurboThrottle_off
 @cmdBLTurboThrottle_on:
 		lda	sheila_MEM_TURBO2
@@ -335,56 +359,18 @@ cmdBLTurboThrottle:
 @cmdBLTurboThrottle_off:
 		lda	sheila_MEM_TURBO2
 		and	#BITS_MEM_TURBO2_THROTTLE ^ $FF
-@s2:		sta	sheila_MEM_TURBO2
-		
-		lda	zp_trans_tmp
-		bpl	@nocfg
-
-		tya
-		pha
+@s2:		sta	sheila_MEM_TURBO2		
+		jmp	cmdBLTurbo_NextClr
 
 
-	; TODO: only do this on cold boot / ctrl break?
-
-	.assert CMOSBITS_CPU_THROT = $80, error, "Code assumes bit 7"
-	.assert BITS_MEM_TURBO2_THROTTLE = $80, error, "Code assumes bit 7"
-
-		jsr	cfgGetRomMap
-		and	#1
-		clc
-		adc	#BLTUTIL_CMOS_FW_CPU_THROT
-		pha
-		
-		lda	sheila_MEM_TURBO2
-		rol	A
-		php			; bit in Cy
-		tay	
-		jsr	bltutil_firmCMOSRead
-		rol	A
-		plp
-		ror	A
-		tax
-		pla
-		tay
-		txa
-		jsr	bltutil_firmCMOSWrite
-
-		pla
-		tay	; get back cmd line pointer
-
-@nocfg:
-		jmp	cmdBLTurbo_Next
-
-
-cmdBLTurboMos:
-
-		jsr	SkipSpacesPTR
-		cmp	#'-'
-		beq	cmdBLTurboMos_off
-
+cmdBLTurboMos:	
 		tya
 		pha	
 		php					; preserve command pointer and interrupts
+
+		jsr	cmdBLTCheckEnd
+		bvs	cmdBLTurboMos_off
+
 
 		; check to find the ROM slot to use
 		pha					; + 4	reserve for return value
@@ -416,7 +402,9 @@ cmdBLTurboMos:
 		; This is map one, the MOS is already from a fast chip
 		lda	#OSWORD_BLTUTIL_RET_FLASH|OSWORD_BLTUTIL_RET_SYS
 		and	zp_blturbo_fl
-		bne	cmdBLTurbo_MOSBadSlot
+		beq	:+
+		jmp	cmdBLTurbo_MOSBadSlot
+:
 
 		lda	#OSWORD_BLTUTIL_RET_MEMI
 		and	zp_blturbo_fl
@@ -428,7 +416,7 @@ cmdBLTurboMos:
 		; check to see if rom #8 is booted
 		lda	oswksp_ROMTYPE_TAB+8
 		beq	:+
-		jmp	cmdBLTurbo_MOSSlotBusy
+		jmp	cmdBLTurbo_MOSBadSlot
 :
 
 
@@ -480,11 +468,12 @@ cmdBLTurbo_NextMOS:
 		plp
 		pla
 		tay
-		jmp	cmdBLTurbo_Next
+		jmp	cmdBLTurbo_NextClr
 cmdBLTurbo_MOSWarnAlready:
-		ldx	#<str_BLTURBOMOS_ALREADY
-		ldy	#>str_BLTURBOMOS_ALREADY
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte	"Map 1: MOS already turbo"
+		.byte 	13|$80
+
 		jmp	cmdBLTurbo_NextMOS
 cmdBLTurbo_MOSBadSlot:
 		M_ERROR
@@ -492,119 +481,150 @@ cmdBLTurbo_MOSBadSlot:
 cmdBLTurbo_MOSInhib:
 		M_ERROR
 		.byte	$FF, "Blitter inhibited",0
-cmdBLTurbo_MOSSlotBusy:
+
+cmdBLTurbo_NotSupp:
 		M_ERROR
-		.byte	$FF, "Slot #8 is in use cannot BLTURBO MOS",0
+		.byte	$FF, "Not supported",0
+
 
 cmdBLTurboRom:
-		jsr	ParseHex				
-		bcs	@brkInvalidArgument3
-	
 		jsr	cfgGetAPISubLevel_1_2
-		bcc	@brkInvalidArgument3
+		bcc	cmdBLTurbo_NotSupp
+		
+		jsr	cmdBLTurboRomsParse
 
-		lda	zp_trans_acc
+		tya
+		pha
+		bit	zp_trans_tmp		; get V flag for V=1 clear, V=0 set
+		ldy	#0
+		lda	zp_trans_tmp+1
+		jsr	@setclr
+		lda	zp_trans_tmp+2
+		ldy	#2
+		jsr	@setclr
+
+		pla
+		tay
+
+		jmp	cmdBLTurbo_NextClr
+
+@setclr:	sta	zp_trans_tmp		; we don't need this any more for flags use as temp
+		lda	sheila_ROM_THROTTLE_0,Y
+		bvc	@f1
+		eor	#$FF
+@f1:		ora	zp_trans_tmp
+		bvc	@f2
+		eor	#$FF
+@f2:		sta	sheila_ROM_THROTTLE_0,Y
+		rts
+
+	; on entry zp_tran_tmp contains the +/- flag in $40
+	; but should be otherwise empty
+	;
+	; enabled/disabled roms set in zp_trans_tmp+1,2
+	; 
+
+cmdBLTurboRomsParse:
+		clc
+		ror	zp_trans_tmp			; move +/- flag into $20
+		lda	#0
+		sta	zp_trans_tmp+1
+		sta	zp_trans_tmp+2
+
+@lp:		lda	(zp_mos_txtptr),Y
+		cmp	#' '+1
+		bcc	@endcheck
+		cmp	#'-'
+		beq	@range
+		cmp	#','
+		beq	@sep
+		jsr	ToUpper
+		cmp	#'R'
+		bne	:+
+		iny		
+:		jsr	ParseDecOrHex
+		bcs	@brkInvalidArgument3
+		
+		; check for 0..15
+		lda	zp_trans_acc+3
+		ora	zp_trans_acc+2
+		ora	zp_trans_acc+1
+		bne	@brkInvalidArgument3
+		lda	zp_trans_acc+0
 		cmp	#16
-		bcc	@ok1
+		bcs	@brkInvalidArgument3
+
+		; we have a number, if we just had a hyphen close range
+		lda	#1
+		bit	zp_trans_tmp
+		bne	@closerange
+		
+		; flag we've had a number
+		lda	#$C0
+		jsr	setf				; had number, open number ready for '-'
+		lda	zp_trans_acc
+		sta	zp_trans_tmp+3			; remember last number (for ranges)
+		jsr	@setA
+
+		jmp	@lp
+
+@closerange:	; had a range 
+		ldx	zp_trans_acc		
+@closerangenxt:
+		cpx	zp_trans_tmp+3
+		bcc	@clearng			; if end of range exit and reset range flags
+		txa
+		jsr	@setA
+		dex
+		bpl	@closerangenxt
+
+@setA:		cmp	#$8
+		php					; set Cy if in 2nd byte
+		and	#$7
+		jsr	MaskBitA
+		plp
+		bcs	@h
+		ora	zp_trans_tmp+1
+		sta	zp_trans_tmp+1
+		rts
+@h:		ora	zp_trans_tmp+2
+		sta	zp_trans_tmp+2
+		rts
+
+
+@clearng:	lda	#$FE
+		bne	@nextF
+
+@sep:		iny
+		bit	zp_trans_tmp
+		bpl	@brkInvalidArgument3		; not had a number error
+		bvc	@brkInvalidArgument3		; range not open
+		lda	#$A0
+@nextF:		and	zp_trans_tmp			; clear range open, had hyphen flags
+		bne	@nxt		
+
+@range:		iny
+		bit	zp_trans_tmp
+		bpl	@brkInvalidArgument3		; not had a number error
+		bvc	@brkInvalidArgument3		; range not open
+		lda	#1
+		ora	zp_trans_tmp			; indicate we've had a -
+@nxt:		sta	zp_trans_tmp
+		bne	@lp				
+
+
+
+
+@endcheck:	lda	#1
+		bit	zp_trans_tmp			
+		bpl	@brkInvalidArgument3		; we've not had anything throw error
+		bne	@brkInvalidArgument3		; range left hanging
+		rol	zp_trans_tmp
+		rts
+
+
 @brkInvalidArgument3:
 		jmp	brkInvalidArgument
-@ok1:		sta	zp_trans_tmp			; rom # and flags 
-
-		; check for [-][X][!]
-@lpfl:		lda	(zp_mos_txtptr),Y
-		jsr	ToUpper
-		cmp	#$D
-		beq	@rgo
-		cmp	#' '
-		beq	@rgo
-
-		tax
-		lda	zp_trans_tmp
-
-		cpx	#'-'
-		bne	@ckX
-		ora	#$80				; add minus flag
-		bne	@rnxtflag
-@ckX:		cpx	#'X'
-		bne	@ckPling
-		ora	#$40				; X flag
-		bne	@rnxtflag
-@ckPling:	cpx	#'!'
-		bne	brkInvalidArgument2
-		ora	#$20
-@rnxtflag:	sta	zp_trans_tmp
-		iny
-		bne	@lpfl
-
-@rgo:		tya
-		pha
-		ldy	#0
-		lda	#8
-		bit	zp_trans_tmp
-		bvs	@altset
-		beq	@sk
-		ldy	#2				; X now contains 0 or 2
-@sk:		lda	zp_trans_tmp
-		and	#7
-		tax
-		jsr	bitX
-
-		bit	zp_trans_tmp
-		bpl	@pl
-		eor	#$ff
-		and	sheila_ROM_THROTTLE_0,Y
-		jmp	@s
-@pl:		ora	sheila_ROM_THROTTLE_0,Y
-@s:		sta	sheila_ROM_THROTTLE_0,Y
-		
-
-@altset:		;check for write to CMOS
-		lda	#$20
-		bit	zp_trans_tmp
-		bvs	@docmos			; X implies !
-		beq	@nocmos
-
-
-	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
-@docmos:		; work out cmos address in Y
-		jsr	cfgGetRomMap
-		bit	zp_trans_tmp
-		bvc	@noswap
-		eor	#1
-@noswap:	and	#1
-		sta	zp_trans_acc+1
-		lda	zp_trans_tmp		; if >8 rol 1 into bottom bit
-		and	#$F
-		cmp	#8
-		rol	zp_trans_acc+1
-		ldy	zp_trans_acc+1
-		; y now contains the CMOS address - $1100
-		jsr	bltutil_firmCMOSRead
-		sta	zp_trans_acc
-
-		lda	zp_trans_tmp
-		and	#7
-		tax
-		jsr	bitX
-
-		bit	zp_trans_tmp
-		bmi	@pl2
-		eor	#$ff
-		and	zp_trans_acc
-		jmp	@s2
-@pl2:		ora	zp_trans_acc
-@s2:		sta	zp_trans_acc
-		lda	zp_trans_acc+1
-		tay
-		lda	zp_trans_acc
-		jsr	bltutil_firmCMOSWrite
-
-
-@nocmos:		pla
-		tay
-
-
-		jmp	cmdBLTurbo_Next
 		
 
 
@@ -768,9 +788,10 @@ cmdRomsNextArg:
 
 
 cmdRoms_Go:		
-		ldx	#<strRomsHeadVer		; verbose headings		
-		ldy	#>strRomsHeadVer
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte	"  # act  crc typ ver Title", 13
+		.byte	" == === ==== === === ====="
+		.byte	$D|$80
 
 		lda	#0
 		sta	zp_ROMS_ctr
@@ -806,19 +827,28 @@ cmdRoms_lp:
 
 		; print "T" for rom throttle active
 
-		lda	zp_ROMS_OS99ret
+		bit	zp_ROMS_OS99ret		
+		bvc	@notsys
+		lda	#'S'
+		bne	@s5
+@notsys:	lda	zp_ROMS_OS99ret		
 		and	#OSWORD_BLTUTIL_RET_ISCUR
 		bne	@st1a
 
 	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
 		; alt set - get from CMOS
 		lda	zp_ROMS_OS99ret
-		and	#1
+		and	#OSWORD_BLTUTIL_RET_MAP1
+		clc
+		ror	A
+		ror	A
+		ror	A			; get map 0/1 into bit 6
 		ldy	zp_ROMS_ctr
 		cpy	#8
-		rol	A
-		tay
-		jsr	bltutil_firmCMOSRead
+		rol	A			; bit 0 = 1 if >8 bit 7 = 1 if map 1
+		tax
+		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE
+		jsr	CMOS_ReadYX
 		eor	#$FF
 		tay
 		lda	zp_ROMS_ctr
@@ -840,7 +870,7 @@ cmdRoms_lp:
 		beq	@s3
 		
 		lda	#'T'
-		jsr	OSWRCH
+@s5:		jsr	PrintA
 		jsr	PrintSpc
 		jmp	@s4
 
@@ -930,9 +960,9 @@ cmdRoms_fullcheck:
 		cmp 	#OSWORD_BLTUTIL_RET_SYS
 		bne	@notsys1
 
-		ldx	#<str_SYS
-		ldy	#>str_SYS
-		jsr	PrintXY
+		jsr	PrintImmedT
+		TOPTERM "-- SYS"
+
 		jmp	cmdRoms_sk_nextrom
 
 
@@ -957,9 +987,8 @@ cmdRoms_sk_notrom:
 		bit	zp_ROMS_flags
 		beq	@1				; not VA
 		jsr	cmdRoms_DoCRC
-@1:		ldx	#<strNoRom
-		ldy	#>strNoRom
-		jsr	PrintXY
+@1:		jsr	PrintImmedT
+		TOPTERM "--"
 
 cmdRoms_sk_nextrom:
 		jsr	PrintNL
@@ -1078,24 +1107,28 @@ cmdSRERASE:
 		ora	zp_ERASE_flags
 		sta	zp_ERASE_flags
 
+		jsr	PrintErase
+
 		; check for EEPROM
 		and	#OSWORD_BLTUTIL_RET_FLASH
 		beq	cmdSRERASE_RAM
 
-		ldx	#<strSRERASEFLASH
-		ldy	#>strSRERASEFLASH
-		lda	zp_ERASE_dest
-		jsr	PrintMsgXYThenHexNyb
 
-		ldy	zp_ERASE_dest
+		jsr	PrintFlash
+		jsr	PrintAt
+		lda	zp_ERASE_dest
+		tay
+		jsr	PrintHexNybA
+		jsr	PrintElip
 		jmp	FlashEraseROM
 
 cmdSRERASE_RAM:
 
-		ldx	#<strSRERASERAM
-		ldy	#>strSRERASERAM
+		jsr	PrintSRAM
+		jsr	PrintAt
 		lda	zp_ERASE_dest
-		jsr	PrintMsgXYThenHexNyb
+		jsr	PrintHexNybA
+		jsr	PrintElip
 
 		lda	#0
 		sta	zp_ERASE_errct			; fail counter
@@ -1119,9 +1152,7 @@ cmdSRERASE_RAM:
 		lda	zp_ERASE_errct
 		ora	zp_ERASE_errct+1
 		bne	@4
-		ldx	#<str_OK
-		ldy	#>str_OK
-		jsr	PrintXY
+		jsr	PrintOK
 		rts
 @4:		; got to end with errors
 		lda	#'&'
@@ -1130,18 +1161,16 @@ cmdSRERASE_RAM:
 		jsr	PrintHexA
 		lda	zp_ERASE_errct
 		jsr	PrintHexA
-		ldx	#<strErrsDet
-		ldy	#>strErrsDet
-		jmp	PrintXY
+		jmp	PrintImmedT
+		TOPTERM	" errors detected"
 @2:		inc	zp_ERASE_errct
 		bne	@s
 		inc	zp_ERASE_errct + 1
 @s:		lda	ERASE_FLAG_FORCE
 		bit	zp_ERASE_flags
 		bne	@3				; continue - F switch in force		
-		ldx	#<str_FailedAt
-		ldy	#>str_FailedAt
-		jsr	PrintXY
+		jsr	PrintImmedT
+		TOPTERM	"failed at "
 		lda	zp_SRLOAD_bank
 		jsr	PrintHexA
 		lda	zp_mos_genPTR + 1
@@ -1181,7 +1210,8 @@ cmdSRCOPY:
 ;X;
 ;X;		ldx	#strSRCOPY2FLASH
 ;X;		lda	zp_SRCOPY_dest
-;X;		jsr	PrintMsgThenHexNyb
+;X;		jsr	PrintMsgThenHexNybImmed
+;X;		
 ;X;
 ;X;		clra
 ;X;		ldb	zp_SRCOPY_dest
@@ -1314,15 +1344,16 @@ cmdSRNUKE_mainloop:
 		jsr	cmdRoms_Go
 		
 		; SHOW MENU
-		ldx	#<cmdSRNUKE_menu
-		ldy	#>cmdSRNUKE_menu
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte	13, "0) Exit	1) Erase Flash	2) Erase RAM	3) Show CRC	4) Erase #"
+		.byte   13|$80
 
 		jsr	CheckBlitterPresent
 		bcc	@s
-		ldx	#<cmdSRNUKE_nodevwarn
-		ldy	#>cmdSRNUKE_nodevwarn
-		jsr	PrintXY
+		jsr	PrintImmedT
+		.byte 	"WARNING: blitter not detected!"
+		.byte	13|$80
+
 @s:
 
 
@@ -1355,16 +1386,17 @@ cmdSRNUKE_crctoggle:
 		jmp	cmdSRNUKE_mainloop
 
 cmdSRNUKE_erase_rom:
-		ldx	#<str_WhichRom
-		ldy	#>str_WhichRom
-		jsr	PrintXY
+		jsr	PrintErase
+		jsr	PrintImmedT
+		TOPTERM "which ROM?"
 		jsr	inkey_clear
 		txa
 		sta	STR_NUKE_CMD			; enter the keyed number as a phoney param to cmdSRERASE
 		jsr	OSASCI
 		jsr	OSNEWL
-		bcs	cmdSRNUKE_mainloop
-		lda	#13
+		bcc	:+
+		jmp	cmdSRNUKE_mainloop
+:		lda	#13
 		sta	STR_NUKE_CMD+1			; terminate command buffer
 		lda	#<STR_NUKE_CMD
 		sta	zp_mos_txtptr
@@ -1377,14 +1409,16 @@ cmdSRNUKE_mainloop2:
 
 
 cmdSRNUKE_flash:
-		ldx	#<str_NukePrAllFl
-		ldy	#>str_NukePrAllFl
+		jsr	PrintErase
+		jsr	PrintWhole
+		jsr	PrintFlash
 		jsr	PromptYN
 		bne	cmdSRNUKE_mainloop2
 
-		ldx	#<str_NukeFl
-		ldy	#>str_NukeFl
-		jsr	PrintXY
+str_NukeFl:	
+		jsr	PrintErase
+		jsr	PrintFlash
+		jsr	PrintElip
 
 		; erase entire flash chip
 		jsr	FlashReset
@@ -1395,15 +1429,18 @@ cmdSRNUKE_flash:
 		jmp	cmdSRNUKE_reboot
 
 
-cmdSRNUKE_ram:	ldx	#<str_NukePrAllRa
-		ldy	#>str_NukePrAllRa
+cmdSRNUKE_ram:	jsr	PrintErase
+		jsr	PrintWhole
+		jsr	PrintSRAM
 		jsr	PromptYN
 		beq	@s
 		jmp	cmdSRNUKE_mainloop
 @s:
-		ldx	#<str_NukeRa
-		ldy	#>str_NukeRa
-		jsr	PrintXY
+		jsr	PrintErase
+		jsr	PrintSRAM
+		jsr	PrintImmedT
+		TOPTERM " $7C0000-$7FFFFF"
+		jsr	PrintElip
 
 		; enable JIM, setup paging regs
 		jsr	jimSetDEV_blitter
@@ -1985,7 +2022,7 @@ cmdXMSave:	jsr	loadsavegetfn
 		jsr	OSFILE
 
 
-		; remove OSGBPB, filenamepointer and ack from stack
+		; remove OSGBPB, filename pointer and ack from stack
 		tsx
 		txa
 		clc
@@ -1998,44 +2035,33 @@ cmdXMSave:	jsr	loadsavegetfn
 
 throttleInit:
 		jsr	cfgGetAPISubLevel_1_2
-		bcc	@s3
-
-		jsr	cfgGetRomMap
-		pha				; for later
-
-	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
-		rol	A
-		and	#2
-		pha
-
-		tay
-		jsr	bltutil_firmCMOSRead	; get from CMOS 1100,Y
-		eor	#$FF
-		sta	sheila_ROM_THROTTLE_0
-		pla
-		tay
-		iny
-		jsr	bltutil_firmCMOSRead	; get from CMOS 1101,Y
-		eor	#$FF
-		sta	sheila_ROM_THROTTLE_1
-
+		bcc	@nothardres
 
 		lda	#OSBYTE_253_VAR_LAST_RESET
 		ldx	#0
 		ldy	#$FF
 		jsr	OSBYTE
 		cpx	#1
-		bne	@notpup
+		bcc	@nothardres
 
-	.assert CMOSBITS_CPU_THROT = $80, error, "Code assumes bit 7"
+
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x0,Y
+		eor	#$FF
+		sta	sheila_ROM_THROTTLE_0
+		ldx	#BLTUTIL_CMOS_FW_ROM_THROT+1
+		jsr	CMOS_ReadFirmX			; get from CMOS 11x1,Y
+		eor	#$FF
+		sta	sheila_ROM_THROTTLE_1
+
+
+		; load CPU throttle from CMOS
+	.assert BLTUTIL_CMOS_FW_THROT_BIT_CPU = $7, error, "Code assumes bit 7"
 	.assert BITS_MEM_TURBO2_THROTTLE = $80, error, "Code assumes bit 7"
 
-		pla
-		clc
-		adc	#BLTUTIL_CMOS_FW_CPU_THROT
-		tay
-		jsr	bltutil_firmCMOSRead	; get from CMOS
-		and	#$80 
+		ldx	#BLTUTIL_CMOS_FW_THROT
+		jsr	CMOS_ReadFirmX			; get from CMOS
+		eor	#$80
 		rol	A
 		php
 		lda	sheila_MEM_TURBO2
@@ -2044,51 +2070,48 @@ throttleInit:
 		ror	A
 		sta	sheila_MEM_TURBO2
 
+		; TODO: MOS Turbo/Throttle
 
-
-@s3:		rts		
-@notpup:	pla
-		rts
+@nothardres:	rts
 
 ;------------------------------------------------------------------------------
 ; Strings and tables
 ;------------------------------------------------------------------------------
 
+PrintErase:	jsr	PrintImmedT
+		TOPTERM "Erase "
+		rts
+PrintWhole:	jsr	PrintImmedT
+		TOPTERM "whole "
+		rts
+PrintFlash:	jsr	PrintImmedT
+		TOPTERM "Flash"
+		rts
+PrintSRAM:	jsr	PrintImmedT
+		TOPTERM "SRAM"
+		rts
+PrintAt:	jsr	PrintImmedT
+		TOPTERM " at "
+		rts
+PrintElip:	jsr	PrintImmedT
+		.byte	"..."
+		.byte	13|$80
+		rts
+PrintOK:	jsr	PrintImmedT
+		.byte	13, "OK."
+		.byte	13|$80
+		rts
+
+
 		.SEGMENT "RODATA"
 
 
-str_WhichRom:		.byte	"Erase Which Rom", 0
 
-strRomsHeadVer:		.byte	"  # act  crc typ ver Title", 13
-			.byte	" == === ==== === === =====", 13, 0 
-
-strRomsHead:		.byte	"  # typ ver Title", 13
-			.byte	" == === === =====", 13, 0 
-
-strNoRom:		.byte	"--",0
-str_SYS:		.byte	"-- SYS ",0
-
-strSRCOPY2RAM:		.byte	"Copying to SROM/SRAM at ",0
-strSRCOPY2FLASH:	.byte	"Copying to Flash at ",0
-strSRERASEFLASH:	.byte	"Erasing Flash at ",0
-strSRERASERAM:		.byte	"Erasing SRAM at ",0
+;X;	strSRCOPY2RAM:		.byte	"Copying to SROM/SRAM at ",0
+;X;	strSRCOPY2FLASH:	.byte	"Copying to Flash at ",0
 
 
-str_Copying:		.byte	"Copying...", 0
-str_OK:			.byte	$D, "OK.", $D, 0
-str_NukePrAllFl:	.byte	"Erase whole Flash", 0
-str_NukePrAllRa:	.byte	"Erase whole SRAM", 0
-str_NukePrRom:		.byte	"Erase rom ",0
-str_FailedAt:		.byte	"failed at ",0
-strErrsDet:		.byte	" errors detected", 0
-str_NukeFl:		.byte	"Erasing flash...", $D, 0
-str_NukeRa:		.byte	"Erasing SRAM $E00000 to $0FFFFF, please wait...", $D, 0
-str_BLTURBOMOS_ALREADY:	.byte	"Map 1, MOS is already turbo",13,10,0
-
-
-cmdSRNUKE_menu:
-		.byte	13, "0) Exit	1) Erase Flash	2) Erase RAM	3) Show CRC	4) Erase #", 13, 0
-cmdSRNUKE_nodevwarn:
-		.byte   13, 131, "WARNING: blitter not detected:",13,10," this probably won't work", 13,0
+;X;	str_Copying:		.byte	"Copying...", 0
+	
 
 
