@@ -249,8 +249,6 @@ CMOS_ReadYX_int2:	pha
 		;	+2	caller X
 		;	+1	-pad-
 
-
-		jsr	CMOS_addRomOffs
 		pha		; block + 7 - address low byte
 		tya
 		pha		; block + 6 - address hi byte - firmware page

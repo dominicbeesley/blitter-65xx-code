@@ -827,14 +827,18 @@ cmdRoms_lp:
 
 		; print "T" for rom throttle active
 
-		lda	zp_ROMS_OS99ret
+		bit	zp_ROMS_OS99ret		
+		bvc	@notsys
+		lda	#'S'
+		bne	@s5
+@notsys:	lda	zp_ROMS_OS99ret		
 		and	#OSWORD_BLTUTIL_RET_ISCUR
 		bne	@st1a
 
 	.assert BLTUTIL_CMOS_FW_ROM_THROT = 0, error, "Code assumes offset 0"
 		; alt set - get from CMOS
 		lda	zp_ROMS_OS99ret
-		and	#1
+		and	#OSWORD_BLTUTIL_RET_MAP1
 		clc
 		ror	A
 		ror	A
@@ -843,6 +847,7 @@ cmdRoms_lp:
 		cpy	#8
 		rol	A			; bit 0 = 1 if >8 bit 7 = 1 if map 1
 		tax
+		ldy	#BLTUTIL_CMOS_PAGE_FIRMWARE
 		jsr	CMOS_ReadYX
 		eor	#$FF
 		tay
@@ -865,7 +870,7 @@ cmdRoms_lp:
 		beq	@s3
 		
 		lda	#'T'
-		jsr	OSWRCH
+@s5:		jsr	PrintA
 		jsr	PrintSpc
 		jmp	@s4
 
