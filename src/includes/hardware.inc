@@ -166,6 +166,29 @@ jim_offs_VERSION_API_sublevel	:=	$82
 jim_offs_VERSION_cfg_bits	:=	$84
 jim_offs_VERSION_cap_bits	:=	$88
 
+;; FC 0088	
+BLCAPS_0_CHIPSET		:= $01
+BLCAPS_0_DMA			:= $02
+BLCAPS_0_BLITTER		:= $04
+BLCAPS_0_AERIS			:= $08
+BLCAPS_0_I2C			:= $10
+BLCAPS_0_PAULA_SOUND		:= $20
+BLCAPS_0_HDMI_FRAMEBUFFER	:= $40
+BLCAPS_0_T65			:= $80
+;;FC 0089	
+BLCAPS_1_CPU_65C02		:= $01
+BLCAPS_1_CPU_6800		:= $02
+BLCAPS_1_CPU_80188		:= $04
+BLCAPS_1_CPU_65816		:= $08
+BLCAPS_1_CPU_6x09		:= $10
+BLCAPS_1_CPU_Z80		:= $20
+BLCAPS_1_CPU_68008		:= $40
+BLCAPS_1_CPU_680x0		:= $80
+;;FC 008A	
+BLCAPS_2_CPU_ARM2		:= $01
+BLCAPS_2_CPU_Z180		:= $02
+BLCAPS_2_GFOOT_SS		:= $04
+
 ; Mk.2/1 option switches - note in API level >1 the sense of these is reversed!
 BLT_MK2_CFG0_T65		:=	$01
 BLT_MK2_CFG0_CPU_6502A_2M	:=	$00

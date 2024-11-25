@@ -88,9 +88,23 @@ i2c_write_devaddr:; on entry Cy contains 1 for read else write
 		rts
 
 
+i2c_OSWORD_13_exit:
+		jmp	ServiceOutA0
+
+i2c_OSWORD_13:	
+		; check this is Blitter and it's got i2c!
+
+		jsr	cfgGetAPILevel
+		bcs	i2c_OSWORD_13_exit
+		jsr	jimPageVersion
+		lda	#BLCAPS_0_I2C
+		bit	JIM+jim_offs_VERSION_cap_bits+0
+		beq	i2c_OSWORD_13_exit
 
 
-i2c_OSWORD_13:	jsr	jimPageChipset
+		jsr	jimPageChipset
+		
+		
 
 		ldy	#3
 		lda	(zp_mos_OSBW_X),Y
