@@ -103,13 +103,13 @@ svcFF_TubeInit:
 
 svcFE_TubeExplode:
 		jsr	CheckBlitterPresent
-		bcs	@s
+		bcs	@s2
 		jsr     cfgGetAPISubLevel_1_3
-		bcc	@s
+		bcc	@s2
 		jsr	cfgMasterMOS
 		bcs	@s2
 		jsr	autohazel_boot_second
-@s:		ldx	#$F
+		ldx	#$F
 		jsr	CMOS_ReadMosX
 		and	#1
 		bne	@s2
