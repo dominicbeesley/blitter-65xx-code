@@ -415,8 +415,8 @@ keyMatch:	tya
 svc9_helptable:	
 		txa
 		pha
-		ldx	zp_tmp_ptr
-		ldy	zp_tmp_ptr+1
+		ldx	zp_mos_genPTR
+		ldy	zp_mos_genPTR+1
 		jsr	PrintXY
 		jsr	PrintNL
 		pla
