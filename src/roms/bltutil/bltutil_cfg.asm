@@ -898,6 +898,8 @@ tbl_capbits:	.byte	str_cap_CS - str_bld_base
 		.byte	str_cpu_SuperShadow - str_bld_base
 		.byte	str_10ns_ChipRAM - str_bld_base
 		.byte	str_45ns_BBRAM - str_bld_base
+		.byte	str_rv32 - str_bld_base
+		.byte	str_haz3 - str_bld_base
 
 CAP_IX_CS	= 0
 CAP_IX_DMA	= 1
@@ -920,7 +922,9 @@ CAP_IX_Z180	= 17
 CAP_IX_SuperShadow	= 18
 CAP_IX_10ns_ChipRAM	= 19
 CAP_IX_45ns_BBRAM	= 20
-CAP_IX_MAX=20
+CAP_IX_RV32		= 21
+CAP_IX_HAZ3		= 22
+CAP_IX_MAX=22
 
 
 str_bld_base:
@@ -960,6 +964,8 @@ str_cpu_Z180:		TOPTERM	"Z180"
 str_cpu_SuperShadow:	TOPTERM	"SuperShadow"
 str_10ns_ChipRAM:	TOPTERM	"10ns ChipRAM"
 str_45ns_BBRAM:		TOPTERM	"45ns BB RAM"
+str_rv32:		TOPTERM "RiscV-PicoRV32"
+str_haz3:		TOPTERM "RiscV-Hazard3"
 
 
 		; these are in the order of bits 3..1 of the config byte for the 1st 8 then followed by the mk.3 specifics
