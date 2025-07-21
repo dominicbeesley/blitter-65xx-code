@@ -1,7 +1,4 @@
 build/*
 *~
 *.bak
-bltutils.sublime-project
-bltutils.sublime-workspace
-src/examples/blitter-examples.sublime-project
-src/examples/blitter-examples.sublime-workspace
+*.sublime*
