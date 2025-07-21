@@ -63,7 +63,7 @@ utils_name:
 		.byte	")"
 Copyright:
 		.byte	0
-		.byte	"(C)2024 "
+		.byte	"(C)2025 "
 str_Dossy:	.byte   "Dossytronics"
 		.byte	0
 

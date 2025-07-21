@@ -101,10 +101,16 @@ cfgGetRomMap:
 		beq	@API0
 
 		lda	JIM+jim_offs_VERSION_Board_level
-		cmp	#3		; check for >= Mk.3 assume Mk.1 and Mk.2 same config
+		cmp	#BOARD_LEVEL_MK3			; check for >= Mk.3 assume Mk.1 and Mk.2 same config
 		bcc	@mk2
+		cmp	#BOARD_LEVEL_C20K
+		bne	@mk3
 
-		; mk.3 switches
+		lda	#0					; TODO: C20K: Rom set
+		clc
+		rts
+
+@mk3:		; mk.3 switches
 		; assume future boards have same config options as mk.3
 		lda	JIM+jim_offs_VERSION_cfg_bits+0
 		and	#BLT_MK3_CFG0_MEMI
@@ -191,19 +197,26 @@ cfgPrintVersionBoot:
 		clc
 		rts
 
-@skP:		ldx	#<str_Blitter
+@skP:		
+		; check board level
+		lda	JIM+jim_offs_VERSION_Board_level
+		cmp	#BOARD_LEVEL_C20K
+		beq	@skc
+		ldx	#<str_Blitter
 		ldy	#>str_Blitter
 		jsr	PrintXYT
-
+@skc:
 		pla
 		pha
 		beq	@skAPI0_1
 		jsr	PrintSpc
 		ldy	#2			; Board
 		jsr	cfgPrintStringY				
+		cmp	#13
+		bne	@sknl
 
 @skAPI0_1:	jsr	OSNEWL
-
+@sknl:
 		jsr	printCPU
 		
 		; check for throttle
@@ -383,10 +396,17 @@ printCPU2:	php
 		jsr	cfgGetAPILevel
 		beq	@API0
 		lda	JIM+jim_offs_VERSION_Board_level
-		cmp	#3		; check for >= Mk.3 assume Mk.1 and Mk.2 same config
+		cmp	#BOARD_LEVEL_MK3	; check for >= Mk.3 assume Mk.1 and Mk.2 same config
 		bcc	@mk2
+		cmp	#BOARD_LEVEL_C20K
+		bne	@mk3
 
-		;mk3 look up
+		;TODO: C20K cpu config
+		plp
+		lda	#cpu_tbl_T65 - cputbl_mk2
+		jmp	@printCPUA
+
+@mk3:		;mk3 look up
 		;first check T65
 		plp
 		bcs	@mk3hard
@@ -528,7 +548,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 		tay
 		pla
 		tax
-		jsr	PrintXY
+		jsr	PrintXY_NoCR
 @sknov:		pla
 		tax
 		inx
@@ -561,7 +581,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		ldx	#tbl_boot_cfg_mk2-tbl_bld
 		lda	JIM+jim_offs_VERSION_Board_level
-		cmp	#3
+		cmp	#BOARD_LEVEL_MK3
 		bcc	@mk2
 		ldx	#tbl_boot_cfg_mk3-tbl_bld
 @mk2:		ldy	#0				; used to mark first pass
@@ -596,7 +616,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		lda	JIM+jim_offs_VERSION_cfg_bits		; get MK.3 host in bit 2..0 inverted
 		ldx	JIM+jim_offs_VERSION_Board_level
-		cpx	#3
+		cpx	#BOARD_LEVEL_MK3
 		bcs	@mk2_2
 		lda	JIM+jim_offs_VERSION_cfg_bits+1		; get MK.2 host in bit 13..11 inverted
 		lsr	A
@@ -943,6 +963,7 @@ str_sys_UK:		TOPTERM	"Unknown"
 str_cap_CS:		TOPTERM "Chipset"
 str_cap_DMA:		TOPTERM "DMA"
 str_Blitter:		TOPTERM "Blitter"
+str_C20K:		TOPTERM "C20K"
 str_cap_AERIS:		TOPTERM "Aeris"
 str_cap_I2C:		TOPTERM "i2c"
 str_cap_SND:		TOPTERM "Paula"
