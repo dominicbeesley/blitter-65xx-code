@@ -1264,7 +1264,10 @@ statTV:		jsr	PushAcc			; we're about to use acc which crashes pointers
 		pha
 		ror	A
 		and	#7
-		jsr	PrintDecA
+		cmp	#4
+		bcc	@s1
+		ora	#$F8
+@s1:		jsr	PrintDecA
 		jsr	PrintComma
 		pla
 		and	#1
@@ -1464,7 +1467,10 @@ configMOSInit:
 		and	#1
 		sta	oswksp_VDU_INTERLACE
 		pla	
-		lsr	A
+		cmp	#4
+		bcc	@s1
+		ora	#$F8
+@s1:		lsr	A
 		sta	oswksp_VDU_VERTADJ		
 
 		pla
