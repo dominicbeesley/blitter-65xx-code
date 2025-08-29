@@ -103,14 +103,7 @@ cfgGetRomMap:
 		lda	JIM+jim_offs_VERSION_Board_level
 		cmp	#BOARD_LEVEL_MK3			; check for >= Mk.3 assume Mk.1 and Mk.2 same config
 		bcc	@mk2
-		cmp	#BOARD_LEVEL_C20K
-		bne	@mk3
-
-		lda	#0					; TODO: C20K: Rom set
-		clc
-		rts
-
-@mk3:		; mk.3 switches
+		; mk.3 switches (and C20K synthesized in core)
 		; assume future boards have same config options as mk.3
 		lda	JIM+jim_offs_VERSION_cfg_bits+0
 		and	#BLT_MK3_CFG0_MEMI
@@ -398,15 +391,7 @@ printCPU2:	php
 		lda	JIM+jim_offs_VERSION_Board_level
 		cmp	#BOARD_LEVEL_MK3	; check for >= Mk.3 assume Mk.1 and Mk.2 same config
 		bcc	@mk2
-		cmp	#BOARD_LEVEL_C20K
-		bne	@mk3
-
-		;TODO: C20K cpu config
-		plp
-		lda	#cpu_tbl_T65 - cputbl_mk2
-		jmp	@printCPUA
-
-@mk3:		;mk3 look up
+		;mk3 look up
 		;first check T65
 		plp
 		bcs	@mk3hard
