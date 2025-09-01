@@ -216,7 +216,11 @@ bit_SEV:	.byte	$C0
 	; add $80 to A if map 1
 CMOS_addRomOffs:	rol	A
 		pha
+		txa
+		pha
 		jsr	cfgGetRomMap
+		pla
+		tax
 		ror	A		; map in Cy
 		pla
 		ror	A

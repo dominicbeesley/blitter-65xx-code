@@ -91,17 +91,23 @@ cfgMasterMOS:
 ;-----------------------------------------------------------------------------
 ; cfgGetRomMap
 ;-----------------------------------------------------------------------------
-; Returns current ROM map number in A or Cy=1 if no ROMS (i.e. Paula) [always 0 or 1]
-; Also returns Ov=1, Cy=1 if MEMI inhibit jumper fitted
-; A is 0 if CS set
+; On Entry
+;	-
+; Returns:
+;	Cy=1:
+;		A =0 	No ROMS i.e. PAULA 1M board
+; 			Also returns Ov=1, Cy=1 if MEMI inhibit jumper fitted
+;	Cy=0
+;		A = Current ROM map number in A 
+;		X = Board level
 cfgGetRomMap:
 		jsr	cfgGetAPILevel
 		clv
 		bcs	@retCs
 		beq	@API0
 
-		lda	JIM+jim_offs_VERSION_Board_level
-		cmp	#BOARD_LEVEL_MK3			; check for >= Mk.3 assume Mk.1 and Mk.2 same config
+		ldx	JIM+jim_offs_VERSION_Board_level
+		cpx	#BOARD_LEVEL_MK3			; check for >= Mk.3 assume Mk.1 and Mk.2 same config
 		bcc	@mk2
 		; mk.3 switches (and C20K synthesized in core)
 		; assume future boards have same config options as mk.3
