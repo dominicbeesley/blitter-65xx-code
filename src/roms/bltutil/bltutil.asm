@@ -215,8 +215,6 @@ cmdBLTurboQry:
 		jsr	PrintHexA
 		jsr	PrintSpc
 		; mos
-		lda	#'M'				; "M[-]"
-		jsr	OSWRCH
 		lda	SHEILA_ROMCTL_MOS
 		and	#BITS_MEM_CTL_SWMOS
 		cmp	#BITS_MEM_CTL_SWMOS
@@ -224,15 +222,17 @@ cmdBLTurboQry:
 		lda	#'-'
 		jsr	OSWRCH
 @smoff:		
+		lda	#'M'				; "M[-]"
+		jsr	OSWRCH
 		jsr	PrintSpc
 		; throttle
-		lda	#'T'
-		jsr	OSWRCH
 		lda	sheila_MEM_TURBO2
 		bmi	@ton
 		lda	#'-'
 		jsr	OSWRCH
 @ton:
+		lda	#'T'
+		jsr	OSWRCH
 
 		jsr	cfgGetAPISubLevel_1_2
 		bcc	cmdBLTurboEnd
@@ -369,8 +369,9 @@ cmdBLTurboMos:
 		php					; preserve command pointer and interrupts
 
 		jsr	cmdBLTCheckEnd
-		bvs	cmdBLTurboMos_off
-
+		bvc	:+
+		jmp	cmdBLTurboMos_off
+:
 
 		; check to find the ROM slot to use
 		pha					; + 4	reserve for return value
@@ -395,11 +396,14 @@ cmdBLTurboMos:
 		pla
 		sta	zp_blturbo_ptr+1
 
+		jsr	cfgGetRomMap
+		cpx	#BOARD_LEVEL_C20K
+		bcs	@c20k
+
 		lda	#OSWORD_BLTUTIL_RET_MAP1
 		and	zp_blturbo_fl
-		bne	cmdBLTurbo_MOSWarnAlready
+		bne	cmdBLTurbo_MOSWarnAlready	; This is map one, the MOS is already from a fast chip
 
-		; This is map one, the MOS is already from a fast chip
 		lda	#OSWORD_BLTUTIL_RET_FLASH|OSWORD_BLTUTIL_RET_SYS
 		and	zp_blturbo_fl
 		beq	:+
@@ -414,7 +418,7 @@ cmdBLTurboMos:
 
 
 		; check to see if rom #8 is booted
-		lda	oswksp_ROMTYPE_TAB+8
+@c20k:		lda	oswksp_ROMTYPE_TAB+8
 		beq	:+
 		jmp	cmdBLTurbo_MOSBadSlot
 :
@@ -422,10 +426,10 @@ cmdBLTurboMos:
 
 		; copy mos rom from FFCxxx to 7F0xxx
 		ldx	#$C0
-
-@l1:		jsr	bljimFF				; copy mos to SWROM slot 8
-		stx	fred_JIM_PAGE_LO
-		lda	JIM,Y
+		stx	zp_tmp_ptr+1
+		ldy	#0
+		sty	zp_tmp_ptr
+@l1:		lda	(zp_tmp_ptr),Y
 		pha
 		lda	zp_blturbo_ptr
 		sta	fred_JIM_PAGE_LO
@@ -436,14 +440,15 @@ cmdBLTurboMos:
 		iny
 		bne	@l1
 		inc	zp_blturbo_ptr
-		inx
+		inc	zp_tmp_ptr+1
 		beq	@s1
-		cpx	#$FC				; skip hardware pages		
+		lda	zp_tmp_ptr+1
+		cmp	#$FC				; skip hardware pages		
 		bne	@l1
 		; skip pages FC-FE
-		inx
-		inx
-		inx
+		inc	zp_tmp_ptr+1
+		inc	zp_tmp_ptr+1
+		inc	zp_tmp_ptr+1
 		inc	zp_blturbo_ptr		
 		inc	zp_blturbo_ptr		
 		inc	zp_blturbo_ptr		
