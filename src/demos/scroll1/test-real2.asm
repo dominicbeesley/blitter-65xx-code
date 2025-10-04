@@ -78,27 +78,70 @@ ZP_TMP:		.RES 1
 		jsr	ex_osfile_load
 
 
+; Use NULA ROM
+;;		ldx	#0
+;;		ldy	#2
+;;pal_lp:		lda	#19
+;;		jsr	OSWRCH
+;;		txa	
+;;		jsr	OSWRCH
+;;		lda	#16
+;;		jsr	OSWRCH
+;;		lda	LOAD_BASE,Y
+;;		jsr	OSWRCH
+;;		iny
+;;		lda	LOAD_BASE,Y
+;;		jsr	OSWRCH
+;;		iny
+;;		lda	LOAD_BASE,Y
+;;		jsr	OSWRCH
+;;		iny
+;;		inx
+;;		cpx	#16
+;;		bne	pal_lp
 
+
+		php
+		sei
+		; reset nula
+		lda	#$40
+		sta	SHEILA_NULA_CTLAUX
+
+		; read in palette and poke as pairs into aux palette reg
 		ldx	#0
 		ldy	#2
-pal_lp:		lda	#19
-		jsr	OSWRCH
-		txa	
-		jsr	OSWRCH
-		lda	#16
-		jsr	OSWRCH
+@pal_lp:		stx	ZP_TMP
 		lda	LOAD_BASE,Y
-		jsr	OSWRCH
 		iny
+		rol	A
+		rol	ZP_TMP
+		rol	A
+		rol	ZP_TMP
+		rol	A
+		rol	ZP_TMP
+		rol	A
+		rol	ZP_TMP
+		lda	ZP_TMP
+		sta	SHEILA_NULA_PALAUX
 		lda	LOAD_BASE,Y
-		jsr	OSWRCH
 		iny
+		and	#$F0
+		sta	ZP_TMP
 		lda	LOAD_BASE,Y
-		jsr	OSWRCH
 		iny
+		lsr	A
+		lsr	A
+		lsr	A
+		lsr	A
+		and	#$0F
+		ora	ZP_TMP
+		sta	SHEILA_NULA_PALAUX
 		inx
 		cpx	#16
-		bne	pal_lp
+		bne	@pal_lp
+
+
+		plp
 
 		ldx	#0
 		stx	ZP_TMP
