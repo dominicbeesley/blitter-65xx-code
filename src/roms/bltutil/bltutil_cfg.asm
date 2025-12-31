@@ -125,10 +125,10 @@ cfgGetRomMap:
 		and	#BLT_MK2_CFG1_MEMI
 		beq	@retOvCs				; if 0 (jumper fitted) return Cs,Ov
 		lda	JIM+jim_offs_VERSION_cfg_bits+0
-		and	#BLT_MK2_CFG0_T65				; isolate T65 jumper setting
+		and	#BLT_MK2_CFG0_T65			; isolate T65 jumper setting
 		pha						; save
 		lda	JIM+jim_offs_VERSION_cfg_bits+0	
-		and	#BLT_MK2_CFG0_SWROMX				; get SWROMX bit
+		and	#BLT_MK2_CFG0_SWROMX			; get SWROMX bit
 		bne	@skswromx				; if SWROMX not fitted jump
 		pla
 		jmp	@sk2					; toggle T65 bit
