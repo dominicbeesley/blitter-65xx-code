@@ -21,6 +21,9 @@ sheila_ROM_AUTOHAZEL_0		:= $FE38
 sheila_ROM_AUTOHAZEL_1		:= $FE39
 
 
+sheila_CRTC_IX				:= $FE00
+sheila_CRTC_DAT				:= $FE01
+
 sheila_ACIA_CTL		:=	$FE08
 ACIA_RDRF		:=	$01
 ACIA_TDRE		:=	$02
@@ -297,7 +300,8 @@ ROMCTL_BITS_FLEX	:=	$10
 ROMCTL_MOS_JIMEN	:=	$02
 ROMCTL_MOS_SWMOS	:=	$01
 
-	
+sheila_VIDPROC		:=  $FE20	
+sheila_VIDPROC_PAL	:=  $FE21
 SHEILA_NULA_CTLAUX	:=	$FE22
 SHEILA_NULA_PALAUX	:=	$FE23
 
