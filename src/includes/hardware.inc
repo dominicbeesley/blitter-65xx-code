@@ -166,6 +166,12 @@ jim_offs_VERSION_API_sublevel	:=	$82
 jim_offs_VERSION_cfg_bits	:=	$84
 jim_offs_VERSION_cap_bits	:=	$88
 
+VERSION_BOARD_PAULA		:=	$00
+VERSION_BOARD_MK1		:=	$1
+VERSION_BOARD_MK2		:=	$2
+VERSION_BOARD_MK3		:=	$3
+VERSION_BOARD_C20K		:=	$4
+
 ;; FC 0088	
 BLCAPS_0_CHIPSET		:= $01
 BLCAPS_0_DMA			:= $02
