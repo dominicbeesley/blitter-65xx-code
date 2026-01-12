@@ -23,16 +23,20 @@
 
 		.include 	"c20k-hardware.inc"
 		.include 	"hardware.inc"
-		.include		"preboot.inc"
-		.include		"spi.inc"
+		.include	"preboot.inc"
+		.include	"spi.inc"
 
 
 	.zeropage
 
 zp_scrptr:	.res	2
-zp_ctr:	.res	1
+zp_ctr:		.res	2
+zp_dat_ptr:	.res	2
+
 
 	.bss
+
+genbuf:		.res	256
 
 	.rodata
 ;********* 6845 REGISTERS 0-11 FOR SCREEN TYPE 4 - MODE 7 ****************
@@ -63,64 +67,47 @@ handle_reset:
 		ldx	#$FF
 		txs
 
-		; mode 7
-		lda	#$4b
-		sta	sheila_VIDPROC
-		ldx	#13
-@lp1:		stx	sheila_CRTC_IX
-		lda	crtc_mo_7, X
-		sta	sheila_CRTC_DAT
-		dex
-		bpl	@lp1
-		lda	#$7C
-		sta	zp_scrptr+1
-		lda	#0
-		sta	zp_scrptr
-
-		lda	#'0'
-		sta	$7C00
-
-
-		lda	#$40
-		sta	zp_ctr		; number of pages to transfer
-
-
-		; start SPI bulk read
+		jmp	crt0_startup
+		
 		jsr	spi_reset
-		lda	#$0B		; fast read
-		jsr	spi_write_cont
-		lda	#^SPI_BOOT_BASE
-		jsr	spi_write_cont
-		lda	#>SPI_BOOT_BASE
-		jsr	spi_write_cont
-		lda	#<SPI_BOOT_BASE
-		jsr	spi_write_cont
-		lda	#$FF		; dummy
-		jsr	spi_write_cont
 
-		; prime JIM registers
-		lda	#JIM_DEVNO_BLITTER
-		sta	fred_JIM_DEVNO
-		lda	#^JIM_BOOT_BASE
-		sta	fred_JIM_PAGE_HI
-		lda	#>JIM_BOOT_BASE
-		sta	fred_JIM_PAGE_LO
-		ldy	#<JIM_BOOT_BASE
+		lda	#'C'
+		jsr	pr
 
-@lp:		jsr	spi_write_cont
-		sta	JIM,Y
-		iny
-		bne	@lp
-		inc	fred_JIM_PAGE_LO
-		bne	@s
-		inc	fred_JIM_PAGE_HI
-@s:		dec	zp_ctr
-		bne	@lp
 
-		jsr	spi_write_last
+		lda	#<ROM_IMAGE_BASE
+		sta	zp_spi_addr
+		lda	#>ROM_IMAGE_BASE
+		sta	zp_spi_addr+1
+		lda	#^ROM_IMAGE_BASE
+		sta	zp_spi_addr+2
 
-		lda	#'1'
-		sta	$7C00
+		lda	#<.sizeof(pb_romset)
+		sta	zp_spi_len
+		lda	#>.sizeof(pb_romset)
+		sta	zp_spi_len+1
+
+		lda	#<genbuf
+		sta	zp_spi_memptr
+		lda	#>genbuf
+		sta	zp_spi_memptr+1
+
+		lda	#'B'
+		jsr	pr
+
+		jsr	spi_read_buf
+
+		lda	#'A'
+		jsr	pr
+
+		ldx	#0
+@pr0:		lda	genbuf+pb_romset::title,X
+		beq	@pr0out
+		jsr	pr
+		inx
+		bne	@pr0
+@pr0out:
+
 
 
 HERE:		jmp	HERE
@@ -141,15 +128,26 @@ HERE:		jmp	HERE
 ;;;		jmp	pr		
 ;;;		.endproc
 ;;;	
-;;;		.proc	pr
-;;;		ldy	#0
-;;;		sta	(zp_scrptr),Y
-;;;		inc	zp_scrptr
-;;;		bne	:+
-;;;		inc	zp_scrptr+1
-;;;:		rts
-;;;		.endproc
-
+		.proc	pr
+		pha
+		tya
+		pha
+		txa
+		pha
+		tsx
+		lda	$103,X
+		ldy	#0
+		sta	(zp_scrptr),Y
+		inc	zp_scrptr
+		bne	:+
+		inc	zp_scrptr+1
+:		pla
+		tax
+		pla
+		tay
+		pla
+		rts
+		.endproc
 
 
 	.segment "VECS"	

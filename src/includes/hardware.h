@@ -1,7 +1,35 @@
 
+
+#define	sheila_MEM_CTL			0xFE31
+#define	BITS_MEM_CTL_SWMOS		0x01
+#define	BITS_MEM_CTL_SWMOS_DEBUG	0x04
+#define	BITS_MEM_CTL_SWMOS_DEBUG_EN	0x08
+#define	BITS_MEM_CTL_FLEX		0x10
+#define	BITS_MEM_CTL_SWMOS_DEBUG_5C	0x40
+#define	BITS_MEM_CTL_SWMOS_DEBUG_ACT	0x80
+#define	sheila_MEM_DEBUG_SAVE		0xFE32
+
+#define	sheila_MEM_TURBO2		0xFE36
+#define	BITS_MEM_TURBO2_THROTTLE	0x80
+
+#define	sheila_MEM_LOMEMTURBO		0xFE37
+#define	sheila_ROM_THROTTLE_0		0xFE33
+#define	sheila_ROM_THROTTLE_1		0xFE35
+#define	sheila_ROM_AUTOHAZEL_0		0xFE38
+#define	sheila_ROM_AUTOHAZEL_1		0xFE39
+
+#define	sheila_CRTC_IX			0xFE00
+#define	sheila_CRTC_DAT			0xFE01
+
+#define	sheila_ACIA_CTL			0xFE08
+#define	ACIA_RDRF			0x01
+#define	ACIA_TDRE			0x02
+
+#define	sheila_ACIA_DATA		0xFE09
+#define	sheila_SERIAL_ULA		0xFE10
+
 #define BLITCON_ACT_ACT			0x80			
 #define BLITCON_ACT_CELL		0x40			
-
 								
 #define BLITCON_ACT_MODE_1BBP		0x00			
 #define BLITCON_ACT_MODE_2BBP		0x10			
@@ -13,8 +41,6 @@
 
 #define BLITCON_LINE_MAJOR_UPnRIGHT	0x10			
 #define BLITCON_LINE_MINOR_CCW		0x20			
-								
-								
 
 #define BLITCON_EXEC_A			0x01	
 #define BLITCON_EXEC_B			0x02	
@@ -166,6 +192,97 @@
 #define sheila_6845_rw			0xFE01
 
 
+#define	JIM				0xFD00
+
+#define	SHEILA_ROMCTL_SWR		0xFE30
+#define	SHEILA_ROMCTL_MOS		0xFE31
+
+#define	SHEILA_ROMCTL_SWR_ELK		0xFE05
+
+#define	sheila_VIDPROC			0xFE20	
+#define	sheila_VIDPROC_PAL		0xFE21
 #define	SHEILA_NULA_CTLAUX		0xFE22
 #define	SHEILA_NULA_PALAUX		0xFE23
 
+/***********************************************************************
+ * System VIA                                                          *
+ ***********************************************************************/
+#define	sheila_SYSVIA_orb		0xFE40
+#define	sheila_SYSVIA_ora		0xFE41
+#define	sheila_SYSVIA_ddrb		0xFE42
+#define	sheila_SYSVIA_ddra		0xFE43
+#define	sheila_SYSVIA_t1cl		0xFE44
+#define	sheila_SYSVIA_t1ch		0xFE45
+#define	sheila_SYSVIA_t1ll		0xFE46
+#define	sheila_SYSVIA_t1lh		0xFE47
+#define	sheila_SYSVIA_t2cl		0xFE48
+#define	sheila_SYSVIA_t2ch		0xFE49
+#define	sheila_SYSVIA_sr		0xFE4A
+#define	sheila_SYSVIA_acr		0xFE4B
+#define	sheila_SYSVIA_pcr		0xFE4C
+#define	sheila_SYSVIA_ifr		0xFE4D
+#define	sheila_SYSVIA_ier		0xFE4E
+#define	sheila_SYSVIA_ora_nh		0xFE4F
+
+
+/***********************************************************************
+ * User VIA                                                            *
+ ***********************************************************************/
+#define	sheila_USRVIA_orb		0xFE60
+#define	sheila_USRVIA_ora		0xFE61
+#define	sheila_USRVIA_ddrb		0xFE62
+#define	sheila_USRVIA_ddra		0xFE63
+#define	sheila_USRVIA_t1cl		0xFE64
+#define	sheila_USRVIA_t1ch		0xFE65
+#define	sheila_USRVIA_t1ll		0xFE66
+#define	sheila_USRVIA_t1lh		0xFE67
+#define	sheila_USRVIA_t2cl		0xFE68
+#define	sheila_USRVIA_t2ch		0xFE69
+#define	sheila_USRVIA_sr		0xFE6A
+#define	sheila_USRVIA_acr		0xFE6B
+#define	sheila_USRVIA_pcr		0xFE6C
+#define	sheila_USRVIA_ifr		0xFE6D
+#define	sheila_USRVIA_ier		0xFE6E
+#define	sheila_USRVIA_ora_nh		0xFE6F
+
+/***********************************************************************
+ *  VIA constants                                                      *
+ ***********************************************************************/
+
+#define	VIA_IFR_BIT_ANY			0x80
+#define	VIA_IFR_BIT_T1			0x40
+#define	VIA_IFR_BIT_T2			0x20
+#define	VIA_IFR_BIT_CB1			0x10
+#define	VIA_IFR_BIT_CB2			0x08
+#define	VIA_IFR_BIT_SR			0x04
+#define	VIA_IFR_BIT_CA1			0x02
+#define	VIA_IFR_BIT_CA2			0x01
+
+#define	VIA_ACR_SHIFTMODE_0		0x00
+#define	VIA_ACR_SHIFTMODE_1		0x04
+#define	VIA_ACR_SHIFTMODE_2		0x08
+#define	VIA_ACR_SHIFTMODE_3		0x0C
+#define	VIA_ACR_SHIFTMODE_4		0x10
+#define	VIA_ACR_SHIFTMODE_5		0x14
+#define	VIA_ACR_SHIFTMODE_6		0x18
+#define	VIA_ACR_SHIFTMODE_7		0x1C
+
+#define	VIA_ACR_T1_MASK			0xC0
+#define	VIA_ACR_T1_CONT			0x40
+
+
+/***********************************************************************
+ * BBC B/B+ WD177x                                                     *
+ ***********************************************************************/
+
+#define	sheila_1770_dcontrol		0xFE80
+#define	sheila_1770_wdc_cmd		0xFE84
+#define	sheila_1770_wdc_trk		0xFE85
+#define	sheila_1770_wdc_sec		0xFE86
+#define	sheila_1770_wdc_dat		0xFE87
+
+#define	W1770_DRVSEL_BIT_SEL0		0x01
+#define	W1770_DRVSEL_BIT_SEL1		0x02
+#define	W1770_DRVSEL_BIT_SIDE1		0x04
+#define	W1770_DRVSEL_BIT_nDDEN		0x08
+#define	W1770_DRVSEL_BIT_nMR		0x20

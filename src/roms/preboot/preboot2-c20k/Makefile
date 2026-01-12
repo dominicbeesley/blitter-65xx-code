@@ -2,11 +2,13 @@
 
 AS=ca65 -U -I $(TOP)/includes -I $(BUILD) -I ../includes
 LD=ld65
+CC=cl65 -I $(TOP)/includes -I $(BUILD) -I ../includes -c
 INCS=$(wildcard $(TOP)/includes/*.inc) $(wildcard *.inc) $(wildcard ../includes *.inc)
 DEPS=$(INCS)
-OBJS=preboot1-c20k spi
+OBJS=preboot2-c20k main_head spi crt0 main
+LIBS=none.lib
 
-TARGETS=preboot1-c20k.vec
+TARGETS=preboot2-c20k.vec
 
 OBJS_O = $(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_O = $(addprefix $(BUILD)/, $(TARGETS))
@@ -18,7 +20,8 @@ ssd:	all
 deploy:	all
 
 #dont know why I need this but otherwise gnu make deletes the .o files!
-.PRECIOUS: $(OBJS_O)
+#.PRECIOUS: $(OBJS_O) $(BUILD)/
+.SECONDARY:
 
 $(BUILD)/%.vec:$(BUILD)/%.rom
 	$(SCRIPTS)/bin2bitvector.pl $< >$@
@@ -29,17 +32,28 @@ $(BUILD)/%.o: 	%.asm $(DEPS)
 $(BUILD)/%.o: 	../lib/%.asm $(DEPS) 
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
+$(BUILD)/%.o:	%.c
+	$(CC) -o $@ -g $<
 
-$(BUILD)/%.rom: $(OBJS_O) preboot1-c20k.cfg
+$(BUILD)/%.o: 	../lib/cc65/%.asm $(DEPS) 
+	$(AS) -o $@ -g -l $(basename $@).lst $<
+
+
+$(BUILD)/main_head.o: main_head.mo7
+
+
+$(BUILD)/%.rom: $(OBJS_O) preboot2-c20k.cfg
 	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map --dbgfile $(basename $@).dbg -o $@ -C $(filter %.cfg, $^) $(OBJS_O) $(LIBS)
 	$(SCRIPTS)/getsymbols.pl <$(basename $@).sy2 >$(basename $@).noi
 	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
 	$(SCRIPTS)/ld65free.pl $(filter %.cfg, $^) $(basename $@).map >$(basename $@).free.txt
 	cat $(basename $@).free.txt
+	echo "M.PRBOOT2 FFC000 FFC000" >$@.inf
 
 clean:
 	-rm $(TARGETS_O)
 	-rm $(patsubst %.vec, %.rom, $(TARGETS_O))
+	-rm $(patsubst %.vec, %.rom.inf, $(TARGETS_O))
 	-rm $(patsubst %.vec, %.sy2, $(TARGETS_O))
 	-rm $(patsubst %.vec, %.map, $(TARGETS_O))
 	-rm $(patsubst %.vec, %.noi, $(TARGETS_O))

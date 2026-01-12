@@ -297,7 +297,6 @@ SHEILA_ROMCTL_SWR_ELK	:=	$FE05
 
 ROMCTL_BITS_FLEX	:=	$10
 
-ROMCTL_MOS_JIMEN	:=	$02
 ROMCTL_MOS_SWMOS	:=	$01
 
 sheila_VIDPROC		:=  $FE20	
@@ -327,27 +326,6 @@ sheila_SYSVIA_pcr			:= $FE4C
 sheila_SYSVIA_ifr			:= $FE4D
 sheila_SYSVIA_ier			:= $FE4E
 sheila_SYSVIA_ora_nh			:= $FE4F
-
-;***********************************************************************
-;* SYS VIA - slow data bus RTC                                         *
-;***********************************************************************
-
-	.IFDEF MACH_CHIPKIT
-BITS_RTC_AS_ON	:=		$88			; PB7
-BITS_RTC_AS_OFF :=		$08			;
-BITS_RTC_CS	:=		$04			; latch
-BITS_RTC_DS	:=		$02			; latch
-BITS_RTC_RnW	:=		$01			; latch
-BITS_LAT_ON	:=		$08			; latch
-
-RTC_REG_SECONDS	:=		$0
-RTC_REG_MINUTES	:=		$2
-RTC_REG_HOURS	:=		$4
-RTC_REG_DOW	:=		$6
-RTC_REG_DAY	:=		$7
-RTC_REG_MONTH	:=		$8
-RTC_REG_YEAR	:=		$9
-	.ENDIF
 
 
 ;***********************************************************************
