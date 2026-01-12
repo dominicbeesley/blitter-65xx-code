@@ -2,15 +2,16 @@
 
 AS=ca65 -U -I $(TOP)/includes -I $(BUILD) -I ../includes
 LD=ld65
-CC=cl65 -I $(TOP)/includes -I $(BUILD) -I ../includes -c
+CC=cl65 -I $(TOP)/includes -I $(BUILD) -I ../includes -O -t none --standard c99
 INCS=$(wildcard $(TOP)/includes/*.inc) $(wildcard *.inc) $(wildcard ../includes *.inc)
 DEPS=$(INCS)
-OBJS=preboot2-c20k main_head spi crt0 main
+A_OBJS=preboot2-c20k main_head spi crt0 
+C_OBJS=main screen window
 LIBS=none.lib
 
 TARGETS=preboot2-c20k.vec
 
-OBJS_O = $(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
+OBJS_O = $(addprefix $(BUILD)/, $(addsuffix .o, $(C_OBJS) $(A_OBJS)))
 TARGETS_O = $(addprefix $(BUILD)/, $(TARGETS))
 
 .PHONY: all clean
@@ -26,17 +27,21 @@ deploy:	all
 $(BUILD)/%.vec:$(BUILD)/%.rom
 	$(SCRIPTS)/bin2bitvector.pl $< >$@
 
+%.o:%.c
+$(BUILD)/%.o:%.c
+
+$(BUILD)/%.s:	%.c
+	$(CC) -S -o $@ -g $<
+
+$(BUILD)/%.o: 	$(BUILD)/%.s $(DEPS) 
+	$(AS) -o $@ -g -l $(basename $@).lst $<
+
 $(BUILD)/%.o: 	%.asm $(DEPS) 
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
 $(BUILD)/%.o: 	../lib/%.asm $(DEPS) 
 	$(AS) -o $@ -g -l $(basename $@).lst $<
 
-$(BUILD)/%.o:	%.c
-	$(CC) -o $@ -g $<
-
-$(BUILD)/%.o: 	../lib/cc65/%.asm $(DEPS) 
-	$(AS) -o $@ -g -l $(basename $@).lst $<
 
 
 $(BUILD)/main_head.o: main_head.mo7
@@ -61,5 +66,6 @@ clean:
 	-rm $(OBJS_O)
 	-rm $(patsubst %.o, %.lst, $(OBJS_O))
 	-rm $(patsubst %.o, %.lst.rel, $(OBJS_O))
+	-rm $(addprefix $(BUILD)/, $(addsuffix .s, $(C_OBJS)))
 
 

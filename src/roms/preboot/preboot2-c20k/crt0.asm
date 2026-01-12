@@ -27,6 +27,10 @@ crt0_startup:
 
         jsr     zerobss
 
+; Copy data
+
+        jsr     copydata
+
 ; Push the command-line arguments; and, call main().
 
         jsr     callmain

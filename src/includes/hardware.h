@@ -1,4 +1,7 @@
 
+// turn a memory location into a dereferenced pointer
+#define R_P(X) (*((unsigned char *)X))
+
 
 #define	sheila_MEM_CTL			0xFE31
 #define	BITS_MEM_CTL_SWMOS		0x01
