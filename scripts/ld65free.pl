@@ -115,7 +115,7 @@ while (<$fh_cfg>) {
 					$state = $STATE_NAME;
 				} else {
 					# end of head, save values
-					(grep {$_->{key} eq $cur_head_key} @$arr_cur_section) and die "Section $cur_section_key Already contains a heading $cur_head_key";
+					##(grep {$_->{key} eq $cur_head_key} @$arr_cur_section) and die "Section $cur_section_key Already contains a heading $cur_head_key";
 					push @$arr_cur_section, {key=>$cur_head_key, values=>$hash_cur_head};
 					$state = $STATE_HEADORCBRACE
 				}
