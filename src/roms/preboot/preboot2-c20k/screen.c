@@ -34,12 +34,14 @@ void screen_init(void) {
 
 }
 
+/*
 char *screen_addr(screen_coord x, screen_coord y) {
 	if (x > 0 && x < SCREEN_WIDTH && y > 0 && y < SCREEN_HEIGHT)
 		return (char *)0x7C00+x+40*y;
 	else
 		return SCREEN_ADDR_BAD;
 }
+*/
 
 void screen_print_at(screen_coord x, screen_coord y, char c) {
 	char *p = screen_addr(x, y);

@@ -13,6 +13,7 @@ extern void screen_init(void);
 extern void screen_print_at(screen_coord x, screen_coord y, char c);
 extern void screen_cursor_at(screen_coord x, screen_coord y);
 extern void screen_cursor(screen_bool b);
+extern char *screen_addr(screen_coord x, screen_coord y);
 
 
 #endif

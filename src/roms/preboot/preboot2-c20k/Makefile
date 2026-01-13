@@ -5,7 +5,7 @@ LD=ld65
 CC=cl65 -I $(TOP)/includes -I $(BUILD) -I ../includes -O -t none --standard c99
 INCS=$(wildcard $(TOP)/includes/*.inc) $(wildcard *.inc) $(wildcard ../includes *.inc)
 DEPS=$(INCS)
-A_OBJS=preboot2-c20k main_head spi crt0 
+A_OBJS=preboot2-c20k main_head spi crt0 screen_int
 C_OBJS=main screen window
 LIBS=none.lib
 
