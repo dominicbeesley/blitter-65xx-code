@@ -70,3 +70,38 @@ void screen_cursor(screen_bool b) {
 		R_P(sheila_CRTC_DAT) = 0x7A;		
 	}
 }
+
+
+void screen_clear(screen_coord X, screen_coord Y, screen_coord W, screen_coord H, char c) {
+
+	char *scr;
+
+	if (X < 0) {
+		W += X;
+		X = 0;
+	}
+	if (X >= SCREEN_WIDTH) 
+		return;
+	if (X + W > SCREEN_WIDTH) 
+		W = SCREEN_WIDTH - X;
+	if (W <= 0)
+		return;
+
+	if (Y < 0) {
+		H += Y;
+		Y = 0;
+	}
+	if (Y >= SCREEN_HEIGHT) 
+		return;
+	if (Y + H > SCREEN_HEIGHT) 
+		H = SCREEN_HEIGHT - Y;
+	if (H <= 0)
+		return;
+
+	scr = screen_addr(X, Y);
+	while (H) {
+		memset(scr, c, W);
+		scr += SCREEN_WIDTH;
+		H--;
+	}
+}

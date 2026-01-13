@@ -33,7 +33,6 @@ extern win_def *win_list;
 extern void win_init(win_def *w, screen_coord left, screen_coord top, screen_coord width, screen_coord height, void *userdata);
 extern void win_open(win_def *w, screen_bool top);
 extern void win_redrwaw_all(void);
-extern void win_render_str(win_def *w, screen_coord X, screen_coord Y, const char *str);
 extern void win_refresh(win_def *w);
 extern win_event_handler win_register_event(win_def *w, int event_index, win_event_handler handler);
 

@@ -4,9 +4,10 @@ AS=ca65 -U -I $(TOP)/includes -I $(BUILD) -I ../includes
 LD=ld65
 CC=cl65 -I $(TOP)/includes -I $(BUILD) -I ../includes -O -t none --standard c99
 INCS=$(wildcard $(TOP)/includes/*.inc) $(wildcard *.inc) $(wildcard ../includes *.inc)
-DEPS=$(INCS)
-A_OBJS=preboot2-c20k main_head spi crt0 screen_int
-C_OBJS=main screen window
+HS=$(wildcard $(TOP)/includes/*.h) $(wildcard *.h) $(wildcard ../includes *.h)
+DEPS=$(INCS) $(HS)
+A_OBJS=preboot2-c20k main_head spi crt0 screen_int surface_int
+C_OBJS=main screen window surface
 LIBS=none.lib
 
 TARGETS=preboot2-c20k.vec

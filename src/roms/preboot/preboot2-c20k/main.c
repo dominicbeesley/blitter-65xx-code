@@ -2,6 +2,7 @@
 
 #include "screen.h"
 #include "window.h"
+#include "surface.h"
 
 
 
@@ -24,13 +25,27 @@ char hex_nyb(unsigned char x) {
 		return 'A' + x - 10;
 }
 
+char * hex_str(char *buf, unsigned char w, unsigned long n) {
+	unsigned char i = w;
+	while (i > 0) {
+		i--;
+		buf[i] = hex_nyb(n);
+		n = n >> 4;
+	}
+
+	return buf + w;
+}
+
+
 screen_bool render_main(win_def *w) {
 	screen_coord Y;
+	surface s;
 
-	for (Y = 0; Y < 16; Y ++) {
-		buf[0] = hex_nyb(Y);
-		buf[1] = 0;
-		win_render_str(w, 0, Y, buf);
+	surface_from_window(&s, w);
+
+	for (Y = 0; Y < 23; Y ++) {
+		*hex_str(buf, 6, Y) = '\0';
+		surface_render_str(&s, 0, Y, buf);
 	}
 
 	return 1;
@@ -58,11 +73,6 @@ int main(void) {
 
 	win_init(&w_status, 0, 24, 40, 1, NULL);
 	win_open(&w_status, 1);
-
-	win_render_str(&w_main, 4, 5, "HELLO");
-	win_render_str(&w_over, 0, 0, "Dominic Beesley");
-	win_render_str(&w_head, 0, 0, "\x86Randomness");
-	win_render_str(&w_status, 0, 0, "STATUS BAR");
 
 	return 0;
 

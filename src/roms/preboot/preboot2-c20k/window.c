@@ -1,4 +1,5 @@
 #include "window.h"
+#include "surface.h"
 #include <string.h>
 
 win_def *win_list=NULL;
@@ -30,8 +31,10 @@ win_event_handler win_register_event(win_def *w, int event_index, win_event_hand
 }
 
 void win_redraw_from(win_def *w) {
+	surface s;
 	while (w) {
-
+		surface_from_window(&s, w);
+		surface_clear(&s, '%');
 		if (w->event_handlers[EVENT_RENDER])
 			(*w->event_handlers[EVENT_RENDER])(w);
 
@@ -40,19 +43,11 @@ void win_redraw_from(win_def *w) {
 
 }
 
-void win_clear(win_def *w) {
-	screen_coord x, y;
-	for (y = w->top; y < w->top + w->height; y++)
-		for (x = w->left; x < w->left + w->width; x++)
-			screen_print_at(x, y, 0);
-}
-
 void win_redraw_all(void) {
 	win_redraw_from(win_list);
 }
 
 void win_refresh(win_def *w) {
-	win_clear(w);
 	win_redraw_from(w);
 }
 
@@ -90,22 +85,6 @@ void win_open(win_def *w, screen_bool top) {
 	win_refresh(w);
 }
 
-void win_render_str(win_def *w, screen_coord X, screen_coord Y, const char *str) {
-	screen_coord SX, SY;
-	const char *p = str;
 
-	if (Y < 0 || Y >= w->height)
-		return;
-
-	SX = w->left + X;
-	SY = w->top + Y;
-	while (*p) {
-		if (X >= 0 && X < w->width)
-			screen_print_at(SX, SY, *p);
-		p++;
-		SX++;
-		X++;
-	}
-}
 
 
