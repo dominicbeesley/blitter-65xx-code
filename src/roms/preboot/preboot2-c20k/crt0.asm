@@ -7,7 +7,9 @@
         .import         initlib, donelib
         .import         zerobss, callmain
         .import         __MAIN_START__, __MAIN_SIZE__   ; Linker generated
-        .import         __STACKSIZE__                   ; from configure file
+        .import         __STACK_START__, __STACK_SIZE__ ; from segment
+
+        .importzp       sp
 
         .include        "zeropage.inc"
 
@@ -17,6 +19,12 @@
 
 .segment        "STARTUP"
 crt0_startup:
+        
+        lda     #<(__STACK_START__ + __STACK_SIZE__)
+        sta     sp
+        lda     #>(__STACK_START__ + __STACK_SIZE__)
+        sta     sp+1
+
 
 ; Save space by putting some of the start-up code in the ONCE segment,
 ; which can be re-used by the BSS segment, the heap and the C stack.
