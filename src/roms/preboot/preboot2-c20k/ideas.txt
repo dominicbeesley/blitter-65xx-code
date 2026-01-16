@@ -5,6 +5,8 @@ Show current map, cpu, boot options in top-box
 
 1 Show ROMS
 
+2 Econet settings -> station number
+
 
 Debrick
 
@@ -16,7 +18,7 @@ Offset	Length	Description
 +1		1       Target CPU
 +2		32		Title, 0 terminated, 0 padded
 +34		30		reserved
-+128	64*N	ROM descriptors...
++64		64*N	ROM descriptors...
 		16K*N	ROM binaries
 
 

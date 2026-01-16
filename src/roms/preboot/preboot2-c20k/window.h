@@ -19,6 +19,9 @@ struct win_struct_def {
 	screen_coord width;
 	screen_coord height;
 
+	screen_coord scroll_X;
+	screen_coord scroll_Y;
+
 	void *userdata;
 
 	screen_bool open;

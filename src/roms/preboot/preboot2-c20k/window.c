@@ -11,6 +11,9 @@ void win_init(win_def *w, screen_coord left, screen_coord top, screen_coord widt
 	w->width = width;
 	w->height = height;
 
+	w->scroll_X = 0;
+	w->scroll_Y = 0;
+
 	w->userdata = userdata;
 
 	w->open = 0;
@@ -34,7 +37,7 @@ void win_redraw_from(win_def *w) {
 	surface s;
 	while (w) {
 		surface_from_window(&s, w);
-		surface_clear(&s, '%');
+		surface_clear(&s, 0);
 		if (w->event_handlers[EVENT_RENDER])
 			(*w->event_handlers[EVENT_RENDER])(w);
 
