@@ -29,7 +29,10 @@ screen_bool lb_render_win(win_def *w) {
 
 		if ( (lb->event_handler_render) )
 		if (surface_from_rect(&sw, &sw_i, X, Y, W, lb->item_height))
+		{
+			surface_clear(&sw_i, 0);
 			(*lb->event_handler_render)(w, lb, &sw_i, ix);
+		}
 		
 		ix++;
 		Y+=lb->item_height;

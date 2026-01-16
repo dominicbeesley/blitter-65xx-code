@@ -142,17 +142,16 @@ int main(void) {
 	screen_cursor_at(13,21);
 	screen_cursor(1);
 
-	win_init(&w_main, 0, 8, 40, 16, NULL);
+	win_init(&w_main, WINDOW_OPT_NOCLEAR, 0, 8, 40, 16, NULL);
 	//win_register_event(&w_main, EVENT_RENDER, &render_main);
 	win_open(&w_main, 1);
 
-	win_init(&w_head, 3, 4, 35, 3, NULL);
+	win_init(&w_head, 0, 3, 4, 35, 3, NULL);
 	win_open(&w_head, 0);
 
-	win_init(&w_status, 0, 24, 40, 1, NULL);
+	win_init(&w_status, 0, 0, 24, 40, 1, NULL);
 	win_open(&w_status, 1);
 	
-	*((char *)0x7c00) = '!';
 	lb_init(&w_main, &l_list, &l_list_render, 20, 2);
 	wait();
 	wait();

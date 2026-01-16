@@ -4,7 +4,14 @@
 
 win_def *win_list=NULL;
 
-void win_init(win_def *w, screen_coord left, screen_coord top, screen_coord width, screen_coord height, void *userdata) {
+void win_init(
+	win_def *w, 
+	unsigned char options,
+	screen_coord left, 
+	screen_coord top,
+	screen_coord width,
+	screen_coord height,
+	void *userdata) {
 
 	w->left = left;
 	w->top = top;
@@ -18,6 +25,8 @@ void win_init(win_def *w, screen_coord left, screen_coord top, screen_coord widt
 
 	w->open = 0;
 	w->next = 0;
+
+	w->options = options;
 
 	memset(w->event_handlers, 0, sizeof(win_event_handler) * EVENT_COUNT);
 }
@@ -37,7 +46,8 @@ void win_redraw_from(win_def *w) {
 	surface s;
 	while (w) {
 		surface_from_window(&s, w);
-		surface_clear(&s, 0);
+		if (!(w->options & WINDOW_OPT_NOCLEAR))
+			surface_clear(&s, 0);
 		if (w->event_handlers[EVENT_RENDER])
 			(*w->event_handlers[EVENT_RENDER])(w);
 

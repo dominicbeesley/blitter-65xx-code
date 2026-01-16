@@ -103,21 +103,6 @@ screen_bool surface_from_rect(surface *parent, surface *new, screen_coord X, scr
 	new->scroll_X = SCX;
 	new->scroll_Y = SCY;
 
-	p = (char *)0x7C28;
-	*p++ = '{';
-	p = hex_str(p, 2, SX);
-	*p++ = ' ';
-	p = hex_str(p, 2, SY);
-	*p++ = ' ';
-	p = hex_str(p, 2, W);
-	*p++ = ' ';
-	p = hex_str(p, 2, H);
-	*p++ = ' ';
-	p = hex_str(p, 2, SCX);
-	*p++ = ' ';
-	p = hex_str(p, 2, SCX);
-	*p++ = ' ';
-
 	return 1;
 
 bad:	

@@ -4,6 +4,8 @@
 #include "screen.h"
 #include <stddef.h>
 
+#define WINDOW_OPT_NOCLEAR 	0x01
+
 typedef struct win_struct_def win_def;
 
 typedef screen_bool (*win_event_handler)(win_def *win);
@@ -28,12 +30,14 @@ struct win_struct_def {
 
 	win_event_handler event_handlers[EVENT_COUNT];
 
+	unsigned char options;
+
 	win_def	*next;
 };
 
 extern win_def *win_list;
 
-extern void win_init(win_def *w, screen_coord left, screen_coord top, screen_coord width, screen_coord height, void *userdata);
+extern void win_init(win_def *w, unsigned char options, screen_coord left, screen_coord top, screen_coord width, screen_coord height, void *userdata);
 extern void win_open(win_def *w, screen_bool top);
 extern void win_redrwaw_all(void);
 extern void win_refresh(win_def *w);
