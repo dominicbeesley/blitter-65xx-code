@@ -4,15 +4,16 @@
 #include "hex.h"
 
 screen_bool lb_render_win(win_def *w) {	
-	char *p;
 	surface sw;
 	surface sw_i;
-	screen_coord X,Y,W; //TODO: LB width?
+	screen_coord X,Y,W,H; //TODO: LB width?
 	lb_def *lb;
 	int ix;
 
-
 	lb = (lb_def *)w->userdata;
+
+	if ( lb->event_handler_render == NULL)
+		return 0;
 
 	surface_from_window(&sw, w);
 	if (sw.scroll_Y > 0)
@@ -21,13 +22,12 @@ screen_bool lb_render_win(win_def *w) {
 		ix = 0;
 
 	X = sw.scroll_X;
-	W = sw.scroll_X + sw.width;
+	W = sw.width;
 	Y = ix * lb->item_height;
 
 	while (Y < sw.scroll_Y + sw.height && 
 		ix < lb->item_count) {
 
-		if ( (lb->event_handler_render) )
 		if (surface_from_rect(&sw, &sw_i, X, Y, W, lb->item_height))
 		{
 			surface_clear(&sw_i, 0);
@@ -37,6 +37,11 @@ screen_bool lb_render_win(win_def *w) {
 		ix++;
 		Y+=lb->item_height;
 	}
+
+	// clear rest of surface
+	H = sw.height - (Y - sw.scroll_Y);
+	if (H > 0)
+		surface_clear_rect(&sw, X, Y, W, H, '.');
 
 	return 1;
 }

@@ -22,5 +22,6 @@ extern void surface_from_window(surface *surface, win_def *);
 extern void surface_render_str(surface *w, screen_coord X, screen_coord Y, const char *str);
 extern void surface_clear(surface *surface, char c);
 extern screen_bool surface_from_rect(surface *parent, surface *new, screen_coord X, screen_coord Y, screen_coord W, screen_coord H);
+extern void surface_clear_rect(surface *surface, screen_coord X, screen_coord Y, screen_coord W, screen_coord H, char c);
 
 #endif

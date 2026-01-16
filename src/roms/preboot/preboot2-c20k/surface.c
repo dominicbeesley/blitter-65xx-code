@@ -50,6 +50,15 @@ void surface_clear(surface *s, char c) {
 }
 
 
+void surface_clear_rect(surface *s, screen_coord X, screen_coord Y, 
+	screen_coord W, screen_coord H, char c) {
+
+	surface sw;
+
+	surface_from_rect(s, &sw, X, Y, W, H);
+	surface_clear(&sw, c);	
+}
+
 screen_bool surface_from_rect(surface *parent, surface *new, screen_coord X, screen_coord Y, screen_coord W, screen_coord H) {
 
 	char *p;

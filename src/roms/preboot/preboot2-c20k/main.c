@@ -119,6 +119,8 @@ void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 	}
 
 	surface_render_str(s, 0, 0, buf);
+
+	surface_render_str(s, 0, 1, "~-~-~-~-~-~-~-~-~-~-~-");
 }
 
 void wait() {
@@ -152,7 +154,7 @@ int main(void) {
 	win_init(&w_status, 0, 0, 24, 40, 1, NULL);
 	win_open(&w_status, 1);
 	
-	lb_init(&w_main, &l_list, &l_list_render, 20, 2);
+	lb_init(&w_main, &l_list, &l_list_render, 5, 2);
 	wait();
 	wait();
 	wait();
