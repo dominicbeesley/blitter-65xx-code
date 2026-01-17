@@ -51,5 +51,9 @@ _exit:  pha                     ; Save the return code on stack
         sei
 HERE:   jmp     HERE
 
+        ;TODO: force reset and ROM switch here
+        ;TODO: restore memory?
+        ;TODO: restore SYS VIA IER for hard/cold/warm reset
+
         rts
 

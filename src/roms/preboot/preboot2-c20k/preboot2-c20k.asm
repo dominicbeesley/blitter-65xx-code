@@ -50,6 +50,20 @@ handle_reset:
 		ldx	#$FF
 		txs
 
+		; do some hardware cleanup before crt0 startup
+
+
+		lda	#$7F
+		sta	sheila_SYSVIA_ier	; TODO: we should maybe use this to detect hard/cold/boot and pass on to client
+
+
+		ldx	#$0f
+		stx	sheila_SYSVIA_ddrb
+@slowb:		stx	sheila_SYSVIA_orb
+		dex
+		cpx	#8
+		bcs	@slowb
+
 		jmp	crt0_startup
 
 

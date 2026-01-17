@@ -5,7 +5,7 @@
 #include "surface.h"
 #include "listbox.h"
 #include "hex.h"
-
+#include "keyboard.h"
 
 extern char main_head[];
 
@@ -174,10 +174,21 @@ int main(void) {
 	win_refresh(&w_main);
 
 	for (i = 0; i < 10; i++) {
-		wait();
 		w_main.scroll_Y = i;	
 		win_refresh(&w_main);
 	}
+
+	do { 
+		if (keyboard_scan(1))
+			*((char *)0x7C00) ='1';
+		else
+			*((char *)0x7C00) ='0';
+
+		if (keyboard_scan(0))
+			*((char *)0x7C01) ='1';
+		else
+			*((char *)0x7C01) ='0';
+	} while (1);
 
 	return 0;
 
