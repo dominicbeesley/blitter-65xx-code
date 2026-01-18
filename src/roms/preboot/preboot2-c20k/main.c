@@ -8,6 +8,7 @@
 #include "keyboard.h"
 #include "hw.h"
 #include "debug.h"
+#include "util.h"
 
 extern char main_head[];
 
@@ -21,16 +22,13 @@ lb_def l_list;
 char buf[100];
 
 
-screen_bool render_main(win_def *w) {
-	screen_coord Y;
+screen_bool render_status(win_def *w) {
 	surface s;
 
 	surface_from_window(&s, w);
 
-	for (Y = 0; Y < 23; Y ++) {
-		*hex_str(buf, 6, Y) = '\0';
-		surface_render_str(&s, 0, Y, buf);
-	}
+	sprintf(buf, "TIME: %d", (long)get_time());
+	surface_render_str(&s, 0, 0, buf);
 
 	return 1;
 }
@@ -160,6 +158,7 @@ int main(void) {
 	win_open(&w_head, 0);
 
 	win_init(&w_status, 0, 0, 24, 40, 1, NULL);
+	win_register_event(&w_status, EVENT_RENDER, &render_status);
 	win_open(&w_status, 1);
 	
 	p = buf;
@@ -199,17 +198,11 @@ int main(void) {
 
 
 	do { 
-		if (keyboard_scan(1))
-			*((char *)0x7C00) ='1';
-		else
-			*((char *)0x7C00) ='0';
-
-		if (keyboard_scan(0))
-			*((char *)0x7C01) ='1';
-		else
-			*((char *)0x7C01) ='0';
+		sprintf((char *)0x7C00, "%2X", (long)keyboard_scan(0x10));
 
 		win_refresh(&w_main);
+
+		win_refresh(&w_status);
 
 	} while (1);
 

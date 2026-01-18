@@ -73,11 +73,6 @@ handle_irq:    	pha
 
         	cld
 
-	inc $7C27
-	lda #$7F
-	sta sheila_SYSVIA_ifr
-
-
 ; Call the chained IRQ handlers.
 
         	ldy     irqcount

@@ -11,4 +11,6 @@ extern void intrestore(unsigned char P);
 
 extern void hw_init(void);
 
+extern unsigned long get_time(void);
+
 #endif

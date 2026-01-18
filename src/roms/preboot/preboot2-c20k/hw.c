@@ -5,6 +5,8 @@
 #define IRQ_STACK_SIZE 0x400
 char IRQ_STACK[IRQ_STACK_SIZE];
 
+unsigned long time = 0;
+
 void poke(unsigned int a, unsigned char v) {
 	*((unsigned char *)a) = v;
 }
@@ -13,9 +15,28 @@ unsigned char peek(unsigned int a) {
 	return *((unsigned char *)a);
 }
 
+unsigned long get_time(void) {
+	char P = intoff();
+	unsigned long ret = time;
+	intrestore(P);
+	return ret;
+}
+
 unsigned char hw_interrupt(void) {
-	(*((char *)0x7C4F))++;
-	poke(sheila_SYSVIA_ifr, 0x7F);
+
+	unsigned char b;
+
+	b = peek(sheila_SYSVIA_ifr);
+	if (b & VIA_IFR_BIT_ANY)
+	{
+		b = b & ~ VIA_IFR_BIT_ANY;
+
+		time++;
+
+		poke (sheila_SYSVIA_ifr, b);
+	}
+
+
 	return 1;
 }
 
