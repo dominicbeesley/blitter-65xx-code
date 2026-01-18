@@ -16,10 +16,11 @@ int	debug_printf(
 	  char		*fmt,		/* format string		*/
 	  ...
 	) {
+	int ret;
     va_list ap;
     va_start(ap, fmt);
-    _doprnt(fmt, ap, &debug_putc, 0);
+    ret = _doprnt(fmt, ap, &debug_putc, 0);
     va_end(ap);
 
-    return 0;
+    return ret;
 }

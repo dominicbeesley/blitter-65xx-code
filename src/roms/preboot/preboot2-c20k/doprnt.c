@@ -17,13 +17,14 @@ static void _prtX16(long num, char *str);
  *				 All arguments passed as 4 bytes, long==int.
  *------------------------------------------------------------------------
  */
-void	_doprnt(
+int _doprnt(
 	  char		*fmt,			/* format string	*/
 	  va_list	ap,			/* ap list of values	*/
 	  int		(*func)(int, int),	/* char output function	*/
 	  int		farg			/* arg for char output	*/
 	)
 {
+    int ret;
     int c;
     int i;
     int f;                      /* The format character (comes after %) */
@@ -40,6 +41,8 @@ void	_doprnt(
     char digit1;                /* Offset to add to first numeric digit */
     long larg;
 
+    ret = 0;
+
     for (;;)
     {
         /* Echo characters until '%' or end of fmt string */
@@ -47,14 +50,16 @@ void	_doprnt(
         {
             if (c == '\0')
             {
-                return;
+                return ret;
             }
             (*func) (farg, c);
+            ret++;
         }
         /* Echo "...%%..." as '%' */
         if (*fmt == '%')
         {
             (*func) (farg, *fmt++);
+            ret++;
             continue;
         }
         /* Check for "%-..." == Left-justified output */
@@ -102,7 +107,8 @@ void	_doprnt(
         if ((f = *fmt++) == '\0')
         {
             (*func) (farg, '%');
-            return;
+            ret++;
+            return ret;
         }
         sign = '\0';            /* sign == '-' for negative decimal */
 
@@ -219,29 +225,37 @@ void	_doprnt(
         if (sign == '-' && fill == '0')
         {
             (*func) (farg, sign);
+            ret++;
         }
         if (leftjust == 0)
         {
             for (i = 0; i < leading; i++)
             {
                 (*func) (farg, fill);
+                ret++;
             }
         }
         if (sign == '-' && fill == ' ')
         {
             (*func) (farg, sign);
+            ret++;
         }
         for (i = 0; i < length; i++)
         {
             (*func) (farg, str[i]);
+            ret++;
         }
         if (leftjust != 0)
         {
             for (i = 0; i < leading; i++)
+            {
                 (*func) (farg, fill);
+                ret++;
+            }
         }
     }
 
+    return ret;
 }
 
 /*------------------------------------------------------------------------
