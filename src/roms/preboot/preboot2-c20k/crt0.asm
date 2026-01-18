@@ -25,19 +25,20 @@ crt0_startup:
         lda     #>(__STACK_START__ + __STACK_SIZE__)
         sta     sp+1
 
+; Copy data
+
+        jsr     copydata
+
+; Clear the BSS data.
+
+        jsr     zerobss
 
 ; Save space by putting some of the start-up code in the ONCE segment,
 ; which can be re-used by the BSS segment, the heap and the C stack.
 
         jsr     initlib
 
-; Clear the BSS data.
 
-        jsr     zerobss
-
-; Copy data
-
-        jsr     copydata
 
 ; Push the command-line arguments; and, call main().
 
