@@ -26,6 +26,10 @@
 		.include	"preboot.inc"
 		.include	"spi.inc"
 
+		.export initirq
+		.export doneirq
+		.export _testval
+
 
 	.zeropage
 
@@ -35,13 +39,65 @@ zp_dat_ptr:	.res	2
 
 
 	.bss
-
-
+irqcount:	.res 1
 	.rodata
+
+	.data
+_testval:	.byte $55
+
 	.code
-handle_nmi:
-handle_irq:
+
+initirq:	
+		lda	#$AA
+		sta	_testval
+		lda     #.lobyte(__INTERRUPTOR_COUNT__*2)
+        	sta     irqcount
+;        	cli
+        	rts
+
+doneirq:	lda	#0
+		sta	irqcount	; disable our handler
+		rts
+
+handle_irq:    	pha
+        	txa
+        	pha
+        	tya
+        	pha
+        	tsx
+        	lda     $104,x          ; Get the flags from the stack
+        	and     #$10            ; Test break flag
+        	bne     handle_brk
+
+; It's an IRQ.
+
+        	cld
+
+	inc $7C27
+	lda #$7F
+	sta sheila_SYSVIA_ifr
+
+
+; Call the chained IRQ handlers.
+
+        	ldy     irqcount
+        	beq     irqskip
+	        jsr     callirq_y       ; Call the functions
+
+; Done with the chained IRQ handlers; check the TPI for IRQs, and handle them.
+
+irqskip:
+
+        	pla
+        	tay
+        	pla
+        	tax
+        	pla
+handle_nmi:    
 		rti
+
+handle_brk:	sei
+		jmp	handle_brk
 
 
 handle_reset:

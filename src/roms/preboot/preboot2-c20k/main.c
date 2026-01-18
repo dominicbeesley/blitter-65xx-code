@@ -6,6 +6,8 @@
 #include "listbox.h"
 #include "hex.h"
 #include "keyboard.h"
+#include "hw.h"
+#include "debug.h"
 
 extern char main_head[];
 
@@ -104,9 +106,9 @@ void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 		*p++ = 0x9D;
 		*p++ = 0x83;
 	} else {
-		*p++ = ' ';
-		*p++ = ' ';
-		*p++ = ' ';
+		*p++ = '.';
+		*p++ = '.';
+		*p++ = '.';
 	}
 
 	addr = romset_find(ix);
@@ -132,12 +134,18 @@ void wait() {
 	__asm__("bne @lp");
 }
 
+extern unsigned char testval;
+surface surf_test;
+
 int main(void) {
 
+	char *p;
 	int i;
 
-	screen_init();
+	debug_printf("HELLO\n");
 
+	screen_init();
+	hw_init();
 
 	memcpy((char *)0x7C00, main_head, 8*40);
 
@@ -154,6 +162,12 @@ int main(void) {
 	win_init(&w_status, 0, 0, 24, 40, 1, NULL);
 	win_open(&w_status, 1);
 	
+	p = buf;
+	p = hex_str(p, 2, testval);
+	*p = 0;
+	surface_from_window(&surf_test, &w_status);
+	surface_render_str(&surf_test, 5, 0, buf);
+
 	lb_init(&w_main, &l_list, &l_list_render, 5, 2);
 	wait();
 	wait();
@@ -178,6 +192,12 @@ int main(void) {
 		win_refresh(&w_main);
 	}
 
+	for (i = 9; i >= 0; i--) {
+		w_main.scroll_Y = i;	
+		win_refresh(&w_main);
+	}
+
+
 	do { 
 		if (keyboard_scan(1))
 			*((char *)0x7C00) ='1';
@@ -188,6 +208,9 @@ int main(void) {
 			*((char *)0x7C01) ='1';
 		else
 			*((char *)0x7C01) ='0';
+
+		win_refresh(&w_main);
+
 	} while (1);
 
 	return 0;

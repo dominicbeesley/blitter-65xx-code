@@ -9,4 +9,6 @@ extern unsigned char intoff();
 
 extern void intrestore(unsigned char P);
 
+extern void hw_init(void);
+
 #endif

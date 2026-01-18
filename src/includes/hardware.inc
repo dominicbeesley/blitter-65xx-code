@@ -372,7 +372,11 @@ VIA_ACR_SHIFTMODE_7			:= $1C
 
 VIA_ACR_T1_MASK				:= $C0
 VIA_ACR_T1_CONT				:= $40
+VIA_ACR_T1_CONT_PB7			:= $C0
+VIA_ACR_T1_ONE				:= $00
+VIA_ACR_T1_ONE_PB7			:= $80
 
+VIA_ACR_T2_PB6				:= $20
 
 ;***********************************************************************
 ;* BBC B/B+ WD177x                                                     *
@@ -398,5 +402,11 @@ W1770_DRVSEL_BIT_nMR			:= $20
 
 JIM_DEVNO_HOG1MPAULA			:= $D0
 JIM_DEVNO_BLITTER			:= $D1
+
+debug_UART_status			:= $FC10
+debug_UART_data				:= $FC11
+
+DBUG_UART_STAT_TXF			:= $40
+DBUG_UART_STAT_RXF			:= $80
 
 	.ENDIF

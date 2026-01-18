@@ -272,6 +272,13 @@
 #define	VIA_ACR_T1_MASK			0xC0
 #define	VIA_ACR_T1_CONT			0x40
 
+#define VIA_ACR_T1_MASK			0xC0
+#define VIA_ACR_T1_CONT			0x40
+#define VIA_ACR_T1_CONT_PB7		0xC0
+#define VIA_ACR_T1_ONE			0x00
+#define VIA_ACR_T1_ONE_PB7		0x80
+
+#define	VIA_ACR_T2_PB6			0x20
 
 /***********************************************************************
  * BBC B/B+ WD177x                                                     *
@@ -288,3 +295,13 @@
 #define	W1770_DRVSEL_BIT_SIDE1		0x04
 #define	W1770_DRVSEL_BIT_nDDEN		0x08
 #define	W1770_DRVSEL_BIT_nMR		0x20
+
+/***********************************************************************
+ * C20K debug UART                                                     *
+ ***********************************************************************/
+
+#define debug_UART_status		0xFC10
+#define debug_UART_data			0xFC11
+
+#define DBUG_UART_STAT_TXF		0x40
+#define DBUG_UART_STAT_RXF		0x80
