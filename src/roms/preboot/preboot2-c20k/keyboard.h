@@ -4,4 +4,6 @@
 extern unsigned char keyboard_pressed(unsigned char); //check if key code is depressed
 extern unsigned char keyboard_scan(unsigned char); //check for first key after
 
+extern unsigned char keycode_ascii(unsigned char code);
+
 #endif

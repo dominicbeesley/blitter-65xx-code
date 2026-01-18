@@ -33,6 +33,12 @@ screen_bool render_status(win_def *w) {
 	return 1;
 }
 
+#pragma bss-name (push,"ZEROPAGE")
+extern unsigned int zp_spi_len;
+extern void * zp_spi_memptr;
+extern unsigned long zp_spi_addr;
+#pragma bss-name (pop)
+
 void spi_read_buf(void *p, unsigned long spi_addr, unsigned count) {
 
 	__asm__(" jsr spi_reset");
@@ -137,6 +143,7 @@ surface surf_test;
 
 int main(void) {
 
+	unsigned char kc, ka;
 	char *p;
 	int i;
 
@@ -198,7 +205,9 @@ int main(void) {
 
 
 	do { 
-		sprintf((char *)0x7C00, "%2X", (long)keyboard_scan(0x10));
+		kc = keyboard_scan(0x10);
+		ka = keycode_ascii(kc);
+		sprintf((char *)0x7C00, "%2X %2X %c", (long)kc, (long)kc, (int)ka);
 
 		win_refresh(&w_main);
 

@@ -59,3 +59,9 @@ unsigned char keyboard_scan_int(unsigned char mincode, unsigned char ignorecode)
 unsigned char keyboard_scan(unsigned char mincode) {
 	return keyboard_scan_int(mincode, 0xFF);
 }
+
+extern char KEYBOARD_TRANS_TABLE[];
+
+unsigned char keycode_ascii(unsigned char code) {
+	return KEYBOARD_TRANS_TABLE[(code - 0x10) & 0x7F];
+}
