@@ -1,35 +1,20 @@
 
-SPI_INC = 1
-
-
 		.include "c20k-hardware.inc"
 		.include "hardware.inc"
-		.include "spi.inc"
+		.include "zeropage.inc"
 
-		.export 		spi_reset
-		.export 		spi_write_last
-		.export 		spi_write_cont
-		.export 		spi_wait_rd
-		.export		spi_read_buf
-
-		.exportzp	zp_spi_addr
-		.exportzp	zp_spi_len
-		.exportzp	zp_spi_memptr
+		.export 		_spi_reset
+		.export		_spi_read_buf
 
 
 XFL_FAST_READ	:= $0B
 
 
-		.segment "ZPEXT": zeropage
-zp_spi_addr:	.res	3
-zp_spi_len:	.res	2
-zp_spi_memptr:	.res	2
-		.code
 ;=============================================
 ; S P I
 ;=============================================
 
-	.proc	spi_reset
+	.proc	_spi_reset
 		lda	#$10
 		sta	fred_SPI_DIV		; fast spi
 		lda	#$1C			; select nCS[7]
@@ -58,20 +43,31 @@ zp_spi_memptr:	.res	2
 		rts
 	.endproc
 
+	;; extern void spi_read_buf(void *buf, unsigned long spi_address, unsigned count);
+	.proc	_spi_read_buf
+		
+		sta	tmp1		; len in tmp1
+		stx	tmp2		; len h in tmp2
+		ora	tmp2		; check for zero len
+		beq	@ret
+		
+		ldy	#5
+		lda	(sp),Y
+		sta	ptr1+1
+		dey
+		lda	(sp),Y
+		sta	ptr1
 
-	.proc	spi_read_buf
-		
-		lda	zp_spi_len
-		ora	zp_spi_len+1
-		beq	@retcc
-		
 		lda	#XFL_FAST_READ
 		jsr	spi_write_cont
-		lda	zp_spi_addr+2
+		ldy	#2
+		lda	(sp),Y
 		jsr	spi_write_cont
-		lda	zp_spi_addr+1
+		dey
+		lda	(sp),Y
 		jsr	spi_write_cont
-		lda	zp_spi_addr+0
+		dey
+		lda	(sp),Y
 		jsr	spi_write_cont
 		
 		jsr	spi_write_cont		; dummy value
@@ -80,24 +76,24 @@ zp_spi_memptr:	.res	2
 		jsr	@declen
 		beq	@last
 @lp:		jsr	spi_write_cont
-		sta	(zp_spi_memptr),Y
+		sta	(ptr1),Y
 		iny
 		bne	@sk0
-		inc	zp_spi_memptr+1
+		inc	ptr1+1
 @sk0:		jsr	@declen
 		bne	@lp
 @last:		jsr	spi_write_last
-		sta	(zp_spi_memptr),Y
+		sta	(ptr1),Y
 		iny
 
-@retcc:		clc
+@ret:		jsr	incsp6
 		rts
 
-@declen:		lda	zp_spi_len
+@declen:		lda	tmp1
 		bne	@skz
-		dec	zp_spi_len+1
-@skz:		dec	zp_spi_len
-		lda	zp_spi_len
-		ora	zp_spi_len+1
+		dec	tmp2
+@skz:		dec	tmp1
+		lda	tmp1
+		ora	tmp2
 		rts
 	.endproc
