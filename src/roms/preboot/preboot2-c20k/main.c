@@ -9,6 +9,7 @@
 #include "hw.h"
 #include "debug.h"
 #include "util.h"
+#include "spi.h"
 
 extern char main_head[];
 
@@ -38,35 +39,6 @@ extern unsigned int zp_spi_len;
 extern void * zp_spi_memptr;
 extern unsigned long zp_spi_addr;
 #pragma bss-name (pop)
-
-void spi_read_buf(void *p, unsigned long spi_addr, unsigned count) {
-
-	__asm__(" jsr spi_reset");
-	__asm__(" ldy #%o", count);
-	__asm__(" lda (sp), Y");
-	__asm__(" sta zp_spi_len");
-	__asm__(" iny");
-	__asm__(" lda (sp), Y");
-	__asm__(" sta zp_spi_len+1");
-	__asm__(" iny");
-	__asm__(" lda (sp), Y");
-	__asm__(" sta zp_spi_addr");
-	__asm__(" iny");
-	__asm__(" lda (sp), Y");
-	__asm__(" sta zp_spi_addr+1");
-	__asm__(" iny");
-	__asm__(" lda (sp), Y");
-	__asm__(" sta zp_spi_addr+2");
-	__asm__(" iny");
-	__asm__(" iny");				// 32 bit pointer!
-	__asm__(" lda (sp), Y");
-	__asm__(" sta zp_spi_memptr");
-	__asm__(" iny");
-	__asm__(" lda (sp), Y");
-	__asm__(" sta zp_spi_memptr+1");
-	__asm__(" jsr spi_read_buf");
-
-}
 
 typedef struct romset_struct_romset romset;
 
