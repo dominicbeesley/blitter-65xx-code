@@ -27,7 +27,7 @@
 		.include		"spi.inc"
 
 
-	.zeropage
+	.segment "ZPEXT": zeropage
 
 zp_scrptr:	.res	2
 zp_ctr:	.res	1
