@@ -24,7 +24,7 @@ lb_def l_list;
 char buf[100];
 
 
-bool render_status(win_def *w) {
+bool render_status(win_def *w, void *arg) {
 	surface s;
 
 	surface_from_window(&s, w);
@@ -131,16 +131,16 @@ int main(void) {
 	screen_cursor_at(13,21);
 	screen_cursor(1);
 
-	win_init(&w_main, WINDOW_OPT_NOCLEAR, 0, 8, 40, 16, NULL);
-	//win_register_event(&w_main, EVENT_RENDER, &render_main);
-	win_open(&w_main, 1);
-
 	win_init(&w_head, 0, 3, 4, 35, 3, NULL);
 	win_open(&w_head, 0);
 
 	win_init(&w_status, 0, 0, 24, 40, 1, NULL);
 	win_register_event(&w_status, EVENT_RENDER, &render_status);
 	win_open(&w_status, 1);
+
+	win_init(&w_main, WINDOW_OPT_NOCLEAR, 0, 8, 40, 16, NULL);
+	//win_register_event(&w_main, EVENT_RENDER, &render_main);
+	win_open(&w_main, 1);
 	
 	p = buf;
 	p = hex_str(p, 2, testval);
@@ -187,19 +187,10 @@ int main(void) {
 	do { 
 
 		if (buffer_get(BUFFER_KEYBOARD, &c) >= 0) {
-			switch (c) {
-				case KEYCODE_DOWN:
-					l_list.selected_index ++;
-					break;
-				case KEYCODE_UP:
-					l_list.selected_index --;
-					break;
-			}
+			win_event_dispatch(EVENT_KEYPRESS, &c);
 		}
 
-
-		win_refresh(&w_main);
-
+		//win_refresh(&w_main);
 		win_refresh(&w_status);
 
 	} while (1);

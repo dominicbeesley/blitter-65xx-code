@@ -49,7 +49,7 @@ void win_redraw_from(win_def *w) {
 		if (!(w->options & WINDOW_OPT_NOCLEAR))
 			surface_clear(&s, 0);
 		if (w->event_handlers[EVENT_RENDER])
-			(*w->event_handlers[EVENT_RENDER])(w);
+			(*w->event_handlers[EVENT_RENDER])(w, NULL);
 
 		w = w->next;
 	}
@@ -99,5 +99,27 @@ void win_open(win_def *w, bool top) {
 }
 
 
+win_def *win_get_focused(void) {
+	//currently just returns top
+	win_def *ret = win_list;
+	while (ret && ret->next) {
+		ret = ret->next;
+	}
+	return ret;
+}
 
+void win_event_dispatch(unsigned char event_index, void *arg) {
 
+	win_def *focused = win_get_focused();
+	if (focused) {
+		//NOT sure about this - maybe should dispatch all events, just user events for now
+		switch (event_index) {
+			case EVENT_KEYPRESS:
+				if (focused->event_handlers[event_index])
+					(*focused->event_handlers[event_index])(focused, arg);
+				break;
+		}
+
+		//TODO: should bubble events?		
+	}
+}
