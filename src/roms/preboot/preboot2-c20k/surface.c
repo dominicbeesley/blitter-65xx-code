@@ -14,8 +14,8 @@ void surface_from_window(surface *surface, win_def *w) {
 
 }
 
-void surface_render_str(surface *s, screen_coord X, screen_coord Y, const char *str) {
-	screen_coord SX, SY;
+void surface_render_str(surface *s, coord X, coord Y, const char *str) {
+	coord SX, SY;
 	const char *p = str;
 
 	X = X - s->scroll_X;
@@ -38,7 +38,7 @@ void surface_render_str(surface *s, screen_coord X, screen_coord Y, const char *
 
 void surface_clear(surface *s, char c) {
 
-	screen_coord SX, SY, SW, SH;
+	coord SX, SY, SW, SH;
 	
 	SX = s->left;
 	SY = s->top;
@@ -50,8 +50,8 @@ void surface_clear(surface *s, char c) {
 }
 
 
-void surface_clear_rect(surface *s, screen_coord X, screen_coord Y, 
-	screen_coord W, screen_coord H, char c) {
+void surface_clear_rect(surface *s, coord X, coord Y, 
+	coord W, coord H, char c) {
 
 	surface sw;
 
@@ -59,12 +59,12 @@ void surface_clear_rect(surface *s, screen_coord X, screen_coord Y,
 	surface_clear(&sw, c);	
 }
 
-screen_bool surface_from_rect(surface *parent, surface *new, screen_coord X, screen_coord Y, screen_coord W, screen_coord H) {
+bool surface_from_rect(surface *parent, surface *new, coord X, coord Y, coord W, coord H) {
 
 	char *p;
-	screen_coord diff;
-	screen_coord SX, SY;
-	screen_coord SCX, SCY;
+	coord diff;
+	coord SX, SY;
+	coord SCX, SCY;
 
 	SCX = 0;
 	SCY = 0;

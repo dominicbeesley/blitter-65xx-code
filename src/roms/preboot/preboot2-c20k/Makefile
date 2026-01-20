@@ -7,7 +7,7 @@ INCS=$(wildcard $(TOP)/includes/*.inc) $(wildcard *.inc) $(wildcard ../includes 
 HS=$(wildcard $(TOP)/includes/*.h) $(wildcard *.h) $(wildcard ../includes *.h)
 DEPS=$(INCS) $(HS)
 A_OBJS=preboot2-c20k main_head spi crt0 screen_int surface_int keyboard_int hw_int
-C_OBJS=main screen window surface listbox hex hw keyboard util debug doprnt
+C_OBJS=main screen window surface listbox hex hw keyboard util debug doprnt buffer
 LIBS=none.lib
 
 TARGETS=preboot2-c20k.vec

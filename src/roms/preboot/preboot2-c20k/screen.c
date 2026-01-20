@@ -35,7 +35,7 @@ void screen_init(void) {
 }
 
 /*
-char *screen_addr(screen_coord x, screen_coord y) {
+char *screen_addr(coord x, coord y) {
 	if (x > 0 && x < SCREEN_WIDTH && y > 0 && y < SCREEN_HEIGHT)
 		return (char *)0x7C00+x+40*y;
 	else
@@ -43,13 +43,13 @@ char *screen_addr(screen_coord x, screen_coord y) {
 }
 */
 
-void screen_print_at(screen_coord x, screen_coord y, char c) {
+void screen_print_at(coord x, coord y, char c) {
 	char *p = screen_addr(x, y);
 	if (p != SCREEN_ADDR_BAD)
  		*p = c;
 }
 
-void screen_cursor_at(screen_coord x, screen_coord y) {
+void screen_cursor_at(coord x, coord y) {
 	char *p = screen_addr(x, y);
 
 	if (p != SCREEN_ADDR_BAD)
@@ -62,7 +62,7 @@ void screen_cursor_at(screen_coord x, screen_coord y) {
 	}
 }
 
-void screen_cursor(screen_bool b) {
+void screen_cursor(bool b) {
 	R_P(sheila_CRTC_IX) = 10;
 	if (b) {
 		R_P(sheila_CRTC_DAT) = 0x72;
@@ -72,7 +72,7 @@ void screen_cursor(screen_bool b) {
 }
 
 
-void screen_clear(screen_coord X, screen_coord Y, screen_coord W, screen_coord H, char c) {
+void screen_clear(coord X, coord Y, coord W, coord H, char c) {
 
 	char *scr;
 

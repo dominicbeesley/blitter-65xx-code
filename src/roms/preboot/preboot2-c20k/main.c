@@ -1,5 +1,5 @@
 #include <string.h>
-
+#include "types.h"
 #include "screen.h"
 #include "window.h"
 #include "surface.h"
@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "util.h"
 #include "spi.h"
+#include "buffer.h"
 
 extern char main_head[];
 
@@ -23,7 +24,7 @@ lb_def l_list;
 char buf[100];
 
 
-screen_bool render_status(win_def *w) {
+bool render_status(win_def *w) {
 	surface s;
 
 	surface_from_window(&s, w);
@@ -115,14 +116,15 @@ surface surf_test;
 
 int main(void) {
 
-	unsigned char kc, ka;
 	char *p;
 	int i;
+	char c;
 
 	debug_printf("HELLO\n");
 
 	screen_init();
 	hw_init();
+	keyb_init();
 
 	memcpy((char *)0x7C00, main_head, 8*40);
 
@@ -175,11 +177,26 @@ int main(void) {
 		win_refresh(&w_main);
 	}
 
+	buffer_add(BUFFER_KEYBOARD, KEYCODE_DOWN);
+	buffer_add(BUFFER_KEYBOARD, KEYCODE_DOWN);
+	buffer_add(BUFFER_KEYBOARD, KEYCODE_DOWN);
+	buffer_add(BUFFER_KEYBOARD, KEYCODE_UP);
+	buffer_add(BUFFER_KEYBOARD, KEYCODE_UP);
+	buffer_add(BUFFER_KEYBOARD, KEYCODE_UP);
 
 	do { 
-		kc = keyboard_scan(0x10);
-		ka = keycode_ascii(kc);
-		sprintf((char *)0x7C00, "%2X %2X %c", (long)kc, (long)kc, (int)ka);
+
+		if (buffer_get(BUFFER_KEYBOARD, &c) >= 0) {
+			switch (c) {
+				case KEYCODE_DOWN:
+					l_list.selected_index ++;
+					break;
+				case KEYCODE_UP:
+					l_list.selected_index --;
+					break;
+			}
+		}
+
 
 		win_refresh(&w_main);
 

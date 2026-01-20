@@ -7,10 +7,10 @@ win_def *win_list=NULL;
 void win_init(
 	win_def *w, 
 	unsigned char options,
-	screen_coord left, 
-	screen_coord top,
-	screen_coord width,
-	screen_coord height,
+	coord left, 
+	coord top,
+	coord width,
+	coord height,
 	void *userdata) {
 
 	w->left = left;
@@ -64,7 +64,7 @@ void win_refresh(win_def *w) {
 	win_redraw_from(w);
 }
 
-void win_open(win_def *w, screen_bool top) {
+void win_open(win_def *w, bool top) {
 	win_def **ww = &win_list;
 	
 	if (!win_list)

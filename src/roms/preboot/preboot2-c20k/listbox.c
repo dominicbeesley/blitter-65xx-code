@@ -3,10 +3,10 @@
 #include "listbox.h"
 #include "hex.h"
 
-screen_bool lb_render_win(win_def *w) {	
+bool lb_render_win(win_def *w) {	
 	surface sw;
 	surface sw_i;
-	screen_coord X,Y,W,H; //TODO: LB width?
+	coord X,Y,W,H; //TODO: LB width?
 	lb_def *lb;
 	int ix;
 

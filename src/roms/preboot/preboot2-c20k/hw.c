@@ -1,4 +1,5 @@
 #include <6502.h>
+#include "types.h"
 #include "hardware.h"
 #include "hw.h"
 
@@ -22,6 +23,9 @@ unsigned long get_time(void) {
 	return ret;
 }
 
+extern void keyb_irq_t1(void);
+extern void keyb_irq_ca2(void);
+extern bool keyb_key_down;
 unsigned char hw_interrupt(void) {
 
 	unsigned char b;
@@ -31,7 +35,15 @@ unsigned char hw_interrupt(void) {
 	{
 		b = b & ~ VIA_IFR_BIT_ANY;
 
-		time++;
+		if (b & VIA_IFR_BIT_T1)
+		{
+			time++;
+			if (!(peek(sheila_SYSVIA_ier) & VIA_IFR_BIT_CA2))
+				keyb_irq_t1();
+		}
+
+		if (b & VIA_IFR_BIT_CA2)
+			keyb_irq_ca2();
 
 		poke (sheila_SYSVIA_ifr, b);
 	}
