@@ -1,6 +1,7 @@
 #include "hardware.h"
 #include "screen.h"
 #include <string.h>
+#include "debug.h"
 
 const char mo7_crtc[] = {
 			0x3f,				// 0 Horizontal Total	 =64
@@ -30,31 +31,23 @@ void screen_init(void) {
 		R_P(sheila_CRTC_DAT) = mo7_crtc[i];
 	}
 
-	memset((char *)0x7C00, '+', 0x400);
+	memset((char *)0x7C00, '~', 0x400);
 
 }
 
-/*
-char *screen_addr(coord x, coord y) {
-	if (x > 0 && x < SCREEN_WIDTH && y > 0 && y < SCREEN_HEIGHT)
-		return (char *)0x7C00+x+40*y;
-	else
-		return SCREEN_ADDR_BAD;
-}
-*/
+void screen_print_at(const point *sp, char c) {
+	char *p = screen_addr(sp);
 
-void screen_print_at(coord x, coord y, char c) {
-	char *p = screen_addr(x, y);
 	if (p != SCREEN_ADDR_BAD)
  		*p = c;
 }
 
-void screen_cursor_at(coord x, coord y) {
-	char *p = screen_addr(x, y);
+void screen_cursor_at(const point *sp) {
+	char *p = screen_addr(sp);
 
 	if (p != SCREEN_ADDR_BAD)
 	{
-		int p = x+40*y;
+		int p = sp->X+40*sp->Y;
 		R_P(sheila_CRTC_IX) = 14;
 		R_P(sheila_CRTC_DAT) = ((unsigned int )p) >> 8;
 		R_P(sheila_CRTC_IX) = 15;
@@ -72,36 +65,39 @@ void screen_cursor(bool b) {
 }
 
 
-void screen_clear(coord X, coord Y, coord W, coord H, char c) {
+void screen_clear(const rectangle *sr, char c) {
 
 	char *scr;
+	rectangle r;
 
-	if (X < 0) {
-		W += X;
-		X = 0;
+	r = *sr;
+	
+	if (r.topleft.X < 0) {
+		r.size.W += r.topleft.X;
+		r.topleft.X = 0;
 	}
-	if (X >= SCREEN_WIDTH) 
+	if (r.topleft.X >= SCREEN_WIDTH) 
 		return;
-	if (X + W > SCREEN_WIDTH) 
-		W = SCREEN_WIDTH - X;
-	if (W <= 0)
+	if (r.topleft.X + r.size.W > SCREEN_WIDTH) 
+		r.size.W = SCREEN_WIDTH - r.topleft.X;
+	if (r.size.W <= 0)
 		return;
 
-	if (Y < 0) {
-		H += Y;
-		Y = 0;
+	if (r.topleft.Y < 0) {
+		r.size.H += r.topleft.Y;
+		r.topleft.Y = 0;
 	}
-	if (Y >= SCREEN_HEIGHT) 
+	if (r.topleft.Y >= SCREEN_HEIGHT) 
 		return;
-	if (Y + H > SCREEN_HEIGHT) 
-		H = SCREEN_HEIGHT - Y;
-	if (H <= 0)
+	if (r.topleft.Y + r.size.H > SCREEN_HEIGHT) 
+		r.size.H = SCREEN_HEIGHT - r.topleft.Y;
+	if (r.size.H <= 0)
 		return;
 
-	scr = screen_addr(X, Y);
-	while (H) {
-		memset(scr, c, W);
+	scr = screen_addr(&r.topleft);
+	while (r.size.H) {
+		memset(scr, c, r.size.W);
 		scr += SCREEN_WIDTH;
-		H--;
+		r.size.H--;
 	}
 }

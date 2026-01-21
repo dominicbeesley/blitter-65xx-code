@@ -7,7 +7,7 @@
 bool lb_render_win(win_def *w, void *arg) {	
 	surface sw;
 	surface sw_i;
-	coord X,Y,W,H; //TODO: LB width?
+	rectangle drawrect; //TODO: LB width?
 	lb_def *lb;
 	int ix;
 
@@ -17,33 +17,33 @@ bool lb_render_win(win_def *w, void *arg) {
 		return 0;
 
 	surface_from_window(&sw, w);
-	if (sw.scroll_Y > 0)
-		ix = sw.scroll_Y /  lb->item_height;
+	if (sw.scroll.Y > 0)
+		ix = sw.scroll.Y /  lb->item_height;
 	else
 		ix = 0;
 
-	X = sw.scroll_X;
-	W = sw.width;
-	H = lb->item_height;
-	Y = ix * lb->item_height;
+	drawrect.topleft.X = sw.scroll.X;
+	drawrect.topleft.Y = ix * lb->item_height;
+	drawrect.size.W = sw.screenrect.size.W;
+	drawrect.size.H = lb->item_height;
 
-	while (Y < sw.scroll_Y + sw.height && 
+	while (drawrect.topleft.Y < sw.scroll.Y + sw.screenrect.size.H && 
 		ix < lb->item_count) {
 
-		if (surface_from_rect(&sw, &sw_i, X, Y, W, H))
+		if (surface_from_rect(&sw, &sw_i, &drawrect))
 		{
 			surface_clear(&sw_i, 0);
 			(*lb->event_handler_render)(w, lb, &sw_i, ix);
 		}
 		
 		ix++;
-		Y += H;
+		drawrect.topleft.Y += drawrect.size.H;
 	}
 
 	// clear rest of surface
-	H = sw.height - (Y - sw.scroll_Y);
-	if (H > 0)
-		surface_clear_rect(&sw, X, Y, W, H, '.');
+	drawrect.size.H = sw.screenrect.size.H - (drawrect.topleft.Y - sw.scroll.Y);
+	if (drawrect.size.H > 0)
+		surface_clear_rect(&sw, &drawrect, '.');
 
 	return 1;
 }
@@ -51,7 +51,7 @@ bool lb_render_win(win_def *w, void *arg) {
 void render_item(lb_def *lb, int ix) {
 	surface sw;
 	surface sw_i;
-	coord X,Y,W,H; //TODO: LB width?
+	rectangle drawrect; //TODO: LB width?
 	if (ix < 0 || ix >= lb->item_count)
 		return;
 
@@ -60,15 +60,15 @@ void render_item(lb_def *lb, int ix) {
 
 	surface_from_window(&sw, lb->window);
 
-	X = sw.scroll_X;
-	W = sw.width;
-	Y = ix * lb->item_height;
-	H = lb->item_height;
+	drawrect.topleft.X = sw.scroll.X;
+	drawrect.topleft.Y = lb->item_height;
+	drawrect.size.W = sw.screenrect.size.W;
+	drawrect.size.H = ix * lb->item_height;
 
-	if (Y < sw.scroll_Y + sw.height && 
-		Y + lb->item_height > sw.scroll_Y) {
+	if (drawrect.topleft.Y < sw.scroll.Y + sw.screenrect.size.H && 
+		drawrect.topleft.Y + lb->item_height > sw.scroll.Y) {
 
-		if (surface_from_rect(&sw, &sw_i, X, Y, W, H))
+		if (surface_from_rect(&sw, &sw_i, &drawrect))
 		{
 			surface_clear(&sw_i, 0);
 			(*lb->event_handler_render)(lb->window, lb, &sw_i, ix);

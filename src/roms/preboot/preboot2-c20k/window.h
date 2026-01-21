@@ -4,6 +4,7 @@
 #include "types.h"
 #include "screen.h"
 #include <stddef.h>
+#include "coords.h"
 
 #define WINDOW_OPT_NOCLEAR 	0x01
 
@@ -18,13 +19,8 @@ typedef bool (*win_event_handler)(win_def *win, void *arg);
 struct win_struct_def {
 
 	//position
-	coord left;
-	coord top;
-	coord width;
-	coord height;
-
-	coord scroll_X;
-	coord scroll_Y;
+	rectangle screenrect;
+	point scroll;
 
 	void *userdata;
 
@@ -39,7 +35,7 @@ struct win_struct_def {
 
 extern win_def *win_list;
 
-extern void win_init(win_def *w, unsigned char options, coord left, coord top, coord width, coord height, void *userdata);
+extern void win_init(win_def *w, unsigned char options, const rectangle *screenrect, void *userdata);
 extern void win_open(win_def *w, bool top);
 extern void win_redrwaw_all(void);
 extern void win_refresh(win_def *w);

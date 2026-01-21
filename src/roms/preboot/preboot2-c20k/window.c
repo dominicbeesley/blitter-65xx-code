@@ -1,26 +1,20 @@
 #include "window.h"
 #include "surface.h"
 #include <string.h>
+#include "debug.h"
 
 win_def *win_list=NULL;
 
 void win_init(
 	win_def *w, 
 	unsigned char options,
-	coord left, 
-	coord top,
-	coord width,
-	coord height,
+	const rectangle *screenrect,
 	void *userdata) {
 
-	w->left = left;
-	w->top = top;
-	w->width = width;
-	w->height = height;
-
-	w->scroll_X = 0;
-	w->scroll_Y = 0;
-
+	w->screenrect = *screenrect;
+	w->scroll.X = 0;
+	w->scroll.Y = 0;
+	
 	w->userdata = userdata;
 
 	w->open = 0;

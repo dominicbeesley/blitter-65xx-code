@@ -2,126 +2,126 @@
 #include "surface.h"
 #include "window.h"
 #include "hex.h"
+#include "debug.h"
 
 void surface_from_window(surface *surface, win_def *w) {
-	surface->left = w->left;
-	surface->top = w->top;
-	surface->width = w->width;
-	surface->height = w->height;
-
-	surface->scroll_X = w->scroll_X;
-	surface->scroll_Y = w->scroll_Y;
-
+	surface->screenrect = w->screenrect;
+	surface->scroll = w->scroll;
 }
 
-void surface_render_str(surface *s, coord X, coord Y, const char *str) {
-	coord SX, SY;
-	const char *p = str;
+void surface_render_str(surface *s, const point *clientpoint, const char *str) {
+	point sp; 			//screen point
+	point p;			//point relative to surface viewport
+	const char *pc = str;
 
-	X = X - s->scroll_X;
-	Y = Y - s->scroll_Y;
+	p = *clientpoint;
 
-	if (Y < 0 || Y >= s->height)
+	// make client coord relative to top-left
+	p.X = p.X - s->scroll.X;
+	p.Y = p.Y - s->scroll.Y;
+
+	if (p.Y < 0 || p.Y >= s->screenrect.size.H)
+	{
 		return;
+	}
 
-	SX = s->left + X;
-	SY = s->top + Y;
-	while (*p) {
-		if (X >= 0 && X < s->width)
-			screen_print_at(SX, SY, *p);
-		p++;
-		SX++;
-		X++;
+
+	// screen coord
+	sp.X = s->screenrect.topleft.X + p.X;
+	sp.Y = s->screenrect.topleft.Y + p.Y;
+
+
+	while (*pc) {
+		if (p.X >= 0 && p.X < s->screenrect.size.W)
+			screen_print_at(&sp, *pc);
+		pc++;
+		p.X++;
+		sp.X++;
 	}
 }
 
 
 void surface_clear(surface *s, char c) {
 
-	coord SX, SY, SW, SH;
-	
-	SX = s->left;
-	SY = s->top;
-	SW = s->width;
-	SH = s->height;
-
-	screen_clear(SX, SY, SW, SH, c);
+	screen_clear(&s->screenrect, c);
 
 }
 
 
-void surface_clear_rect(surface *s, coord X, coord Y, 
-	coord W, coord H, char c) {
+void surface_clear_rect(surface *s, const rectangle *r, char c) {
 
 	surface sw;
 
-	surface_from_rect(s, &sw, X, Y, W, H);
+	surface_from_rect(s, &sw, r);
 	surface_clear(&sw, c);	
 }
 
-bool surface_from_rect(surface *parent, surface *new, coord X, coord Y, coord W, coord H) {
+bool surface_from_rect(surface *parent, surface *new, const rectangle *clientrect) {
 
 	char *p;
 	coord diff;
 	coord SX, SY;
 	coord SCX, SCY;
+	rectangle r;		//modified to fit in viewport bounds
+
+	r = *clientrect;
 
 	SCX = 0;
 	SCY = 0;
-	SX = X + parent->left - parent->scroll_X;
-	SY = Y + parent->top - parent->scroll_Y;
+	SX = r.topleft.X + parent->screenrect.topleft.X - parent->scroll.X;
+	SY = r.topleft.Y + parent->screenrect.topleft.Y - parent->scroll.Y;
 
 	//left bound check
-	diff = parent->left + parent->width - (SX + W);
+	diff = parent->screenrect.topleft.X + parent->screenrect.size.W - (SX + r.size.W);
 	if (diff < 0)
-		W+= diff;
+		r.size.W += diff;
 
-	if (W<0) goto bad;
+	if (r.size.W < 0) goto bad;
 
 	//bottom bound check
-	diff = (parent->top + parent->height) - (SY + H);
+	diff = (parent->screenrect.topleft.X + parent->screenrect.size.H) - (SY + r.size.H);
 	if (diff < 0)
-		H+= diff;
+		r.size.H += diff;
 
-	if (H<0) goto bad;
+	if (r.size.H < 0) goto bad;
 
 	//right bound check
-	diff = SX - parent->left;
+	diff = SX - parent->screenrect.topleft.X;
 	if (diff < 0) {
-		W += diff;
+		r.size.W += diff;
 		SX -= diff;
 		SCX = -diff;
 	}
 
-	if (W<0) goto bad;
+	if (r.size.W < 0) goto bad;
 
 	//top bound check
-	diff = SY - parent->top;
+	diff = SY - parent->screenrect.topleft.X;
 	if (diff < 0) {
-		H += diff;
+		r.size.H += diff;
 		SY -= diff;
 		SCY = -diff;
 	}
 
-	if (H<0) goto bad;
+	if (r.size.H < 0) goto bad;
 
-	new->left = SX;
-	new->top = SY;
-	new->width = W;
-	new->height = H;
-	new->scroll_X = SCX;
-	new->scroll_Y = SCY;
+	new->screenrect.topleft.X = SX;
+	new->screenrect.topleft.Y = SY;
+	new->screenrect.size.W = r.size.W;
+	new->screenrect.size.H = r.size.H;
+	new->scroll.X = SCX;
+	new->scroll.Y = SCY;
 
 	return 1;
 
 bad:	
 
-	new->left = SX;
-	new->top = SY;
-	new->width = 0;
-	new->height = 0;
-	new->scroll_X = SCX;
-	new->scroll_Y = SCY;
+	new->screenrect.topleft.X = 0;
+	new->screenrect.topleft.Y = 0;
+	new->screenrect.size.W = 0;
+	new->screenrect.size.H = 0;
+	new->scroll.X = 0;
+	new->scroll.Y = 0;
 	return 0;
 
 

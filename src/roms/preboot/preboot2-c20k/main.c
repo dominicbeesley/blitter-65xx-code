@@ -11,6 +11,7 @@
 #include "util.h"
 #include "spi.h"
 #include "buffer.h"
+#include "coords.h"
 
 extern char main_head[];
 
@@ -30,7 +31,7 @@ bool render_status(win_def *w, void *arg) {
 	surface_from_window(&s, w);
 
 	sprintf(buf, "TIME: %d", (long)get_time());
-	surface_render_str(&s, 0, 0, buf);
+	surface_render_str(&s, &point0, buf);
 
 	return 1;
 }
@@ -77,6 +78,7 @@ unsigned long romset_find(int ix) {
 void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 	char *p = buf;
 	unsigned long addr;
+	point point01 = {0, 1};
 
 	if (l->selected_index == ix) {
 		*p++ = 0x86;
@@ -97,9 +99,9 @@ void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 		*p++ = 0;
 	}
 
-	surface_render_str(s, 0, 0, buf);
+	surface_render_str(s, &point0, buf);
 
-	surface_render_str(s, 0, 1, "~-~-~-~-~-~-~-~-~-~-~-");
+	surface_render_str(s, &point01, "~-~-~-~-~-~-~-~-~-~-~-");
 }
 
 void wait() {
@@ -113,6 +115,9 @@ void wait() {
 
 extern unsigned char testval;
 surface surf_test;
+rectangle r_head = {{3, 4}, {25, 3}};
+rectangle r_status = {{0, 24}, {40, 1}};
+rectangle r_main = {{0, 8}, {40, 16}};
 
 int main(void) {
 
@@ -126,63 +131,47 @@ int main(void) {
 	hw_init();
 	keyb_init();
 
+	debug_printf("HELLO2\n");
+
 	memcpy((char *)0x7C00, main_head, 8*40);
 
-	screen_cursor_at(13,21);
+	screen_cursor_at(&point0);
 	screen_cursor(1);
 
-	win_init(&w_head, 0, 3, 4, 35, 3, NULL);
-	win_open(&w_head, 0);
+//TODO: why have to cast here function arguments should be copied so wtf?
+//	win_init(&w_head, 0, &r_head, NULL);
+//	win_open(&w_head, 0);
 
-	win_init(&w_status, 0, 0, 24, 40, 1, NULL);
+	win_init(&w_status, 0, &r_status, NULL);
 	win_register_event(&w_status, EVENT_RENDER, &render_status);
 	win_open(&w_status, 1);
 
-	win_init(&w_main, WINDOW_OPT_NOCLEAR, 0, 8, 40, 16, NULL);
+
+
+//	win_init(&w_main, WINDOW_OPT_NOCLEAR, &r_main, NULL);
 	//win_register_event(&w_main, EVENT_RENDER, &render_main);
-	win_open(&w_main, 1);
+//	win_open(&w_main, 1);
 	
-	p = buf;
-	p = hex_str(p, 2, testval);
-	*p = 0;
-	surface_from_window(&surf_test, &w_status);
-	surface_render_str(&surf_test, 5, 0, buf);
+debug_printf("HERE1\n");
 
-	lb_init(&w_main, &l_list, &l_list_render, 5, 2);
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	wait();
-	l_list.selected_index = 3;
-	win_refresh(&w_main);
-
-	for (i = 0; i < 10; i++) {
-		w_main.scroll_Y = i;	
-		win_refresh(&w_main);
-	}
-
-	for (i = 9; i >= 0; i--) {
-		w_main.scroll_Y = i;	
-		win_refresh(&w_main);
-	}
-
-	buffer_add(BUFFER_KEYBOARD, KEYCODE_DOWN);
-	buffer_add(BUFFER_KEYBOARD, KEYCODE_DOWN);
-	buffer_add(BUFFER_KEYBOARD, KEYCODE_DOWN);
-	buffer_add(BUFFER_KEYBOARD, KEYCODE_UP);
-	buffer_add(BUFFER_KEYBOARD, KEYCODE_UP);
-	buffer_add(BUFFER_KEYBOARD, KEYCODE_UP);
+//	lb_init(&w_main, &l_list, &l_list_render, 5, 2);
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	wait();
+//	l_list.selected_index = 3;
+//	win_refresh(&w_main);
 
 	do { 
 
