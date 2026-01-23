@@ -1,6 +1,9 @@
 // This is an adapted version of a ancient version of https://www.cs.purdue.edu/homes/comer/downloads/private/Xinu/test2/files/common_files/doprnt.c.html
 
 #include <stdarg.h>
+#include <string.h>
+#include "hex.h"
+#include "types.h"
 
 #define	MAXSTR	80
 #define NULL    0
@@ -10,6 +13,7 @@ static void _prtl10(long num, char *str);
 static void _prtX16(long num, char *str);
 //static void _prtl16(long num, char *str);
 //static void _prtl2(long num, char *str);
+static int parsen(char **fmt, va_list ap);
 
 /*------------------------------------------------------------------------
  *  _doprnt  -  Format and write output using 'func' to write characters.
@@ -34,7 +38,7 @@ int _doprnt(
     /*  from number conversion              */
     int length;                 /* Length of string "str"               */
     char fill;                  /* Fill character (' ' or '0')          */
-    int leftjust;               /* 0 = right-justified, else left-just  */
+    bool leftjust;               /* 0 = right-justified, else left-just  */
     int fmax, fmin;             /* Field specifications % MIN . MAX s   */
     int leading;                /* No. of leading/trailing fill chars   */
     char sign;                  /* Set to '-' for negative decimals     */
@@ -63,7 +67,7 @@ int _doprnt(
             continue;
         }
         /* Check for "%-..." == Left-justified output */
-        if ((leftjust = ((*fmt == '-')) ? 1 : 0))
+        if ((leftjust = (*fmt == '-')))
         {
             fmt++;
         }
@@ -71,36 +75,12 @@ int _doprnt(
         fill = (*fmt == '0') ? *fmt++ : ' ';
         /* Allow for minimum field width specifier for %d,u,x,o,c,s */
         /* Also allow %* for variable width (%0* as well)       */
-        fmin = 0;
-        if (*fmt == '*')
-        {
-            fmin = va_arg(ap, int);
-
-            ++fmt;
-        }
-        else
-        {
-            while ('0' <= *fmt && *fmt <= '9')
-            {
-                fmin = fmin * 10 + *fmt++ - '0';
-            }
-        }
+        fmin = parsen(&fmt, ap);
         /* Allow for maximum string width for %s */
         fmax = 0;
         if (*fmt == '.')
         {
-            if (*(++fmt) == '*')
-            {
-                fmax = va_arg(ap, int);
-                ++fmt;
-            }
-            else
-            {
-                while ('0' <= *fmt && *fmt <= '9')
-                {
-                    fmax = fmax * 10 + *fmt++ - '0';
-                }
-            }
+            fmax = parsen(&fmt, ap);
         }
 
         str = string;
@@ -167,6 +147,7 @@ int _doprnt(
 //            fmax = 0;
 //            break;
 //
+        case 'x':
         case 'X':
             larg = va_arg(ap, long);
 
@@ -193,9 +174,7 @@ int _doprnt(
             ret++;
             break;
         }
-        for (length = 0; str[length] != '\0'; length++)
-        {;
-        }
+        length = strlen(str);
         if (fmin > MAXSTR || fmin < 0)
         {
             fmin = 0;
@@ -350,7 +329,7 @@ static void	_prtX16(
     temp[0] = '\0';
     for (i = 1; i <= 8; i++)
     {
-        temp[i] = "0123456789ABCDEF"[num & 0x0F];
+        temp[i] = hex_nyb(num);
         num = num >> 4;
     }
     for (i = 8; temp[i] == '0'; i--);
@@ -384,3 +363,18 @@ static void	_prtX16(
 //    while (i >= 0)
 //        *str++ = temp[i--];
 //}
+
+
+int parsen(char **fmt, va_list ap) {
+    int ret;
+    ret = 0;
+    if (**fmt == '*')
+    {
+        ret = va_arg(ap, int);
+        *fmt++;
+    } else {
+        while ('0' <= **fmt && **fmt <= '9')
+            ret = ret * 10 + *(*fmt++) - '0';
+    }
+    return ret;
+}

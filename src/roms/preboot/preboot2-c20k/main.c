@@ -130,7 +130,7 @@ int main(void) {
 	memcpy((char *)0x7C00, main_head, 8*40);
 
 	screen_cursor_at(&point0);
-	screen_cursor(1);
+	screen_cursor(0);
 
 	win_init(&w_head, 0, &r_head, NULL);
 	win_register_event(&w_head, EVENT_RENDER, &render_head);
