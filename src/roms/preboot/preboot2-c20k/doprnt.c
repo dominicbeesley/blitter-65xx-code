@@ -190,6 +190,7 @@ int _doprnt(
 //
         default:
             (*func) (farg, f);
+            ret++;
             break;
         }
         for (length = 0; str[length] != '\0'; length++)
