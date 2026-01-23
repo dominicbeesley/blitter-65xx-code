@@ -5,37 +5,54 @@
 #include "keyboard.h"
 #include "debug.h"
 
+bool lb_render_item_int(lb_def *lb, surface *sw, int ix, rectangle *drawrect) {
+	surface sw_i;
+
+	if (drawrect->topleft.Y < sw->scroll.Y + sw->screenrect.size.H && 
+		ix < lb->item_count && ix >= 0) {
+
+		if (surface_from_rect(sw, &sw_i, drawrect))
+		{
+			surface_clear(&sw_i, 0);
+			(*lb->event_handler_render)(lb->window, lb, &sw_i, ix);
+		}
+		return 1;
+	} else 
+		return 0;
+}
+
+void lb_render_item_surface(lb_def *lb, surface *sw, int ix, rectangle *drawrect) {
+	surface_from_window(sw, lb->window);
+
+	drawrect->topleft.X = sw->scroll.X;
+	drawrect->topleft.Y = ix * lb->item_height;
+	drawrect->size.W = sw->screenrect.size.W;
+	drawrect->size.H = lb->item_height;
+
+}
+
 bool lb_render_win(win_def *w, void *arg) {	
 	surface sw;
-	surface sw_i;
-	rectangle drawrect; //TODO: LB width?
 	lb_def *lb;
 	int ix;
+	bool ret;
+	rectangle drawrect;
 
+	ret = 0;
 	lb = (lb_def *)w->userdata;
 
 	if ( lb->event_handler_render == NULL)
 		return 0;
 
-	surface_from_window(&sw, w);
-	if (sw.scroll.Y > 0)
-		ix = sw.scroll.Y /  lb->item_height;
+	if (w->scroll.Y > 0)
+		ix = w->scroll.Y /  lb->item_height;
 	else
 		ix = 0;
 
-	drawrect.topleft.X = sw.scroll.X;
-	drawrect.topleft.Y = ix * lb->item_height;
-	drawrect.size.W = sw.screenrect.size.W;
-	drawrect.size.H = lb->item_height;
+	lb_render_item_surface(lb, &sw, ix, &drawrect);
 
-	while (drawrect.topleft.Y < sw.scroll.Y + sw.screenrect.size.H && 
-		ix < lb->item_count) {
-
-		if (surface_from_rect(&sw, &sw_i, &drawrect))
-		{
-			surface_clear(&sw_i, 0);
-			(*lb->event_handler_render)(w, lb, &sw_i, ix);
-		}
+	while (lb_render_item_int(lb, &sw, ix, &drawrect)) {
+		ret = 1;
 		
 		ix++;
 		drawrect.topleft.Y += drawrect.size.H;
@@ -46,35 +63,19 @@ bool lb_render_win(win_def *w, void *arg) {
 	if (drawrect.size.H > 0)
 		surface_clear_rect(&sw, &drawrect, 0);
 
-	return 1;
+	return ret;
 }
 
-void render_item(lb_def *lb, int ix) {
+bool render_item(lb_def *lb, int ix) {
 	surface sw;
-	surface sw_i;
 	rectangle drawrect; //TODO: LB width?
-	if (ix < 0 || ix >= lb->item_count)
-		return;
 
 	if ( lb->event_handler_render == NULL)
-		return;
+		return 0;
 
-	surface_from_window(&sw, lb->window);
+	lb_render_item_surface(lb, &sw, ix, &drawrect);
 
-	drawrect.topleft.X = sw.scroll.X;
-	drawrect.topleft.Y = ix * lb->item_height;
-	drawrect.size.W = sw.screenrect.size.W;
-	drawrect.size.H = lb->item_height;
-
-	if (drawrect.topleft.Y < sw.scroll.Y + sw.screenrect.size.H && 
-		drawrect.topleft.Y + lb->item_height > sw.scroll.Y) {
-
-		if (surface_from_rect(&sw, &sw_i, &drawrect))
-		{
-			surface_clear(&sw_i, 0);
-			(*lb->event_handler_render)(lb->window, lb, &sw_i, ix);
-		}
-	}
+	return lb_render_item_int(lb, &sw, ix, &drawrect);
 }
 
 void set_selected_index(lb_def *lb, int nexix) {

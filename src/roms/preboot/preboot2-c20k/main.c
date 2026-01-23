@@ -33,6 +33,7 @@ const char *str_head_pleaseselect = "\x06" "Cursor selects item, press return.";
 
 const char *head_title;
 const char *head_subtitle;
+const char *status;
 bool render_head(win_def *w, void *arg) {
 	surface s;
 	point p;
@@ -53,7 +54,7 @@ bool render_head(win_def *w, void *arg) {
 		p.Y = 2;
 		surface_render_str(&s, &p, head_subtitle);
 	}
-	
+	return 1;	
 }
 
 void set_head_title(const char *title, const char *subtitle) {
@@ -65,20 +66,18 @@ void set_head_title(const char *title, const char *subtitle) {
 
 bool render_status(win_def *w, void *arg) {
 	surface s;
-
 	surface_from_window(&s, w);
 
-	sprintf(buf, "TIME: %d", (long)get_time());
-	surface_render_str(&s, &point0, buf);
+	if (status) 
+		surface_render_str(&s, &point0, status);
 
 	return 1;
 }
 
-#pragma bss-name (push,"ZEROPAGE")
-extern unsigned int zp_spi_len;
-extern void * zp_spi_memptr;
-extern unsigned long zp_spi_addr;
-#pragma bss-name (pop)
+void set_status(const char *s) {
+	status = s;
+	win_refresh(&w_status);
+}
 
 typedef struct romset_struct_romset romset;
 
@@ -113,10 +112,54 @@ unsigned long romset_find(int ix) {
 	return addr;
 }
 
+int romset_count() {
+	int ret = 0;
+	unsigned long addr = ROMSET_BASE;
+	while (1) {
+		spi_read_buf(&romset_g, addr, sizeof(romset));
+		if (!romset_g.len)
+			return ret;
+		ret++;
+		addr += 
+			(unsigned long)ROMSET_SIZE 
+			+ (unsigned long)((ROMDESCR_SIZE + ROM_SIZE) 
+				* (unsigned long)romset_g.len);
+	}
+}
+
+typedef struct cpu_def {
+	unsigned char code;
+	char *label;
+} cpu_def;
+
+const struct cpu_def cpudefs[] = {
+	{0, "NMOS 6502"},
+	{1, "65C02"},
+	{2, "65816"},
+	{4, "6809"},
+	{5, "6309"},
+	{8, "Z80"},
+	{12, "68000"},
+	{16, "6800"},
+	{20, "RiscV"},
+	{0, NULL}
+};
+
+const cpu_def *cpu_def_from_code(unsigned char c) {
+	const cpu_def *ret = &cpudefs[0];
+	while (ret->label) {
+		if (ret->code == c)
+			return ret;
+		ret++;
+	}
+	return NULL;
+}
+
 void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 	char *p = buf;
 	unsigned long addr;
-	point point01 = {0, 1};
+	const cpu_def *cpu;
+	point pp;
 	if (l->selected_index == ix) {
 		*p++ = 0x86;
 		*p++ = 0x9D;
@@ -137,24 +180,19 @@ void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 	}
 
 	surface_render_str(s, &point0, buf);
-
-	surface_render_str(s, &point01, "~-~-~-~-~-~-~-~-~-~-~-");
-}
-
-void wait() {
-	__asm__("ldx #0");
-	__asm__("ldy #0");
-	__asm__("@lp: dex");
-	__asm__("bne @lp");
-	__asm__("dey");
-	__asm__("bne @lp");
+	
+	cpu = cpu_def_from_code(romset_g.cpu);
+	pp.X = 0;
+	pp.Y = 1;
+	surface_render_str(s, &pp, "\x86");
+	pp.X = 4;
+	sprintf(buf, "ROMS:%d, CPU:%s\n", (long)romset_g.len, cpu?cpu->label:"UNKNOWN");
+	surface_render_str(s, &pp, buf);
 }
 
 
 int main(void) {
 
-	char *p;
-	int i;
 	char c;
 
 	debug_printf("HELLO\n");
@@ -183,7 +221,7 @@ int main(void) {
 	win_open(&w_main, 1);
 	
 
-	lb_init(&w_main, &l_list, &l_list_render, 2, 2);
+	lb_init(&w_main, &l_list, &l_list_render, romset_count(), 2);
 	l_list.selected_index = 0;
 	win_refresh(&w_main);
 
