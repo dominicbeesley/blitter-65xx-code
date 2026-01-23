@@ -9,7 +9,7 @@
 #include "hw.h"
 #include "debug.h"
 #include "util.h"
-#include "spi.h"
+#include "romset.h"
 #include "buffer.h"
 #include "coords.h"
 
@@ -79,86 +79,12 @@ void set_status(const char *s) {
 	win_refresh(&w_status);
 }
 
-typedef struct romset_struct_romset romset;
-
-struct romset_struct_romset {
-	unsigned char len;
-	unsigned char cpu;
-	char title[32];	
-};
-
-#define ROMSET_BASE 0x720000
-#define ROMSET_SIZE 64
-#define ROMDESCR_SIZE 64
-#define ROM_SIZE 16384
-
 romset romset_g;
-
-unsigned long romset_find(int ix) {
-	unsigned long addr;
-	addr = ROMSET_BASE;
-	ix++;
-	while (ix) {
-		spi_read_buf(&romset_g, addr, sizeof(romset));
-		if (!romset_g.len)
-			return 0;
-		ix--;
-		if (ix)
-			addr += 
-				(unsigned long)ROMSET_SIZE 
-				+ (unsigned long)((ROMDESCR_SIZE + ROM_SIZE) 
-					* (unsigned long)romset_g.len);
-	}
-	return addr;
-}
-
-int romset_count() {
-	int ret = 0;
-	unsigned long addr = ROMSET_BASE;
-	while (1) {
-		spi_read_buf(&romset_g, addr, sizeof(romset));
-		if (!romset_g.len)
-			return ret;
-		ret++;
-		addr += 
-			(unsigned long)ROMSET_SIZE 
-			+ (unsigned long)((ROMDESCR_SIZE + ROM_SIZE) 
-				* (unsigned long)romset_g.len);
-	}
-}
-
-typedef struct cpu_def {
-	unsigned char code;
-	char *label;
-} cpu_def;
-
-const struct cpu_def cpudefs[] = {
-	{0, "NMOS 6502"},
-	{1, "65C02"},
-	{2, "65816"},
-	{4, "6809"},
-	{5, "6309"},
-	{8, "Z80"},
-	{12, "68000"},
-	{16, "6800"},
-	{20, "RiscV"},
-	{0, NULL}
-};
-
-const cpu_def *cpu_def_from_code(unsigned char c) {
-	const cpu_def *ret = &cpudefs[0];
-	while (ret->label) {
-		if (ret->code == c)
-			return ret;
-		ret++;
-	}
-	return NULL;
-}
 
 void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 	char *p = buf;
 	unsigned long addr;
-	const cpu_def *cpu;
+	const romset_cpu_def *cpu;
 	point pp;
 	if (l->selected_index == ix) {
 		*p++ = 0x86;
@@ -170,7 +96,7 @@ void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 		*p++ = ' ';
 	}
 
-	addr = romset_find(ix);
+	addr = romset_get_index(ix, &romset_g);
 	if (addr) {
 		strncpy(p, romset_g.title, 32);
 		p[32] = 0;
@@ -181,7 +107,7 @@ void l_list_render(win_def *w, lb_def *l, surface *s, int ix) {
 
 	surface_render_str(s, &point0, buf);
 	
-	cpu = cpu_def_from_code(romset_g.cpu);
+	cpu = romset_cpu_def_from_code(romset_g.cpu);
 	pp.X = 0;
 	pp.Y = 1;
 	surface_render_str(s, &pp, "\x86");
