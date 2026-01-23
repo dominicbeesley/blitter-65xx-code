@@ -79,7 +79,7 @@ bool surface_from_rect(surface *parent, surface *new, const rectangle *clientrec
 	if (r.size.W < 0) goto bad;
 
 	//bottom bound check
-	diff = (parent->screenrect.topleft.X + parent->screenrect.size.H) - (SY + r.size.H);
+	diff = (parent->screenrect.topleft.Y + parent->screenrect.size.H) - (SY + r.size.H);
 	if (diff < 0)
 		r.size.H += diff;
 
@@ -96,7 +96,7 @@ bool surface_from_rect(surface *parent, surface *new, const rectangle *clientrec
 	if (r.size.W < 0) goto bad;
 
 	//top bound check
-	diff = SY - parent->screenrect.topleft.X;
+	diff = SY - parent->screenrect.topleft.Y;
 	if (diff < 0) {
 		r.size.H += diff;
 		SY -= diff;
