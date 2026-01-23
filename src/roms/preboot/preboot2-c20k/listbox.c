@@ -3,6 +3,7 @@
 #include "listbox.h"
 #include "hex.h"
 #include "keyboard.h"
+#include "debug.h"
 
 bool lb_render_win(win_def *w, void *arg) {	
 	surface sw;
@@ -43,7 +44,7 @@ bool lb_render_win(win_def *w, void *arg) {
 	// clear rest of surface
 	drawrect.size.H = sw.screenrect.size.H - (drawrect.topleft.Y - sw.scroll.Y);
 	if (drawrect.size.H > 0)
-		surface_clear_rect(&sw, &drawrect, '.');
+		surface_clear_rect(&sw, &drawrect, 0);
 
 	return 1;
 }
@@ -61,9 +62,9 @@ void render_item(lb_def *lb, int ix) {
 	surface_from_window(&sw, lb->window);
 
 	drawrect.topleft.X = sw.scroll.X;
-	drawrect.topleft.Y = lb->item_height;
+	drawrect.topleft.Y = ix * lb->item_height;
 	drawrect.size.W = sw.screenrect.size.W;
-	drawrect.size.H = ix * lb->item_height;
+	drawrect.size.H = lb->item_height;
 
 	if (drawrect.topleft.Y < sw.scroll.Y + sw.screenrect.size.H && 
 		drawrect.topleft.Y + lb->item_height > sw.scroll.Y) {
@@ -85,9 +86,11 @@ void set_selected_index(lb_def *lb, int nexix) {
 		nexix = -1;
 
 	oldix = lb->selected_index;
-	render_item(lb, oldix);
-	lb->selected_index = nexix;
-	render_item(lb, nexix);
+	if (nexix != oldix) {
+		lb->selected_index = nexix;
+		render_item(lb, oldix);
+		render_item(lb, nexix);
+	}
 
 }
 
