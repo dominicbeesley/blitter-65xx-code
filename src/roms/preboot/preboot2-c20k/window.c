@@ -38,12 +38,17 @@ win_event_handler win_register_event(win_def *w, int event_index, win_event_hand
 
 void win_redraw_from(win_def *w) {
 	surface s;
+	rectangle r;
+	r = w->screenrect;
 	while (w) {
-		surface_from_window(&s, w);
-		if (!(w->options & WINDOW_OPT_NOCLEAR))
-			surface_clear(&s, 0);
-		if (w->event_handlers[EVENT_RENDER])
-			(*w->event_handlers[EVENT_RENDER])(w, NULL);
+		if (rectangles_overlap(&w->screenrect, &r)) {
+			surface_from_window(&s, w);
+			if (!(w->options & WINDOW_OPT_NOCLEAR))
+				surface_clear(&s, 0);
+			if (w->event_handlers[EVENT_RENDER])
+				(*w->event_handlers[EVENT_RENDER])(w, NULL);
+			rectangle_surround(&r, &w->screenrect, &r);
+		}
 
 		w = w->next;
 	}

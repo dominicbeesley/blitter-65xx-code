@@ -20,4 +20,10 @@ typedef struct s_rect {
 	size size;
 } rectangle;
 
+extern bool rectangles_overlap(const rectangle *r1, const rectangle *r2);
+extern coord coord_min(coord c1, coord c2);
+extern coord coord_max(coord c1, coord c2);
+extern void rectangle_surround(const rectangle *r1, const rectangle *r2, rectangle *r3);
+
+
 #endif
