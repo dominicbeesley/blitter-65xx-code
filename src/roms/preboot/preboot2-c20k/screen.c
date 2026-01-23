@@ -31,7 +31,7 @@ void screen_init(void) {
 		R_P(sheila_CRTC_DAT) = mo7_crtc[i];
 	}
 
-	memset((char *)0x7C00, '~', 0x400);
+	memset((char *)0x7C00, ' ', 0x400);
 
 }
 
