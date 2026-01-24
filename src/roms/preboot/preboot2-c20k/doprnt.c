@@ -14,6 +14,7 @@ static void _prtX16(long num, char *str);
 //static void _prtl16(long num, char *str);
 //static void _prtl2(long num, char *str);
 static int parsen(char **fmt, va_list ap);
+static void dopad(int leading, char fill, int (*func)(int, int), int farg);
 
 /*------------------------------------------------------------------------
  *  _doprnt  -  Format and write output using 'func' to write characters.
@@ -74,7 +75,6 @@ int _doprnt(
         /* Allow for zero-filled numeric outputs ("%0...") */
         fill = (*fmt == '0') ? *fmt++ : ' ';
         /* Allow for minimum field width specifier for %d,u,x,o,c,s */
-        /* Also allow %* for variable width (%0* as well)       */
         fmin = parsen(&fmt, ap);
         /* Allow for maximum string width for %s */
         fmax = 0;
@@ -205,34 +205,24 @@ int _doprnt(
         if (sign == '-' && fill == '0')
         {
             (*func) (farg, sign);
-            ret++;
         }
         if (leftjust == 0)
         {
-            for (i = 0; i < leading; i++)
-            {
-                (*func) (farg, fill);
-                ret++;
-            }
+            dopad(leading, fill, func, farg);
         }
         if (sign == '-' && fill == ' ')
         {
             (*func) (farg, sign);
-            ret++;
         }
         for (i = 0; i < length; i++)
         {
             (*func) (farg, str[i]);
-            ret++;
         }
         if (leftjust != 0)
         {
-            for (i = 0; i < leading; i++)
-            {
-                (*func) (farg, fill);
-                ret++;
-            }
+            dopad(leading, fill, func, farg);
         }
+        ret+=leading+length + (sign='-'?1:0);
     }
 
     return ret;
@@ -368,13 +358,15 @@ static void	_prtX16(
 int parsen(char **fmt, va_list ap) {
     int ret;
     ret = 0;
-    if (**fmt == '*')
-    {
-        ret = va_arg(ap, int);
-        *fmt++;
-    } else {
-        while ('0' <= **fmt && **fmt <= '9')
-            ret = ret * 10 + *(*fmt++) - '0';
-    }
+    while ('0' <= **fmt && **fmt <= '9')
+        ret = ret * 10 + *(*fmt++) - '0';
     return ret;
 }
+
+void dopad(int leading, char fill, int (*func)(int, int), int farg) {
+    int i;
+    for (i = 0; i < leading; i++)
+    {
+        (*func) (farg, fill);        
+    }
+ }
