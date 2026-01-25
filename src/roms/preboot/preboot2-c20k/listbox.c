@@ -4,8 +4,10 @@
 #include "hex.h"
 #include "keyboard.h"
 #include "debug.h"
+#include "event.h"
 
 bool lb_render_item_int(lb_def *lb, surface *sw, int ix, rectangle *drawrect) {
+	lb_item_render_args args;
 	surface sw_i;
 
 	if (drawrect->topleft.Y < sw->scroll.Y + sw->screenrect.size.H && 
@@ -14,7 +16,9 @@ bool lb_render_item_int(lb_def *lb, surface *sw, int ix, rectangle *drawrect) {
 		if (surface_from_rect(sw, &sw_i, drawrect))
 		{
 			surface_clear(&sw_i, 0);
-			(*lb->event_handler_render)(lb->window, lb, &sw_i, ix);
+			args.surface = &sw_i;
+			args.index = ix;
+			(*lb->event_handler_render)(lb, &args);
 		}
 		return 1;
 	} else 
@@ -31,13 +35,15 @@ void lb_render_item_surface(lb_def *lb, surface *sw, int ix, rectangle *drawrect
 
 }
 
-bool lb_render_win(win_def *w, void *arg) {	
+bool lb_render_win(void *sender, void *arg) {	
+	win_def *w;
 	surface sw;
 	lb_def *lb;
 	int ix;
 	bool ret;
 	rectangle drawrect;
 
+	w = (win_def *)sender;
 	ret = 0;
 	lb = (lb_def *)w->userdata;
 
@@ -95,10 +101,14 @@ void set_selected_index(lb_def *lb, int nexix) {
 
 }
 
-bool lb_keypress(win_def *w, void *arg) {
+bool lb_keypress(void *sender, void *arg) {
 	char c = *(char *)arg;
-	lb_def *lb = (lb_def *)w->userdata;
+	lb_def *lb;
 	int nexix;
+	win_def *w;
+
+	w = (win_def *)sender;
+	lb = (lb_def *)w->userdata;
 
 	switch (c) {
 		case KEYCODE_DOWN:
@@ -112,16 +122,16 @@ bool lb_keypress(win_def *w, void *arg) {
 	}
 }
 
-void lb_init(win_def *w, lb_def *lb, lb_render_handler render, int item_count, unsigned char item_height) {
+void lb_init(win_def *w, lb_def *lb, event_handler render_handler, int item_count, unsigned char item_height) {
 	lb->window = w;
 	lb->item_count = item_count;
 	lb->item_height = item_height;
-	lb->event_handler_render = render;
+	lb->event_handler_render = render_handler;
 	lb->selected_index = -1;
 	
 	w->userdata = lb;
-	win_register_event(w, EVENT_RENDER, &lb_render_win);	
-	win_register_event(w, EVENT_KEYPRESS, &lb_keypress);	
+	win_register_event(w, WIN_EVENT_RENDER, &lb_render_win);	
+	win_register_event(w, WIN_EVENT_KEYPRESS, &lb_keypress);	
 
 	win_refresh(w);
 }

@@ -22,13 +22,13 @@ void win_init(
 
 	w->options = options;
 
-	memset(w->event_handlers, 0, sizeof(win_event_handler) * EVENT_COUNT);
+	memset(w->event_handlers, 0, sizeof(event_handler) * WIN_EVENT_COUNT);
 }
 
-win_event_handler win_register_event(win_def *w, int event_index, win_event_handler handler) {
-	win_event_handler ret;
+event_handler win_register_event(win_def *w, int event_index, event_handler handler) {
+	event_handler ret;
 
-	if (event_index < 0 || event_index >= EVENT_COUNT)
+	if (event_index < 0 || event_index >= WIN_EVENT_COUNT)
 		return NULL;
 
 	ret = w->event_handlers[event_index];
@@ -45,8 +45,8 @@ void win_redraw_from(win_def *w) {
 			surface_from_window(&s, w);
 			if (!(w->options & WINDOW_OPT_NOCLEAR))
 				surface_clear(&s, 0);
-			if (w->event_handlers[EVENT_RENDER])
-				(*w->event_handlers[EVENT_RENDER])(w, NULL);
+			if (w->event_handlers[WIN_EVENT_RENDER])
+				(*w->event_handlers[WIN_EVENT_RENDER])(w, NULL);
 			rectangle_surround(&r, &w->screenrect, &r);
 		}
 
@@ -107,18 +107,20 @@ win_def *win_get_focused(void) {
 	return ret;
 }
 
-void win_event_dispatch(unsigned char event_index, void *arg) {
+bool win_event_dispatch(unsigned char event_index, void *arg) {
 
 	win_def *focused = win_get_focused();
 	if (focused) {
 		//NOT sure about this - maybe should dispatch all events, just user events for now
 		switch (event_index) {
-			case EVENT_KEYPRESS:
+			case WIN_EVENT_KEYPRESS:
 				if (focused->event_handlers[event_index])
-					(*focused->event_handlers[event_index])(focused, arg);
+					return(*focused->event_handlers[event_index])(focused, arg);
 				break;
 		}
 
 		//TODO: should bubble events?		
 	}
+
+	return 0;
 }

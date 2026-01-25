@@ -5,16 +5,15 @@
 #include "screen.h"
 #include <stddef.h>
 #include "coords.h"
+#include "event.h"
 
 #define WINDOW_OPT_NOCLEAR 	0x01
 
 typedef struct win_struct_def win_def;
 
-typedef bool (*win_event_handler)(win_def *win, void *arg);
-
-#define EVENT_RENDER 0
-#define EVENT_KEYPRESS 1
-#define EVENT_COUNT 2
+#define WIN_EVENT_RENDER		0
+#define WIN_EVENT_KEYPRESS		1
+#define WIN_EVENT_COUNT			2
 
 struct win_struct_def {
 
@@ -26,7 +25,7 @@ struct win_struct_def {
 
 	bool open;
 
-	win_event_handler event_handlers[EVENT_COUNT];
+	event_handler event_handlers[WIN_EVENT_COUNT];
 
 	unsigned char options;
 
@@ -39,8 +38,8 @@ extern void win_init(win_def *w, unsigned char options, const rectangle *screenr
 extern void win_open(win_def *w, bool top);
 extern void win_redrwaw_all(void);
 extern void win_refresh(win_def *w);
-extern win_event_handler win_register_event(win_def *w, int event_index, win_event_handler handler);
+extern event_handler win_register_event(win_def *w, int event_index, event_handler handler);
 
-extern void win_event_dispatch(unsigned char event_index, void *arg);
+extern bool win_event_dispatch(unsigned char event_index, void *arg);
 
 #endif
