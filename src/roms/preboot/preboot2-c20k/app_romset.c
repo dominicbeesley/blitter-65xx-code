@@ -5,6 +5,7 @@
 #include "event.h"
 #include "romset.h"
 #include "util.h"
+#include "strings.h"
 
 static bool l_list_render(void *sender, void *args);
 static bool app_rs_init(void *sender, void *arg);
@@ -20,15 +21,11 @@ ui_app app_romset = {
 	}
 };
 
-lb_def l_list;
+static lb_def l_list; //TODO: make this global and share between apps?
 
-const char *w_main_data = "HELLO WORLD";
-const char *str_head_mainmenu = "\x02Main Menu";
-const char *str_head_pleaseselect = "\x06" "Cursor selects item, press return.";
-
-romset romset_g;
 
 bool l_list_render(void *sender, void *args) {
+	romset romset_g;
 	char *p = buf;
 	unsigned long addr;
 	const romset_cpu_def *cpu;

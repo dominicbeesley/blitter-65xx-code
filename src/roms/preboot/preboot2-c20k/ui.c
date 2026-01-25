@@ -7,12 +7,17 @@
 
 extern char buf[];
 
+ui_app *cur_app;
+
 rectangle r_head = {{3, 4}, {35, 3}};
 rectangle r_status = {{0, 24}, {40, 1}};
 rectangle r_main = {{0, 8}, {40, 16}};
 win_def w_main;
 win_def w_head;
 win_def w_status;
+
+static void ui_start_old(ui_app *app);
+
 
 const char *head_title;
 const char *head_subtitle;
@@ -73,12 +78,25 @@ void ui_poll() {
 	char c;
 
 	if (buffer_get(BUFFER_KEYBOARD, &c) >= 0) {
-		win_event_dispatch(WIN_EVENT_KEYPRESS, &c);
+		if (!win_event_dispatch(WIN_EVENT_KEYPRESS, &c)) {
+			if (
+					!cur_app
+				 || !cur_app->event_handlers[UI_EVENT_KEYPRESS]
+				 || !cur_app->event_handlers[UI_EVENT_KEYPRESS](cur_app, &c)
+				)
+				{
+					switch (c) {
+						case 0x1B:
+							//escape
+							if (cur_app != NULL && cur_app->parent != NULL) {
+								ui_start_old(cur_app->parent);
+							}
+					}
+				}
+		}
 	}
 
 }
-
-extern ui_app app_romset;
 
 void ui_init() {
 	win_init(&w_head, 0, &r_head, NULL);
@@ -92,10 +110,19 @@ void ui_init() {
 
 
 	win_init(&w_main, WINDOW_OPT_NOCLEAR, &r_main, NULL);
-	win_register_event(&w_main, WIN_EVENT_RENDER, app_romset.event_handlers[UI_EVENT_RENDER_MAIN]);
 	win_open(&w_main, 1);
 
-	app_romset.event_handlers[UI_EVENT_INIT](&app_romset, NULL);
-	
-	
+}
+
+void ui_start_app(ui_app *app) {
+	app->parent = cur_app;
+	ui_start_old(app);
+}
+void ui_start_old(ui_app *app) {
+	cur_app = app;
+	win_register_event(&w_main, WIN_EVENT_RENDER, app->event_handlers[UI_EVENT_RENDER_MAIN]);
+	app->event_handlers[UI_EVENT_INIT](app, NULL);	
+	win_refresh(&w_main);
+	win_refresh(&w_head);
+	win_refresh(&w_status);
 }

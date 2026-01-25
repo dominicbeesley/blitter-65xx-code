@@ -6,8 +6,10 @@ CC=cl65 -I $(TOP)/includes -I $(BUILD) -I ../includes -O -t none --standard c99
 INCS=$(wildcard $(TOP)/includes/*.inc) $(wildcard *.inc) $(wildcard ../includes *.inc)
 HS=$(wildcard $(TOP)/includes/*.h) $(wildcard *.h) $(wildcard ../includes *.h)
 DEPS=$(INCS) $(HS)
-A_OBJS=preboot2-c20k main_head spi crt0 screen_int surface_int keyboard_int hw_int
-C_OBJS=main screen window surface listbox hex hw keyboard util debug doprnt buffer coords romset ui app_romset
+A_OBJS=	preboot2-c20k main_head spi crt0 screen_int surface_int keyboard_int \
+		hw_int
+C_OBJS=	main screen window surface listbox hex hw keyboard util debug doprnt \
+		buffer coords romset ui app_romset app_main_menu strings app_reboot
 LIBS=none.lib
 
 TARGETS=preboot2-c20k.vec

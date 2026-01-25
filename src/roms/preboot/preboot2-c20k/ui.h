@@ -12,6 +12,7 @@
 
 typedef struct ui_app {
 	event_handler event_handlers[UI_EVENT_COUNT];
+	struct ui_app *parent;
 	
 } ui_app;
 

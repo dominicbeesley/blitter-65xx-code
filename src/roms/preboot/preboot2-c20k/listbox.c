@@ -120,6 +120,8 @@ bool lb_keypress(void *sender, void *arg) {
 			set_selected_index(lb, nexix);
 			return 1;
 	}
+
+	return 0;
 }
 
 void lb_init(win_def *w, lb_def *lb, event_handler render_handler, int item_count, unsigned char item_height) {

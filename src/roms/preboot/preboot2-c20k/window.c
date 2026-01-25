@@ -43,7 +43,7 @@ void win_redraw_from(win_def *w) {
 	while (w) {
 		if (rectangles_overlap(&w->screenrect, &r)) {
 			surface_from_window(&s, w);
-			if (!(w->options & WINDOW_OPT_NOCLEAR))
+			if (!(w->options & WINDOW_OPT_NOCLEAR) || !w->event_handlers[WIN_EVENT_RENDER])
 				surface_clear(&s, 0);
 			if (w->event_handlers[WIN_EVENT_RENDER])
 				(*w->event_handlers[WIN_EVENT_RENDER])(w, NULL);
