@@ -86,6 +86,11 @@ bool render_item(lb_def *lb, int ix) {
 
 void set_selected_index(lb_def *lb, int nexix) {
 	int oldix;
+	coord Y, WH, MY;
+	point np;
+	int d = 0;
+
+	np.X = 0;
 
 	if (nexix >= lb->item_count)
 		nexix = lb->item_count - 1;
@@ -95,8 +100,37 @@ void set_selected_index(lb_def *lb, int nexix) {
 	oldix = lb->selected_index;
 	if (nexix != oldix) {
 		lb->selected_index = nexix;
-		render_item(lb, oldix);
-		render_item(lb, nexix);
+
+		WH = lb->window->screenrect.size.H;
+		d = 2;
+		while (d * 2 * lb->item_height > WH && d > 0)
+			d --;
+
+		// check in bounds and if no need to scroll update individual items
+		Y = (nexix - d) * lb->item_height - lb->window->scroll.Y;
+
+		if (Y < 0) {
+			np.Y = (nexix - 2) * lb->item_height;
+			if (np.Y < 0)
+				np.Y = 0;
+		} 
+		Y = (nexix + d) * lb->item_height - lb->window->scroll.Y;
+		if (Y > WH) {
+			
+			np.Y = (lb->selected_index + 2) * lb->item_height - WH;
+
+			// calc max Y scroll
+			MY = lb->item_height * lb->item_count - WH;
+			if (np.Y > MY)
+				np.Y = MY;
+		}
+
+		if (np.Y != lb->window->scroll.Y) {
+			win_scroll(lb->window, &np);
+		} else {
+			render_item(lb, oldix);
+			render_item(lb, nexix);
+		}
 	}
 
 }
