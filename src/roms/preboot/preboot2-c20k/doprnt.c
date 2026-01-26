@@ -13,7 +13,7 @@ static void _prtl10(long num, char *str);
 static void _prtX16(long num, char *str);
 //static void _prtl16(long num, char *str);
 //static void _prtl2(long num, char *str);
-static int parsen(char **fmt, va_list ap);
+static int parsen(char **fmt);
 static void dopad(int leading, char fill, int (*func)(int, int), int farg);
 
 /*------------------------------------------------------------------------
@@ -75,12 +75,13 @@ int _doprnt(
         /* Allow for zero-filled numeric outputs ("%0...") */
         fill = (*fmt == '0') ? *fmt++ : ' ';
         /* Allow for minimum field width specifier for %d,u,x,o,c,s */
-        fmin = parsen(&fmt, ap);
+        fmin = parsen(&fmt);
         /* Allow for maximum string width for %s */
         fmax = 0;
         if (*fmt == '.')
         {
-            fmax = parsen(&fmt, ap);
+            fmt++;
+            fmax = parsen(&fmt);
         }
 
         str = string;
@@ -355,11 +356,10 @@ static void	_prtX16(
 //}
 
 
-int parsen(char **fmt, va_list ap) {
-    int ret;
-    ret = 0;
+int parsen(char **fmt) {
+    int ret = 0;
     while ('0' <= **fmt && **fmt <= '9')
-        ret = ret * 10 + *(*fmt++) - '0';
+        ret = ret * 10 + *((*fmt)++) - '0';
     return ret;
 }
 
