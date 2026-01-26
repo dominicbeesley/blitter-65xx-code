@@ -170,7 +170,8 @@ print "$slot\n";
 	my $co = ord(substr($buf, 7, 1));
 	if (substr($buf, $co, 4) eq chr(0)."(C)") {
 		# looks like a ROM
-		$ret->{type} = ord(substr($buf, 6, 1));
+		$ret->{rom_type} = ord(substr($buf, 6, 1));
+		$ret->{ext_type} = 1;
 		$ret->{title} = cleantit(join(" ", unpack("Z* Z*", substr($buf, 9, 31))));
 	}
 
