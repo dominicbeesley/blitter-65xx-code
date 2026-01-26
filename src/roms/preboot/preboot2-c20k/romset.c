@@ -4,6 +4,7 @@
 #include "types.h"
 #include "debug.h"
 #include "hex.h"
+#include "util.h"
 
 unsigned long romset_get_index(int ix, romset *ret) {
 	unsigned long addr;
@@ -91,4 +92,41 @@ char romset_slot_char(unsigned char code) {
 		return hex_nyb(code);
 	else
 		return '?';
+}
+
+char* romset_rom_type_string(char *buf, unsigned char ext_type, unsigned char rom_type) {	
+	char *cpu = "?";
+	if (ext_type == 2) {
+		buf += sprintf(buf, "MOS");
+	} else if (ext_type == 1) {
+		buf += sprintf(buf, "ROM(");
+		if (rom_type & 0x80)
+			*buf++='S';
+		if (rom_type & 0x40)
+			*buf++='L';
+		if (rom_type & 0x20)
+			*buf++='T';
+		if (rom_type & 0x10)
+			*buf++='E';
+		*buf++=')';
+		*buf++=' ';
+		switch (rom_type & 0x7) {
+		case 0:
+			cpu = "6502BAS";
+			break;
+		case 1:
+			cpu = "6502TURBO";
+			break;
+		case 2:
+			cpu = "6502";
+			break;		
+		case 3:
+			cpu = "6x09";
+			break;
+		}
+		buf += sprintf(buf, "%s", cpu);
+	}
+
+	*buf++=0;
+	return buf;
 }

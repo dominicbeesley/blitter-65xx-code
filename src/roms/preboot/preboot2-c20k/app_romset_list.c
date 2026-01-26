@@ -62,12 +62,14 @@ bool l_list_render(void *sender, void *args) {
 
 	cpu = romset_cpu_def_from_code(rd.cpu);
 
-	sprintf(buf, "ext=%x,type=%x,cpu=%s",
-		(long)rd.ext_type,
-		(long)rd.rom_type,
-		cpu?cpu->label:"?");
+	romset_rom_type_string(buf+128, rd.ext_type, rd.rom_type);
 
-	pp.X = 6;
+	sprintf(buf, "\x82%16.16s %12.12s %X",
+		buf+128,
+		cpu?cpu->label:"?",
+		(long)rd.crc);
+
+	pp.X = 3;
 	pp.Y = 1;
 	surface_render_str(s, &pp, buf);
 	

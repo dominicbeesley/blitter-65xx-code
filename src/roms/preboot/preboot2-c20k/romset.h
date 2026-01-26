@@ -36,6 +36,7 @@ extern bool romset_get_rom(int romset_ix, int ix, romset_rom_desc *rd);
 extern int romset_count();
 extern const romset_cpu_def *romset_cpu_def_from_code(unsigned char c);
 extern char romset_slot_char(unsigned char code);
+extern char* romset_rom_type_string(char *buf, unsigned char ext_type, unsigned char rom_type);
 
 extern const romset_cpu_def cpudefs[];
 
