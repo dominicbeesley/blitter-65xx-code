@@ -103,7 +103,7 @@ sub parse_rominf($$) {
 			} elsif (/^TYPE=(.+)/) {
 				$ret->{ext_type} = ext_type_no($1);
 			} elsif (/^TITLE=(.+)/) {
-				$ret->{title} = $1;
+				$ret->{title} = cleantit($1);
 			} else {
 				die "Unrecognised line : $_";
 			}
@@ -113,6 +113,17 @@ sub parse_rominf($$) {
 	
 
 	close($fh);
+}
+
+sub cleantit($) {
+	my ($t) = @_;
+
+	$t =~ s/[\r\n\t]/ /gi;
+	$t =~ s/\s+/ /gi;
+	$t =~ s/^\s+//gi;
+	$t =~ s/\s+$//gi;
+
+	return $t;
 }
 
 sub get_rom($$) {
@@ -143,7 +154,7 @@ print "$slot\n";
 	my $ret= {
 		filename => $romfilepath,
 		bytes => $buf,
-		title => $nm,
+		title => cleantit($nm),
 		slot => rom_slot_no($slot), 
 		crc => mycrc(unpack("C*",$buf))
 	};
@@ -160,7 +171,7 @@ print "$slot\n";
 	if (substr($buf, $co, 4) eq chr(0)."(C)") {
 		# looks like a ROM
 		$ret->{type} = ord(substr($buf, 6, 1));
-		$ret->{title} = join(" ", unpack("Z* Z*", substr($buf, 9, 31)));
+		$ret->{title} = cleantit(join(" ", unpack("Z* Z*", substr($buf, 9, 31))));
 	}
 
 	# specific rominf file
@@ -206,7 +217,7 @@ sub read_list($) {
 						push @ret, $curdisc;
 					}
 					$curdisc = {
-						title => $1,
+						title => cleantit($1),
 						cpu   => 0
 					};
 				} elsif (/^DIR\s*=\s*(.+?)\s*$/) {
