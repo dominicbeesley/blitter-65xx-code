@@ -1,6 +1,9 @@
 #include <stddef.h>
 #include "romset.h"
 #include "spi.h"
+#include "types.h"
+#include "debug.h"
+#include "hex.h"
 
 unsigned long romset_get_index(int ix, romset *ret) {
 	unsigned long addr;
@@ -36,6 +39,28 @@ int romset_count() {
 	}
 }
 
+bool romset_get_rom(int romset_ix, int ix, romset_rom_desc *rd) {
+	romset r;
+	unsigned long addr;
+
+
+	addr = romset_get_index(romset_ix, &r);
+	if (!addr)
+		return 0;
+	if (ix >= r.len)
+		return 0;
+	
+	addr += (unsigned long)ROMSET_SIZE + 
+			(unsigned long)ix * (unsigned long)ROMDESCR_SIZE;
+
+	spi_read_buf(
+		rd, 
+		addr,
+		sizeof(romset_rom_desc));
+	return 1;
+}
+
+
 const romset_cpu_def cpudefs[] = {
 	{0, "NMOS 6502"},
 	{1, "65C02"},
@@ -57,4 +82,13 @@ const romset_cpu_def *romset_cpu_def_from_code(unsigned char c) {
 		ret++;
 	}
 	return NULL;
+}
+
+char romset_slot_char(unsigned char code) {
+	if (code == 0xFF)
+		return 'M';
+	else if (code < 16)
+		return hex_nyb(code);
+	else
+		return '?';
 }

@@ -22,7 +22,7 @@ int main(void) {
 
 	memcpy((char *)0x7C00, main_head, 8*40);
 	ui_init();
-	ui_start_app(&app_main_menu);
+	ui_start_app(&app_main_menu, NULL);
 
 	screen_cursor_at(&point0);
 	screen_cursor(0);

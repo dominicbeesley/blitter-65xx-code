@@ -41,5 +41,6 @@ extern void win_refresh(win_def *w);
 extern event_handler win_register_event(win_def *w, int event_index, event_handler handler);
 
 extern bool win_event_dispatch(unsigned char event_index, void *arg);
+extern void win_scroll(win_def *w, point *scroll);
 
 #endif

@@ -6,19 +6,20 @@
 #include "romset.h"
 #include "util.h"
 #include "strings.h"
-#include "apps.h"
+#include "debug.h"
+
+int romset_ix;
 
 static bool l_list_render(void *sender, void *args);
-static bool app_rs_init(void *sender, void *arg);
-static bool app_rs_kp(void *sender, void *arg);
+static bool app_rsl_init(void *sender, void *arg);
 
 extern char buf[];
 
-ui_app app_romset = {
+ui_app app_romset_list = {
 	{
-		&app_rs_init,	//init
+		&app_rsl_init,	//init
 		NULL,			//poll
-		&app_rs_kp,		//keypress
+		NULL,			//keypress
 		NULL			//render main
 	}
 };
@@ -27,9 +28,9 @@ static lb_def l_list; //TODO: make this global and share between apps?
 
 
 bool l_list_render(void *sender, void *args) {
-	romset romset_g;
+	romset_rom_desc rd;
 	char *p, *t;
-	unsigned long addr;
+	bool fnd;
 	const romset_cpu_def *cpu;
 	point pp;
 	lb_def *l;
@@ -45,42 +46,49 @@ bool l_list_render(void *sender, void *args) {
 		p = "   ";
 	}
 
-	addr = romset_get_index(ix, &romset_g);
-	if (addr) {
-		t = &romset_g.title[0];
+	fnd = romset_get_rom(romset_ix, ix, &rd);
+	if (fnd) {
+		t = &rd.title[0];
 	} else {
 		t = "?";
 	}
 
-	sprintf(buf, "%s%s", p, t);
-	
-	surface_render_str(s, &point0, buf);
-	
-	cpu = romset_cpu_def_from_code(romset_g.cpu);
-	pp.X = 0;
-	pp.Y = 1;
-	surface_render_str(s, &pp, "\x86");
-	pp.X = 4;
-	sprintf(buf, "ROMS:%d, CPU:%s\n", (long)romset_g.len, cpu?cpu->label:"UNKNOWN");
-	surface_render_str(s, &pp, buf);
+	sprintf(buf, "%s%c.%s", 
+		p, 
+		romset_slot_char(rd.slot),
+		t);
 
+	surface_render_str(s, &point0, buf);
+
+	cpu = romset_cpu_def_from_code(rd.cpu);
+
+	sprintf(buf, "ext=%x,type=%x,cpu=%s",
+		(long)rd.ext_type,
+		(long)rd.rom_type,
+		cpu?cpu->label:"?");
+
+	pp.X = 6;
+	pp.Y = 1;
+	surface_render_str(s, &pp, buf);
+	
 	return 1;
 }
 
-bool app_rs_init(void *sender, void *arg) {
-	lb_init(&w_main, &l_list, &l_list_render, romset_count(), 2);
+bool app_rsl_init(void *sender, void *arg) {
+	romset r;
+	int ct;
+	if (arg) {
+		//if new invocation set arg, else remember
+		romset_ix = *(int *)arg;
+	}
+
+	if (romset_get_index(romset_ix, &r))
+		ct = r.len;
+	else
+		ct = 0;
+
+	lb_init(&w_main, &l_list, &l_list_render, ct, 2);
 	l_list.selected_index = 0;
 	set_head_title(str_head_mainmenu, str_head_pleaseselect);
 	return 1;
-}
-
-bool app_rs_kp(void *sender, void *arg) {
-	char c = *(char *)arg;
-	int ix = l_list.selected_index;
-	if (c == 13) {
-		if (ix >= 0 && ix < l_list.item_count)
-			ui_start_app(&app_romset_list, &ix);
-		return 1;
-	}
-	return 0;
 }

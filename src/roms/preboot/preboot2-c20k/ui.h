@@ -16,7 +16,7 @@ typedef struct ui_app {
 	
 } ui_app;
 
-extern void ui_start_app(ui_app *app);
+extern void ui_start_app(ui_app *app, void *args);
 
 extern void ui_poll(void);
 extern void ui_init(void);

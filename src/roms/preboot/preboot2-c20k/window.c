@@ -124,3 +124,8 @@ bool win_event_dispatch(unsigned char event_index, void *arg) {
 
 	return 0;
 }
+
+void win_scroll(win_def *w, point *scroll) {
+	w->scroll = *scroll;
+	win_refresh(w);
+}

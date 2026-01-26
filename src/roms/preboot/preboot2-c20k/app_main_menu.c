@@ -80,7 +80,7 @@ bool app_mm_kp(void *sender, void *arg) {
 	int ix = l_list.selected_index;
 	if (c == 13) {
 		if (ix >= 0 && ix < MMI_COUNT)
-			ui_start_app(menuitems[ix].app);
+			ui_start_app(menuitems[ix].app, NULL);
 		return 1;
 	}
 	return 0;

@@ -16,12 +16,12 @@ win_def w_main;
 win_def w_head;
 win_def w_status;
 
-static void ui_start_old(ui_app *app);
+static void ui_start_old(ui_app *app, void *args);
 
 
-const char *head_title;
-const char *head_subtitle;
-const char *status;
+char head_title[34];
+char head_subtitle[34];
+char status[34];
 bool render_head(void *sender, void *arg) {
 	surface s;
 	point p;
@@ -33,22 +33,21 @@ bool render_head(void *sender, void *arg) {
 
 	surface_from_window(&s, w);
 
-	if (head_title) {
-		surface_render_str(&s, &p, head_title);
-		p.Y++;
-		surface_render_str(&s, &p, head_title);
-	}
+	surface_render_str(&s, &p, head_title);
+	p.Y++;
+	surface_render_str(&s, &p, head_title);
 
-	if (head_subtitle) {
-		p.Y = 2;
-		surface_render_str(&s, &p, head_subtitle);
-	}
+	p.Y = 2;
+	surface_render_str(&s, &p, head_subtitle);
+
 	return 1;	
 }
 
 void set_head_title(const char *title, const char *subtitle) {
-	head_title = title;
-	head_subtitle = subtitle;
+	strncpy(head_title, title, sizeof(head_title));
+	head_title[sizeof(head_title)-1] = 0;
+	strncpy(head_subtitle, subtitle, sizeof(head_subtitle));
+	head_subtitle[sizeof(head_subtitle)-1] = 0;
 	win_refresh(&w_head);
 }
 
@@ -68,7 +67,8 @@ bool render_status(void *sender, void *arg) {
 }
 
 void set_status(const char *s) {
-	status = s;
+	strncpy(status, s, sizeof(status));
+	status[sizeof(status) - 1] = '0';
 	win_refresh(&w_status);
 }
 
@@ -89,7 +89,7 @@ void ui_poll() {
 						case 0x1B:
 							//escape
 							if (cur_app != NULL && cur_app->parent != NULL) {
-								ui_start_old(cur_app->parent);
+								ui_start_old(cur_app->parent, NULL);
 							}
 					}
 				}
@@ -97,6 +97,7 @@ void ui_poll() {
 	}
 
 }
+
 
 void ui_init() {
 	win_init(&w_head, 0, &r_head, NULL);
@@ -114,14 +115,21 @@ void ui_init() {
 
 }
 
-void ui_start_app(ui_app *app) {
+void ui_start_app(ui_app *app, void *args) {
 	app->parent = cur_app;
-	ui_start_old(app);
+	ui_start_old(app, args);
 }
-void ui_start_old(ui_app *app) {
+void ui_start_old(ui_app *app, void *args) {
 	cur_app = app;
+
+	w_main.scroll = point0;
+	w_status.scroll = point0;
+	w_head.scroll = point0;
+	set_status("");
+	set_head_title("", "");
+
 	win_register_event(&w_main, WIN_EVENT_RENDER, app->event_handlers[UI_EVENT_RENDER_MAIN]);
-	app->event_handlers[UI_EVENT_INIT](app, NULL);	
+	app->event_handlers[UI_EVENT_INIT](app, args);	
 	win_refresh(&w_main);
 	win_refresh(&w_head);
 	win_refresh(&w_status);

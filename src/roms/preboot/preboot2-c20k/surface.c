@@ -21,9 +21,7 @@ void surface_render_str(surface *s, const point *clientpoint, const char *str) {
 	p.Y = p.Y - s->scroll.Y;
 
 	if (p.Y < 0 || p.Y >= s->screenrect.size.H)
-	{
 		return;
-	}
 
 
 	// screen coord
