@@ -101,8 +101,14 @@ handle_reset:
 		ldx	#$FF
 		txs
 
-		; do some hardware cleanup before crt0 startup
+		; set non-throttled, low-mem=turbo mode
+		lda	#$7F
+		sta	sheila_MEM_LOMEMTURBO
+		lda	sheila_MEM_TURBO2
+		and	#<~(BITS_MEM_TURBO2_THROTTLE|BITS_MEM_TURBO2_THROTTLE_MOS)
+		sta	sheila_MEM_TURBO2
 
+		; do some hardware cleanup before crt0 startup
 
 		lda	#$7F
 		sta	sheila_SYSVIA_ier	; TODO: we should maybe use this to detect hard/cold/boot and pass on to client

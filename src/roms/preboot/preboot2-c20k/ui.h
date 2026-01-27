@@ -22,6 +22,7 @@ extern void ui_poll(void);
 extern void ui_init(void);
 
 extern void set_head_title(const char *title, const char *subtitle);
+extern void set_status(const char *s);
 
 extern win_def w_main;
 

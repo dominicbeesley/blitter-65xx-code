@@ -7,6 +7,8 @@
 #include "util.h"
 #include "strings.h"
 #include "apps.h"
+#include "hw.h"
+#include "hardware.h"
 
 static bool l_list_render(void *sender, void *args);
 static bool app_mm_init(void *sender, void *arg);
@@ -72,6 +74,14 @@ bool app_mm_init(void *sender, void *arg) {
 	lb_init(&w_main, &l_list, &l_list_render, MMI_COUNT, 2);
 	l_list.selected_index = 0;
 	set_head_title(str_head_mainmenu, str_head_pleaseselect);
+
+	sprintf(buf, "%02X %02X %02X %02X"
+		, (long)peek(sheila_MEM_LOMEMTURBO)
+		, (long)peek(sheila_MEM_TURBO2)
+		, (long)peek(sheila_ROM_THROTTLE_0)
+		, (long)peek(sheila_ROM_THROTTLE_1)		
+		);
+	set_status(buf);
 	return 1;
 }
 

@@ -8,6 +8,31 @@ Show current map, cpu, boot options in top-box
 2 Econet settings -> station number
 
 
+Need to be able to:
+- enable MOSRAM
+- switch SWROMX
+- switch t65, hard cpu, RiscV, etc
+
+
+Preboot - first cut
+===================
+
+1) First "boot"->preboot1
+2) preboot1->loads preboot monitor and executes
+	- loads image to SWMOS 7F0000 
+	- if key held down switch to swmos and execute reset vector for preboot C program
+	- turn off preboot and execute whatever mos is there
+
+May need proper reboot
+May need method to select MEMI, SWROMX, SWMOS when rebooting
+May need way to reset e.g. SYSVIA, memctl
+
+
+TRY: no reset, just switch configs with code on stack, poke SYSVIA IER to provoke hard vs soft reset
+NEED: a full reset cycle or a way of switching CPUs programmatically, or hard/soft CPU to be held
+in reset until preboot exits
+
+
 Debrick
 
 SPI contains multiple "starter sets" starting at 720000
