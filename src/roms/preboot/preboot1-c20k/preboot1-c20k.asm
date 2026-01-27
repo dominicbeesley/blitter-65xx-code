@@ -27,63 +27,74 @@
 		.include		"spi.inc"
 
 
+KEY_COPY	= $69
+
 	.segment "ZPEXT": zeropage
 
-zp_scrptr:	.res	2
-zp_ctr:	.res	1
+zp_txtptr:	.res	2
+zp_ctr:		.res	1
+pwrup:		.res	1
 
 	.bss
 
 	.rodata
-;********* 6845 REGISTERS 0-11 FOR SCREEN TYPE 4 - MODE 7 ****************
-crtc_mo_7:
-			.byte	$3f				; 0 Horizontal Total	 =64
-			.byte	$28				; 1 Horizontal Displayed =40
-			.byte	$33				; 2 Horizontal Sync	 =&33  Note: &31 is a better value
-			.byte	$24				; 3 HSync Width+VSync	 =&24  VSync=2, HSync=4
-			.byte	$1e				; 4 Vertical Total	 =30
-			.byte	$02				; 5 Vertical Adjust	 =2
-			.byte	$19				; 6 Vertical Displayed	 =25
-			.byte	$1b				; 7 VSync Position	 =&1B
-			.byte	$93				; 8 Interlace+Cursor	 =&93  Cursor=2, Display=1, Interlace=Sync+Video
-			.byte	$12				; 9 Scan Lines/Character =19
-			.byte	$72				; 10 Cursor Start Line	  =&72	Blink=On, Speed=1/32, Line=18
-			.byte	$13				; 11 Cursor End Line	  =19
-			.byte	0
-			.byte	0
+
 	.code
+
+;;debug_hex:	pha
+;;		lsr	A
+;;		lsr	A
+;;		lsr	A
+;;		lsr	A
+;;		jsr	debug_hexnyb
+;;		pla
+;;
+;;		; fall thru
+;;
+;;debug_hexnyb:	and	#$F
+;;		cmp	#$A
+;;		bcc	@s
+;;		adc	#'A'-'0'-11
+;;@s:		adc	#'0'
+;;
+;;		; fall thru
+
+debug_printc:	bit	debug_UART_status
+		bvs	debug_printc
+		sta	debug_UART_data
+		rts
+
 handle_nmi:
 handle_irq:
 		rti
 
 
-handle_reset:
-		cld
+handle_reset:	cld
 		sei
 		ldx	#$FF
 		txs
+		
+		lda	#'A'
+		jsr	debug_printc
 
-		; mode 7
-		lda	#$4b
-		sta	sheila_VIDPROC
-		ldx	#13
-@lp1:		stx	sheila_CRTC_IX
-		lda	crtc_mo_7, X
-		sta	sheila_CRTC_DAT
-		dex
-		bpl	@lp1
-		lda	#$7C
-		sta	zp_scrptr+1
-		lda	#0
-		sta	zp_scrptr
+		; check for key combo // TODO: check for other keys?
+		
+		lda	#3
+		sta	sheila_SYSVIA_orb		; stop auto-scan
+		lda	#$7F
+		sta	sheila_SYSVIA_ddra	; bit 7 in, others out
 
-		lda	#'0'
-		sta	$7C00
+		lda	#KEY_COPY
+		sta	sheila_SYSVIA_ora_nh
+		bit	sheila_SYSVIA_ora_nh
+		bpl	reboot
+
+		lda	#'B'
+		jsr	debug_printc
 
 
 		lda	#$40
 		sta	zp_ctr		; number of pages to transfer
-
 
 		; start SPI bulk read
 		jsr	spi_reset
@@ -119,37 +130,30 @@ handle_reset:
 
 		jsr	spi_write_last
 
-		lda	#'1'
-		sta	$7C00
+		; force to map 0 mosram
+		lda	sheila_MEM_TURBO2
+		ora	#BITS_MEM_TURBO2_MAP0N1
+		sta	sheila_MEM_TURBO2
+		lda	sheila_MEM_CTL
+		ora	#BITS_MEM_CTL_SWMOS
+		sta	sheila_MEM_CTL
+
+reboot:		lda	#$FF
+		sta	JIM_DEVNO_BLITTER		; make sure JIM is deselected
+
+		ldx	#stackprog_end-stackprog-1
+@rlp:		lda	stackprog,X
+		sta	$100,X
+		dex
+		bpl	@rlp
+		jmp	$100
 
 
-HERE:		jmp	HERE
-
-;;;		.proc 	hex
-;;;		pha
-;;;		lsr	A
-;;;		lsr	A
-;;;		lsr	A
-;;;		lsr	A
-;;;		jsr	hex_nyb
-;;;		pla
-;;;hex_nyb:		and	#$F
-;;;		cmp	#9
-;;;		bcc	:+
-;;;		adc	#'A'-'0'-10-1
-;;;:		adc	#'0'
-;;;		jmp	pr		
-;;;		.endproc
-;;;	
-;;;		.proc	pr
-;;;		ldy	#0
-;;;		sta	(zp_scrptr),Y
-;;;		inc	zp_scrptr
-;;;		bne	:+
-;;;		inc	zp_scrptr+1
-;;;:		rts
-;;;		.endproc
-
+stackprog:	lda	sheila_MEM_TURBO2
+		and	#<~BITS_MEM_TURBO2_PREBOOT
+		sta	sheila_MEM_TURBO2
+		jmp	($FFFC)
+stackprog_end:
 
 
 	.segment "VECS"	
