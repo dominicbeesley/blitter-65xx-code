@@ -10,20 +10,20 @@ SPI_INC = 1
 		.export 		spi_write_last
 		.export 		spi_write_cont
 		.export 		spi_wait_rd
-		.export		spi_read_buf
+;		.export		spi_read_buf
 
-		.exportzp	zp_spi_addr
-		.exportzp	zp_spi_len
-		.exportzp	zp_spi_memptr
+;;		.exportzp	zp_spi_addr
+;;		.exportzp	zp_spi_len
+;;		.exportzp	zp_spi_memptr
 
 
 XFL_FAST_READ	:= $0B
 
 
 		.segment "ZPEXT": zeropage
-zp_spi_addr:	.res	3
-zp_spi_len:	.res	2
-zp_spi_memptr:	.res	2
+;;zp_spi_addr:	.res	3
+;;zp_spi_len:	.res	2
+;;zp_spi_memptr:	.res	2
 		.code
 ;=============================================
 ; S P I
@@ -58,46 +58,46 @@ zp_spi_memptr:	.res	2
 		rts
 	.endproc
 
-
-	.proc	spi_read_buf
-		
-		lda	zp_spi_len
-		ora	zp_spi_len+1
-		beq	@retcc
-		
-		lda	#XFL_FAST_READ
-		jsr	spi_write_cont
-		lda	zp_spi_addr+2
-		jsr	spi_write_cont
-		lda	zp_spi_addr+1
-		jsr	spi_write_cont
-		lda	zp_spi_addr+0
-		jsr	spi_write_cont
-		
-		jsr	spi_write_cont		; dummy value
-		ldy	#0
-		
-		jsr	@declen
-		beq	@last
-@lp:		jsr	spi_write_cont
-		sta	(zp_spi_memptr),Y
-		iny
-		bne	@sk0
-		inc	zp_spi_memptr+1
-@sk0:		jsr	@declen
-		bne	@lp
-@last:		jsr	spi_write_last
-		sta	(zp_spi_memptr),Y
-		iny
-
-@retcc:		clc
-		rts
-
-@declen:		lda	zp_spi_len
-		bne	@skz
-		dec	zp_spi_len+1
-@skz:		dec	zp_spi_len
-		lda	zp_spi_len
-		ora	zp_spi_len+1
-		rts
-	.endproc
+;;
+;;	.proc	spi_read_buf
+;;		
+;;		lda	zp_spi_len
+;;		ora	zp_spi_len+1
+;;		beq	@retcc
+;;		
+;;		lda	#XFL_FAST_READ
+;;		jsr	spi_write_cont
+;;		lda	zp_spi_addr+2
+;;		jsr	spi_write_cont
+;;		lda	zp_spi_addr+1
+;;		jsr	spi_write_cont
+;;		lda	zp_spi_addr+0
+;;		jsr	spi_write_cont
+;;		
+;;		jsr	spi_write_cont		; dummy value
+;;		ldy	#0
+;;		
+;;		jsr	@declen
+;;		beq	@last
+;;@lp:		jsr	spi_write_cont
+;;		sta	(zp_spi_memptr),Y
+;;		iny
+;;		bne	@sk0
+;;		inc	zp_spi_memptr+1
+;;@sk0:		jsr	@declen
+;;		bne	@lp
+;;@last:		jsr	spi_write_last
+;;		sta	(zp_spi_memptr),Y
+;;		iny
+;;
+;;@retcc:		clc
+;;		rts
+;;
+;;@declen:		lda	zp_spi_len
+;;		bne	@skz
+;;		dec	zp_spi_len+1
+;;@skz:		dec	zp_spi_len
+;;		lda	zp_spi_len
+;;		ora	zp_spi_len+1
+;;		rts
+;;	.endproc
