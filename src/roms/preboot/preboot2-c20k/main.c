@@ -6,6 +6,7 @@
 #include "hw.h"
 #include "ui.h"
 #include "apps.h"
+#include "sound.h"
 
 extern char main_head[];
 
@@ -19,6 +20,7 @@ int main(void) {
 	screen_init();
 	hw_init();
 	keyb_init();
+	sound_init();
 
 	memcpy((char *)0x7C00, main_head, 8*40);
 	ui_init();

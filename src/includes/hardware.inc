@@ -1,6 +1,8 @@
 	.IFNDEF __HARDWARE_INC__
 __HARDWARE_INC__:
 
+sheila_RD_NOP_2MHz		:= $FE34		; a location that can be read harmlessly and force a 2MHz cycle
+sheila_RD_NOP_1MHz		:= $FE00		; a location that can be read harmlessly and force a 1MHz cycle
 
 sheila_MEM_CTL			:= $FE31
 BITS_MEM_CTL_SWMOS		:= $01
