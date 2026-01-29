@@ -5,6 +5,7 @@ use strict;
 #use Data::Dumper;
 use List::Util qw/sum/;
 
+my %symbols = ();
 
 sub usage($$) {
 	my ($fh, $msg) = @_;
@@ -22,7 +23,10 @@ sub num($) {
 	} elsif ($i =~ /^(\d+)/) {
 		return 0 + $1;
 	} else {
-		return 0;
+		exists($symbols{$i}) or die "Missing symbol \"$i\".";
+		my $vv = $symbols{$i};
+		$vv eq $i && die "Circular symbol reference";
+		return num($vv);
 	}
 }
 
@@ -145,6 +149,15 @@ $state == $STATE_SECTION or die "Not correctly terminated at $.:0";
 
 close $fh_cfg;
 
+
+# rearrange symbols if present
+if (exists($hash_sections->{SYMBOLS})) {
+	my $ss = $hash_sections->{SYMBOLS};
+	foreach my $sss (@$ss) {
+		#print "SSSS:$sss->{key} => $sss->{values}->{value}\n";
+		$symbols{$sss->{key}} = $sss->{values}->{value};
+	}
+}
 
 my $STATE_M_WAIT_T1 = 0;
 my $STATE_M_WAIT_T2 = 1;
