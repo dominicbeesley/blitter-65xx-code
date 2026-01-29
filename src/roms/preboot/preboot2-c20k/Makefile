@@ -20,6 +20,8 @@ TARGETS_O = $(addprefix $(BUILD)/, $(TARGETS))
 
 .PHONY: all clean
 
+.DELETE_ON_ERROR:
+
 all:	$(TARGETS_O)
 ssd:	all
 deploy:	all
@@ -53,6 +55,8 @@ $(BUILD)/%.bin: $(OBJS_O) preboot2-c20k.cfg
 	da65 -v -S 0xC000 -o $@.da.S $@
 	cat $(basename $@).free.txt
 	echo "M.PRBOOT2 FFC000 FFC000" >$@.inf
+	./genck.pl $@
+
 
 clean:
 	-rm $(TARGETS_O)
