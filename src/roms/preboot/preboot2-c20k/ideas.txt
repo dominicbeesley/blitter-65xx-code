@@ -87,3 +87,9 @@ Target CPU
 
 
 
+Extended config block for
+=========================
+
+- station number
+- RAM/ROM placement e.g. remap each of ROM slots after mem detect
+- ChipRAM/BBRAM mapping for different RAM sizes (done at preboot)

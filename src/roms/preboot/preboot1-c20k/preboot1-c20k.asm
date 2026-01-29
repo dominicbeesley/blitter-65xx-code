@@ -31,10 +31,9 @@ KEY_COPY	= $69
 
 	.segment "ZPEXT": zeropage
 
-zp_txtptr:	.res	2
 zp_ctr:		.res	1
-pwrup:		.res	1
-
+zp_cksm:		.res	1
+zp_spi_act:	.res	2	; jmp indirect address of routine to call with SPI data
 	.bss
 
 	.rodata
@@ -74,6 +73,10 @@ handle_reset:	cld
 		ldx	#$FF
 		txs
 		
+		; prime JIM registers
+		lda	#JIM_DEVNO_BLITTER
+		sta	fred_JIM_DEVNO
+
 		lda	#'A'
 		jsr	debug_printc
 
@@ -92,9 +95,15 @@ handle_reset:	cld
 		lda	#'B'
 		jsr	debug_printc
 
-
+		; TODO: make this a subroutine and call twice, once with DEV deselected
 		lda	#$40
 		sta	zp_ctr		; number of pages to transfer
+
+		lda	#^JIM_BOOT_BASE
+		sta	fred_JIM_PAGE_HI
+		lda	#>JIM_BOOT_BASE
+		sta	fred_JIM_PAGE_LO
+		ldy	#<JIM_BOOT_BASE
 
 		; start SPI bulk read
 		jsr	spi_reset
@@ -109,17 +118,11 @@ handle_reset:	cld
 		lda	#$FF		; dummy
 		jsr	spi_write_cont
 
-		; prime JIM registers
-		lda	#JIM_DEVNO_BLITTER
-		sta	fred_JIM_DEVNO
-		lda	#^JIM_BOOT_BASE
-		sta	fred_JIM_PAGE_HI
-		lda	#>JIM_BOOT_BASE
-		sta	fred_JIM_PAGE_LO
-		ldy	#<JIM_BOOT_BASE
-
 @lp:		jsr	spi_write_cont
 		sta	JIM,Y
+		clc
+		adc	zp_cksm
+		sta	zp_cksm
 		iny
 		bne	@lp
 		inc	fred_JIM_PAGE_LO
@@ -130,6 +133,10 @@ handle_reset:	cld
 
 		jsr	spi_write_last
 
+		lda	zp_cksm
+		bne	@badboot
+
+
 		; force to map 0 mosram
 		lda	sheila_MEM_TURBO2
 		ora	#BITS_MEM_TURBO2_MAP0N1
@@ -137,6 +144,9 @@ handle_reset:	cld
 		lda	sheila_MEM_CTL
 		ora	#BITS_MEM_CTL_SWMOS
 		sta	sheila_MEM_CTL
+		jmp	reboot
+@badboot:	lda	#'!'
+		jsr	debug_printc
 
 reboot:		lda	#$FF
 		sta	JIM_DEVNO_BLITTER		; make sure JIM is deselected
