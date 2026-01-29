@@ -9,6 +9,7 @@
 #include "apps.h"
 #include "hw.h"
 #include "hardware.h"
+#include "debug.h"
 
 static bool l_list_render(void *sender, void *args);
 static bool app_mm_init(void *sender, void *arg);
@@ -19,17 +20,8 @@ struct mmi {
 	ui_app *app;
 };
 
-#define MMI_COUNT 11
+#define MMI_COUNT 2
 struct mmi menuitems [] = {
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
-	{"ROMSET", &app_romset},
 	{"ROMSET", &app_romset},
 	{"REBOOT", &app_reboot}
 };
@@ -88,6 +80,7 @@ bool app_mm_init(void *sender, void *arg) {
 bool app_mm_kp(void *sender, void *arg) {
 	char c = *(char *)arg;
 	int ix = l_list.selected_index;
+	debug_printf("KP:%02X\n", (long)c);
 	if (c == 13) {
 		if (ix >= 0 && ix < MMI_COUNT)
 			ui_start_app(menuitems[ix].app, NULL);

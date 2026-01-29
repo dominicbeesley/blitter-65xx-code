@@ -85,26 +85,31 @@ void keyb_init() {
 	_keyb_autoscan(1);
 }
 
+unsigned char key_prev = 0;
+
 void keyb_irq_ca2() {
 	unsigned char kc, ka;
 	// had a key-down irq, disable scan
-	poke(sheila_SYSVIA_ier, VIA_IFR_BIT_CA2);
-	_keyb_autoscan(0);
 
 	kc = keyb_scan(0x10);
 
-	if (ka)
+	if (kc && kc != key_prev)
 	{
+		key_prev = kc;
 		ka = keyb_code2ascii(kc, 0);
 		buffer_add(BUFFER_KEYBOARD, ka);
 	}
+
+	poke(sheila_SYSVIA_ier, VIA_IFR_BIT_CA2);
 }
 
 void keyb_irq_t1() {
 	unsigned char kc;
-	kc = keyb_scan(0x10);
-	if (!kc) {
-		poke(sheila_SYSVIA_ier, VIA_IFR_BIT_ANY|VIA_IFR_BIT_CA2);
-		_keyb_autoscan(1);
+	if (key_prev) {
+		if (!keyb_check_pressed(key_prev)) {
+			key_prev = 0;
+			poke(sheila_SYSVIA_ier, VIA_IFR_BIT_ANY|VIA_IFR_BIT_CA2);
+			_keyb_autoscan(1);
+		}
 	}
 }

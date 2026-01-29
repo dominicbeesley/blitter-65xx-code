@@ -28,6 +28,8 @@
 
 
 KEY_COPY	= $69
+KEY_BS	= $59
+KEY_CTRL	= $01
 
 	.segment "ZPEXT": zeropage
 
@@ -68,6 +70,11 @@ handle_irq:
 		rti
 
 
+ks:
+		sta	sheila_SYSVIA_ora_nh
+		bit	sheila_SYSVIA_ora_nh
+		rts
+
 handle_reset:	cld
 		sei
 		ldx	#$FF
@@ -87,9 +94,11 @@ handle_reset:	cld
 		lda	#$7F
 		sta	sheila_SYSVIA_ddra	; bit 7 in, others out
 
-		lda	#KEY_COPY
-		sta	sheila_SYSVIA_ora_nh
-		bit	sheila_SYSVIA_ora_nh
+		lda	#KEY_BS
+		jsr	ks
+		bpl	reboot
+		lda	#KEY_CTRL
+		jsr	ks
 		bpl	reboot
 
 		lda	#'B'

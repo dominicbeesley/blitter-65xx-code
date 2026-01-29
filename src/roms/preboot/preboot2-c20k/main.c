@@ -21,13 +21,11 @@ int main(void) {
 	hw_init();
 	keyb_init();
 	sound_init();
+	screen_cursor_at(&point0);
+	screen_cursor(0);
 
 	memcpy((char *)0x7C00, main_head, 8*40);
 	ui_init();
-	ui_start_app(&app_main_menu, NULL);
-
-	screen_cursor_at(&point0);
-	screen_cursor(0);
 
 	do { 
 		ui_poll();
@@ -36,3 +34,24 @@ int main(void) {
 	return 0;
 
 }
+
+
+#pragma code-name (push, "OVERLAY1")
+
+const char SOMERODATA[] = "THIS IS A STRING";
+
+int dosomething(int x, int y) {
+	return x * y;
+}
+
+#pragma code-name (pop)
+
+
+#pragma code-name (push, "OVERLAY2")
+
+int dosomething2(int x, int y) {
+	return x * y;
+}
+
+
+#pragma code-name (pop)

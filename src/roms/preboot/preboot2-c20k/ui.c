@@ -4,10 +4,12 @@
 #include "listbox.h"
 #include "util.h"
 #include "buffer.h"
+#include "debug.h"
+#include "apps.h"
 
 extern char buf[];
 
-ui_app *cur_app;
+ui_app *cur_app = NULL;
 
 rectangle r_head = {{3, 4}, {35, 3}};
 rectangle r_status = {{0, 24}, {40, 1}};
@@ -72,6 +74,12 @@ void set_status(const char *s) {
 	win_refresh(&w_status);
 }
 
+void ui_exit(void) {
+	if (cur_app != NULL && cur_app->parent != NULL)
+		ui_start_old(cur_app->parent, NULL);
+	else
+		ui_start_app(&app_main_menu, NULL);		
+}
 
 void ui_poll() {
 
@@ -88,14 +96,11 @@ void ui_poll() {
 					switch (c) {
 						case 0x1B:
 							//escape
-							if (cur_app != NULL && cur_app->parent != NULL) {
-								ui_start_old(cur_app->parent, NULL);
-							}
+							ui_exit();
 					}
 				}
 		}
 	}
-
 }
 
 
@@ -113,6 +118,7 @@ void ui_init() {
 	win_init(&w_main, WINDOW_OPT_NOCLEAR, &r_main, NULL);
 	win_open(&w_main, 1);
 
+	ui_start_app(&app_main_menu, NULL);
 }
 
 void ui_start_app(ui_app *app, void *args) {
