@@ -121,6 +121,27 @@ handle_reset:
 		cpx	#8
 		bcs	@slowb
 
+PER_1CS=10000
+
+
+		lda	#VIA_ACR_T1_CONT
+		sta	sheila_SYSVIA_acr
+		lda	#<(PER_1CS - 2) 
+		sta	sheila_SYSVIA_t1ll
+		lda	#>(PER_1CS - 2)
+		sta	sheila_SYSVIA_t1lh
+		sta	sheila_SYSVIA_t1ch
+		lda	#VIA_PCR_CB2_INP_NEG_EDGE|VIA_PCR_CB1_NEG_EDGE|VIA_PCR_CA2_INP_POS_EDGE|VIA_PCR_CA1_NEG_EDGE				
+		sta	sheila_SYSVIA_pcr		;
+			; CA1 to interrupt on negative edge (Frame sync)
+			; CA2 Handshake output for Keyboard
+			; CB1 interrupt on negative edge (end of conversion)
+			; CB2 Negative edge (Light pen strobe)
+		lda	VIA_IFR_BIT_ANY|VIA_IFR_BIT_T1
+		sta	sheila_SYSVIA_ier
+
+
+
 		; page in rom E - assume this is RAM, 
 		; TODO: check / report if not
 		lda	#$E

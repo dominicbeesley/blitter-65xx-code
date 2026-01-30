@@ -385,6 +385,32 @@ VIA_ACR_T1_ONE_PB7			:= $80
 
 VIA_ACR_T2_PB6				:= $20
 
+
+VIA_PCR_CB2_INP_NEG_EDGE		:= $00
+VIA_PCR_CB2_INT_NEG_EDGE		:= $20
+VIA_PCR_CB2_INP_POS_EDGE		:= $40
+VIA_PCR_CB2_INT_POS_EDGE		:= $60
+VIA_PCR_CB2_HAND_OUT			:= $80
+VIA_PCR_CB2_PULSE_OUT			:= $A0
+VIA_PCR_CB2_LOW_OUT			:= $C0
+VIA_PCR_CB2_HIGH_OUT			:= $E0
+
+VIA_PCR_CB1_NEG_EDGE			:= $00
+VIA_PCR_CB1_POS_EDGE			:= $10
+
+VIA_PCR_CA2_INP_NEG_EDGE		:= $00
+VIA_PCR_CA2_INT_NEG_EDGE		:= $02
+VIA_PCR_CA2_INP_POS_EDGE		:= $04
+VIA_PCR_CA2_INT_POS_EDGE		:= $06
+VIA_PCR_CA2_HAND_OUT			:= $08
+VIA_PCR_CA2_PULSE_OUT			:= $0A
+VIA_PCR_CA2_LOW_OUT			:= $0C
+VIA_PCR_CA2_HIGH_OUT			:= $0E
+
+VIA_PCR_CA1_NEG_EDGE			:= $00
+VIA_PCR_CA1_POS_EDGE			:= $01
+
+
 ;***********************************************************************
 ;* BBC B/B+ WD177x                                                     *
 ;***********************************************************************

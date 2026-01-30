@@ -46,7 +46,7 @@ bool app_reboot_kp(void *sender, void *arg) {
 
 			p.Y = 0;
 			surface_from_window(&s, &w_main);
-			surface_clear(&s, " ");
+			surface_clear(&s, ' ');
 			
 			for (p.X = 0; p.X < 38; p.X++) {
 				t = get_time();

@@ -52,18 +52,10 @@ unsigned char hw_interrupt(void) {
 	return 1;
 }
 
-#define PER_1CS 10000
 
 void hw_init(void) {
 
 	//setup timer 1 for 100Hz
-
-	poke(sheila_SYSVIA_acr, VIA_ACR_T1_CONT);
-	poke(sheila_SYSVIA_t1ll, (PER_1CS - 2) & 0xFF);
-	poke(sheila_SYSVIA_t1lh, (PER_1CS - 2) >> 8);
-	poke(sheila_SYSVIA_t1ch, (PER_1CS - 2) >> 8);
-
-	poke(sheila_SYSVIA_ier, VIA_IFR_BIT_ANY|VIA_IFR_BIT_T1);
 
 	set_irq(&hw_interrupt, &IRQ_STACK[0], IRQ_STACK_SIZE);
 }
