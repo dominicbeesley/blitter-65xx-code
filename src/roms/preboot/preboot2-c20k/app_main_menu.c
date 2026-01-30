@@ -30,6 +30,7 @@ struct mmi menuitems [] = {
 extern char buf[];
 
 ui_app app_main_menu = {
+	0,
 	{
 		&app_mm_init,	//init
 		NULL,			//poll
@@ -39,6 +40,9 @@ ui_app app_main_menu = {
 };
 
 static lb_def l_list; //TODO: make this global and share between apps?
+
+#pragma code-name (push, "OVERLAY0")
+
 
 bool l_list_render(void *sender, void *args) {
 	point pp;
@@ -57,13 +61,13 @@ bool l_list_render(void *sender, void *args) {
 	}
 	sprintf(buf, "%s%d.%s", p, (long)ix, menuitems[ix].label);
 
-	surface_render_str(s, &point0, buf);
+	surface_render_str(s, &point0, buf, 1);
 
 	return 1;
 }
 
 bool app_mm_init(void *sender, void *arg) {
-	lb_init(&w_main, &l_list, &l_list_render, MMI_COUNT, 2);
+	lb_init(&w_main, &l_list, &l_list_render, MMI_COUNT, 1);
 	l_list.selected_index = 0;
 	set_head_title(str_head_mainmenu, str_head_pleaseselect);
 
@@ -88,3 +92,5 @@ bool app_mm_kp(void *sender, void *arg) {
 	}
 	return 0;
 }
+
+#pragma code-name (pop)

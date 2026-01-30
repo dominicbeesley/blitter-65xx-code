@@ -11,9 +11,9 @@
 #define UI_EVENT_COUNT			4
 
 typedef struct ui_app {
+	unsigned char overlay_ix;
 	event_handler event_handlers[UI_EVENT_COUNT];
-	struct ui_app *parent;
-	
+	struct ui_app *parent;	
 } ui_app;
 
 extern void ui_start_app(ui_app *app, void *args);

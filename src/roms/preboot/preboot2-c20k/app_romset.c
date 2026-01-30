@@ -15,6 +15,7 @@ static bool app_rs_kp(void *sender, void *arg);
 extern char buf[];
 
 ui_app app_romset = {
+	0,
 	{
 		&app_rs_init,	//init
 		NULL,			//poll
@@ -25,6 +26,7 @@ ui_app app_romset = {
 
 static lb_def l_list; //TODO: make this global and share between apps?
 
+#pragma code-name (push, "OVERLAY0")
 
 bool l_list_render(void *sender, void *args) {
 	romset romset_g;
@@ -54,15 +56,15 @@ bool l_list_render(void *sender, void *args) {
 
 	sprintf(buf, "%s%s", p, t);
 	
-	surface_render_str(s, &point0, buf);
+	surface_render_str(s, &point0, buf, 1);
 	
 	cpu = romset_cpu_def_from_code(romset_g.cpu);
 	pp.X = 0;
 	pp.Y = 1;
-	surface_render_str(s, &pp, "\x86");
+	surface_render_str(s, &pp, "\x86", 0);
 	pp.X = 4;
 	sprintf(buf, "ROMS:%d, CPU:%s\n", (long)romset_g.len, cpu?cpu->label:"UNKNOWN");
-	surface_render_str(s, &pp, buf);
+	surface_render_str(s, &pp, buf, 1);
 
 	return 1;
 }
@@ -84,3 +86,5 @@ bool app_rs_kp(void *sender, void *arg) {
 	}
 	return 0;
 }
+
+#pragma code-name (pop)

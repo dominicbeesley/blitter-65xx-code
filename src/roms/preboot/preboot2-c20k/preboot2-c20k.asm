@@ -121,6 +121,11 @@ handle_reset:
 		cpx	#8
 		bcs	@slowb
 
+		; page in rom E - assume this is RAM, 
+		; TODO: check / report if not
+		lda	#$E
+		sta	sheila_ROMSEL
+
 		jmp	crt0_startup
 
 

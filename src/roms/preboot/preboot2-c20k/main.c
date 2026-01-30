@@ -35,23 +35,3 @@ int main(void) {
 
 }
 
-
-#pragma code-name (push, "OVERLAY1")
-
-const char SOMERODATA[] = "THIS IS A STRING";
-
-int dosomething(int x, int y) {
-	return x * y;
-}
-
-#pragma code-name (pop)
-
-
-#pragma code-name (push, "OVERLAY2")
-
-int dosomething2(int x, int y) {
-	return x * y;
-}
-
-
-#pragma code-name (pop)

@@ -6,6 +6,11 @@
 #include "buffer.h"
 #include "debug.h"
 #include "apps.h"
+#include "spi.h"
+
+#define APP_OVERLAY_SPI_BASE 0x704000
+#define APP_OVERLAY_MEM 0x8000
+#define APP_OVERLAY_SIZE 0x4000
 
 extern char buf[];
 
@@ -35,12 +40,12 @@ bool render_head(void *sender, void *arg) {
 
 	surface_from_window(&s, w);
 
-	surface_render_str(&s, &p, head_title);
+	surface_render_str(&s, &p, head_title, 1);
 	p.Y++;
-	surface_render_str(&s, &p, head_title);
+	surface_render_str(&s, &p, head_title, 1);
 
 	p.Y = 2;
-	surface_render_str(&s, &p, head_subtitle);
+	surface_render_str(&s, &p, head_subtitle, 1);
 
 	return 1;	
 }
@@ -63,7 +68,7 @@ bool render_status(void *sender, void *arg) {
 	surface_from_window(&s, w);
 
 	if (status) 
-		surface_render_str(&s, &point0, status);
+		surface_render_str(&s, &point0, status, 1);
 
 	return 1;
 }
@@ -105,7 +110,7 @@ void ui_poll() {
 
 
 void ui_init() {
-	win_init(&w_head, 0, &r_head, NULL);
+	win_init(&w_head, WINDOW_OPT_NOCLEAR, &r_head, NULL);
 	win_register_event(&w_head, WIN_EVENT_RENDER, &render_head);
 	win_open(&w_head, 0);
 
@@ -118,6 +123,7 @@ void ui_init() {
 	win_init(&w_main, WINDOW_OPT_NOCLEAR, &r_main, NULL);
 	win_open(&w_main, 1);
 
+	cur_app = NULL;
 	ui_start_app(&app_main_menu, NULL);
 }
 
@@ -126,13 +132,46 @@ void ui_start_app(ui_app *app, void *args) {
 	ui_start_old(app, args);
 }
 void ui_start_old(ui_app *app, void *args) {
-	cur_app = app;
-
+	unsigned char cksum;
+	unsigned char *p;
 	w_main.scroll = point0;
 	w_status.scroll = point0;
 	w_head.scroll = point0;
 	set_status("");
 	set_head_title("", "");
+
+	if (app == NULL)
+	{
+		set_status("App NULL");
+		cur_app = NULL;
+		return;
+	}
+
+	if (cur_app == NULL || cur_app->overlay_ix != app->overlay_ix) {
+		set_status("loading...");
+		spi_read_buf(
+			(void *)APP_OVERLAY_MEM, 
+			(unsigned long)APP_OVERLAY_SPI_BASE + (unsigned long)app->overlay_ix*(long)APP_OVERLAY_SIZE,
+			APP_OVERLAY_SIZE
+			);
+		cksum = 0;
+		for (p = (char *)0x8000; p < (char *)0xC000; p++)
+			cksum += *p;
+		if (cksum != 0)
+		{
+			sprintf(buf, "Bad CKSUM %X : %02X", 
+				(long)app->overlay_ix, 
+				(long)cksum);
+			set_status(buf);
+			cur_app = NULL;
+			return;
+		}
+
+		//checksum check
+	}
+
+	set_status("");
+	cur_app = app;
 
 	win_register_event(&w_main, WIN_EVENT_RENDER, app->event_handlers[UI_EVENT_RENDER_MAIN]);
 	app->event_handlers[UI_EVENT_INIT](app, args);	

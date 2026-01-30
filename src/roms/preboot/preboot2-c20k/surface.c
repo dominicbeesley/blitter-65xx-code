@@ -9,7 +9,7 @@ void surface_from_window(surface *surface, win_def *w) {
 	surface->scroll = w->scroll;
 }
 
-void surface_render_str(surface *s, const point *clientpoint, const char *str) {
+void surface_render_str(surface *s, const point *clientpoint, const char *str, bool cleareol) {
 	point sp; 			//screen point
 	point p;			//point relative to surface viewport
 	const char *pc = str;
@@ -36,6 +36,13 @@ void surface_render_str(surface *s, const point *clientpoint, const char *str) {
 		p.X++;
 		sp.X++;
 	}
+
+	if (cleareol)
+		while (sp.X < s->screenrect.topleft.X + s->screenrect.size.W)
+		{
+			screen_print_at(&sp, ' ');
+			sp.X++;
+		}
 }
 
 

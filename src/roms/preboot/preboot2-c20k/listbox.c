@@ -15,7 +15,6 @@ bool lb_render_item_int(lb_def *lb, surface *sw, int ix, rectangle *drawrect) {
 
 		if (surface_from_rect(sw, &sw_i, drawrect))
 		{
-			surface_clear(&sw_i, 0);
 			args.surface = &sw_i;
 			args.index = ix;
 			(*lb->event_handler_render)(lb, &args);
