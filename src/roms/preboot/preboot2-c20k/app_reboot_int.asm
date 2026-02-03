@@ -16,7 +16,7 @@ _app_reboot_reboot:
 		ora	#BITS_MEM_TURBO2_MAP0N1|BITS_MEM_TURBO2_THROTTLE|BITS_MEM_TURBO2_THROTTLE_MOS
 		sta	sheila_MEM_TURBO2		; map 0 forced - todo, get from preboot-1
 		
-		lda	#0
+		lda	#$7F
 		sta	sheila_SYSVIA_ier		; this will cause a cold boot! (TODO: get from preboot-1)
 		sta	sheila_SYSVIA_ifr
 
