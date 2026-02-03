@@ -604,13 +604,11 @@ oswordGetRomBase:
 		lda	(zp_mos_OSBW_X),Y		; get rom #
 	.ifdef MACH_ELK
 		eor	#$0C				; bodge address bases
+							; hole in Elk for both maps
 	.else
 		ldx	JIM+jim_offs_VERSION_Board_level
 		cpx	#VERSION_BOARD_C20K
 		bcs	@nohole				; assume > 4 has no roms hole
-
-
-		bcs	@nohole				; hole in Elk for both maps
 	.endif
 		cmp	#4
 		bcc	@nohole
