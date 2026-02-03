@@ -73,7 +73,7 @@ reserved area to save/restore these locations. On 6502 based systems it is
 expected that these locations will be intialised by the operating system.
 
 If preboot-2 is to be entered then the memory used by preboot-2 will be 
-overwritten by the loader.
+overwritten by the load routine.
 
 ### Preboot-2
 

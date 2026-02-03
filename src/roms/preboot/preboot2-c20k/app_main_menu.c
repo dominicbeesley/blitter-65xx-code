@@ -20,9 +20,10 @@ struct mmi {
 	ui_app *app;
 };
 
-#define MMI_COUNT 2
+#define MMI_COUNT 3
 struct mmi menuitems [] = {
 	{"ROMSET", &app_romset},
+	{"Clear BB", &app_clearbb},
 	{"REBOOT", &app_reboot}
 };
 

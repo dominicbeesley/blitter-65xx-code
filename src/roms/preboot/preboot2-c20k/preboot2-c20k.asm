@@ -140,8 +140,6 @@ PER_1CS=10000
 		lda	VIA_IFR_BIT_ANY|VIA_IFR_BIT_T1
 		sta	sheila_SYSVIA_ier
 
-
-
 		; page in rom E - assume this is RAM, 
 		; TODO: check / report if not
 		lda	#$E

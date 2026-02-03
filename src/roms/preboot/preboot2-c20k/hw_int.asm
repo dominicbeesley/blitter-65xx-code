@@ -1,7 +1,8 @@
-
+	.include "hardware.inc"
 
 	.export _intoff
 	.export _intrestore
+	.export _jim_page
 
 ;; unsigned char intoff();
 
@@ -18,3 +19,23 @@ _intrestore:
 	plp
 	rts
 
+
+_jim_page:
+	sta	tmp1
+
+	lda	#JIM_DEVNO_BLITTER
+	sta	fred_JIM_DEVNO
+
+	lda	fred_JIM_PAGE_LO
+	pha
+	lda	tmp1
+	sta	fred_JIM_PAGE_LO
+
+	lda	fred_JIM_PAGE_HI
+	pha
+	stx	fred_JIM_PAGE_HI
+
+	pla
+	tax
+	pla
+	rts

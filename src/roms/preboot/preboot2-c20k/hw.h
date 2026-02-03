@@ -13,4 +13,6 @@ extern void hw_init(void);
 
 extern unsigned long get_time(void);
 
+extern unsigned int jim_page(unsigned int);
+
 #endif
