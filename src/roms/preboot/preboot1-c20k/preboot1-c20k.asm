@@ -33,9 +33,14 @@ KEY_CTRL	= $01
 
 	.segment "ZPEXT": zeropage
 
-zp_ctr:		.res	1
-zp_cksm:		.res	1
-zp_spi_act:	.res	2	; jmp indirect address of routine to call with SPI data
+; TODO: 
+; - preserve zero-page on stack?
+; - preserve all memory in reserved area?
+; - if checksum fails, force hard-reset
+; - store map0n1 etc for preboot-2
+
+zp_ctr	:= <$00FD
+zp_cksm	:= <$00FF
 	.bss
 
 	.rodata
@@ -104,7 +109,6 @@ handle_reset:	cld
 		lda	#'B'
 		jsr	debug_printc
 
-		; TODO: make this a subroutine and call twice, once with DEV deselected
 		lda	#$40
 		sta	zp_ctr		; number of pages to transfer
 
