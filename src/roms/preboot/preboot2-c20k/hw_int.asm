@@ -3,6 +3,7 @@
 	.export _intoff
 	.export _intrestore
 	.export _jim_page
+	.importzp tmp1
 
 ;; unsigned char intoff();
 
