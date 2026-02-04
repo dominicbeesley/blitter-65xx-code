@@ -20,13 +20,12 @@ extern void app_clearbb_reboot(void);
 static bool app_clearbb_init(void *sender, void *arg);
 static bool app_clearbb_kp(void *sender, void *arg);
 
-ui_app app_clearbb = {
+const ui_app app_clearbb = {
 	0,
 	{
 		&app_clearbb_init,	//init
 		NULL,				//poll
-		&app_clearbb_kp,	//keypress
-		NULL				//render main
+		&app_clearbb_kp		//keypress
 	}
 };
 

@@ -14,7 +14,7 @@
 
 extern char buf[];
 
-ui_app *cur_app = NULL;
+ui_app_inst *cur_app = NULL;
 
 rectangle r_head = {{3, 4}, {35, 3}};
 rectangle r_status = {{0, 24}, {40, 1}};
@@ -23,7 +23,7 @@ win_def w_main;
 win_def w_head;
 win_def w_status;
 
-static void ui_start_old(ui_app *app, void *args);
+static void ui_start_old(ui_app_inst *app, void *args);
 
 
 char head_title[34];
@@ -79,11 +79,41 @@ void set_status(const char *s) {
 	win_refresh(&w_status);
 }
 
+ui_app_inst app_inst_clearbb = {
+	&app_clearbb,
+	NULL
+};
+
+ui_app_inst app_inst_reboot = {
+	&app_reboot,
+	NULL
+};
+
+
+const struct app_main_menu_mmi main_menu_items [] = {
+	{"Clear Memory", &app_inst_clearbb},
+	{"REBOOT", &app_inst_reboot}
+};
+
+const struct app_main_menu_data main_menu = {
+	main_menu_items,
+	sizeof(main_menu_items) / sizeof(struct app_main_menu_mmi)
+};
+
+
+ui_app_inst app_inst_main_menu = {
+	&app_main_menu,
+	NULL,
+	&main_menu
+};
+
 void ui_exit(void) {
 	if (cur_app != NULL && cur_app->parent != NULL)
 		ui_start_old(cur_app->parent, NULL);
-	else
-		ui_start_app(&app_main_menu, NULL);		
+	else {
+		cur_app = NULL;
+		ui_start_app(&app_inst_main_menu, NULL);		
+	}
 }
 
 void ui_poll() {
@@ -94,8 +124,8 @@ void ui_poll() {
 		if (!win_event_dispatch(WIN_EVENT_KEYPRESS, &c)) {
 			if (
 					!cur_app
-				 || !cur_app->event_handlers[UI_EVENT_KEYPRESS]
-				 || !cur_app->event_handlers[UI_EVENT_KEYPRESS](cur_app, &c)
+				 || !cur_app->def->event_handlers[UI_EVENT_KEYPRESS]
+				 || !cur_app->def->event_handlers[UI_EVENT_KEYPRESS](cur_app, &c)
 				)
 				{
 					switch (c) {
@@ -124,19 +154,23 @@ void ui_init() {
 	win_open(&w_main, 1);
 
 	cur_app = NULL;
-	ui_start_app(&app_main_menu, NULL);
+	ui_start_app(&app_inst_main_menu, NULL);
 }
 
-void ui_start_app(ui_app *app, void *args) {
+void ui_start_app(ui_app_inst *app, void *args) {
 	app->parent = cur_app;
 	ui_start_old(app, args);
 }
-void ui_start_old(ui_app *app, void *args) {
+
+void ui_start_old(ui_app_inst *app, void *args) {
 	unsigned char cksum;
 	unsigned char *p;
+	int i;
+
 	w_main.scroll = point0;
 	w_status.scroll = point0;
 	w_head.scroll = point0;
+
 	set_status("");
 	set_head_title("", "");
 
@@ -147,11 +181,11 @@ void ui_start_old(ui_app *app, void *args) {
 		return;
 	}
 
-	if (cur_app == NULL || cur_app->overlay_ix != app->overlay_ix) {
+	if (cur_app == NULL || cur_app->def->overlay_ix != app->def->overlay_ix) {
 		set_status("loading...");
 		spi_read_buf(
 			(void *)APP_OVERLAY_MEM, 
-			(unsigned long)APP_OVERLAY_SPI_BASE + (unsigned long)app->overlay_ix*(long)APP_OVERLAY_SIZE,
+			(unsigned long)APP_OVERLAY_SPI_BASE + (unsigned long)app->def->overlay_ix*(long)APP_OVERLAY_SIZE,
 			APP_OVERLAY_SIZE
 			);
 		cksum = 0;
@@ -160,7 +194,7 @@ void ui_start_old(ui_app *app, void *args) {
 		if (cksum != 0)
 		{
 			sprintf(buf, "Bad CKSUM %X : %02X", 
-				(long)app->overlay_ix, 
+				(long)app->def->overlay_ix, 
 				(long)cksum);
 			set_status(buf);
 			cur_app = NULL;
@@ -173,8 +207,11 @@ void ui_start_old(ui_app *app, void *args) {
 	set_status("");
 	cur_app = app;
 
-	win_register_event(&w_main, WIN_EVENT_RENDER, app->event_handlers[UI_EVENT_RENDER_MAIN]);
-	app->event_handlers[UI_EVENT_INIT](app, args);	
+	for (i = 0; i < WIN_EVENT_COUNT; i++) {
+		win_register_event(&w_main, i, NULL);
+	}
+
+	app->def->event_handlers[UI_EVENT_INIT](app, args);	
 	win_refresh(&w_main);
 	win_refresh(&w_head);
 	win_refresh(&w_status);

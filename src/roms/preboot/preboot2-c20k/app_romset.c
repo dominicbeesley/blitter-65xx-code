@@ -14,13 +14,12 @@ static bool app_rs_kp(void *sender, void *arg);
 
 extern char buf[];
 
-ui_app app_romset = {
+const ui_app app_romset = {
 	0,
 	{
 		&app_rs_init,	//init
 		NULL,			//poll
-		&app_rs_kp,		//keypress
-		NULL			//render main
+		&app_rs_kp		//keypress
 	}
 };
 
@@ -76,12 +75,17 @@ bool app_rs_init(void *sender, void *arg) {
 	return 1;
 }
 
+ui_app_inst app_romset_list_inst = {
+	&app_romset,
+	NULL
+};
+
 bool app_rs_kp(void *sender, void *arg) {
 	char c = *(char *)arg;
 	int ix = l_list.selected_index;
 	if (c == 13) {
 		if (ix >= 0 && ix < l_list.item_count)
-			ui_start_app(&app_romset_list, &ix);
+			ui_start_app(&app_romset_list_inst, &ix);
 		return 1;
 	}
 	return 0;

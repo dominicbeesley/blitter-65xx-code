@@ -16,13 +16,12 @@ extern void app_reboot_reboot(void);
 static bool app_reboot_init(void *sender, void *arg);
 static bool app_reboot_kp(void *sender, void *arg);
 
-ui_app app_reboot = {
+const ui_app app_reboot = {
 	0,
 	{
 		&app_reboot_init,	//init
 		NULL,				//poll
-		&app_reboot_kp,		//keypress
-		NULL				//render main
+		&app_reboot_kp		//keypress
 	}
 };
 

@@ -47,6 +47,8 @@ void win_redraw_from(win_def *w) {
 				surface_clear(&s, 0);
 			if (w->event_handlers[WIN_EVENT_RENDER])
 				(*w->event_handlers[WIN_EVENT_RENDER])(w, NULL);
+			else
+				surface_clear(&s, 0);
 			rectangle_surround(&r, &w->screenrect, &r);
 		}
 

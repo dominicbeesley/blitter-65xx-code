@@ -19,6 +19,8 @@ struct lb_struct_def {
 	int					selected_index;
 
 	event_handler		event_handler_render;
+
+	void*				data;
 };
 
 extern void lb_init(win_def *w, lb_def *lb, event_handler render_handler, int item_count, unsigned char item_height);

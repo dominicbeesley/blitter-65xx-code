@@ -15,13 +15,12 @@ static bool app_rsl_init(void *sender, void *arg);
 
 extern char buf[];
 
-ui_app app_romset_list = {
+const ui_app app_romset_list = {
 	0,
 	{
 		&app_rsl_init,	//init
 		NULL,			//poll
-		NULL,			//keypress
-		NULL			//render main
+		NULL			//keypress
 	}
 };
 

@@ -7,7 +7,6 @@
 #define UI_EVENT_INIT			0
 #define UI_EVENT_POLL			1
 #define UI_EVENT_KEYPRESS 		2
-#define UI_EVENT_RENDER_MAIN	3
 #define UI_EVENT_COUNT			4
 
 typedef struct ui_app {
@@ -16,7 +15,13 @@ typedef struct ui_app {
 	struct ui_app *parent;	
 } ui_app;
 
-extern void ui_start_app(ui_app *app, void *args);
+typedef struct ui_app_inst {
+	const ui_app *def;
+	struct ui_app_inst *parent;
+	void *data;
+} ui_app_inst;
+
+extern void ui_start_app(ui_app_inst *app, void *args);
 
 extern void ui_poll(void);
 extern void ui_init(void);
