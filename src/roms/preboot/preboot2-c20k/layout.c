@@ -77,14 +77,11 @@ void flash_wait(void) {
 }
 
 void flash_sector_erase(unsigned page) {
-	debug_printf("SECE:%04X...", (long)page);
 	flash_cmd(0x80);
 	flash_jim5555eqAAthen2A();
 	jim_page(page);
 	poke(JIM + 0, 0x30);
-	debug_printf("OK");
 	flash_wait();
-	debug_printf("\n");
 }
 
 //These assume running in MOS area so we are safe to tickle the Flash EEPROM
@@ -106,13 +103,11 @@ bool erase_slot(romloc *rl) {
 		while (pagectr < 0x40) {
 			jim_page(page);
 
-			debug_printf("E:%04X\n", (long)page);
 			memset((void *)JIM, 0xFF, 0x100);
 
 			page++;
 			pagectr++;
 		}
-		debug_printf("E:OK\n");
 		return 1;
 	}
 

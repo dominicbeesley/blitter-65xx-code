@@ -58,8 +58,6 @@ bool app_mm_init(void *sender, void *arg) {
 	ui_app_inst *appi = (ui_app_inst *)sender;
 	struct app_main_menu_data *menu = (struct app_main_menu_data *)appi->data;
 
-	debug_printf("MMIC:%d", (long)menu->item_count);
-
 	lb_init(&w_main, &l_list, &l_list_render, menu->item_count, 1);
 	l_list.data = sender;
 	l_list.selected_index = 0;
@@ -82,7 +80,6 @@ bool app_mm_kp(void *sender, void *arg) {
 	char c = *(char *)arg;
 	int ix = l_list.selected_index;
 
-	debug_printf("KP:%02X\n", (long)c);
 	if (c == 13) {
 		if (ix >= 0 && ix < menu->item_count)
 			ui_start_app(menu->items[ix].app, NULL);
