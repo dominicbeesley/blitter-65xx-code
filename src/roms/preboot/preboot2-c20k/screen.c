@@ -3,13 +3,6 @@
 #include <string.h>
 #include "debug.h"
 
-void screen_print_at(const point *sp, char c) {
-	char *p = screen_addr(sp);
-
-	if (p != SCREEN_ADDR_BAD)
- 		*p = c;
-}
-
 void screen_cursor_at(const point *sp) {
 	char *p = screen_addr(sp);
 

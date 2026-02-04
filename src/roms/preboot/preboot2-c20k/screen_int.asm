@@ -61,7 +61,8 @@
 	adc	tmp1
 	bcc	@s
 	inx
-@s:	rts
+@s:	clc
+	rts
 
 
 @badaddr:
@@ -69,6 +70,7 @@
 @badaddr2:
 	lda	#$FF
 	tax
+	sec
 	rts
 
 .endproc
@@ -91,6 +93,31 @@
 
 	rts
 .endproc
+
+
+
+;;void screen_print_at(const point *sp, char c) {
+
+	.export _screen_print_at
+.proc _screen_print_at:near
+	pha
+	jsr	popax
+	jsr	_screen_addr	
+	bcs	@o
+	sta	ptr1
+	stx	ptr1+1
+	pla
+	ldy	#0
+	sta	(ptr1),Y
+@o2:	lda	#0
+	tax
+	rts
+@o:	pla
+	jmp	@o2
+.endproc
+
+
+
 
 	.rodata
 
