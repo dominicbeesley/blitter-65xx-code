@@ -2,6 +2,8 @@
 	.importzp	sp, sreg, regsave, regbank
 	.importzp	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 
+	.include "hardware.inc"
+
 ; ---------------------------------------------------------------
 ; __near__ unsigned char * __near__ screen_addr (const point *p)
 ; ---------------------------------------------------------------
@@ -19,13 +21,25 @@
 
 	ldy	#0
 	lda	(ptr1),Y
+	sta	tmp1
+	iny
+	lda	(ptr1),Y
+	sta	tmp2
+	; fall thru to _screen_addr_int
+.endproc
+
+
+	; tmp1 = X
+	; tmp2 = Y
+.proc	_screen_addr_int: near
+
+	lda	tmp1
 	bmi	@badaddr
 	cmp	#$28
 	bcs	@badaddr
 	pha			; X checked and on machine stack
 
-	iny
-	lda	(ptr1),Y
+	lda	tmp2
 	bmi	@badaddr2
 	cmp	#$19
 	bcs	@badaddr2
@@ -58,3 +72,41 @@
 	rts
 
 .endproc
+
+;; void screen_init(void)
+
+	.export  _screen_init
+.proc _screen_init:near
+	lda	#$4B
+	sta	sheila_VIDPROC
+	ldx	#13
+@lp:	stx	sheila_CRTC_IX
+	lda	mo7_crtc, X
+	sta	sheila_CRTC_DAT
+	dex
+	bpl	@lp
+
+	lda	#0
+	tax
+
+	rts
+.endproc
+
+	.rodata
+
+mo7_crtc: 
+	.byte $3f				; 0 Horizontal Total	 =64
+	.byte $28				; 1 Horizontal Displayed =40
+	.byte $33				; 2 Horizontal Sync	 =&33  Note: &31 is a better value
+	.byte $24				; 3 HSync Width+VSync	 =&24  VSync=2, HSync=4
+	.byte $1e				; 4 Vertical Total	 =30
+	.byte $02				; 5 Vertical Adjust	 =2
+	.byte $19				; 6 Vertical Displayed	 =25
+	.byte $1b				; 7 VSync Position	 =&1B
+	.byte $93				; 8 Interlace+Cursor	 =&93  Cursor=2, Display=1, Interlace=Sync+Video
+	.byte $12				; 9 Scan Lines/Character =19
+	.byte $72				; 10 Cursor Start Line	  =&72	Blink=On, Speed=1/32, Line=18
+	.byte $13				; 11 Cursor End Line	  =19
+	.byte $0
+	.byte $0
+
