@@ -48,6 +48,8 @@ bool app_clearbb_init(void *sender, void *arg) {
 	return 1;
 }
 
+
+
 bool app_clearbb_kp(void *sender, void *arg) {
 	char c = *(char *)arg;
 	point p;
@@ -64,7 +66,7 @@ bool app_clearbb_kp(void *sender, void *arg) {
 
 
 			p = point0;
-			rl = cur_romset;
+			rl = cur_layout;
 			while (rl && rl->flags) {
 
 				if (rl->flags & ROMLOC_FLAGS_BBRAM && !(rl->flags & ROMLOC_FLAGS_PREBOOT)) {

@@ -10,6 +10,7 @@
 #define ROMLOC_FLAGS_FLASH		0x40
 #define ROMLOC_FLAGS_MOS		0x20
 
+#define SLOT_ANY				0xAA
 
 typedef struct romloc {
 	unsigned char slot;
@@ -17,7 +18,9 @@ typedef struct romloc {
 	unsigned char flags;
 } romloc;
 
-extern romloc *cur_romset;
+extern romloc *cur_layout;
+
+extern romloc *layout_find(unsigned char slot, unsigned char flags);
 
 extern bool erase_slot(romloc *loc);
 
