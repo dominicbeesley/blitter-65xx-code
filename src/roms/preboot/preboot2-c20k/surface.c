@@ -30,10 +30,11 @@ void surface_render_char(surface *s, const point *clientpoint, char c) {
 		screen_print_at(&sp, c);
 }
 
-void surface_render_str(surface *s, const point *clientpoint, const char *str, bool cleareol) {
+int surface_render_str(surface *s, const point *clientpoint, const char *str, bool cleareol) {
 	point sp; 			//screen point
 	point p;			//point relative to surface viewport
 	const char *pc = str;
+	int ret = 0;
 
 	p = *clientpoint;
 
@@ -42,7 +43,7 @@ void surface_render_str(surface *s, const point *clientpoint, const char *str, b
 	p.Y = p.Y - s->scroll.Y;
 
 	if (p.Y < 0 || p.Y >= s->screenrect.size.H)
-		return;
+		return -1;
 
 
 	// screen coord
@@ -56,6 +57,7 @@ void surface_render_str(surface *s, const point *clientpoint, const char *str, b
 		pc++;
 		p.X++;
 		sp.X++;
+		ret ++;
 	}
 
 	if (cleareol)
@@ -64,6 +66,7 @@ void surface_render_str(surface *s, const point *clientpoint, const char *str, b
 			screen_print_at(&sp, ' ');
 			sp.X++;
 		}
+	return ret;
 }
 
 
