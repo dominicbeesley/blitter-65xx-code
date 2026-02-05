@@ -79,13 +79,18 @@ void set_status(const char *s) {
 	win_refresh(&w_status);
 }
 
+struct app_clearbb_data clearbb_data;
+
 ui_app_inst app_inst_clearbb = {
 	&app_clearbb,
+	&clearbb_data,
 	NULL
 };
 
+
 ui_app_inst app_inst_reboot = {
 	&app_reboot,
+	NULL,
 	NULL
 };
 
@@ -103,8 +108,8 @@ const struct app_main_menu_data main_menu = {
 
 ui_app_inst app_inst_main_menu = {
 	&app_main_menu,
-	NULL,
-	&main_menu
+	&main_menu,
+	NULL
 };
 
 void ui_exit(void) {
@@ -121,19 +126,19 @@ void ui_poll() {
 	char c;
 
 	if (buffer_get(BUFFER_KEYBOARD, &c) >= 0) {
+
+		switch (c) {
+			case 0x1B:
+				//escape
+				ui_exit();
+				return;
+		}
+
 		if (!win_event_dispatch(WIN_EVENT_KEYPRESS, &c)) {
 			if (
-					!cur_app
-				 || !cur_app->def->event_handlers[UI_EVENT_KEYPRESS]
-				 || !cur_app->def->event_handlers[UI_EVENT_KEYPRESS](cur_app, &c)
-				)
-				{
-					switch (c) {
-						case 0x1B:
-							//escape
-							ui_exit();
-					}
-				}
+					cur_app
+				 && cur_app->def->event_handlers[UI_EVENT_KEYPRESS])
+				cur_app->def->event_handlers[UI_EVENT_KEYPRESS](cur_app, &c);
 		}
 	}
 }
@@ -210,6 +215,8 @@ void ui_start_old(ui_app_inst *app, void *args) {
 	for (i = 0; i < WIN_EVENT_COUNT; i++) {
 		win_register_event(&w_main, i, NULL);
 	}
+	screen_cursor(0);
+	w_main.userdata = app;
 
 	app->def->event_handlers[UI_EVENT_INIT](app, args);	
 	win_refresh(&w_main);

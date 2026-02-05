@@ -9,8 +9,7 @@ void surface_from_window(surface *surface, win_def *w) {
 	surface->scroll = w->scroll;
 }
 
-void surface_render_char(surface *s, const point *clientpoint, char c) {
-	point sp; 			//screen point
+bool surface_client_to_screen(surface *s, const point *clientpoint, point *sp) {
 	point p;			//point relative to surface viewport
 
 	p = *clientpoint;
@@ -20,15 +19,33 @@ void surface_render_char(surface *s, const point *clientpoint, char c) {
 	p.Y = p.Y - s->scroll.Y;
 
 	if (p.Y < 0 || p.Y >= s->screenrect.size.H)
-		return;
-
+		return 0;
 
 	// screen coord
-	sp.X = s->screenrect.topleft.X + p.X;
-	sp.Y = s->screenrect.topleft.Y + p.Y;
+	sp->X = s->screenrect.topleft.X + p.X;
+	sp->Y = s->screenrect.topleft.Y + p.Y;
 	if (p.X >= 0 && p.X < s->screenrect.size.W)
-		screen_print_at(&sp, c);
+		return 1;
+	else
+		return 0;
 }
+
+void surface_render_char(surface *s, const point *clientpoint, char c) {
+	point sp;
+	if (surface_client_to_screen(s, clientpoint, &sp)) {
+		screen_print_at(&sp, c);
+	}
+}
+
+void surface_cursor_at(surface *s, const point *clientpoint) {
+	point sp;
+	if (surface_client_to_screen(s, clientpoint, &sp)) {
+		screen_cursor_at(&sp);
+		screen_cursor(1);
+	} else
+		screen_cursor(0);
+}
+
 
 int surface_render_str(surface *s, const point *clientpoint, const char *str, bool cleareol) {
 	point sp; 			//screen point

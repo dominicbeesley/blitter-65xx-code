@@ -50,6 +50,8 @@ romloc *cur_layout  = &c20k_layout[0];
 #define FLASH_SECTOR_SIZE 	0x10
 #define FLASH_BASE 			0x8000
 
+extern void flash_wait(void);
+
 void flash_jim55(void) {
 	jim_page(FLASH_BASE + 0x55);
 }
@@ -71,11 +73,6 @@ void flash_cmd(unsigned char cmd) {
 	poke(JIM + 0x55, cmd);
 }
 
-void flash_wait(void) {
-	unsigned a = peek(JIM);
-	while (a != peek(JIM)) ;
-}
-
 void flash_sector_erase(unsigned page) {
 	flash_cmd(0x80);
 	flash_jim5555eqAAthen2A();
@@ -89,8 +86,8 @@ bool erase_slot(romloc *rl) {
 	unsigned short page;
 	unsigned short pagectr;
 
-		page = rl->page;
-		pagectr = 0;
+	page = rl->page;
+	pagectr = 0;
 
 	if ((rl->flags & ROMLOC_FLAGS_FLASH)!=0) {
 		while (pagectr < 0x40) {

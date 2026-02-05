@@ -16,10 +16,11 @@ struct surf_struct_def {
 
 
 extern void surface_from_window(surface *surface, win_def *);
-extern void surface_render_str(surface *w, const point *clientpoint, const char *str, bool cleareol);
+extern int surface_render_str(surface *w, const point *clientpoint, const char *str, bool cleareol);
 extern void surface_render_char(surface *w, const point *clientpoint, char c);
 extern void surface_clear(surface *surface, char c);
 extern bool surface_from_rect(surface *parent, surface *new, const rectangle *r);
 extern void surface_clear_rect(surface *surface, const rectangle *r, char c);
+extern void surface_cursor_at(surface *w, const point *clientpoint);
 
 #endif

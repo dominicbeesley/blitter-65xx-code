@@ -10,6 +10,9 @@
 #include "apps.h"
 #include "debug.h"
 #include "hw.h"
+#include "coords.h"
+
+
 
 extern void app_reboot_reboot(void);
 
@@ -26,8 +29,12 @@ const ui_app app_reboot = {
 };
 
 #pragma code-name (push, "OVERLAY0")
+#pragma rodata-name (push, "OVERLAY0_RO")
+
+const char str_head_reboot[] = "\x81REBOOT";
 
 bool app_reboot_init(void *sender, void *arg) {
+	
 	set_head_title(str_head_reboot, str_head_areyousure);
 	return 1;
 }
@@ -63,4 +70,5 @@ bool app_reboot_kp(void *sender, void *arg) {
 	return 1;
 }
 
+#pragma rodata-name (pop)
 #pragma code-name (pop)

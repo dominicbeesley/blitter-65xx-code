@@ -21,6 +21,12 @@ struct app_main_menu_data {
 	int item_count;
 };
 
+struct app_clearbb_data {
+	unsigned char ui_state;
+	unsigned char map;
+	unsigned char flash;
+};
+
 extern const ui_app app_reboot;
 extern const ui_app app_clearbb;
 

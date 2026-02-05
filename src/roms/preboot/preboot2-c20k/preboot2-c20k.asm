@@ -91,8 +91,33 @@ irqskip:
 handle_nmi:    
 		rti
 
-handle_brk:	sei
-		jmp	handle_brk
+dbph:		pha
+		lsr	A
+		lsr	A
+		lsr	A
+		lsr	A
+		jsr	dbphn
+		pla
+dbphn:		and	#$F
+		cmp	#10
+		bcc	@s
+		adc	#'A' - '0' - 10 - 1
+@s:		adc	#'0'
+dbp:		bit	debug_UART_status
+		bvs	dbp
+		sta	debug_UART_data
+		rts
+
+handle_brk:	lda	#'B'
+		jsr	dbp
+		lda	#'!'
+		jsr	dbp
+		lda	$106,X
+		jsr	dbph
+		lda	$105,X
+		jsr	dbph
+
+hang:		jmp	hang
 
 
 handle_reset:

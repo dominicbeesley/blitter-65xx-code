@@ -12,13 +12,12 @@
 typedef struct ui_app {
 	unsigned char overlay_ix;
 	event_handler event_handlers[UI_EVENT_COUNT];
-	struct ui_app *parent;	
 } ui_app;
 
 typedef struct ui_app_inst {
 	const ui_app *def;
-	struct ui_app_inst *parent;
 	void *data;
+	struct ui_app_inst *parent;
 } ui_app_inst;
 
 extern void ui_start_app(ui_app_inst *app, void *args);

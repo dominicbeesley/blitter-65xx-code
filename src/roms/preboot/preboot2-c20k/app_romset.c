@@ -26,6 +26,11 @@ const ui_app app_romset = {
 static lb_def l_list; //TODO: make this global and share between apps?
 
 #pragma code-name (push, "OVERLAY0")
+#pragma local-strings(1)
+#pragma rodata-name (push, "OVERLAY0_RO")
+
+const char str_head_romset[] = "\x82ROMSET";
+
 
 bool l_list_render(void *sender, void *args) {
 	romset romset_g;
@@ -71,7 +76,7 @@ bool l_list_render(void *sender, void *args) {
 bool app_rs_init(void *sender, void *arg) {
 	lb_init(&w_main, &l_list, &l_list_render, romset_count(), 2);
 	l_list.selected_index = 0;
-	set_head_title(str_head_mainmenu, str_head_pleaseselect);
+	set_head_title(str_head_romset, str_head_pleaseselect);
 	return 1;
 }
 
@@ -91,4 +96,5 @@ bool app_rs_kp(void *sender, void *arg) {
 	return 0;
 }
 
+#pragma rodata-name (pop)
 #pragma code-name (pop)
