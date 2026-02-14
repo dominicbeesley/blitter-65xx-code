@@ -12,6 +12,8 @@
         .importzp       sp
 
         .include        "zeropage.inc"
+        .include        "preboot.inc"
+        .include        "preboot_saves.inc"
 
 
 ; ------------------------------------------------------------------------
@@ -39,6 +41,11 @@ crt0_startup:
         jsr     initlib
 
 
+; =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+; preboot entry params
+; =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        lda     PREBOOT_SAVE_TURBO2
+        sta     _preboot_save_TURBO2
 
 ; Push the command-line arguments; and, call main().
 

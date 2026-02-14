@@ -26,7 +26,7 @@ struct lb_struct_def {
 extern void lb_init(win_def *w, lb_def *lb, event_handler render_handler, int item_count, unsigned char item_height);
 extern void lb_set_item_height(lb_def *lb, unsigned char);
 extern void lb_set_count(lb_def *lb, int);
-
+extern void lb_close(lb_def *lb);
 
 
 #endif

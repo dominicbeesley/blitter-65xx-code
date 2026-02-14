@@ -4,8 +4,9 @@
 #include "hardware.h"
 #include <string.h>
 #include "debug.h"
+#include "spi.h"
 
-romloc c20k_layout[] = {
+const romloc c20k_layout[] = {
 	{0x0, 0x7E00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
 	{0x1, 0x9E00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
 	{0x2, 0x7E40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
@@ -14,7 +15,7 @@ romloc c20k_layout[] = {
 	{0x5, 0x9E80, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
 	{0x6, 0x7EC0, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
 	{0x7, 0x9EC0, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
-	{0x8, 0x7F00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM|ROMLOC_FLAGS_MOS|ROMLOC_FLAGS_PREBOOT},
+	{0x8, 0x7F00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM|ROMLOC_FLAGS_PREBOOT},
 	{0x9, 0x9F00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH|ROMLOC_FLAGS_MOS},
 	{0xA, 0x7F40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
 	{0xB, 0x9F40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
@@ -31,7 +32,7 @@ romloc c20k_layout[] = {
 	{0x5, 0x9C80, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
 	{0x6, 0x7CC0, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
 	{0x7, 0x9CC0, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
-	{0x8, 0x7D00, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM|ROMLOC_FLAGS_MOS},
+	{0x8, 0x7D00, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
 	{0x9, 0x9D00, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH|ROMLOC_FLAGS_MOS},
 	{0xA, 0x7D40, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
 	{0xB, 0x9D40, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
@@ -45,7 +46,7 @@ romloc c20k_layout[] = {
 
 
 //TODO: detect at boot
-romloc *cur_layout  = &c20k_layout[0];
+const romloc *cur_layout  = &c20k_layout[0];
 
 #define FLASH_SECTOR_SIZE 	0x10
 #define FLASH_BASE 			0x8000
@@ -82,7 +83,7 @@ void flash_sector_erase(unsigned page) {
 }
 
 //These assume running in MOS area so we are safe to tickle the Flash EEPROM
-bool erase_slot(romloc *rl) {
+bool erase_slot(const romloc *rl) {
 	unsigned short page;
 	unsigned short pagectr;
 
@@ -110,8 +111,52 @@ bool erase_slot(romloc *rl) {
 
 }
 
-romloc *layout_find(unsigned char slot, unsigned char flags) {
-	romloc *ret = cur_layout;
+extern char buf[];
+
+bool write_slot_from_spi(const romloc *rl, unsigned long spiaddr) {
+	unsigned short page;
+	unsigned short pagectr;
+	int i;
+
+	page = rl->page;
+	pagectr = 0;
+
+	if ((rl->flags & ROMLOC_FLAGS_FLASH)!=0) {
+		erase_slot(rl);
+		while (pagectr < 0x40) {
+			spi_read_buf(buf, spiaddr, 0x100);
+
+			for (i = 0; i < 0x100; i++) {
+				flash_cmd(0xA0);
+				jim_page(page);
+				poke(JIM + i, buf[i]);
+				flash_wait();
+			}
+
+			spiaddr+= 0x100;
+			page ++;
+			pagectr ++;
+		}
+		return 1;
+	} else {
+		while (pagectr < 0x40) {
+
+			spi_read_buf(buf, spiaddr, 0x100);
+
+			jim_page(page);
+			memcpy((void *)JIM, buf, 0x100);
+
+			spiaddr+= 0x100;
+			page++;
+			pagectr++;
+		}
+		return 1;
+	}
+	
+}
+
+const romloc *layout_find(unsigned char slot, unsigned char flags) {
+	const romloc *ret = cur_layout;
 	while (ret && ret->flags) {
 		if (
 			(slot == SLOT_ANY || ret->slot == slot) &&
@@ -120,5 +165,22 @@ romloc *layout_find(unsigned char slot, unsigned char flags) {
 		ret++;
 	}
 
+	return NULL;
+}
+
+const romloc *layout_find_romset(const romset_rom_desc *rom, unsigned char mapflags) {
+	const romloc *ret = cur_layout;
+	while (ret && ret->flags) {
+		
+		if (
+			(ret->flags & mapflags) && 
+			(
+				(rom->ext_type == ROM_EXTTYPE_MOS && ret->flags & ROMLOC_FLAGS_MOS)
+			||  (rom->ext_type == ROM_EXTTYPE_ROM && ret->slot == rom->slot)
+			)
+		) 
+			return ret;
+		ret++;
+	}
 	return NULL;
 }

@@ -171,6 +171,14 @@ void lb_init(win_def *w, lb_def *lb, event_handler render_handler, int item_coun
 	win_refresh(w);
 }
 
+void lb_close(lb_def *lb) {
+	win_register_event(lb->window, WIN_EVENT_RENDER, &lb_render_win);	
+	win_register_event(lb->window, WIN_EVENT_KEYPRESS, &lb_keypress);	
+	win_refresh(lb->window);
+	lb->window->userdata = NULL;
+
+}
+
 
 void lb_set_item_height(lb_def *lb, unsigned char item_height) {
 	lb->item_height = item_height;

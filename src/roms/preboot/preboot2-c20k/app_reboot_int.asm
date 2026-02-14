@@ -2,6 +2,8 @@
 
 
 	.export	_app_reboot_reboot
+	.include "preboot_saves.inc"
+	.include "preboot.inc"
 
 		.segment "reboot_int"
 
@@ -10,14 +12,14 @@ _app_reboot_reboot:
 		lda	#$FF
 		sta	JIM_DEVNO_BLITTER		; make sure JIM is deselected
 
-		lda	#0
-		sta	sheila_MEM_LOMEMTURBO	; data may have disappeared now!
-		lda	sheila_MEM_TURBO2		
-		ora	#BITS_MEM_TURBO2_MAP0N1|BITS_MEM_TURBO2_THROTTLE|BITS_MEM_TURBO2_THROTTLE_MOS
-		sta	sheila_MEM_TURBO2		; map 0 forced - todo, get from preboot-1
+		lda	_preboot_save_TURBO2	; need to get this before mapping out lomem turbo
+		and	#<~BITS_MEM_TURBO2_PREBOOT
+		ldx	#0
+		stx	sheila_MEM_LOMEMTURBO	; data may have disappeared now!
+		sta	PREBOOT_SAVE_TURBO2	; store in safe area...to be picked up in stack bounce below
 		
 		lda	#$7F
-		sta	sheila_SYSVIA_ier		; this will cause a cold boot! (TODO: get from preboot-1)
+		sta	sheila_SYSVIA_ier		; this will cause a cold boot! (TODO: get from preboot-1, or should we force a cold-boot?)
 		sta	sheila_SYSVIA_ifr
 
 		ldx	#stackprog_end-stackprog-1
@@ -29,8 +31,10 @@ _app_reboot_reboot:
 
 
 stackprog:	lda	sheila_MEM_CTL
-		and	#<~BITS_MEM_CTL_SWMOS	; swmos off - todo, get from preboot-1 if not map0
+		and	#<~BITS_MEM_CTL_SWMOS	; swmos off - TODO:, get from preboot-1 if not map0, or should we force this?
 		sta	sheila_MEM_CTL
+		lda	PREBOOT_SAVE_TURBO2
+		sta	sheila_MEM_TURBO2
 		
 		jmp	($FFFC)
 stackprog_end:

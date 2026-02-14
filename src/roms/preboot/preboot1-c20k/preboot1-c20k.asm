@@ -152,6 +152,7 @@ handle_reset:	cld
 
 		; force to map 0 mosram
 		lda	sheila_MEM_TURBO2
+		sta	PREBOOT_SAVE_TURBO2
 		ora	#BITS_MEM_TURBO2_MAP0N1
 		sta	sheila_MEM_TURBO2
 		lda	sheila_MEM_CTL

@@ -40,9 +40,10 @@ int romset_count() {
 	}
 }
 
-bool romset_get_rom(int romset_ix, int ix, romset_rom_desc *rd) {
+unsigned long romset_get_rom(int romset_ix, int ix, romset_rom_desc *rd) {
 	romset r;
 	unsigned long addr;
+	unsigned long addr_ret;
 
 
 	addr = romset_get_index(romset_ix, &r);
@@ -51,6 +52,10 @@ bool romset_get_rom(int romset_ix, int ix, romset_rom_desc *rd) {
 	if (ix >= r.len)
 		return 0;
 	
+	addr_ret = addr + (unsigned long)ROMSET_SIZE 
+					+ (unsigned long)r.len * (unsigned long)ROMDESCR_SIZE
+					+ (unsigned long)ix * ROM_SIZE;
+
 	addr += (unsigned long)ROMSET_SIZE + 
 			(unsigned long)ix * (unsigned long)ROMDESCR_SIZE;
 
@@ -58,7 +63,7 @@ bool romset_get_rom(int romset_ix, int ix, romset_rom_desc *rd) {
 		rd, 
 		addr,
 		sizeof(romset_rom_desc));
-	return 1;
+	return addr_ret;
 }
 
 
@@ -96,9 +101,9 @@ char romset_slot_char(unsigned char code) {
 
 char* romset_rom_type_string(char *buf, unsigned char ext_type, unsigned char rom_type) {	
 	char *cpu = "?";
-	if (ext_type == 2) {
+	if (ext_type == ROM_EXTTYPE_MOS) {
 		buf += sprintf(buf, "MOS");
-	} else if (ext_type == 1) {
+	} else if (ext_type == ROM_EXTTYPE_ROM) {
 		buf += sprintf(buf, "ROM(");
 		if (rom_type & 0x80)
 			*buf++='S';

@@ -126,12 +126,16 @@ handle_reset:
 		ldx	#$FF
 		txs
 
+		ldx	PREBOOT_SAVE_TURBO2	;; TODO: this is a frig to copy into correct turbo memory, look at stashing in JIM?		
+
 		; set non-throttled, low-mem=turbo mode
 		lda	#$7F
 		sta	sheila_MEM_LOMEMTURBO
 		lda	sheila_MEM_TURBO2
 		and	#<~(BITS_MEM_TURBO2_THROTTLE|BITS_MEM_TURBO2_THROTTLE_MOS)
 		sta	sheila_MEM_TURBO2
+
+		stx	PREBOOT_SAVE_TURBO2
 
 		; do some hardware cleanup before crt0 startup
 

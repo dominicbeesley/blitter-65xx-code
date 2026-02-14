@@ -1,6 +1,7 @@
 #ifndef __LAYOUT_H__
 #define __LAYOUT_H__
 #include "types.h"
+#include "romset.h"
 
 #define ROMLOC_FLAGS_MAP0		0x01
 #define ROMLOC_FLAGS_MAP1		0x02
@@ -18,10 +19,12 @@ typedef struct romloc {
 	unsigned char flags;
 } romloc;
 
-extern romloc *cur_layout;
+extern const romloc *cur_layout;
 
-extern romloc *layout_find(unsigned char slot, unsigned char flags);
+extern const romloc *layout_find(unsigned char slot, unsigned char flags);
+extern const romloc *layout_find_romset(const romset_rom_desc *rom, unsigned char mapflags);
 
-extern bool erase_slot(romloc *loc);
+extern bool erase_slot(const romloc *loc);
+extern bool write_slot_from_spi(const romloc *rl, unsigned long spiaddr);
 
 #endif

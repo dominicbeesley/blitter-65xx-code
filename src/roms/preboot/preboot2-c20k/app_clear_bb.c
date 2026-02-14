@@ -6,7 +6,6 @@
 #include "event.h"
 #include "romset.h"
 #include "util.h"
-#include "strings.h"
 #include "apps.h"
 #include "debug.h"
 #include "hw.h"
@@ -169,7 +168,7 @@ bool app_clearbb_kp(void *sender, void *arg) {
 
 static void do_erase(struct app_clearbb_data *opts) {
 	surface s;
-	romloc *rl;
+	const romloc *rl;
 	unsigned char skip;
 	point p;
 	point p2;

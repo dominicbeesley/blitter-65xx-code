@@ -32,3 +32,11 @@ PB_CPU_z80	:=	8
 PB_CPU_68xxx	:=	12
 PB_CPU_6800	:=	16
 PB_CPU_RiscV	:=	20
+
+;=============================================================================
+;preboot-1 params
+;=============================================================================
+; these are the values of various registers before
+; preboot-1 forces the correct mode for the main preboot-2 program
+
+PREBOOT_SAVE_TURBO2	:= $180

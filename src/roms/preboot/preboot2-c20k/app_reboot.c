@@ -6,7 +6,6 @@
 #include "event.h"
 #include "romset.h"
 #include "util.h"
-#include "strings.h"
 #include "apps.h"
 #include "debug.h"
 #include "hw.h"
@@ -29,9 +28,11 @@ const ui_app app_reboot = {
 };
 
 #pragma code-name (push, "OVERLAY0")
+#pragma local-strings(1)
 #pragma rodata-name (push, "OVERLAY0_RO")
 
-const char str_head_reboot[] = "\x81REBOOT";
+static const char str_head_reboot[] = "\x81REBOOT";
+static const char str_head_areyousure[] = "\x88\x87" "Are you sure (Y/N)?\x89";
 
 bool app_reboot_init(void *sender, void *arg) {
 	

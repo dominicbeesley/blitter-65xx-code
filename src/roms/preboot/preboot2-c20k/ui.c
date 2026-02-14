@@ -7,10 +7,7 @@
 #include "debug.h"
 #include "apps.h"
 #include "spi.h"
-
-#define APP_OVERLAY_SPI_BASE 0x704000
-#define APP_OVERLAY_MEM 0x8000
-#define APP_OVERLAY_SIZE 0x4000
+#include "overlay.h"
 
 extern char buf[];
 
@@ -94,10 +91,20 @@ ui_app_inst app_inst_reboot = {
 	NULL
 };
 
+struct app_romset_data romset_data;
+
+ui_app_inst app_inst_romset = {
+	&app_romset,
+	&romset_data,
+	NULL
+};
+
+
 
 const struct app_main_menu_mmi main_menu_items [] = {
-	{"Clear Memory", &app_inst_clearbb},
-	{"REBOOT", &app_inst_reboot}
+	{"Clear memory", &app_inst_clearbb},
+	{"Load ROM set to flash", &app_inst_romset},
+	{"Reboot", &app_inst_reboot}
 };
 
 const struct app_main_menu_data main_menu = {
@@ -168,8 +175,6 @@ void ui_start_app(ui_app_inst *app, void *args) {
 }
 
 void ui_start_old(ui_app_inst *app, void *args) {
-	unsigned char cksum;
-	unsigned char *p;
 	int i;
 
 	w_main.scroll = point0;
@@ -181,33 +186,12 @@ void ui_start_old(ui_app_inst *app, void *args) {
 
 	if (app == NULL)
 	{
-		set_status("App NULL");
+		set_status("");
 		cur_app = NULL;
 		return;
 	}
 
-	if (cur_app == NULL || cur_app->def->overlay_ix != app->def->overlay_ix) {
-		set_status("loading...");
-		spi_read_buf(
-			(void *)APP_OVERLAY_MEM, 
-			(unsigned long)APP_OVERLAY_SPI_BASE + (unsigned long)app->def->overlay_ix*(long)APP_OVERLAY_SIZE,
-			APP_OVERLAY_SIZE
-			);
-		cksum = 0;
-		for (p = (char *)0x8000; p < (char *)0xC000; p++)
-			cksum += *p;
-		if (cksum != 0)
-		{
-			sprintf(buf, "Bad CKSUM %X : %02X", 
-				(long)app->def->overlay_ix, 
-				(long)cksum);
-			set_status(buf);
-			cur_app = NULL;
-			return;
-		}
-
-		//checksum check
-	}
+	overlay_ensure(app->def->overlay_ix);
 
 	set_status("");
 	cur_app = app;
