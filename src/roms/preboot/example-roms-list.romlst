@@ -1,5 +1,5 @@
 #define ROMS65 /home/domin/hostfs/roms65
-#define ROMS69 /home/domin/hostfs/roms69
+//#define ROMS69 /home/domin/hostfs/roms69
 
 DIR=${ROMS65}
 
@@ -25,10 +25,10 @@ M=MOS120.M
 CPU=6502
 M=OSTEST.M
 
-
-DIR=${ROMS69}
-[6809]
-CPU=6809
-1=6809BAS.bin
-M=mosrom-6809.bin
-F=UTILS.bin
+// Example for other CPU types
+// DIR=${ROMS69}
+// [6809]
+// CPU=6809
+// 1=6809BAS.bin
+// M=mosrom-6809.bin
+// F=UTILS.bin

@@ -61,6 +61,98 @@ ROM images (amongst other things) and then reboot the system.
 The preboot-2 may load further data and program overlays from the SPI flash as
 it is running.
 
+# Maps
+
+The C20K and Blitter boards have two ROM "maps" map 0 is usually used by the
+t65 core for NMOS 6502 compatible ROMs and games and map 1 is typically used
+by the hard-cpu (in the case of the C20K the on-board 65816).
+
+The user may switch between rom maps by holding down break for 3 seconds 
+or pressing the reset button next to the power socket whilst holding down
+option button 1 (on the c20k) or by fitting the SWROMX button or jumper on the
+blitter boards.
+
+# Using preboot
+
+The preboot can be entered at any time with suitable firmware by holding down
+break-ctrl-backspace (in that order) then release break whilst still holding
+ctrl-backspace.
+
+The machine should now reboot to the preboot main-menu, if it doesn't then it
+might be that a correct preboot image has not been located in the FPGA's SPI
+flash memory. See [Troubleshooting](#troubleshooting) for details.
+
+In general navigation is by using the up and down keys to select menu items
+and pressing RETURN to select an item. ESCape can be used to exit a menu.
+
+## Clear memory
+
+This option can be used to erase the battery backed and Flash EEPROMS should
+they become corrupted. You will be asked several questions before being asked
+to confirm.
+
+Map 0, 1, B: this indicates which ROM-set is to be erased
+(F)lash, (R)am or (B)oth: whether to erase Flash EEPROM or battery backed RAM
+
+Once this has been performed you may need to load a new ROMset for the map(s)
+you have just erased.
+
+## Load ROMSET
+
+This option can be used to initialise the Flash and BB ROMs from a pre-baked 
+image containing a number of ROMs called a "romset". A romset will usually,
+in addition to filing-system and utility ROMs, contain a MOS image which will
+be used to initialise the operating system slot.
+
+You will be presented with a list of romsets that are available in the FPGA's
+SPI Flash memory as a list. You can select an item from the list by using the
+up and down cursor keys and either RETURN to select that image or 'I' to 
+inspect the contents of the romset (press ESCape to return to the list of 
+romsets).
+
+When you have selected a ROMset to load you will be prompted which map to load
+to 0 or 1. 
+
+Note: when loading to a map any ROM slots that are not present in the image
+will _not_ be erased, for this reason it is usually wise to used the clear
+memory function to clear a map before loading a romset.
+
+
+# Preparing for Preboot
+
+You FPGA needs to be loaded with a newer (Feb 2026) firmware which has the 
+preboot-1 code baked into the FPGA core, you must then also load the preboot-2
+program and the romsets to the FPGA's SPI flash memory.
+
+# Creating Romsets
+
+You may use the [makeromset.pl](../../../scripts/makeromset.pl) script to 
+create your own romset binaries that can be loaded to the SPI Flash.
+
+The script takes a text file describing the roms to load, where they are
+located on your filing system and which slots they should occupy. An example
+script is provided [example-roms-list.romlst](example-roms-list.romlst)
+
+# Troubleshooting
+
+The preboot ROM may not boot it:
+ - the SPI Flash is locked by other software
+ - you have an older firmware before mid-Feb 2026
+ - the SPI Flash image has been corrupted
+ - you have not correctly loaded the preboot-2 image to the SPI Flash
+
+In the first case a full power-cycle can sometimes clear the problem.
+
+If you have an older firmware or you wish to update the preboot-2 image or
+romsets then follow the [Preparing for preboot](#preparing-for-preboot)
+instructions.
+
+If you are unsure and it is possible to attach an RV-debugger dongle to the
+FPGA then at boot time you should receive an "A" chracter for a normal reboot
+or "AB" for a break-ctrl-backspace boot. If this is followed by a "!" then
+that indicates that the search for a valid preboot image failed and that the
+SPI flash should be reloaded.
+
 # Technical notes
 
 ## Memory usage
@@ -101,5 +193,5 @@ Command line to map usb devices to WSL:
 
 Command line to load to SPI flash:
 
-	c:\Gowin\Gowin_V1.9.12_x64\Programmer\bin\programmer_cli.exe --device GW2A-18C --run 39 --spiaddr 0x700000 --mcuFile c:\Users\domin\OneDrive\Documents\GitHub\blitter-65xx-code\build\roms\preboot\preboot2-c20k\preboot2-c20k.bin
+	c:\Gowin\Gowin_V1.9.12_x64\Programmer\bin\programmer_cli.exe --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile c:\Users\domin\OneDrive\Documents\GitHub\blitter-65xx-code\build\roms\preboot\preboot2-c20k\preboot2-c20k.bin
 
