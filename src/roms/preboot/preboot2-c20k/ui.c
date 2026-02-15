@@ -103,7 +103,7 @@ ui_app_inst app_inst_romset = {
 
 const struct app_main_menu_mmi main_menu_items [] = {
 	{"Clear memory", &app_inst_clearbb},
-	{"Load ROM set to flash", &app_inst_romset},
+	{"Load ROM set", &app_inst_romset},
 	{"Reboot", &app_inst_reboot}
 };
 

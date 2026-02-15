@@ -13,6 +13,7 @@ static bool l_list_render(void *sender, void *args);
 static bool app_rs_init(void *sender, void *arg);
 static bool app_rs_kp(void *sender, void *arg);
 static void do_loadromset(struct app_romset_data *opt, bool check);
+static void do_askmap(void);
 
 extern char buf[];
 
@@ -31,9 +32,11 @@ static lb_def l_list; //TODO: make this global and share between apps?
 #pragma local-strings(1)
 #pragma rodata-name (push, "OVERLAY0_RO")
 
-static const char str_head_romset[] = "\x82ROMSET";
+static const char str_head_romset[] = "\x82" "ROMSET load";
+static const char str_head_pick_map[] = "\x82" "Which map?";
 static const char str_head_areyousure[] = "\x88\x87" "Are you sure (Y/N)?\x89";
 static const char str_head_pleaseselect[] = "\x86" "Cursor selects item, press return.";
+static const char str_main_map[] ="\x87" "Map 0/1";
 
 
 bool l_list_render(void *sender, void *args) {
@@ -114,22 +117,32 @@ bool app_rs_kp(void *sender, void *arg) {
 					state = 1;
 					lb_close(&l_list);
 					data->romset_ix = ix;
-					data->map = ROMLOC_FLAGS_MAP0;
-					do_loadromset(data, 1);
+					do_askmap();
 				}
 			}
 			break;
 		case 1:
+			if (c == '0') {
+				data->map = ROMLOC_FLAGS_MAP0;
+				do_loadromset(data, 1);
+				state = 2;
+			} else if (c == '1') {
+				data->map = ROMLOC_FLAGS_MAP1;
+				do_loadromset(data, 1);				
+				state = 2;
+			}
+			break;
+		case 2:
 			if (c == 'y')
 			{
-				state = 2;
+				state = 3;
 				do_loadromset(data, 0);
 			} else if (c == 'n') {
 				ui_exit();
 				return 1;
 			}
 			break;
-		case 2:
+		case 3:
 			ui_exit();
 			return 1;
 	}
@@ -140,6 +153,14 @@ bool app_rs_kp(void *sender, void *arg) {
 		return 1;
 	} else
 		return 0;
+}
+
+static void do_askmap() {
+	surface s;
+	surface_from_window(&s, &w_main);
+	surface_clear(&s, ' ');
+	set_head_title(str_head_romset, str_head_pick_map);
+	surface_render_str(&s, &point0, str_main_map, 1);
 }
 
 static void do_loadromset(struct app_romset_data *opt, bool check) {
@@ -158,6 +179,7 @@ static void do_loadromset(struct app_romset_data *opt, bool check) {
 	surface_clear(&s, ' ');
 
 	set_head_title(str_head_romset, (check)?"\x88\x87" "Are you sure?" "\x89":"\x06" "Loading...");
+	set_status((opt->map == ROMLOC_FLAGS_MAP0)?"Romset will be loaded to map 0":"Romset will be loaded to map 1");
 	screen_cursor(0);
 
 	addr = romset_get_index(opt->romset_ix, &romset_g);
