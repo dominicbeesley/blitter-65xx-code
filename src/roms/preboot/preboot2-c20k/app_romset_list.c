@@ -5,7 +5,6 @@
 #include "event.h"
 #include "romset.h"
 #include "util.h"
-#include "strings.h"
 #include "debug.h"
 
 int romset_ix;
@@ -30,6 +29,7 @@ static lb_def l_list; //TODO: make this global and share between apps?
 #pragma local-strings(1)
 #pragma rodata-name (push, "OVERLAY0_RO")
 
+const char str_romsetlist[] = "\x82List Romset contents";
 
 bool l_list_render(void *sender, void *args) {
 	romset_rom_desc rd;
@@ -95,7 +95,8 @@ bool app_rsl_init(void *sender, void *arg) {
 
 	lb_init(&w_main, &l_list, &l_list_render, ct, 2);
 	l_list.selected_index = 0;
-	set_head_title("ROMSETLIST", "???");
+	sprintf(buf, "\x83%s", r.title);
+	set_head_title(str_romsetlist, buf);
 	return 1;
 }
 

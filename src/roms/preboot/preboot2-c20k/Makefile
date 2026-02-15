@@ -10,7 +10,7 @@ A_OBJS=	preboot2-c20k main_head spi crt0 screen_int surface_int keyboard_int \
 		hw_int sound_int app_reboot_int layout_int
 C_OBJS=	main screen window surface listbox hex hw keyboard util debug doprnt \
 		buffer coords romset ui app_romset app_main_menu app_reboot \
-		sound app_clear_bb layout overlay preboot_saves
+		sound app_clear_bb layout overlay preboot_saves app_romset_list 
 LIBS=none.lib
 
 TARGETS=preboot2-c20k.bin

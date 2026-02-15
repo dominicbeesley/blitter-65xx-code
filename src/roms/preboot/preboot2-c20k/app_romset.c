@@ -8,6 +8,7 @@
 #include "util.h"
 #include "apps.h"
 #include "layout.h"
+#include "apps.h"
 
 static bool l_list_render(void *sender, void *args);
 static bool app_rs_init(void *sender, void *arg);
@@ -35,13 +36,13 @@ static lb_def l_list; //TODO: make this global and share between apps?
 static const char str_head_romset[] = "\x82" "ROMSET load";
 static const char str_head_pick_map[] = "\x82" "Which map?";
 static const char str_head_areyousure[] = "\x88\x87" "Are you sure (Y/N)?\x89";
-static const char str_head_pleaseselect[] = "\x86" "Cursor selects item, press return.";
+static const char str_head_pleaseselect[] = "\x86" "Cursor, RETurn, (I)nspect.";
 static const char str_main_map[] ="\x87" "Map 0/1";
-
+static const char str_selpre[] = "\x86\x9D\x83";
 
 bool l_list_render(void *sender, void *args) {
 	romset romset_g;
-	char *p, *t;
+	const char *p, *t;
 	unsigned long addr;
 	const romset_cpu_def *cpu;
 	point pp;
@@ -53,7 +54,7 @@ bool l_list_render(void *sender, void *args) {
 	l = (lb_def *)sender;
 
 	if (l->selected_index == ix) {
-		p = "\x86\x9D\x83";
+		p = str_selpre;
 	} else {
 		p = "   ";
 	}
@@ -95,7 +96,8 @@ bool app_rs_init(void *sender, void *arg) {
 }
 
 ui_app_inst app_romset_list_inst = {
-	&app_romset,
+	&app_romset_list,
+	NULL,
 	NULL
 };
 
@@ -119,6 +121,9 @@ bool app_rs_kp(void *sender, void *arg) {
 					data->romset_ix = ix;
 					do_askmap();
 				}
+			} else if (c == 'i') {
+				ui_start_app(&app_romset_list_inst, (void *)&ix);
+				return 1;
 			}
 			break;
 		case 1:

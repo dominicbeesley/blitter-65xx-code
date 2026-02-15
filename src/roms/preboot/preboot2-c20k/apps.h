@@ -6,7 +6,7 @@
 struct mmi;
 
 extern const ui_app app_romset;
-//extern const ui_app app_romset_list;
+extern const ui_app app_romset_list;
 extern const ui_app app_main_menu;
 
 struct ui_app_inst;
