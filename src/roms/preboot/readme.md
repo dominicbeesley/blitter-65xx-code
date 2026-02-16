@@ -124,6 +124,47 @@ You FPGA needs to be loaded with a newer (Feb 2026) firmware which has the
 preboot-1 code baked into the FPGA core, you must then also load the preboot-2
 program and the romsets to the FPGA's SPI flash memory.
 
+~~Andy C - These instructions have been written for the gowin programmer_cli
+utility, mainly because I couldn't get my openFPGAloader to load binary files
+to SPI Flash. I'm not sure if that is due to me running on WSL instead of 
+true Linux, an outdated openFPGAloader or just that openFPGAloader doesn't
+support the Primer 20K! The symptoms are that it starts to program, then 
+complains about the Flash being unknown/protected. But it does seem to 
+bulk-erase the SPI - rather than just erasing the sectors it needs to. It 
+would be good if you could provide any insights!~~
+
+~~Andy C - according to Hoglet you may or may not need to add a 
+--cable-index 5 argument to all the commands below, or do further fannying 
+around to get the Gowin programmer_clk program to work! Let me know how you 
+get on!~~
+
+The Gowin programmer tool on windows is rather fussy and must be started
+either with the current directory set to the programmer\bin directory of the
+Gowin tools or with the full path to the tool specified on the command line.
+When specifying --fsFile or --mcuFile arguments the full path must be 
+specified.
+
+## Flash new firmware to SPI
+
+Use the usual tool-chain to load a newer C20K.fs or C20K816only.fs file to
+the FPGA's flash ROM
+
+```
+	[full path to gowin programmer]\programmer_cli --device GW2A-18C --run 36 --fsFile [full path to C20K.fs or C20K816only.fs]
+```
+
+## Flash the preboot-2 image to SPI
+
+```
+	[full path to gowin programmer]\programmer_cli.exe --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile [full path...]\preboot2-c20k.bin
+```
+
+## Flash Romsets to SPI
+
+```
+	[full path to gowin programmer]\programmer_cli.exe --device GW2A-18C --run 39 --spiaddr 0x320000 --mcuFile [full path...]\romsets.bin
+```
+
 # Creating Romsets
 
 You may use the [makeromset.pl](../../../scripts/makeromset.pl) script to 
@@ -195,3 +236,8 @@ Command line to load to SPI flash:
 
 	c:\Gowin\Gowin_V1.9.12_x64\Programmer\bin\programmer_cli.exe --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile c:\Users\domin\OneDrive\Documents\GitHub\blitter-65xx-code\build\roms\preboot\preboot2-c20k\preboot2-c20k.bin
 
+
+TODO:
+ - make preboot-1 image deploy from code project to vhdl proj instead of hard-coded paths in c20k.vhd, c20k816only.vhd
+ - make preboot-1 preserve ZP, STACK data areas when not booting
+ - make an "exit-preboot" register to release hard cpu from reset and/or suspect t65
