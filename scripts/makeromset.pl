@@ -257,8 +257,8 @@ close($fh_list);
 open(my $fh_o, ">:raw:", $fn_binout) or die "Cannot open binary file \"$fn_binout\" for output: $!";
 
 foreach my $d (@$romlist) {
-	print $fh_o pack("C C Z32 x30", (scalar keys %{$d->{roms}}, $d->{cpu}, $d->{title}));
-	print "$d->{title}\n";
+	print $fh_o pack("C C Z32 A4 x26", (scalar keys %{$d->{roms}}, $d->{cpu}, $d->{title}, "RoMs"));
+	print "$d->{title}!\n";
 
 	foreach my $s (sort keys %{$d->{roms}}) {
 		my $r = $d->{roms}->{$s};

@@ -1,7 +1,9 @@
 #ifndef __OVERLAY_H__
 #define __OVERLAY_H__
 
-#define APP_OVERLAY_SPI_BASE 0x704000
+#include "preboot.h"
+
+#define APP_OVERLAY_SPI_BASE (PREBOOT_BASE + 0x4000)
 #define APP_OVERLAY_MEM 0x8000
 #define APP_OVERLAY_SIZE 0x4000
 

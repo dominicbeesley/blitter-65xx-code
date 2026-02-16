@@ -42,7 +42,8 @@ Offset	Length	Description
 +0		1		Length in 16K ROMS &1..&0 (1 to 16)
 +1		1       Target CPU
 +2		32		Title, 0 terminated, 0 padded
-+34		30		reserved
++34		4		"RoMs" - identification string
++38		26		reserved
 +64		64*N	ROM descriptors...
 		16K*N	ROM binaries
 

@@ -1,6 +1,7 @@
 #ifndef __ROMSET_H__
 #define __ROMSET_H__
 
+#include "preboot.h"
 #include "types.h"
 
 typedef struct romset_struct_romset romset;
@@ -9,9 +10,10 @@ struct romset_struct_romset {
 	unsigned char len;
 	unsigned char cpu;
 	char title[32];	
+	unsigned long ident;
 };
 
-#define ROMSET_BASE 0x720000
+#define ROMSET_BASE (PREBOOT_BASE + 0x020000)
 #define ROMSET_SIZE 64
 #define ROMDESCR_SIZE 64
 #define ROM_SIZE 16384

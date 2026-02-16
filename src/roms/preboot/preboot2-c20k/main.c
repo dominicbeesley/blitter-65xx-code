@@ -16,8 +16,6 @@ char buf[100];
 
 int main(void) {
 
-	debug_printf("HELLO\n");
-
 	screen_init();
 	hw_init();
 	keyb_init();

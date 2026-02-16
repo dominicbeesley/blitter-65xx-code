@@ -30,6 +30,8 @@ int romset_count() {
 	romset r;
 	while (1) {
 		spi_read_buf(&r, addr, sizeof(romset));
+		if (r.ident != (unsigned long)0x734D6F52)
+			return ret;
 		if (!r.len)
 			return ret;
 		ret++;
