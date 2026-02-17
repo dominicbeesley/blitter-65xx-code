@@ -102,73 +102,73 @@ void surface_clear_rect(surface *s, const rectangle *r, char c) {
 	surface_clear(&sw, c);	
 }
 
-bool surface_from_rect(surface *parent, surface *new, const rectangle *clientrect) {
+// bool surface_from_rect(surface *parent, surface *new, const rectangle *clientrect) {
 
-	char *p;
-	coord diff;
-	coord SX, SY;
-	coord SCX, SCY;
-	rectangle r;		//modified to fit in viewport bounds
+// 	char *p;
+// 	coord diff;
+// 	coord SX, SY;
+// 	coord SCX, SCY;
+// 	rectangle r;		//modified to fit in viewport bounds
 
-	r = *clientrect;
+// 	r = *clientrect;
 
-	SCX = 0;
-	SCY = 0;
-	SX = r.topleft.X + parent->screenrect.topleft.X - parent->scroll.X;
-	SY = r.topleft.Y + parent->screenrect.topleft.Y - parent->scroll.Y;
+// 	SCX = 0;
+// 	SCY = 0;
+// 	SX = r.topleft.X + parent->screenrect.topleft.X - parent->scroll.X;
+// 	SY = r.topleft.Y + parent->screenrect.topleft.Y - parent->scroll.Y;
 
-	//left bound check
-	diff = parent->screenrect.topleft.X + parent->screenrect.size.W - (SX + r.size.W);
-	if (diff < 0)
-		r.size.W += diff;
+// 	//left bound check
+// 	diff = parent->screenrect.topleft.X + parent->screenrect.size.W - (SX + r.size.W);
+// 	if (diff < 0)
+// 		r.size.W += diff;
 
-	if (r.size.W < 0) goto bad;
+// 	if (r.size.W < 0) goto bad;
 
-	//bottom bound check
-	diff = (parent->screenrect.topleft.Y + parent->screenrect.size.H) - (SY + r.size.H);
-	if (diff < 0)
-		r.size.H += diff;
+// 	//bottom bound check
+// 	diff = (parent->screenrect.topleft.Y + parent->screenrect.size.H) - (SY + r.size.H);
+// 	if (diff < 0)
+// 		r.size.H += diff;
 
-	if (r.size.H < 0) goto bad;
+// 	if (r.size.H < 0) goto bad;
 
-	//right bound check
-	diff = SX - parent->screenrect.topleft.X;
-	if (diff < 0) {
-		r.size.W += diff;
-		SX -= diff;
-		SCX = -diff;
-	}
+// 	//right bound check
+// 	diff = SX - parent->screenrect.topleft.X;
+// 	if (diff < 0) {
+// 		r.size.W += diff;
+// 		SX -= diff;
+// 		SCX = -diff;
+// 	}
 
-	if (r.size.W < 0) goto bad;
+// 	if (r.size.W < 0) goto bad;
 
-	//top bound check
-	diff = SY - parent->screenrect.topleft.Y;
-	if (diff < 0) {
-		r.size.H += diff;
-		SY -= diff;
-		SCY = -diff;
-	}
+// 	//top bound check
+// 	diff = SY - parent->screenrect.topleft.Y;
+// 	if (diff < 0) {
+// 		r.size.H += diff;
+// 		SY -= diff;
+// 		SCY = -diff;
+// 	}
 
-	if (r.size.H < 0) goto bad;
+// 	if (r.size.H < 0) goto bad;
 
-	new->screenrect.topleft.X = SX;
-	new->screenrect.topleft.Y = SY;
-	new->screenrect.size.W = r.size.W;
-	new->screenrect.size.H = r.size.H;
-	new->scroll.X = SCX;
-	new->scroll.Y = SCY;
+// 	new->screenrect.topleft.X = SX;
+// 	new->screenrect.topleft.Y = SY;
+// 	new->screenrect.size.W = r.size.W;
+// 	new->screenrect.size.H = r.size.H;
+// 	new->scroll.X = SCX;
+// 	new->scroll.Y = SCY;
 
-	return 1;
+// 	return 1;
 
-bad:	
+// bad:	
 
-	new->screenrect.topleft.X = 0;
-	new->screenrect.topleft.Y = 0;
-	new->screenrect.size.W = 0;
-	new->screenrect.size.H = 0;
-	new->scroll.X = 0;
-	new->scroll.Y = 0;
-	return 0;
+// 	new->screenrect.topleft.X = 0;
+// 	new->screenrect.topleft.Y = 0;
+// 	new->screenrect.size.W = 0;
+// 	new->screenrect.size.H = 0;
+// 	new->scroll.X = 0;
+// 	new->scroll.Y = 0;
+// 	return 0;
 
 
-}
+// }

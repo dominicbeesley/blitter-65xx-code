@@ -24,10 +24,10 @@ int main(void) {
 	screen_cursor(0);
 
 	overlay_init();
-	ui_init();
-
 	overlay_ensure(0);
 	memcpy((char *)0x7C00, main_head, 8*40);
+
+	ui_init();
 
 	do { 
 		ui_poll();
