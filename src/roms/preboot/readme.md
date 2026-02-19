@@ -135,7 +135,7 @@ would be good if you could provide any insights!*
 
 *@AndyC - according to Hoglet you may or may not need to add a 
 --cable-index 5 argument to all the commands below, or do further fannying 
-around to get the Gowin programmer_clk program to work! Let me know how you 
+around to get the Gowin programmer_cli program to work! Let me know how you 
 get on!*
 
 The Gowin programmer tool on windows is rather fussy and must be started
@@ -150,19 +150,19 @@ Use the usual tool-chain to load a newer C20K.fs or C20K816only.fs file to
 the FPGA's flash ROM
 
 ```
-	> [full path to gowin programmer]\programmer_cli --device GW2A-18C --run 36 --fsFile [full path to C20K.fs or C20K816only.fs]
+	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 36 --fsFile [full path to C20K.fs or C20K816only.fs]
 ```
 
 ## Flash the preboot-2 image to SPI
 
 ```
-	> [full path to gowin programmer]\programmer_cli.exe --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile [full path...]\preboot2-c20k.bin
+	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile [full path...]/preboot2-c20k.bin
 ```
 
 ## Flash Romsets to SPI
 
 ```
-	> [full path to gowin programmer]\programmer_cli.exe --device GW2A-18C --run 39 --spiaddr 0x320000 --mcuFile [full path...]\romsets.bin
+	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x320000 --mcuFile [full path...]/romsets.bin
 ```
 
 # Creating Romsets
@@ -173,6 +173,8 @@ create your own romset binaries that can be loaded to the SPI Flash.
 The script takes a text file describing the roms to load, where they are
 located on your filing system and which slots they should occupy. An example
 script is provided [example-roms-list.romlst](example-roms-list.romlst)
+
+TODO: documentation for creating a .lst file
 
 # Troubleshooting
 
