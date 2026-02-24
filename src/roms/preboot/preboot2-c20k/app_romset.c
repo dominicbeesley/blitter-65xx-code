@@ -142,6 +142,8 @@ bool app_rs_kp(void *sender, void *arg) {
 			{
 				state = 3;
 				do_loadromset(data, 0);
+				set_head_title(str_head_romset, "\x87" "Done.");
+				set_status("Press a key to exit...");
 			} else if (c == 'n') {
 				ui_exit();
 				return 1;
@@ -184,7 +186,8 @@ static void do_loadromset(struct app_romset_data *opt, bool check) {
 	surface_clear(&s, ' ');
 
 	set_head_title(str_head_romset, (check)?"\x88\x87" "Are you sure?" "\x89":"\x06" "Loading...");
-	set_status((opt->map == ROMLOC_FLAGS_MAP0)?"Romset will be loaded to map 0":"Romset will be loaded to map 1");
+	sprintf(buf, "Romset will be loaded to map %x", (long)((opt->map == ROMLOC_FLAGS_MAP0)?0:1));
+	set_status(buf);
 	screen_cursor(0);
 
 	addr = romset_get_index(opt->romset_ix, &romset_g);
