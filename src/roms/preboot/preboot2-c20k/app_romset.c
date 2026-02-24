@@ -204,9 +204,10 @@ static void do_loadromset(struct app_romset_data *opt, bool check) {
 			surface_render_str(&s, &p, buf, 0);
 			return;
 		}
+		romset_rom_type_string(buf + 128, rom_g.ext_type, rom_g.rom_type);
 		sprintf(buf, "\x82" "%c %12.12s %24.24s", 
 			romset_slot_char(rom_g.slot), 
-			romset_rom_type_string(buf + 128, rom_g.ext_type, rom_g.rom_type), 
+			buf + 128, 
 			rom_g.title);
 		surface_render_str(&s, &p, buf, 0);
 		p.Y++;
