@@ -149,21 +149,43 @@ specified.
 Use the usual tool-chain to load a newer C20K.fs or C20K816only.fs file to
 the FPGA's flash ROM
 
+GoWin:
+
 ```
 	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 36 --fsFile [full path to C20K.fs or C20K816only.fs]
 ```
 
+openFPGAloader:
+```
+	> openFPGALoader --verbose-level 2 --cable ft2232 --write-flash  [full path to C20K.fs or C20K816only.fs]
+```
+
+
 ## Flash the preboot-2 image to SPI
 
+GoWin:
 ```
 	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile [full path...]/preboot2-c20k.bin
 ```
 
+openFPGAloader:
+```
+	> openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x300000 --bitstream [full path...]/preboot2-c20k.bin
+```
+
+
 ## Flash Romsets to SPI
 
+GoWin:
 ```
 	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x320000 --mcuFile [full path...]/romsets.bin
 ```
+
+openFPGAloader:
+```
+	>openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x320000 --bitstream [full path...]//romset.bin
+```
+
 
 # Creating Romsets
 
