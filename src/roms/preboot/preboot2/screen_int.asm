@@ -134,6 +134,6 @@ mo7_crtc:
 	.byte $12				; 9 Scan Lines/Character =19
 	.byte $72				; 10 Cursor Start Line	  =&72	Blink=On, Speed=1/32, Line=18
 	.byte $13				; 11 Cursor End Line	  =19
-	.byte $0
-	.byte $0
+	.byte $28				; 12 start H
+	.byte $0					; 13 start L
 

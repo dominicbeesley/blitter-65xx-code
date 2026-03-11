@@ -21,7 +21,9 @@
 ; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ; SOFTWARE.
 
+.ifdef C20K
 		.include 	"c20k-hardware.inc"
+.endif
 		.include 	"hardware.inc"
 		.include		"preboot.inc"
 		.include		"spi.inc"
@@ -30,6 +32,10 @@
 KEY_COPY	= $69
 KEY_BS	= $59
 KEY_CTRL	= $01
+
+LAT_KEYSCAN = 3
+LAT_SHIFT = 6
+LAT_CAPS = 7
 
 	.segment "ZPEXT": zeropage
 
@@ -45,35 +51,25 @@ zp_cksm	:= <$00FF
 
 	.rodata
 
+spi_head:.byte	$FF, <SPI_BOOT_BASE, >SPI_BOOT_BASE, ^SPI_BOOT_BASE, $B
+
 	.code
-
-;;debug_hex:	pha
-;;		lsr	A
-;;		lsr	A
-;;		lsr	A
-;;		lsr	A
-;;		jsr	debug_hexnyb
-;;		pla
-;;
-;;		; fall thru
-;;
-;;debug_hexnyb:	and	#$F
-;;		cmp	#$A
-;;		bcc	@s
-;;		adc	#'A'-'0'-11
-;;@s:		adc	#'0'
-;;
-;;		; fall thru
-
-debug_printc:	bit	debug_UART_status
-		bvs	debug_printc
-		sta	debug_UART_data
-		rts
 
 handle_nmi:
 handle_irq:
 		rti
 
+flash:		
+		jsr	flash2
+		eor	#8
+flash2:		sta	sheila_SYSVIA_orb
+		ldx	#0
+		ldy	#0
+@l:		dey
+		bne	@l
+		dex
+		bne	@l
+@w:		rts
 
 ks:
 		sta	sheila_SYSVIA_ora_nh
@@ -89,15 +85,22 @@ handle_reset:	cld
 		lda	#JIM_DEVNO_BLITTER
 		sta	fred_JIM_DEVNO
 
-		lda	#'A'
-		jsr	debug_printc
+
 
 		; check for key combo // TODO: check for other keys?
-		
-		lda	#3
+
+		lda	#$F
+		sta	sheila_SYSVIA_ddrb	; slow latch setup
+		lda	#LAT_KEYSCAN
 		sta	sheila_SYSVIA_orb		; stop auto-scan
 		lda	#$7F
 		sta	sheila_SYSVIA_ddra	; bit 7 in, others out
+
+		lda	#LAT_CAPS+8
+		sta	sheila_SYSVIA_orb
+		lda	#LAT_SHIFT+8
+		sta	sheila_SYSVIA_orb
+
 
 		lda	#KEY_BS
 		jsr	ks
@@ -106,8 +109,9 @@ handle_reset:	cld
 		jsr	ks
 		bpl	reboot
 
-		lda	#'B'
-		jsr	debug_printc
+		lda	#LAT_CAPS
+		jsr	flash
+		
 
 		lda	#$40
 		sta	zp_ctr		; number of pages to transfer
@@ -120,16 +124,11 @@ handle_reset:	cld
 
 		; start SPI bulk read
 		jsr	spi_reset
-		lda	#$0B		; fast read
+		ldx	#4
+@hl:		lda	spi_head, X
 		jsr	spi_write_cont
-		lda	#^SPI_BOOT_BASE
-		jsr	spi_write_cont
-		lda	#>SPI_BOOT_BASE
-		jsr	spi_write_cont
-		lda	#<SPI_BOOT_BASE
-		jsr	spi_write_cont
-		lda	#$FF		; dummy
-		jsr	spi_write_cont
+		dex	
+		bpl	@hl
 
 @lp:		jsr	spi_write_cont
 		sta	JIM,Y
@@ -159,8 +158,9 @@ handle_reset:	cld
 		ora	#BITS_MEM_CTL_SWMOS
 		sta	sheila_MEM_CTL
 		jmp	reboot
-@badboot:	lda	#'!'
-		jsr	debug_printc
+@badboot:	lda	#LAT_SHIFT
+		jsr	flash
+
 
 reboot:		lda	#$FF
 		sta	JIM_DEVNO_BLITTER		; make sure JIM is deselected
