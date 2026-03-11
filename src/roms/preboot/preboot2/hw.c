@@ -30,7 +30,7 @@ unsigned char hw_interrupt(void) {
 
 	unsigned char b;
 
-	b = peek(sheila_SYSVIA_ifr);
+	b = peek(sheila_SYSVIA_ifr) & peek(sheila_SYSVIA_ier);
 	if (b & VIA_IFR_BIT_ANY)
 	{
 		b = b & ~ VIA_IFR_BIT_ANY;

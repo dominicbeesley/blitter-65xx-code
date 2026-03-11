@@ -52,7 +52,7 @@ initirq:
 		sta	_testval
 		lda     #.lobyte(__INTERRUPTOR_COUNT__*2)
         	sta     irqcount
-;        	cli
+        	cli
         	rts
 
 doneirq:	lda	#0
@@ -70,7 +70,6 @@ handle_irq:    	pha
         	bne     handle_brk
 
 ; It's an IRQ.
-
         	cld
 
 ; Call the chained IRQ handlers.
@@ -141,7 +140,7 @@ handle_reset:
 
 		lda	#$7F
 		sta	sheila_SYSVIA_ier	; TODO: we should maybe use this to detect hard/cold/boot and pass on to client
-
+		sta	sheila_SYSVIA_ifr
 
 		ldx	#$0f
 		stx	sheila_SYSVIA_ddrb
@@ -153,20 +152,23 @@ handle_reset:
 PER_1CS=10000
 
 
-		lda	#VIA_ACR_T1_CONT
-		sta	sheila_SYSVIA_acr
-		lda	#<(PER_1CS - 2) 
-		sta	sheila_SYSVIA_t1ll
-		lda	#>(PER_1CS - 2)
-		sta	sheila_SYSVIA_t1lh
-		sta	sheila_SYSVIA_t1ch
 		lda	#VIA_PCR_CB2_INP_NEG_EDGE|VIA_PCR_CB1_NEG_EDGE|VIA_PCR_CA2_INP_POS_EDGE|VIA_PCR_CA1_NEG_EDGE				
 		sta	sheila_SYSVIA_pcr		;
 			; CA1 to interrupt on negative edge (Frame sync)
 			; CA2 Handshake output for Keyboard
 			; CB1 interrupt on negative edge (end of conversion)
 			; CB2 Negative edge (Light pen strobe)
-		lda	VIA_IFR_BIT_ANY|VIA_IFR_BIT_T1
+
+		lda	#VIA_ACR_T1_CONT
+		sta	sheila_SYSVIA_acr
+
+		lda	#<(PER_1CS - 2) 
+		sta	sheila_SYSVIA_t1ll
+		lda	#>(PER_1CS - 2)
+		sta	sheila_SYSVIA_t1lh
+		sta	sheila_SYSVIA_t1ch
+
+		lda	#VIA_IFR_BIT_ANY|VIA_IFR_BIT_T1
 		sta	sheila_SYSVIA_ier
 
 		; page in rom E - assume this is RAM, 
