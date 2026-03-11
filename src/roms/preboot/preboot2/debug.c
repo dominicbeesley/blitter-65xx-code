@@ -4,10 +4,14 @@
 #include "doprnt.h"
 
 int debug_putc(int dev, int c) {
+
+#ifdef C20K
 	while (peek(debug_UART_status) & DBUG_UART_STAT_TXF)	
 		;
 	poke(debug_UART_data, c);
 
+#endif
+	
 	return c;
 }
 
