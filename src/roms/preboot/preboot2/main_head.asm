@@ -4,4 +4,14 @@
 
 	.segment "OVERLAY0_RO"
 
-_main_head:	.incbin "main_head.mo7"
+
+
+.ifdef C20K
+_main_head:
+	.incbin "main_head.mo7"
+.endif
+
+.ifdef MK2
+_main_head:
+	.incbin "main_head.mk2.mo7"
+.endif
