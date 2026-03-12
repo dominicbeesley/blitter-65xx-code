@@ -16,7 +16,7 @@ BUILDP2=$BUILD/preboot2/mk2
 set -e
 
 make all
-$SCRIPTS/makeromset.pl example-roms-list.romlst $BUILD/romset.bin
+$SCRIPTS/makeromset.pl example-roms-list-mk2.romlst $BUILD/romset.bin
 
 srec_cat -Output $BUILD/romset.hex -Intel $BUILD/romset.bin -Binary
 srec_cat -Output $BUILDP2/preboot2.hex -Intel $BUILDP2/preboot2.bin -Binary
