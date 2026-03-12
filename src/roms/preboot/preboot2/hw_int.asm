@@ -40,3 +40,54 @@ _jim_page:
 	tax
 	pla
 	rts
+
+	
+;; extern void keyb_irq_t1(void);
+;; extern void keyb_irq_ca2(void);
+;; unsigned char hw_interrupt(void) {
+
+
+	.export	_hw_interrupt:near
+	.proc	_hw_interrupt:near
+
+	lda	sheila_SYSVIA_ifr
+	and	sheila_SYSVIA_ier
+
+	bpl	@sknovia
+
+	and	#$7F
+	pha
+
+	and	#VIA_IFR_BIT_T1
+	beq	@skt1
+	
+	; T1 interrupt
+	inc	_time
+	bne	@st
+	inc	_time+1
+	bne	@st
+	inc	_time+2
+	bne	@st
+	inc	_time+3
+@st:
+	lda	sheila_SYSVIA_ier
+	and	#VIA_IFR_BIT_CA2
+	bne	@skendvia
+	jsr	_keyb_irq_t1
+	jmp	@skendvia
+@skt1:	pla
+	pha
+	and	#VIA_IFR_BIT_CA2
+	beq	@skendvia
+	jsr	_keyb_irq_ca2
+@skendvia:
+	pla
+	sta	sheila_SYSVIA_ifr
+
+@sknovia:
+	lda	#1
+	ldx	#0
+	rts
+
+
+	.endproc
