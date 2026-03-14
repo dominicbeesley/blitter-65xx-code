@@ -27,8 +27,20 @@ M=OSTEST.M
 
 //Example for other CPU types
 DIR=${ROMS69}
-[6809]
+[6809 standard]
 CPU=6809
-1=6809BAS.bin
-M=mosrom-6809.bin
-F=UTILS.bin
+1=BASIC.R
+M=MOS6809.M
+F=UTILS09.R
+
+[6309 standard]
+CPU=6309
+1=BAS6368.R
+M=MOS6309.M
+F=UTILS09.R
+
+[6309 native mode]
+CPU=6309
+1=BAS6368.R
+M=MOS630N.M
+F=UTILS09.R
