@@ -606,6 +606,7 @@ oswordGetRomBase:
 		eor	#$0C				; bodge address bases
 							; hole in Elk for both maps
 	.else
+		bcs	@nohole				; Cy set above for map1
 		ldx	JIM+jim_offs_VERSION_Board_level
 		cpx	#VERSION_BOARD_C20K
 		bcs	@nohole				; assume > 4 has no roms hole
@@ -615,7 +616,7 @@ oswordGetRomBase:
 		cmp	#8
 		bcc	@sys2
 		; calculate offset of rom in area
-@nohole:	pha
+@nohole:		pha
 
 		ror	a
 		ror	a
