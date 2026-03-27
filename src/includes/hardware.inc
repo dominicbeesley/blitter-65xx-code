@@ -1,6 +1,10 @@
 	.IFNDEF __HARDWARE_INC__
 __HARDWARE_INC__:
 
+sheila_RD_NOP_2MHz		:= $FE30		; a location that can be read harmlessly and force a 2MHz cycle
+sheila_RD_NOP_1MHz		:= $FE00		; a location that can be read harmlessly and force a 1MHz cycle
+
+sheila_ROMSEL			:= $FE30
 
 sheila_MEM_CTL			:= $FE31
 BITS_MEM_CTL_SWMOS		:= $01
@@ -13,6 +17,9 @@ sheila_MEM_DEBUG_SAVE		:= $FE32
 
 sheila_MEM_TURBO2		:= $FE36
 BITS_MEM_TURBO2_THROTTLE	:= $80
+BITS_MEM_TURBO2_THROTTLE_MOS	:= $40
+BITS_MEM_TURBO2_PREBOOT		:= $20
+BITS_MEM_TURBO2_MAP0N1		:= $10
 
 sheila_MEM_LOMEMTURBO		:= $FE37
 sheila_ROM_THROTTLE_0		:= $FE33
@@ -20,6 +27,9 @@ sheila_ROM_THROTTLE_1		:= $FE35
 sheila_ROM_AUTOHAZEL_0		:= $FE38
 sheila_ROM_AUTOHAZEL_1		:= $FE39
 
+
+sheila_CRTC_IX				:= $FE00
+sheila_CRTC_DAT				:= $FE01
 
 sheila_ACIA_CTL		:=	$FE08
 ACIA_RDRF		:=	$01
@@ -172,6 +182,10 @@ VERSION_BOARD_MK2		:=	$2
 VERSION_BOARD_MK3		:=	$3
 VERSION_BOARD_C20K		:=	$4
 
+jim_page_CONFIG			:=	$FC40
+jim_offs_CONFIG_STATION_ID	:=	$10
+
+
 ;; FC 0088	
 BLCAPS_0_CHIPSET		:= $01
 BLCAPS_0_DMA			:= $02
@@ -294,10 +308,10 @@ SHEILA_ROMCTL_SWR_ELK	:=	$FE05
 
 ROMCTL_BITS_FLEX	:=	$10
 
-ROMCTL_MOS_JIMEN	:=	$02
 ROMCTL_MOS_SWMOS	:=	$01
 
-	
+sheila_VIDPROC		:=  $FE20	
+sheila_VIDPROC_PAL	:=  $FE21
 SHEILA_NULA_CTLAUX	:=	$FE22
 SHEILA_NULA_PALAUX	:=	$FE23
 
@@ -323,27 +337,6 @@ sheila_SYSVIA_pcr			:= $FE4C
 sheila_SYSVIA_ifr			:= $FE4D
 sheila_SYSVIA_ier			:= $FE4E
 sheila_SYSVIA_ora_nh			:= $FE4F
-
-;***********************************************************************
-;* SYS VIA - slow data bus RTC                                         *
-;***********************************************************************
-
-	.IFDEF MACH_CHIPKIT
-BITS_RTC_AS_ON	:=		$88			; PB7
-BITS_RTC_AS_OFF :=		$08			;
-BITS_RTC_CS	:=		$04			; latch
-BITS_RTC_DS	:=		$02			; latch
-BITS_RTC_RnW	:=		$01			; latch
-BITS_LAT_ON	:=		$08			; latch
-
-RTC_REG_SECONDS	:=		$0
-RTC_REG_MINUTES	:=		$2
-RTC_REG_HOURS	:=		$4
-RTC_REG_DOW	:=		$6
-RTC_REG_DAY	:=		$7
-RTC_REG_MONTH	:=		$8
-RTC_REG_YEAR	:=		$9
-	.ENDIF
 
 
 ;***********************************************************************
@@ -390,6 +383,36 @@ VIA_ACR_SHIFTMODE_7			:= $1C
 
 VIA_ACR_T1_MASK				:= $C0
 VIA_ACR_T1_CONT				:= $40
+VIA_ACR_T1_CONT_PB7			:= $C0
+VIA_ACR_T1_ONE				:= $00
+VIA_ACR_T1_ONE_PB7			:= $80
+
+VIA_ACR_T2_PB6				:= $20
+
+
+VIA_PCR_CB2_INP_NEG_EDGE		:= $00
+VIA_PCR_CB2_INT_NEG_EDGE		:= $20
+VIA_PCR_CB2_INP_POS_EDGE		:= $40
+VIA_PCR_CB2_INT_POS_EDGE		:= $60
+VIA_PCR_CB2_HAND_OUT			:= $80
+VIA_PCR_CB2_PULSE_OUT			:= $A0
+VIA_PCR_CB2_LOW_OUT			:= $C0
+VIA_PCR_CB2_HIGH_OUT			:= $E0
+
+VIA_PCR_CB1_NEG_EDGE			:= $00
+VIA_PCR_CB1_POS_EDGE			:= $10
+
+VIA_PCR_CA2_INP_NEG_EDGE		:= $00
+VIA_PCR_CA2_INT_NEG_EDGE		:= $02
+VIA_PCR_CA2_INP_POS_EDGE		:= $04
+VIA_PCR_CA2_INT_POS_EDGE		:= $06
+VIA_PCR_CA2_HAND_OUT			:= $08
+VIA_PCR_CA2_PULSE_OUT			:= $0A
+VIA_PCR_CA2_LOW_OUT			:= $0C
+VIA_PCR_CA2_HIGH_OUT			:= $0E
+
+VIA_PCR_CA1_NEG_EDGE			:= $00
+VIA_PCR_CA1_POS_EDGE			:= $01
 
 
 ;***********************************************************************
@@ -416,5 +439,22 @@ W1770_DRVSEL_BIT_nMR			:= $20
 
 JIM_DEVNO_HOG1MPAULA			:= $D0
 JIM_DEVNO_BLITTER			:= $D1
+
+debug_UART_status			:= $FC10
+debug_UART_data				:= $FC11
+
+DBUG_UART_STAT_TXF			:= $40
+DBUG_UART_STAT_RXF			:= $80
+
+;***********************************************************************
+;* Mk.2 Blitter / C20K Configuration Flash                             *
+;***********************************************************************
+
+fred_SPI_CTL				:= $FC50
+fred_SPI_STAT				:= $FC50
+fred_SPI_DIV				:= $FC51
+fred_SPI_READ_DATA  			:= $FC52
+fred_SPI_WRITE_END 			:= $FC52
+fred_SPI_WRITE_CONT  			:= $FC53
 
 	.ENDIF

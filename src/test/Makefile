@@ -3,8 +3,8 @@
 SSD=$(SSDS)/blittest.ssd
 DEPLOY=$(DEPLOY_TOP)/blittest
 
-SUBDIRS=test-aeris test-hdmi test-line-plot
-OBJS=test-aeris/test-aeris.bin test-hdmi/test-hdmi.bin test-line-plot/test-line.bin
+SUBDIRS=test-aeris test-hdmi test-line-plot test-spi
+OBJS=test-aeris/test-aeris.bin test-hdmi/test-hdmi.bin test-line-plot/test-line.bin test-spi/test-spi.bbc
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 
@@ -30,6 +30,8 @@ $(BUILD)/test-hdmi/test-hdmi.bin:
 	make -C test-hdmi all
 $(BUILD)/test-line-plot/test-line.bin:
 	make -C test-line-plot all
+$(BUILD)/test-spi/test-spi.bbc:
+	make -C test-spi all
 
 $(SSD):	$(OBJS_O)
 	dfs form -80 $(SSD)

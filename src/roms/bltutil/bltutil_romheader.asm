@@ -879,6 +879,7 @@ tbl_configs_MOS:	Conf	strDot,			confHelp, 		0
 			Conf	strMode,		confMode,		confHelpD	
 			ConfYN	strTube,		confYN,			0,	0,	$F
 			Conf	strTV,			confTV,			confHelpDD
+			Conf	strStation,		confStationId,		confHelpD
 			.word	0
 ; these are always scanned
 tbl_configs_BLTUTIL:	Conf	strDot,			confBLHelp, 		0		
@@ -893,6 +894,7 @@ strTube:		.byte	"Tube",0
 strBLThrottle:		.byte	"BLSlow",0
 strBLThrottleROMS:	.byte	"BLSlowROMs",0
 strMode:		.byte	"Mode",0
+strStation:		.byte	"Station",0
 
 confHelpBLThrottleROMS:	.byte	"[[-]R<D>[-<D>][,...]]",0
 
@@ -1330,6 +1332,21 @@ statMode:	jsr	PushAcc			; we're about to use acc which crashes pointers
 		rts
 
 
+confStationId:	bcs	statStationId
+		jsr	ParseDecOrHex
+		lda	zp_trans_acc+0
+		bcs	jbrkBadCommand
+		ldx	#0	
+		jsr	CMOS_WriteMosX
+		rts
+statStationId:	jsr	PushAcc			; we're about to use acc which crashes pointers
+		ldx	#0
+		jsr	CMOS_ReadMosX
+		jsr	PrintDecA
+		jsr	PopAcc		
+		rts
+
+
 
 .scope
 ::findConfigBL:
@@ -1477,6 +1494,11 @@ configMOSInit:
 		jsr	OSWRCH
 		pla
 		jsr	OSWRCH
+
+		ldx	#0
+		jsr	CMOS_ReadMosX
+		jsr	jimPageConfig
+		sta	JIM+jim_offs_CONFIG_STATION_ID
 
 
 @nothardres:

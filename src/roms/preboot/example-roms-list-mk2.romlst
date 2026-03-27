@@ -1,0 +1,49 @@
+#define ROMS65 /home/domin/hostfs/roms65
+#define ROMS69 /home/domin/hostfs/roms69
+
+DIR=${ROMS65}
+
+[Standard Mk.2 6502 Guide]
+CPU=6502
+M=MOS120.M
+B=BASIC2
+D=U_BLMMFS.rom
+F=BLTUTIL
+
+[Big Mk.2 6502 Dom]
+CPU=6502
+3=U_BLMMFS.rom
+5=BASIC2
+7=ADFSH30
+B=NFS360JGH
+D=HFSTFSM
+F=BLTUTIL
+M=MOS120.M
+
+
+[Tricky OS Test]
+CPU=6502
+M=OSTEST.M
+
+//Example for other CPU types
+DIR=${ROMS69}
+[6809 standard]
+CPU=6809
+1=BASIC.R
+M=MOS6809.M
+B=HOSTFSM.R
+F=UTILS09.R
+
+[6309 standard]
+CPU=6309
+1=BAS6368.R
+M=MOS6309.M
+B=HOSTFSM.R
+F=UTILS09.R
+
+[6309 native mode]
+CPU=6309
+1=BAS6368.R
+M=MOS630N.M
+B=HOSTFSM.R
+F=UTILS09.R
