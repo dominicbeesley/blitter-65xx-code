@@ -79,10 +79,12 @@
 
 	.export  _screen_init
 .proc _screen_init:near
+	lda	#$40
+	sta	SHEILA_NULA_CTLAUX	; reset nula in case its messed up
 	lda	#$4B
-	sta	sheila_VIDPROC
+	sta	sheila_VIDPROC		; ula mode 7 / teletext
 	ldx	#13
-@lp:	stx	sheila_CRTC_IX
+@lp:	stx	sheila_CRTC_IX		; loop over CRTC registers and set up from table
 	lda	mo7_crtc, X
 	sta	sheila_CRTC_DAT
 	dex
