@@ -38,6 +38,12 @@ the FPGA cores. The user may use the SRLOAD, SRERASE etc commands from the
 BLTUTIL ROM to load arbitrary programs to this memory, which can easily lead
 to a bricked system.
 
+#### i2c configuration EEPROM
+
+The Blitter and C20K boards also contain a small 64kbit i2c EEPROM which is
+used to store configuration for the \*CONFIGURE command. This is not currently
+used by Preboot.
+
 #### Battery Backed RAM
 
 The C20K and Blitters contain RAM that can also store ROM-images, this can
@@ -76,7 +82,8 @@ the SWROMX button or jumper on the blitter boards.
 
 The preboot can be entered at any time with suitable firmware by holding down
 break-ctrl-backspace (in that order) then release break whilst still holding
-ctrl-backspace.
+ctrl-backspace. The mk.2 blitter board will only enter preboot when the T65
+core is active to avoid crashing hard-cpus
 
 The machine should now reboot to the preboot main-menu, if it doesn't then it
 might be that a correct preboot image has not been located in the FPGA's SPI
@@ -117,8 +124,12 @@ Note: when loading to a map any ROM slots that are not present in the image
 will _not_ be erased, for this reason it is usually wise to used the clear
 memory function to clear a map before loading a romset.
 
+## Reboot
 
-# Preparing for Preboot
+This will return you to normal operation. Alternatively a long-break can be
+used to reboot normally.
+
+# Preparing you board for Preboot
 
 You FPGA needs to be loaded with a newer (Feb 2026) firmware which has the 
 preboot-1 code baked into the FPGA core, you must then also load the preboot-2
@@ -146,45 +157,29 @@ specified.
 
 ## Flash new firmware to SPI
 
-Use the usual tool-chain to load a newer C20K.fs or C20K816only.fs file to
-the FPGA's flash ROM
+The files below can all be found in the latest release of the main firmware
+[git](https://github.com/dominicbeesley/blitter-vhdl-6502/releases)
+
+### Mk.2 blitter
+
+Use the Altera programming tool to burn the 
+
+### C20K
 
 GoWin:
-
 ```
 	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 36 --fsFile [full path to C20K.fs or C20K816only.fs]
+	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile [full path...]/preboot2-c20k.bin
+	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x320000 --mcuFile [full path...]/romset-c20k.bin
 ```
 
 openFPGAloader:
 ```
 	> openFPGALoader --verbose-level 2 --cable ft2232 --write-flash  [full path to C20K.fs or C20K816only.fs]
-```
-
-
-## Flash the preboot-2 image to SPI
-
-GoWin:
-```
-	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile [full path...]/preboot2-c20k.bin
-```
-
-openFPGAloader:
-```
 	> openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x300000 --bitstream [full path...]/preboot2-c20k.bin
+	>openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x320000 --bitstream [full path...]//romset-c20k.bin
 ```
 
-
-## Flash Romsets to SPI
-
-GoWin:
-```
-	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x320000 --mcuFile [full path...]/romsets.bin
-```
-
-openFPGAloader:
-```
-	>openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x320000 --bitstream [full path...]//romset.bin
-```
 
 
 # Creating Romsets
@@ -212,11 +207,14 @@ If you have an older firmware or you wish to update the preboot-2 image or
 romsets then follow the [Preparing for preboot](#preparing-for-preboot)
 instructions.
 
-If you are unsure and it is possible to attach an RV-debugger dongle to the
-FPGA then at boot time you should receive an "A" chracter for a normal reboot
-or "AB" for a break-ctrl-backspace boot. If this is followed by a "!" then
-that indicates that the search for a valid preboot image failed and that the
-SPI flash should be reloaded.
+The Caps and Shift-lock LEDs can be used to check the preboot process.
+
+
+On a ctrl-backspace-break: the shift-lock LED should illuminate for 
+around 1/4s and then both Caps and Shift-lock should go out before the
+pre-boot menu appears. If the caps-lock LED also flashes for 1/4 second
+then that indicates that the preboot2 image was not found or had a bad
+checksum follow the instructions above to prime the FPGA for preboot again.
 
 # Technical notes
 
