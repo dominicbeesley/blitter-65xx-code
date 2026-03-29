@@ -2,12 +2,12 @@
 <cof>
 	<eprom_name>EPCS16</eprom_name>
 	<flash_loader_device>EP4CE10</flash_loader_device>
-	<output_filename>../../../build/roms/preboot/mk2-image.jic</output_filename>
+	<output_filename>../../../build/roms/preboot/preboot-mk2.jic</output_filename>
 	<n_pages>0</n_pages>
 	<width>1</width>
 	<mode>7</mode>
 	<hex_block>
-		<hex_filename>../../../build/roms/preboot/romset.hex</hex_filename>
+		<hex_filename>../../../build/roms/preboot/romset-mk2.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
 		<hex_offset>1179648</hex_offset>
 		<hex_little_endian>0</hex_little_endian>
