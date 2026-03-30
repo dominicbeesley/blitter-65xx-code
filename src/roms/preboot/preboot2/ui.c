@@ -143,8 +143,8 @@ void ui_poll() {
 
 		if (!win_event_dispatch(WIN_EVENT_KEYPRESS, &c)) {
 			if (
-					cur_app
-				 && cur_app->def->event_handlers[UI_EVENT_KEYPRESS])
+					cur_app != NULL
+				 && cur_app->def->event_handlers[UI_EVENT_KEYPRESS] != NULL)
 				cur_app->def->event_handlers[UI_EVENT_KEYPRESS](cur_app, &c);
 		}
 	}
