@@ -6,7 +6,8 @@
 #include "debug.h"
 #include "spi.h"
 
-const romloc c20k_layout[] = {
+#ifdef C20K
+const romloc _layout[] = {
 	{0x0, 0x7E00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
 	{0x1, 0x9E00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
 	{0x2, 0x7E40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
@@ -43,10 +44,50 @@ const romloc c20k_layout[] = {
 
 	{0, 0, 0}
 };
+#endif
 
+#ifdef MK2
+const romloc _layout[] = {
+	{0x0, 0x7E00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
+	{0x1, 0x9E00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
+	{0x2, 0x7E40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
+	{0x3, 0x9E40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
+	{0x4, 0xFF80, ROMLOC_FLAGS_MAP0|ROMLOC_SYS},
+	{0x5, 0xFF80, ROMLOC_FLAGS_MAP0|ROMLOC_SYS},
+	{0x6, 0xFF80, ROMLOC_FLAGS_MAP0|ROMLOC_SYS},
+	{0x7, 0xFF80, ROMLOC_FLAGS_MAP0|ROMLOC_SYS},
+	{0x8, 0x7F00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM|ROMLOC_FLAGS_PREBOOT},
+	{0x9, 0x9F00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH|ROMLOC_FLAGS_MOS},
+	{0xA, 0x7F40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
+	{0xB, 0x9F40, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
+	{0xC, 0x7F80, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM},
+	{0xD, 0x9F80, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
+	{0xE, 0x1F00, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_BBRAM|ROMLOC_FLAGS_PREBOOT},
+	{0xF, 0x9FC0, ROMLOC_FLAGS_MAP0|ROMLOC_FLAGS_FLASH},
+
+	{0x0, 0x7C00, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0x1, 0x9C00, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
+	{0x2, 0x7C40, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0x3, 0x9C40, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
+	{0x4, 0x7C80, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0x5, 0x9C80, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
+	{0x6, 0x7CC0, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0x7, 0x9CC0, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
+	{0x8, 0x7D00, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0x9, 0x9D00, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH|ROMLOC_FLAGS_MOS},
+	{0xA, 0x7D40, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0xB, 0x9D40, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
+	{0xC, 0x7D80, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0xD, 0x9D80, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
+	{0xE, 0x1F40, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_BBRAM},
+	{0xF, 0x9DC0, ROMLOC_FLAGS_MAP1|ROMLOC_FLAGS_FLASH},
+
+	{0, 0, 0}
+};
+#endif
 
 //TODO: detect at boot
-const romloc *cur_layout  = &c20k_layout[0];
+const romloc *cur_layout  = &_layout[0];
 
 #define FLASH_SECTOR_SIZE 	0x10
 #define FLASH_BASE 			0x8000
@@ -86,6 +127,7 @@ void flash_sector_erase(unsigned page) {
 bool erase_slot(const romloc *rl) {
 	unsigned short page;
 	unsigned short pagectr;
+	bool ret = 1;
 
 	page = rl->page;
 	pagectr = 0;
@@ -102,11 +144,14 @@ bool erase_slot(const romloc *rl) {
 			jim_page(page);
 
 			memset((void *)JIM, 0xFF, 0x100);
+			
+			if (*((unsigned char *)JIM) != 0xFF)
+				ret = 0;
 
 			page++;
 			pagectr++;
 		}
-		return 1;
+		return ret;
 	}
 
 }
@@ -117,6 +162,7 @@ bool write_slot_from_spi(const romloc *rl, unsigned long spiaddr) {
 	unsigned short page;
 	unsigned short pagectr;
 	int i;
+	bool ret = 1;
 
 	page = rl->page;
 	pagectr = 0;
@@ -133,11 +179,14 @@ bool write_slot_from_spi(const romloc *rl, unsigned long spiaddr) {
 				flash_wait();
 			}
 
+			if (memcmp((void *)JIM, buf, 0x100))
+				ret = 0;;
+
 			spiaddr+= 0x100;
 			page ++;
 			pagectr ++;
 		}
-		return 1;
+		return ret;
 	} else {
 		while (pagectr < 0x40) {
 
@@ -146,21 +195,25 @@ bool write_slot_from_spi(const romloc *rl, unsigned long spiaddr) {
 			jim_page(page);
 			memcpy((void *)JIM, buf, 0x100);
 
+			if (memcmp((void *)JIM, buf, 0x100))
+				ret = 0;;
+
 			spiaddr+= 0x100;
 			page++;
 			pagectr++;
 		}
-		return 1;
+		return ret;
 	}
 	
 }
 
-const romloc *layout_find(unsigned char slot, unsigned char flags) {
+const romloc *layout_find(unsigned char slot, unsigned char flags, unsigned char notflags) {
 	const romloc *ret = cur_layout;
 	while (ret && ret->flags) {
 		if (
 			(slot == SLOT_ANY || ret->slot == slot) &&
-			(ret->flags & flags))
+			(ret->flags & flags) &&
+			!(ret->flags & notflags))
 			return ret;
 		ret++;
 	}
@@ -168,18 +221,20 @@ const romloc *layout_find(unsigned char slot, unsigned char flags) {
 	return NULL;
 }
 
-const romloc *layout_find_romset(const romset_rom_desc *rom, unsigned char mapflags) {
+const romloc *layout_find_romset(const romset_rom_desc *rom, unsigned char mapflags, unsigned char notmapflags) {
 	const romloc *ret = cur_layout;
 	while (ret && ret->flags) {
 		
 		if (
 			(ret->flags & mapflags) && 
+			!(ret->flags & notmapflags) &&
 			(
 				(rom->ext_type == ROM_EXTTYPE_MOS && ret->flags & ROMLOC_FLAGS_MOS)
 			||  (rom->ext_type == ROM_EXTTYPE_ROM && ret->slot == rom->slot)
 			)
-		) 
+		) {
 			return ret;
+		}
 		ret++;
 	}
 	return NULL;

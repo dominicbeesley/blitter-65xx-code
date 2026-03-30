@@ -21,8 +21,8 @@ typedef struct romloc {
 
 extern const romloc *cur_layout;
 
-extern const romloc *layout_find(unsigned char slot, unsigned char flags);
-extern const romloc *layout_find_romset(const romset_rom_desc *rom, unsigned char mapflags);
+extern const romloc *layout_find(unsigned char slot, unsigned char flags, unsigned char notflags);
+extern const romloc *layout_find_romset(const romset_rom_desc *rom, unsigned char mapflags, unsigned char notflags);
 
 extern bool erase_slot(const romloc *loc);
 extern bool write_slot_from_spi(const romloc *rl, unsigned long spiaddr);

@@ -21,6 +21,10 @@ OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 $(BUILD)/romset-c20k.bin: example-roms-list.romlst
 	$(SCRIPTS)/makeromset.pl example-roms-list.romlst $@
 
+FORCE: ;
+
+$(BUILD)/preboot2/mk2/preboot2.bin: FORCE
+	make -C preboot2 all
 
 %.hex: %.bin
 	srec_cat -Output $@ -Intel $< -Binary

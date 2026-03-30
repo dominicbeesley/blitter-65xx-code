@@ -216,20 +216,23 @@ static void do_loadromset(struct app_romset_data *opt, bool check) {
 		p.Y++;
 
 		//find a matching romloc
-		rl = layout_find_romset(&rom_g, opt->map);
+		rl = layout_find_romset(&rom_g, opt->map, ROMLOC_SYS);
 		if (!rl)
 			sprintf(buf, "\x86WARN: no matching slot!");
 		else
 			sprintf(buf, "\x85 -- Write  \x85%08x to %04x00", addr, (long)rl->page);
 		surface_render_str(&s, &p, buf, 0);
 
-		if (!check) {
+		if (!check && rl) {
 			p.X = 4;
-			surface_render_char(&s, &p, '\x81');
-			write_slot_from_spi(rl, addr);
-			surface_render_char(&s, &p, '\x87');
-			p.X = 9;
-			surface_render_str(&s, &p, "ten", 0);
+			surface_render_char(&s, &p, '\x85');
+			if (!write_slot_from_spi(rl, addr)) {
+				surface_render_str(&s, &p, "\x81""FAILED!", 0);
+			} else {
+				surface_render_char(&s, &p, '\x87');
+				p.X = 9;
+				surface_render_str(&s, &p, "ten", 0);
+			}
 			p.X = 0;
 		}
 		p.Y++;
