@@ -7,7 +7,7 @@ extern char buf[];
 
 int overlay_cur_ix;
 
-void overlay_init() {
+void overlay_init(void) {
 	overlay_cur_ix = -1;
 }
 
@@ -27,7 +27,7 @@ void overlay_ensure(int ix)
 
 		//checksum check
 		cksum = 0;
-		for (p = (char *)0x8000; p < (char *)0xC000; p++)
+		for (p = (char *)APP_OVERLAY_MEM; p < (char *)(APP_OVERLAY_MEM+APP_OVERLAY_SIZE); p++)
 			cksum += *p;
 		if (cksum != 0)
 		{

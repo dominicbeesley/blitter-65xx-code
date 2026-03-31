@@ -8,7 +8,7 @@
 #define APP_OVERLAY_SIZE 0x4000
 
 
-extern void overlay_init();
+extern void overlay_init(void);
 
 extern void overlay_ensure(int ix);
 

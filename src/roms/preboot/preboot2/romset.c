@@ -24,7 +24,7 @@ unsigned long romset_get_index(int ix, romset *ret) {
 	return addr;
 }
 
-int romset_count() {
+int romset_count(void) {
 	int ret = 0;
 	unsigned long addr = ROMSET_BASE;
 	romset r;
@@ -40,6 +40,7 @@ int romset_count() {
 			+ (unsigned long)((ROMDESCR_SIZE + ROM_SIZE) 
 				* (unsigned long)r.len);
 	}
+	return 0;
 }
 
 unsigned long romset_get_rom(int romset_ix, int ix, romset_rom_desc *rd) {
