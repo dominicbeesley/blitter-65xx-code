@@ -127,7 +127,12 @@ memory function to clear a map before loading a romset.
 ## Reboot
 
 This will return you to normal operation. Alternatively a long-break can be
-used to reboot normally.
+used to reboot normally. 
+
+Note: due to certain limitations in the firmware it is only possible to exit
+the preboot menu to T65 mode with Map 0 active. If you wish to switch to another
+mode i.e. hard CPU or swap the rom maps then you should exit with a long 
+ctrl-break to cause the machine to reset and re-scan the jumpers.
 
 # Preparing you board for Preboot
 
@@ -233,11 +238,10 @@ overwritten by the load routine.
 ### Preboot-2
 
 The MOSRAM (shadow MOS) of bank 0 is used to host the PREBOOT-2 image along
-with slot #E sideways RAM slot. These are effectively corrupted if the 
-ctrl-delete-break key sequence is used. The main system memory and screen
-memory will be corrupted and preboot-2 is usually exited with a hard-reset
-(by clearing the IER of the system VIA).
-
+the whole of main-memory. These are effectively corrupted if the 
+ctrl-delete-break key sequence is used. For this reason preboot-2 is 
+always exited with a hard-reset (by clearing the IER of the system VIA) which
+will force the MOS to do a cold-restart.
 
 ## Registers used
 
