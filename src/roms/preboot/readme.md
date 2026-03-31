@@ -92,6 +92,14 @@ flash memory. See [Troubleshooting](#troubleshooting) for details.
 In general navigation is by using the up and down keys to select menu items
 and pressing RETURN to select an item. ESCape can be used to exit a menu.
 
+## Mk.2 SYStem ROM slots
+
+On the Mk.2 Blitter when clearing or loading to Map 0 slots 4-7 and the MOS 
+slot cannot be written as the motherboard IC's are used. In these cases those
+slots will be skipped with a warning. If you need to load an alteranative OS 
+ROM (i.e. Tricky's test ROM) then you should use the SWROMX facility to switch
+maps to map 1.
+
 ## Clear memory
 
 This option can be used to erase the battery backed and Flash EEPROMS should
