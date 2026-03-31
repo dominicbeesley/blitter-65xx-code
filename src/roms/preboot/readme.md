@@ -193,7 +193,14 @@ openFPGAloader:
 	>openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x320000 --bitstream [full path...]//romset-c20k.bin
 ```
 
-
+NOTE: As of 31/3/2026 both openFPGALoader (running under WSL) and the 
+programmer_cli tool fail to program the Primer 20K. For openFPGA loader
+there is a well-known "Error: ftdi_read_data in mpsse_read" which still
+seems to not be resolved on WSL under Windows. The gowin programmer_cli
+fails with "Error: Flsh format error". For this reason under Windows it
+is recommended to use the Gowin Windows Programmer app in 
+"exFlash C Bin Erase, Program thru GAO-Bridge", being careful to set the
+correct SPI base addresses 0x300000 and 0x320000
 
 # Creating Romsets
 
