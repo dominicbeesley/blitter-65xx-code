@@ -16,7 +16,7 @@ EXTRAS=$(wildcard extras/*.inf)
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 
-.PHONY: clean all $(SUBDIRS) 
+.PHONY: FORCE clean all $(SUBDIRS) 
 
 $(BUILD)/romset-c20k.bin: example-roms-list.romlst
 	$(SCRIPTS)/makeromset.pl example-roms-list.romlst $@
@@ -33,7 +33,7 @@ $(BUILD)/preboot2/mk2/preboot2.bin $(BUILD)/preboot2/c20k/preboot2.bin: FORCE
 $(BUILD)/preboot-mk2.jic: mk2_conv.cof $(BUILD)/romset-mk2.hex $(BUILD)/preboot2/mk2/preboot2.hex
 	$(QUARTUS_CPF) -c mk2_conv.cof
 
-$(BUILD)/romset-mk2.bin: example-roms-list-mk2.romlst
+$(BUILD)/romset-mk2.bin: example-roms-list-mk2.romlst FORCE
 	$(SCRIPTS)/makeromset.pl example-roms-list-mk2.romlst $@
 
 
