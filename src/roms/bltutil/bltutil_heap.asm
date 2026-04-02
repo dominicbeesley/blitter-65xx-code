@@ -546,7 +546,8 @@ oswordAlloc:
 ; OSWORD 99 B%?2<16 : Get ROM Base Address
 ;=============================================================================
 
-_zp_tmp_99 = $E6		; TODO: check with *. if this is valid!
+_zp_tmp_99 = $E6		; https://stardot.org.uk/forums/viewtopic.php?p=473496#p473496
+_zp_tmp2_99 = $FA		; interrupts are off nab this
 
 _getcurset:	pha
 		jsr	cfgGetRomMap
@@ -591,8 +592,7 @@ oswordGetRomBase:
 		lda	(zp_mos_OSBW_X),Y		; get flags
 		bmi	_getcurset
 		ror	A				; map1 into Cy
-@map1:
-		; at this point CS = map1, CC = map 0
+@map1:		; at this point CS = map1, CC = map 0
 		php					; save flags
 		bcc	@notmap1
 		lda	#1
@@ -624,17 +624,19 @@ oswordGetRomBase:
 		ora	zp_mos_OSBW_A
 		sta	zp_mos_OSBW_A			; set Flash flag
 		iny
-		iny					; Y=4
+		iny					; Y=4		
 		pla
+		ldx	JIM+jim_offs_VERSION_Board_level
+		cpx	#VERSION_BOARD_MK2+1
+		bcc	@others
 		cmp	#$E
 		bne	@others
 		lda	#$1F
 		sta	(zp_mos_OSBW_X),Y
 		plp					; map in cy
 		lda	#0
-		rol	A		
-		rol	A		
-		rol	A		
+		ror	A		
+		ror	A		
 		dey					; Y=3
 		sta	(zp_mos_OSBW_X),Y
 		jmp	@retBWA
