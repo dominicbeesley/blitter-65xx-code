@@ -182,8 +182,8 @@ Use the Altera programming tool to burn the
 GoWin:
 ```
 	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 36 --fsFile [full path to C20K.fs or C20K816only.fs]
-	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x300000 --mcuFile [full path...]/preboot2-c20k.bin
-	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 39 --spiaddr 0x320000 --mcuFile [full path...]/romset-c20k.bin
+	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 32 --spiaddr 0x300000 --mcuFile "[full path...]/preboot2-c20k.bin"
+	> [full path to gowin programmer]/programmer_cli --device GW2A-18C --run 32 --spiaddr 0x320000 --mcuFile "[full path...]/romset-c20k.bin"
 ```
 
 openFPGAloader:
