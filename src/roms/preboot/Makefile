@@ -49,8 +49,8 @@ c20k-program: $(BUILD)/romset-c20k.bin $(BUILD)/preboot2/c20k/preboot2.bin
 #	openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x300000 --bitstream $(BUILD)/preboot2/c20k/preboot2.bin
 #	openFPGALoader --verbose-level 2 --cable ft2232 --write-flash -o 0x320000 --bitstream $(BUILD)/romset-c20k.bin
 
-	$(GOWIN_PROG) --device GW2A-18C --location 8465 --channel 1 --run 39 --spiaddr 0x300000 --mcuFile $(shell wslpath -w "$(BUILD)/preboot2/c20k/preboot2.bin")
-	$(GOWIN_PROG) --device GW2A-18C --location 8465 --channel 1 --run 39 --spiaddr 0x320000 --mcuFile $(shell wslpath -w "$(BUILD)/romset-c20k.bin")
+	$(GOWIN_PROG) --device GW2A-18C --location 136241 --channel 1 --run 32 --spiaddr 0x300000 --mcuFile "$(shell wslpath -w "$(BUILD)/preboot2/c20k/preboot2.bin")"
+	$(GOWIN_PROG) --device GW2A-18C --location 136241 --channel 1 --run 32 --spiaddr 0x320000 --mcuFile "$(shell wslpath -w "$(BUILD)/romset-c20k.bin")"
 
 clean: $(SUBDIRS)
 	-rm $(BUILD)/romset-c20k.bin

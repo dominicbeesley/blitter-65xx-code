@@ -147,6 +147,8 @@ bool app_clearbb_kp(void *sender, void *arg) {
 			switch (c) {
 				case 'y':
 					do_erase(data);
+					set_status("Finished! Press a key...");
+					state = 3;
 					break;
 				case 'n':
 					ui_exit();
@@ -160,7 +162,8 @@ bool app_clearbb_kp(void *sender, void *arg) {
 
 	if (state != data->ui_state) {
 		data->ui_state = state;
-		win_refresh(&w_main);
+		if (state != 3)
+			win_refresh(&w_main);
 		return 1;
 	} else
 		return 0;
