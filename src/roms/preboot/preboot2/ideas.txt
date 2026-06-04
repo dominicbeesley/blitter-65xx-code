@@ -1,0 +1,96 @@
+
+Show current map, cpu, boot options in top-box
+
+# Main Menu
+
+1 Show ROMS
+
+2 Econet settings -> station number
+
+
+Need to be able to:
+- enable MOSRAM
+- switch SWROMX
+- switch t65, hard cpu, RiscV, etc
+
+
+Preboot - first cut
+===================
+
+1) First "boot"->preboot1
+2) preboot1->loads preboot monitor and executes
+	- loads image to SWMOS 7F0000 
+	- if key held down switch to swmos and execute reset vector for preboot C program
+	- turn off preboot and execute whatever mos is there
+
+May need proper reboot
+May need method to select MEMI, SWROMX, SWMOS when rebooting
+May need way to reset e.g. SYSVIA, memctl
+
+
+TRY: no reset, just switch configs with code on stack, poke SYSVIA IER to provoke hard vs soft reset
+NEED: a full reset cycle or a way of switching CPUs programmatically, or hard/soft CPU to be held
+in reset until preboot exits
+
+
+Debrick
+
+SPI contains multiple "starter sets" starting at 720000
+Each set is a has a descriptor with info about the roms contained
+
+Offset	Length	Description
++0		1		Length in 16K ROMS &1..&0 (1 to 16)
++1		1       Target CPU
++2		32		Title, 0 terminated, 0 padded
++34		4		"RoMs" - identification string
++38		26		reserved
++64		64*N	ROM descriptors...
+		16K*N	ROM binaries
+
+
+Rom Descriptor
++0		1		Slot #
++1		1		Extended type
++2		1		ROM type
++3		1		CPU type
++4		32		Title, 0 terminated, 0 padded
++36		2		CRC
++38		28		reserved
+
+
+Extended type
+0		Unknown
+1		Normal ROM
+2		MOS ROM
+
+Target CPU
+0		6502
+1		65C02
+2		65816 
+
+4		6809
+5		6309
+
+8		z80
+
+12		68xxx
+
+16		6800
+
+20		RiscV
+
+24		8088/8086
+25		80186
+26		80286
+27		80386
+28		80486
+
+
+
+
+Extended config block for
+=========================
+
+- station number
+- RAM/ROM placement e.g. remap each of ROM slots after mem detect
+- ChipRAM/BBRAM mapping for different RAM sizes (done at preboot)

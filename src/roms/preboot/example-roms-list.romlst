@@ -1,0 +1,34 @@
+#define ROMS65 /home/domin/hostfs/roms65
+//#define ROMS69 /home/domin/hostfs/roms69
+
+DIR=${ROMS65}
+
+[Standard C20K 6502 Guide]
+CPU=6502
+M=MOS120.M
+B=BASIC2
+D=B_BLMMFS.rom
+F=BLTUTIL
+
+[Big C20K 6502 Dom]
+CPU=6502
+3=B_BLMMFS.rom
+5=BASIC2
+7=ADFSH30
+B=NFS360JGH
+D=HFSTFSM
+F=BLTUTIL
+M=MOS120.M
+
+
+[Tricky OS Test]
+CPU=6502
+M=OSTEST.M
+
+// Example for other CPU types
+// DIR=${ROMS69}
+// [6809]
+// CPU=6809
+// 1=6809BAS.bin
+// M=mosrom-6809.bin
+// F=UTILS.bin

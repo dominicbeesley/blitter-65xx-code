@@ -541,6 +541,14 @@ oswordAlloc:
 		sta	(zp_mos_OSBW_X),Y
 		jmp	ServiceOutA0
 
+
+;=============================================================================
+; OSWORD 99 B%?2<16 : Get ROM Base Address
+;=============================================================================
+
+_zp_tmp_99 = $E6		; https://stardot.org.uk/forums/viewtopic.php?p=473496#p473496
+_zp_tmp2_99 = $FA		; interrupts are off nab this
+
 _getcurset:	pha
 		jsr	cfgGetRomMap
 		bcs	@bad				; return 0 is no onboard roms
@@ -550,7 +558,7 @@ _getcurset:	pha
 		beq	@cont00
 		; alternate flag is active, toggle carry
 		jsr	@toglcy				
-@cont00:		jmp	_cont0
+@cont00:	jmp	_cont0
 
 @bad:		pla
 		clc	
@@ -584,22 +592,24 @@ oswordGetRomBase:
 		lda	(zp_mos_OSBW_X),Y		; get flags
 		bmi	_getcurset
 		ror	A				; map1 into Cy
-@map1:
-		; at this point CS = map1, CC = map 0
+@map1:		; at this point CS = map1, CC = map 0
 		php					; save flags
 		bcc	@notmap1
 		lda	#1
 		ora	zp_mos_OSBW_A
 		sta	zp_mos_OSBW_A
 @notmap1:	lda	#0
-		pha
-		tsx
-		dey
+		sta	_zp_tmp_99			; initialise low ret address
+		dey					; Y=2
 		lda	(zp_mos_OSBW_X),Y		; get rom #
 	.ifdef MACH_ELK
 		eor	#$0C				; bodge address bases
+							; hole in Elk for both maps
 	.else
-		bcs	@nohole				; hole in Elk for both maps
+		bcs	@nohole				; Cy set above for map1
+		ldx	JIM+jim_offs_VERSION_Board_level
+		cpx	#VERSION_BOARD_C20K
+		bcs	@nohole				; assume > 4 has no roms hole
 	.endif
 
 		; check for C20K - no hole in either map
@@ -612,33 +622,50 @@ oswordGetRomBase:
 		cmp	#8
 		bcc	@sys2
 		; calculate offset of rom in area
-@nohole:	pha
+@nohole:		pha
+
 		ror	a
 		ror	a
 		and	#OSWORD_BLTUTIL_RET_FLASH	;$80
 		ora	zp_mos_OSBW_A
 		sta	zp_mos_OSBW_A			; set Flash flag
+		iny
+		iny					; Y=4		
 		pla
+		ldx	JIM+jim_offs_VERSION_Board_level
+		cpx	#VERSION_BOARD_MK2+1
+		bcc	@others
+		cmp	#$E
+		bne	@others
+		lda	#$1F
+		sta	(zp_mos_OSBW_X),Y
+		plp					; map in cy
+		lda	#0
+		ror	A		
+		ror	A		
+		dey					; Y=3
+		sta	(zp_mos_OSBW_X),Y
+		jmp	@retBWA
+
+@others:
 		and	#$0E
 		lsr	a
-		ror	$101,X
+		ror	_zp_tmp_99
 		lsr	a
-		ror	$101,X
+		ror	_zp_tmp_99
 		lsr	a
-		ror	$101,X
+		ror	_zp_tmp_99
 		adc	#$7E		
-		iny
-		iny
 		sta	(zp_mos_OSBW_X),Y
-		dey
-		pla
+		dey					; Y=3
+		lda	_zp_tmp_99
 		sta	(zp_mos_OSBW_X),Y
 		; check if rom/ram
-		dey
+		dey					; Y=2
 		lda	(zp_mos_OSBW_X),Y
-		ror	A				; odd / even in CY
+		ror	A				; odd / even in CY (flash/ram)
 		iny
-		iny
+		iny					; Y=4
 		lda	(zp_mos_OSBW_X),Y		
 		bcc	@ram
 		; add $20 to rom/ram address high
@@ -647,13 +674,9 @@ oswordGetRomBase:
 		bcc	@map0_2
 		sbc	#2
 @map0_2:	sta	(zp_mos_OSBW_X),Y
-		lda	zp_mos_OSBW_A
-		jmp	@retA
+		jmp	@retBWA
 
-
-
-@sys2:		pla
-		plp
+@sys2:		plp
 @sys:		; either memi or SYS
 		ldy	#4
 		lda	#$FF
@@ -663,10 +686,9 @@ oswordGetRomBase:
 		sta	(zp_mos_OSBW_X),Y
 		lda	#OSWORD_BLTUTIL_RET_SYS
 		ora	zp_mos_OSBW_A
-	
-@retA:		sta	zp_mos_OSBW_A
+		sta	zp_mos_OSBW_A
 
-		jsr	cfgGetRomMap
+@retBWA:	jsr	cfgGetRomMap
 		bcs	@forceCur
 		eor	zp_mos_OSBW_A
 		eor	#1				; eor MAP1 with cur map and flip

@@ -1,6 +1,6 @@
 	include ./Makefile.defs
 
-SUBDIRSWIMAKE:=blitlib demos roms test tools65
+SUBDIRSWIMAKE:=blitlib demos roms test tools65 examples
 
 $(TOPTARGETS): $(SUBDIRSWIMAKE)
 

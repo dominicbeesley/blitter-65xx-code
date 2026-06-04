@@ -41,6 +41,7 @@
 		.export jimPageWorkspace
 		.export jimPageChipset
 		.export jimPageVersion
+		.export jimPageConfig
 		.export	jimSetDEV_either_stack_old
 		.export jimUnStackDev
 		.export jimPageSamTbl
@@ -467,9 +468,15 @@ jimPageSoundWorkspace:
 		pla
 		rts
 
+	.assert (>jim_page_VERSION) = (>jim_page_CONFIG), error, "Assumes CONFIG and VERSION in same bank"
+jimPageConfig:	pha
+		lda	#<jim_page_CONFIG
+		bne	jimPageVersion_s2
+
 jimPageVersion:
 		pha
-		lda	#<jim_page_VERSION
+		lda	#<jim_page_VERSION		
+jimPageVersion_s2:
 		sta	fred_JIM_PAGE_LO
 		lda	#>jim_page_VERSION
 		sta	fred_JIM_PAGE_HI
