@@ -59,6 +59,8 @@ clean: $(SUBDIRS)
 	-rm $(BUILD)/romset-mk2.hex 
 	-rm $(BUILD)/preboot2/mk2/preboot2.hex
 
+deploy: all
+
 $(SUBDIRS):
 	$(MAKE) -C $@ $(MAKECMDGOALS)
 

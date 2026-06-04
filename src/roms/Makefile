@@ -3,7 +3,7 @@
 SSD=$(SSDS)/roms65.ssd
 DEPLOY=$(DEPLOY_TOP)/roms65
 
-SUBDIRS=bltutil testrom
+SUBDIRS=bltutil testrom preboot
 OBJS=bltutil/bltutil.rom bltutil/bltutil.e.rom testrom/blttest.rom
 EXTRAS=$(wildcard extras/*.inf)
 
