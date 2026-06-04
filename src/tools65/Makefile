@@ -3,9 +3,10 @@
 SSD=$(SSDS)/tools65.ssd
 DEPLOY=$(DEPLOY_TOP)/tools65
 
-SUBDIRS=srnuke memtest flashtst turbo i2cdump rtcdump memsize ssd1306 XFdump
+SUBDIRS=srnuke memtest flashtst turbo i2cdump rtcdump memsize ssd1306 XFdump pokeavi ediddump
 OBJS=memtest/memtest.bin flashtst/flashtst.bin \
 	i2cdump/i2cdump.bin rtcdump/rtcdump.bin memsize/memsize.bin ssd1306/test1306.tok \
+  pokeavi/pokeavi.tok ediddump/ediddump.tok ediddump/ediddump2.tok \
 	XFDump/xfdump.bin
 EXTRAS=$(basename $(wildcard extras/*.inf))
 
@@ -44,6 +45,10 @@ $(BUILD)/memsize/memsize.bin:
 		make -C memsize all
 $(BUILD)/ssd1306/test1306.tok:
 		make -C ssd1306 all
+$(BUILD)/pokeavi/pokeavi.tok:
+		make -C pokeavi all
+$(BUILD)/ediddump/ediddump.tok $(BUILD)/ediddump/ediddump2.tok:
+		make -C ediddump all
 $(BUILD)/XFDump/xfdump.bin:
 		make -C xfdump all
 

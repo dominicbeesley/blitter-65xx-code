@@ -1,7 +1,5 @@
 build/*
 *~
 *.bak
-bltutils.sublime-project
-bltutils.sublime-workspace
-**.sublime-project
-**.sublime-workspace
+*.sublime*
+*.NoiCtx

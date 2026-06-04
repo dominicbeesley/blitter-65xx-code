@@ -40,6 +40,7 @@
 		.export	PrintHexAmpXY
 		.export	PrintMsgXYThenHexNyb
 		.export	PrintXY
+		.export PrintXY_NoCR
 		.export	PrintXY16
 		.export	PrintXYT
 		.export	PrintXYT16
@@ -304,7 +305,7 @@ PrintAtPtrPtrY_int:
 		tay
 		pla
 		plp
-		rts
+sev:		rts
 
 
 
@@ -312,11 +313,14 @@ PrintXY16:
 		clc
 		bcc	PrintXY_int	
 
+PrintXY_NoCR:	sec
+		bit	sev
+		bvs	PrintXY_int2	
+
 		; zero terminated string at XY
 PrintXY:	sec
-
-PrintXY_int:
-		lda	zp_tmp_ptr
+PrintXY_int:	clv
+PrintXY_int2:	lda	zp_tmp_ptr
 		pha
 		lda	zp_tmp_ptr+1
 		pha
@@ -326,7 +330,7 @@ PrintXY_int:
 		ldy	#0
 
 		php
-		jsr	PrintPTR
+		jsr	PrintPTR_V_CR
 		tya
 		plp
 		bcs	@no16
@@ -363,12 +367,19 @@ PrintPTRT:
 
 
 	; returns length of string + 1 in Y (i.e. counts zero terminator)
-PrintPTR:
+PrintPTR:	clv
+PrintPTR_V_CR:	ldx	#0			; if VS on entry skip CR
 @lp:		lda	(zp_tmp_ptr),Y
+		php
 		iny
-		cmp	#0
+		plp
 		beq	@out
+		bvc	@oa
+		cmp	#13
+		beq	@lp
+@oa:		php
 		jsr	OSASCI
+		plp
 		cpy	#0
 		bne	@lp
 @out:		rts

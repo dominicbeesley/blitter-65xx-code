@@ -315,8 +315,15 @@ sheila_VIDPROC_PAL	:=  $FE21
 SHEILA_NULA_CTLAUX	:=	$FE22
 SHEILA_NULA_PALAUX	:=	$FE23
 
+sheila_ULA_ctl		:=	$FE20
+sheila_ULA_pal		:=	$FE21
+sheila_NULA_ctlaux	:=	$FE22
+sheila_NULA_palaux	:=	$FE23
+
 SHEILA_DEBUG		:=	$FEFF
 
+sheila_CRTC_ix		:=	$FE00
+sheila_CRTC_dat		:=	$FE01
 
 ;***********************************************************************
 ;* System VIA                                                          *

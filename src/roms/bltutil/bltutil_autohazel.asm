@@ -30,20 +30,20 @@
 		
 
 ; As all the stuff in this file happens fairly early during boot we will
-; assume that we can trample on some as defined below
+; assume that we can trample on some as defined below TODO: save and restore on stack
 
-	.segment "ZEROPAGE_HAZEL"
-zp_tmp_lo:
-zp_srv_prg:	.res 1		; low byte of service_call address on stack - 1
-zp_bltutil_rom:	.res 1		; rom # for this ROM
-zp_srv_rom:	.res 1		; rom # for current service call
-zp_srv_num:	.res 1		; current service call number
-zp_srv_prevY:	.res 1		; save Y before service call
-zp_srv_map:	.res 2		; a bit is set here for any rom that changed Y
-zp_srv_resetY:	.res 1		; a top bit set means Cy on entry
-zp_wksp_top:	.res 1		
-zp_srv_resY:	.res 1		; return Y from end of service call round robin
-zp_tmp_len	:= *-zp_tmp_lo	; save length
+	.segment "WKSP_HAZEL"
+hwsp_tmp_lo:
+hwsp_srv_prg:	.res 1		; low byte of service_call address on stack - 1
+hwsp_bltutil_rom:	.res 1		; rom # for this ROM
+hwsp_srv_rom:	.res 1		; rom # for current service call
+hwsp_srv_num:	.res 1		; current service call number
+hwsp_srv_prevY:	.res 1		; save Y before service call
+hwsp_srv_map:	.res 2		; a bit is set here for any rom that changed Y
+hwsp_srv_resetY:	.res 1		; a top bit set means Cy on entry
+hwsp_wksp_top:	.res 1		
+hwsp_srv_resY:	.res 1		; return Y from end of service call round robin
+hwsp_tmp_len	:= *-hwsp_tmp_lo	; save length
 
 
 	.code
@@ -67,9 +67,9 @@ service_call:
 		sta	SHEILA_ROMCTL_SWR
 	.endif
 		stx	SHEILA_ROMCTL_SWR	
-		lda 	zp_srv_num		; get back service call number A
+		lda 	hwsp_srv_num		; get back service call number A
 		jsr	$8003			; call service routine in ROM #X
-		ldx	zp_bltutil_rom
+		ldx	hwsp_bltutil_rom
 		stx	zp_mos_curROM
 	.ifdef MACH_ELK
 		lda	#$0C
@@ -89,7 +89,7 @@ service_call_len	:= *-service_call
 call_service_call:
 		lda	#1
 		pha
-		lda	zp_srv_prg
+		lda	hwsp_srv_prg
 		pha				; push low address of service_call-1 on stack 
 
 ;	STACK
@@ -111,15 +111,15 @@ call_service_call:
 	;	Y = updated parameter
 	;	bits in zp_map0..1 are set if that rom # modified Y
 autohazel_service:
-		ror	zp_srv_resetY		; zp_srv_resetY is minus for Y resets
-		sta	zp_srv_num		; save A for later
-		sty	zp_srv_prevY		; save Y for later
-		sty	zp_srv_resY		; result (should no roms respond)
+		ror	hwsp_srv_resetY		; hwsp_srv_resetY is minus for Y resets
+		sta	hwsp_srv_num		; save A for later
+		sty	hwsp_srv_prevY		; save Y for later
+		sty	hwsp_srv_resY		; result (should no roms respond)
 
 		lda	zp_mos_curROM
-		sta 	zp_bltutil_rom		; remember who we are
+		sta 	hwsp_bltutil_rom		; remember who we are
 		and	#$F
-		sta	zp_srv_rom		; number of next rom to call + 1
+		sta	hwsp_srv_rom		; number of next rom to call + 1
 
 		; copy service trampoline to stack
 		ldx	#service_call_len
@@ -128,24 +128,24 @@ autohazel_service:
 		dex
 		bne	@lp1
 		tsx
-		stx	zp_srv_prg
+		stx	hwsp_srv_prg
 
 		; loop through all roms below us and call service routine
-@lp2:		dec	zp_srv_rom
+@lp2:		dec	hwsp_srv_rom
 		bmi	@sk_done
-		ldx	zp_srv_rom
+		ldx	hwsp_srv_rom
 		
 		lda	oswksp_ROMTYPE_TAB,X	; Read bit 7 on ROM type table (no ROM has type 254 &FE)
 		bpl	@lp2			; If not set (+ve result), step to next ROM down
 
-		ldy	zp_srv_prevY
+		ldy	hwsp_srv_prevY
 		jsr	call_service_call		; call the service call A will be set later
 
-		cpy	zp_srv_prevY
+		cpy	hwsp_srv_prevY
 		beq	@sk2			; no change don't set bit
 
 		; the rom changed Y, set its bit in the map registers
-		lda	zp_srv_rom		; get back X (it may have been changed in the service call?)
+		lda	hwsp_srv_rom		; get back X (it may have been changed in the service call?)
 		and	#$7
 		tax
 		lda	#1
@@ -154,25 +154,25 @@ autohazel_service:
 		bmi	@bsk
 		rol	A
 		bcc	@blp
-@bsk:		ldx	zp_srv_rom
+@bsk:		ldx	hwsp_srv_rom
 		cpx	#8
 		bcs	@bsk2
-		ora	zp_srv_map
-		sta	zp_srv_map
+		ora	hwsp_srv_map
+		sta	hwsp_srv_map
 		bne	@sk2			; always
-@bsk2:		ora	zp_srv_map+1
-		sta	zp_srv_map+1		
+@bsk2:		ora	hwsp_srv_map+1
+		sta	hwsp_srv_map+1		
 @sk2:		
 
 		; check to see if Y should be update
-		bit	zp_srv_resetY
+		bit	hwsp_srv_resetY
 		bpl	@sk_noresetY		; go round again, Y will be reset
 
-		cpy	zp_srv_resY		; compare against result value
+		cpy	hwsp_srv_resY		; compare against result value
 		bcc	@lp2			; < reset Y and go again
 		bcs	@stlp2
-@sk_noresetY:	sty	zp_srv_prevY		
-@stlp2:		sty	zp_srv_resY
+@sk_noresetY:	sty	hwsp_srv_prevY		
+@stlp2:		sty	hwsp_srv_resY
 		jmp	@lp2			; go round again with new Y
 
 		;exit service call
@@ -182,8 +182,8 @@ autohazel_service:
 		adc	#service_call_len
 		tax
 		txs
-		lda	zp_srv_num
-		ldy	zp_srv_resY
+		lda	hwsp_srv_num
+		ldy	hwsp_srv_resY
 		rts
 
 svc_24_CountDyn_HAZEL	:= $24
@@ -202,15 +202,15 @@ autohazel_boot_first:
 		pha
 
 		lda	#0
-		sta	zp_srv_map
-		sta	zp_srv_map+1
+		sta	hwsp_srv_map
+		sta	hwsp_srv_map+1
 
 		; Ask ROMs how much private high workspace required
 		ldy 	#$DC			; Start high workspace at &DC00 and work downwards
 		lda 	#svc_24_CountDyn_HAZEL 
 		clc				; count down from DC updating value
 		jsr 	autohazel_service		;
-		sty	zp_wksp_top		; Save top of shared workspace (so far)
+		sty	hwsp_wksp_top		; Save top of shared workspace (so far)
 
 		; Ask ROMs for maximum shared high workspace required
 		ldy	#$C0
@@ -218,16 +218,16 @@ autohazel_boot_first:
 		sec				; reset back to C0 each time - (detect need for shared Hazel)
 		jsr 	autohazel_service	;
 
-		; check if Y > zp_wksp_top use that later for the reported value
-		cpy	zp_wksp_top
+		; check if Y > hwsp_wksp_top use that later for the reported value
+		cpy	hwsp_wksp_top
 		bcs	@sk1
-		ldy	zp_wksp_top		
-@sk1:		sty	zp_wksp_top		; Save top of shared workspace (so far)
+		ldy	hwsp_wksp_top		
+@sk1:		sty	hwsp_wksp_top		; Save top of shared workspace (so far)
 
 		; enable auto hazel hardware map
-		lda	zp_srv_map
+		lda	hwsp_srv_map
 		sta	sheila_ROM_AUTOHAZEL_0
-		lda	zp_srv_map+1
+		lda	hwsp_srv_map+1
 		sta	sheila_ROM_AUTOHAZEL_1
 
 		; Ask ROMs for private high workspace required
@@ -254,7 +254,7 @@ autohazel_boot_second:
 		tya
 		pha
 
-                	ldy	zp_wksp_top		; Get top of shared high workspace
+                	ldy	hwsp_wksp_top		; Get top of shared high workspace
                 	lda	#svc_23_NotifyAbs_HAZEL	; Tell ROMs top of shared high workspace
                 	clc				; no reset of value
 		jsr	autohazel_service
