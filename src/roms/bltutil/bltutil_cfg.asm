@@ -107,7 +107,7 @@ cfgGetRomMap:
 		beq	@API0
 
 		ldx	JIM+jim_offs_VERSION_Board_level
-		cpx	#BOARD_LEVEL_MK3			; check for >= Mk.3 assume Mk.1 and Mk.2 same config
+		cpx	#VERSION_BOARD_MK3		; check for >= Mk.3 assume Mk.1 and Mk.2 same config
 		bcc	@mk2
 		; mk.3 switches (and C20K synthesized in core)
 		; assume future boards have same config options as mk.3
@@ -199,20 +199,20 @@ cfgPrintVersionBoot:
 @skP:		
 		; check board level
 		lda	JIM+jim_offs_VERSION_Board_level
-		cmp	#BOARD_LEVEL_C20K
+		cmp	#VERSION_BOARD_C20K
 		beq	@skc
 		ldx	#<str_Blitter
 		ldy	#>str_Blitter
 		jsr	PrintXYT
-@skc:
 		pla
 		pha
 		beq	@skAPI0_1
 		jsr	PrintSpc
+@skc:
 		ldy	#2			; Board
 		jsr	cfgPrintStringY				
 		cmp	#13
-		bne	@sknl
+		beq	@sknl
 
 @skAPI0_1:	jsr	OSNEWL
 @sknl:
@@ -395,7 +395,7 @@ printCPU2:	php
 		jsr	cfgGetAPILevel
 		beq	@API0
 		lda	JIM+jim_offs_VERSION_Board_level
-		cmp	#BOARD_LEVEL_MK3	; check for >= Mk.3 assume Mk.1 and Mk.2 same config
+		cmp	#VERSION_BOARD_MK3	; check for >= Mk.3 assume Mk.1 and Mk.2 same config
 		bcc	@mk2
 		;mk3 look up
 		;first check T65
@@ -572,7 +572,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		ldx	#tbl_boot_cfg_mk2-tbl_bld
 		lda	JIM+jim_offs_VERSION_Board_level
-		cmp	#BOARD_LEVEL_MK3
+		cmp	#VERSION_BOARD_MK3
 		bcc	@mk2
 		ldx	#tbl_boot_cfg_mk3-tbl_bld
 @mk2:		ldy	#0				; used to mark first pass
@@ -607,7 +607,7 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		lda	JIM+jim_offs_VERSION_cfg_bits		; get MK.3 host in bit 2..0 inverted
 		ldx	JIM+jim_offs_VERSION_Board_level
-		cpx	#BOARD_LEVEL_MK3
+		cpx	#VERSION_BOARD_MK3
 		bcs	@mk2_2
 		lda	JIM+jim_offs_VERSION_cfg_bits+1		; get MK.2 host in bit 13..11 inverted
 		lsr	A

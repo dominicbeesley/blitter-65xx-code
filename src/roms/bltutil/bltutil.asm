@@ -397,7 +397,7 @@ cmdBLTurboMos:
 		sta	zp_blturbo_ptr+1
 
 		jsr	cfgGetRomMap
-		cpx	#BOARD_LEVEL_C20K
+		cpx	#VERSION_BOARD_C20K
 		bcs	@c20k
 
 		lda	#OSWORD_BLTUTIL_RET_MAP1
@@ -2078,6 +2078,9 @@ throttleInit:
 		; TODO: MOS Turbo/Throttle
 
 @nothardres:	rts
+
+		.SEGMENT "RODATA" ; STICK THIS IN RODATA FOR SPACE
+
 
 ;------------------------------------------------------------------------------
 ; Strings and tables

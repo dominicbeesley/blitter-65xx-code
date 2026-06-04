@@ -614,7 +614,7 @@ oswordGetRomBase:
 
 		; check for C20K - no hole in either map
 		; x still contains board level - compare for C20k
-		cpx	#BOARD_LEVEL_C20K
+		cpx	#VERSION_BOARD_C20K
 		bcs	@nohole
 
 		cmp	#4
