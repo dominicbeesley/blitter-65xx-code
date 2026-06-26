@@ -7,18 +7,23 @@ SUBDIRS=modplay modmenu
 
 PAULA_OBJS_O=$(addprefix $(BUILD)/, $(PAULA_OBJS))
 
-all: $(PAULA_OBJS_O)
+.PHONY: clean all $(SUBDIRS)
 
-ssd: $(SSD)
+all: $(SUBDIRS)
+	make -C modmenu all
+	make -C modplay all
 
-clean: 
-	make -C modmenu clean
-	make -C modplay clean
+ssd: all $(SSD)
+
+clean: $(SUBDIRS)
 	-rm $(SSD)
 
-deploy: $(SSD)
+deploy: ssd
 	mkdir -p $(DEPLOY_TOP)/modplay
 	dfs read -i -d $(DEPLOY_TOP)/modplay $(SSD)
+
+$(SUBDIRS):
+	$(MAKE) -C $@ $(MAKECMDGOALS)
 
 $(BUILD)/modplay/modplay.bin:
 	make -C modplay all
