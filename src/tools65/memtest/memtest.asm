@@ -48,11 +48,15 @@ zp_trans_acc:
 zp_addr:	.res	3
 zp_data:	.res	1
 zp_fail:	.res	1
+zp_ctr:	.res	1
 
 		.BSS
 orgstack:	.res	1	; original stack pointer
-addr_max:	.res	3
+addr_max:	.res	3	; base+size - 1
 dev_no:		.res	1
+addr_base:	.res	3
+addr_size:	.res	3	; actually size - 1
+addr_bits:	.res	1	; number of bits in size-1
 		.CODE
 		
 ;==============================================================================
@@ -83,20 +87,47 @@ dev_no:		.res	1
 		jsr	ParseHex
 		bcs	brkBadCommand
 		lda	zp_trans_acc
+		sta	addr_base
+		lda	zp_trans_acc+1
+		sta	addr_base+1
+		lda	zp_trans_acc+2
+		sta	addr_base+2
+
+
+		jsr	ParseHex
+		bcs	brkBadCommand
+
+		jsr	decAcc
+
+		clc
+		lda	zp_trans_acc
+		sta	addr_size
+		adc	addr_base
 		sta	addr_max
 		lda	zp_trans_acc+1
+		sta	addr_size+1
+		adc	addr_base+1
 		sta	addr_max+1
 		lda	zp_trans_acc+2
+		sta	addr_size+2
+		adc	addr_base+2
 		sta	addr_max+2
+
+
+		lda	#1
+		jsr	addAAcc
 
 		lda	zp_trans_acc+2
 		ora	zp_trans_acc+1
 		ora	zp_trans_acc+0
 		beq	brkBadCommand
 
+		lda	#$FF
+		sta	addr_bits
 @l1:		lsr	zp_trans_acc+2
 		ror	zp_trans_acc+1
 		ror	zp_trans_acc
+		inc	addr_bits
 		bcc	@l1
 		lda	zp_trans_acc+2
 		ora	zp_trans_acc+1
@@ -104,17 +135,7 @@ dev_no:		.res	1
 		bne	brkP2
 
 		clc
-		lda	addr_max
-		sbc	#0
-		sta	addr_max
-		lda	addr_max+1
-		sbc	#0
-		sta	addr_max+1
-		lda	addr_max+2
-		sbc	#0
-		sta	addr_max+2
-
-
+		
 		lda	#0
 		sta	flag_soak
 		sta	flag_soak_ctr
@@ -133,12 +154,13 @@ dev_no:		.res	1
 
 		jmp	go
 
+brkBadCommand:	brk
+		.byte	0, "Bad Command: MEMTEST <DEV> <START> <MEMSIZE> [S]", 0
+
 brkP2:		brk	
 		.byte	1, "Memsize must be power of 2", 0
 
 
-brkBadCommand:	brk
-		.byte	0, "Bad Command: MEMTEST <DEV> <MEMSIZE> [S]", 0
 
 
 go:
@@ -173,42 +195,50 @@ again:
 data_W1:
 		M_PRINT str_TestW1
 
-		jsr	addr0
+		jsr	addrBase
 		sta	zp_fail
 
 		lda	#1
 		sta	zp_data
 @l:		jsr	jimwrite
+		jsr	jimcheck		
+		bne	@e
+		jsr	CheckESC
 		clc
 		rol	zp_data
 		bcc	@l
 
-		jsr	passfail
+@e:		jsr	passfail
 
 data_W0:
 		M_PRINT str_TestW0
 
-		jsr	addr0
+		jsr	addrBase
 		sta	zp_fail
 
 		lda	#$FE
 		sta	zp_data
 @l:		jsr	jimwrite
 		jsr	jimcheck
+		bne	@e
+		jsr	CheckESC
 		sec
 		rol	zp_data
 		bcs	@l
 
-		jsr	passfail
+@e:		jsr	passfail
 
 		M_PRINT str_TestAddrLine
 
 addr_W1:
 		M_PRINT str_TestW1
 
-		jsr	addr0
+		ldx	addr_bits
+		stx	zp_ctr
+		jsr	addrBase
 		sec	
 		jsr	roladdr
+		lda	#0
 		sta	zp_fail
 
 		lda	#1
@@ -217,27 +247,33 @@ addr_W1:
 		clc
 		jsr	roladdr
 		inc	zp_data
-		jsr	cmpaddrmax
-		bcc	@l
+		dec	zp_ctr
+		bne	@l
 		
-		jsr	addr0
+		ldx	addr_bits
+		stx	zp_ctr
+		jsr	addrBase
 		sec	
 		jsr	roladdr
 
 		lda	#1
 		sta	zp_data
 @l2:		jsr	jimcheck
+		bne	@e
+		jsr	CheckESC
 		clc
 		jsr	roladdr
 		inc	zp_data
-		jsr	cmpaddrmax
-		bcc	@l2
+		dec	zp_ctr
+		bne	@l2
 
-		jsr	passfail
+@e:		jsr	passfail
 
 addr_W0:
 		M_PRINT str_TestW0
 
+		ldx	addr_bits
+		stx	zp_ctr
 		jsr	addrmax
 		clc
 		jsr	roladdr
@@ -247,15 +283,17 @@ addr_W0:
 
 		lda	#$FF
 		sta	zp_data
-@l:		jsr	addrandmax
+@l1:		jsr	addrandmax
 		jsr	jimwrite
 		dec	zp_data
 		sec
 		jsr	roladdr
 		jsr	addrandmax
-		jsr	cmpaddrmax
-		bcc	@l
+		dec	zp_ctr
+		bne	@l1
 
+		ldx	addr_bits
+		stx	zp_ctr
 		jsr	addrmax
 		clc
 		jsr	roladdr
@@ -264,19 +302,24 @@ addr_W0:
 		lda	#$FF
 		sta	zp_data
 @l2:		jsr	jimcheck
+		bne	@e
+		jsr	CheckESC
 		sec
 		jsr	roladdr
 		dec	zp_data
 		jsr	addrandmax
-		jsr	cmpaddrmax
-		bcc	@l2
+		dec	zp_ctr
+		bne	@l2
 
-		jsr	passfail
+@e:		jsr	passfail
 
 addr_S1:
 		M_PRINT str_TestS1
 
-		jsr	addr0
+		ldx	addr_bits
+		inx
+		stx	zp_ctr
+		jsr	addrBase
 		sta	zp_fail
 
 		lda	#1
@@ -285,23 +328,66 @@ addr_S1:
 		sec
 		jsr	roladdr
 		inc	zp_data
-		jsr	cmpaddrmax
-		bcc	@l
+		dec	zp_ctr
+		bne	@l
 		
-		jsr	addr0
+		ldx	addr_bits
+		inx
+		stx	zp_ctr
+		jsr	addrBase
 
 		lda	#1
 		sta	zp_data
 @l2:		jsr	jimcheck
+		bne	@e
+		jsr	CheckESC
 		sec
 		jsr	roladdr
 		inc	zp_data
-		jsr	cmpaddrmax
-		bcc	@l2
+		dec	zp_ctr
+		bne	@l2
 
-		jsr	passfail
+@e:		jsr	passfail
 
+testP1:
+		M_PRINT str_TestP1
+		; page wide test
+		lda	#0
+		sta	zp_fail
+		
+		jsr	addrmax
+		lda	#0
+		sta	zp_addr+0
+@ll:		lda	zp_addr+2
+		eor	zp_addr+1
+		eor	#$FF
+		sta	zp_data
+		jsr	jimwrite
+		sec
+		lda	zp_addr+1
+		sbc	#1
+		sta	zp_addr+1
+		lda	zp_addr+2
+		sbc	#0
+		sta	zp_addr+2
+@ss:		jsr	cmpaddrbase
+		bcs	@ll
 
+		jsr	addrBase
+@ll1:		lda	zp_addr+2
+		eor	zp_addr+1
+		eor	#$FF
+		sta	zp_data
+		jsr	jimcheck
+		bne	@e
+		jsr	CheckESC
+		inc	zp_addr+1
+		bne	@ss1
+		inc	zp_addr+2
+@ss1:		jsr	cmpaddrmax
+		bcc	@ll1
+
+@e:		jsr	passfail
 
 		bit	flag_soak
 		bpl	@out
@@ -339,24 +425,67 @@ cmpaddrmax:	sec
 		sbc	addr_max+2
 		rts
 
-roladdr:
+cmpaddrbase:	sec
+		lda	zp_addr
+		sbc	addr_base
+		lda	zp_addr+1
+		sbc	addr_base+1
+		lda	zp_addr+2
+		sbc	addr_base+2
+		rts
+
+
+roladdr:		jsr	subbase
 		rol	zp_addr
 		rol	zp_addr+1
 		rol	zp_addr+2
+		jsr	addbase
 		rts
 
-roraddr:
+roraddr:		jsr	subbase
 		ror	zp_addr
 		ror	zp_addr+1
 		ror	zp_addr+2
+		jsr	addbase
 		rts
 
 
-addr0:	
-		lda	#0
+addbase:		php
+		clc
+		lda	zp_addr
+		adc	addr_base
 		sta	zp_addr
+		lda	zp_addr+1
+		adc	addr_base+1
 		sta	zp_addr+1
+		lda	zp_addr+2
+		adc	addr_base+2
 		sta	zp_addr+2
+		plp
+		rts
+
+subbase:		php
+		sec
+		lda	zp_addr
+		sbc	addr_base
+		sta	zp_addr
+		lda	zp_addr+1
+		sbc	addr_base+1
+		sta	zp_addr+1
+		lda	zp_addr+2
+		sbc	addr_base+2
+		sta	zp_addr+2
+		plp
+		rts
+
+addrBase:	
+		lda	addr_base
+		sta	zp_addr
+		lda	addr_base+1
+		sta	zp_addr+1
+		lda	addr_base+2
+		sta	zp_addr+2
+		lda	#0		; depended on in calls
 		rts
 
 addrmax:	
@@ -368,16 +497,17 @@ addrmax:
 		sta	zp_addr+2
 		rts
 
-addrandmax:	
-		lda	addr_max
+addrandmax:	jsr	subbase
+		lda	addr_size
 		and	zp_addr
 		sta	zp_addr
-		lda	addr_max+1
+		lda	addr_size+1
 		and	zp_addr+1
 		sta	zp_addr+1
-		lda	addr_max+2
+		lda	addr_size+2
 		and	zp_addr+2
 		sta	zp_addr+2
+		jsr	addbase
 		rts
 
 
@@ -397,13 +527,28 @@ jimreadA:
 
 jimcheck:
 		jsr	jimaddr
+
+;		jsr	PrintAddr
+;		lda	#':'
+;		jsr	OSWRCH
+
 		ldx	zp_addr+0
 		lda	JIM,X
+;		pha
+;		jsr	PrintHex
+;		lda	#'='
+;		jsr	OSWRCH
+;		lda	zp_data
+;		jsr	PrintHex
+;		jsr	OSNEWL
+;		pla
+
 		cmp	zp_data
 		bne	@s1
 		rts
-@s1:		inc	zp_fail
-		pha
+@s1:		pha
+		lda	#$FF
+		sta	zp_fail
 
 		jsr	OSNEWL
 		jsr	PrintAddr
@@ -412,7 +557,9 @@ jimcheck:
 
 		M_PRINT str_read
 		pla
-		jmp	PrintHex
+		jsr	PrintHex
+		lda	#$FF		; Z=0
+		rts
 
 
 
@@ -559,14 +706,16 @@ WaitKey:	pha
 		bne	@2
 		jmp	ackEscape
 
-CheckESC:	bit	zp_mos_ESC_flag			; TODO - system call for this?
+CheckESC:	php
+		bit	zp_mos_ESC_flag			; TODO - system call for this?
 		bpl	ceRTS
 ackEscape:	ldx	#$FF
 		lda	#OSBYTE_126_ESCAPE_ACK
 		jsr	OSBYTE
 brkEscape:	M_ERROR
 		.byte	17, "Escape",0
-ceRTS:		rts
+ceRTS:		plp
+		rts
 
 
 ;------------------------------------------------------------------------------
@@ -697,12 +846,26 @@ addAAcc:
 		rts
 
 
+decAcc:
+		clc
+		lda	zp_trans_acc
+		sbc	#0
+		sta	zp_trans_acc
+		lda	zp_trans_acc+1
+		sbc	#0
+		sta	zp_trans_acc+1
+		lda	zp_trans_acc+2
+		sbc	#0
+		sta	zp_trans_acc+2		
+		rts
+
 
 str_TestDataLine:	.byte	"Testing data lines", $D, 0
 str_TestW1:		.byte	"Walking 1's", 0
 str_TestW0:		.byte	"Walking 0's", 0
 str_TestS1:		.byte	"Shifting 1's", 0
 str_TestS0:		.byte	"Shifting 0's", 0
+str_TestP1:		.byte	"Page by page", 0
 str_TestAddrLine:	.byte	"Testing address lines", $D, 0
 str_Writing:		.byte	"Writing ", 0
 str_At:			.byte	" at ", 0
