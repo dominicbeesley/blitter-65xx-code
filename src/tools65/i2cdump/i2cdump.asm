@@ -277,7 +277,7 @@ dowrite:	iny
 
 
 brkNoEEPROM:	brk
-		.byte	0, "NO RTC", 0
+		.byte	0, "NO EEPROM", 0
 
 
 cmpaddr:
