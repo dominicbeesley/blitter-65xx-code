@@ -88,9 +88,7 @@
 		.export brkBadCommand
 		.export brkInvalidArgument
 
-		.export MaskBitA
-
-		.export bitX
+		.export tblMaskBits
 ;
 ; -----------------------------
 ; Generate a sideways ROM error in ADDR_ERRBUF *stack or other space*
@@ -1030,34 +1028,7 @@ brkInvalidArgument:
 		.byte	$7F, "Invalid Argument", 0
 
 
-bitX:		; bit A of A is set to 1, return X=0
-		tax
-		inx
-		lda	#0
-		sec
-@lp:		rol	A
-		dex
-		bne	@lp
-		rts
+tblMaskBits:	.byte $01, $02, $04, $08, $10, $20, $40, $80
 
 
-	; return's A with the Ath bit set's the bit A in
-MaskBitA:	pha			; room for result
-		txa
-		pha
-		tsx
-		lda	$102,X
-		tax
-		lda	#0
-		sec
-		; make a mask from bits in 
-@ml:		rol	A
-		dex
-		bpl	@ml
-		tsx
-		sta	$102,X
-		pla
-		tax
-		pla
-		rts
 
