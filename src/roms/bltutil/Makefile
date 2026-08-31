@@ -9,12 +9,13 @@ OBJS=	bltutil_romheader bltutil bltutil_flashutils \
 	bltutil_sound bltutil_heap bltutil_sound_irq \
 	bltutil_cfg bltutil_i2c bltutil_autohazel
 OBJS_N=	bltutil_noice
+OBJS_NOT_N=rtc
 ROMNO=F
 
 TARGETS=bltutil bltutil.e bltutil.n bltutil.n.e
 
-BBCOBJS_O = $(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
-ELKOBJS_O = $(addprefix $(BUILD)/E/, $(addsuffix .o, $(OBJS)))
+BBCOBJS_O = $(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS) $(OBJS_NOT_N)))
+ELKOBJS_O = $(addprefix $(BUILD)/E/, $(addsuffix .o, $(OBJS) $(OBJS_NOT_N)))
 BBCOBJS_N_O = $(addprefix $(BUILD)/N/, $(addsuffix .o, $(OBJS) $(OBJS_N)))
 ELKOBJS_N_O = $(addprefix $(BUILD)/NE/, $(addsuffix .o, $(OBJS) $(OBJS_N)))
 ALLOBJS_O = $(BBCOBJS_O) $(ELKOBJS_O) $(BBCOBJS_N_O) $(ELKOBJS_N_O)

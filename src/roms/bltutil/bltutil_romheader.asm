@@ -786,12 +786,20 @@ dMOS_OSBYTE_162_WRITE_CMOS:
 svc8_OSWORD:
 		lda	zp_mos_OSBW_A
 		cmp	#OSWORD_BLTUTIL		
-		beq     oswordHandle
-		cmp	#OSWORD_SOUND
-		bne	@out
+		bne     @s1
+		jmp	heap_OSWORD_bltutil
+@s1:		cmp	#OSWORD_SOUND
+		bne	@s2
 		jmp	sound_OSWORD_SOUND
-@out:		jmp	ServiceOut
-oswordHandle:	jmp	heap_OSWORD_bltutil
+@s2:		
+	.ifndef	INC_NOICE
+		cmp	#OSWORD_RTC_READ
+		bne	@s3
+		jmp	rtc_OSWORD_READ
+@s3:
+	.endif
+
+		jmp	ServiceOut
 
 
 
@@ -1092,7 +1100,7 @@ confYN:		bcs	statYN
 		and	#$7			; the bit position used to store the config
 		tax
 		lda	tblMaskBits,X
-		
+
 		sta	zp_trans_tmp+1		; store mask
 		and	zp_trans_tmp
 		sta	zp_trans_tmp		; set bit to store
