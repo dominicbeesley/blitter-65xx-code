@@ -146,25 +146,9 @@ autohazel_service:
 
 		; the rom changed Y, set its bit in the map registers
 		lda	hwsp_srv_rom		; get back X (it may have been changed in the service call?)
-		and	#$7
-		tax
-		lda	#1
-		clc
-@blp:		dex	
-		bmi	@bsk
-		rol	A
-		bcc	@blp
-@bsk:		ldx	hwsp_srv_rom
-		cpx	#8
-		bcs	@bsk2
-		ora	hwsp_srv_map
-		sta	hwsp_srv_map
-		bne	@sk2			; always
-@bsk2:		ora	hwsp_srv_map+1
-		sta	hwsp_srv_map+1		
-@sk2:		
+		jsr	setHBitA
 
-		; check to see if Y should be update
+@sk2:		; check to see if Y should be update
 		bit	hwsp_srv_resetY
 		bpl	@sk_noresetY		; go round again, Y will be reset
 
@@ -224,6 +208,10 @@ autohazel_boot_first:
 		ldy	hwsp_wksp_top		
 @sk1:		sty	hwsp_wksp_top		; Save top of shared workspace (so far)
 
+		; enable auto hazel for ourselves
+		lda	zp_mos_curROM
+		jsr	setHBitA
+
 		; enable auto hazel hardware map
 		lda	hwsp_srv_map
 		sta	sheila_ROM_AUTOHAZEL_0
@@ -270,4 +258,15 @@ autohazel_boot_second:
 
 
 
-
+setHBitA:	and	#$F
+		cmp	#8
+		and	#$7
+		tax
+		lda	tblMaskBits, X
+@bsk:		bcs	@bsk2
+		ora	hwsp_srv_map
+		sta	hwsp_srv_map
+		bne	@sk2			; always
+@bsk2:		ora	hwsp_srv_map+1
+		sta	hwsp_srv_map+1		
+@sk2:		rts	

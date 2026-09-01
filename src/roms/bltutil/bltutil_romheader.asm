@@ -832,6 +832,9 @@ tbl_commands_General:
 	; Master/MOS substitute commands
 tbl_commands_MOS:	.word	strCmdCONFIG, cmdCONFIG-1, strHelpCONFIG
 			.word	strCmdSTATUS, cmdSTATUS-1, strHelpSTATUS
+	.ifndef INC_NOICE
+			.word   strCmdTIME, cmdTIME-1, strHelpTIME
+	.endif
 			.word	0
 
 strHELPKEY_BLTUTIL:	.byte	"BLTUTIL",0
@@ -872,10 +875,14 @@ strHelpXMLoad:		.byte	"<file> [#dev] [<start>]",0
 strCmdXMSAVE:		.byte	"XMSAVE",0
 strHelpXMSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
 
-strCmdCONFIG:		.byte	"CONFIGURE", 0
+strCmdCONFIG:		.byte	"CONFIGURE"
 strHelpCONFIG:		.byte	0
-strCmdSTATUS:		.byte	"STATUS", 0
+strCmdSTATUS:		.byte	"STATUS"
 strHelpSTATUS:		.byte	0
+	.ifndef INC_NOICE
+strCmdTIME:		.byte   "TIME"
+strHelpTIME:		.byte	0
+	.endif
 
 	.macro ConfYN Name, Func, Flip, Bit, Offs
 		.word	Name

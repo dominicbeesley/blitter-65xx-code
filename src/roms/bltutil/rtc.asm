@@ -23,11 +23,13 @@
 
 		.include "mosrom.inc"	
 		.include "oslib.inc"
+		.include "hazel.inc"
 
 		.include "bltutil.inc"
 
 
 		.export rtc_OSWORD_READ
+		.export cmdTIME
 
 		; The RTC on the blitter / C20k has a different order to that on the master
 
@@ -79,7 +81,7 @@ tbloffs:	.byte	OSWIX_SEC
 			.res 1                      ;':'
 		ss	.res 2
 		cr      .res 1                      ;'\n'
-		.endstruct
+	.endstruct
 
 
 
@@ -264,3 +266,23 @@ monthStrings:   .byte "Jan",$01
                 .byte "Oct",$10
                 .byte "Nov",$11
                 .byte "Dec",$12
+
+
+;-------------------------------------------------------------------------
+;
+; *TIME [MasRef C.5-12]
+; 
+cmdTIME:
+                lda	#0
+                sta	HZ_CMDLINE
+                ldx	#<HZ_CMDLINE
+                ldy	#>HZ_CMDLINE
+                lda	#$0E                     
+                jsr	OSWORD                   
+                ldx	#256-.sizeof(ClockStringFormat)
+L8752:
+                lda	HZ_CMDLINE-(256-.sizeof(ClockStringFormat)),x
+                jsr	OSASCI                   
+                inx                          
+                bne	L8752                    
+                rts                          
