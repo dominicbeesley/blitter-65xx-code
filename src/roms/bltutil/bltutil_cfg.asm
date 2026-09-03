@@ -629,14 +629,25 @@ cmdInfo:	jsr	cfgGetAPILevel
 
 		ldx	#tbl_capbits - tbl_bld
 		ldy	#0
-		lda	JIM + jim_offs_VERSION_cap_bits+0
-@caplp:		cpx	#tbl_capbits - tbl_bld + 16
-		bne	@skcap00
-		lda	JIM + jim_offs_VERSION_cap_bits+2
-		jmp	@skcap0
-@skcap00:	cpx	#tbl_capbits - tbl_bld + 8
-		bne	@skcap0		
-		lda	JIM + jim_offs_VERSION_cap_bits+1
+		
+@caplp:		pha
+		txa
+		pha
+		sec
+		sbc	#tbl_capbits - tbl_bld
+		bit	seven
+		bne	@s
+		lsr	A
+		lsr	A
+		lsr	A
+		tax
+		lda	JIM + jim_offs_VERSION_cap_bits,X
+		tsx
+		sta	$102,X
+@s:		pla
+		tax
+		pla
+
 @skcap0:	ror	A
 		bcc	@capnext
 		pha
@@ -690,6 +701,8 @@ cmdInfo:	jsr	cfgGetAPILevel
 		; capabilities
 
 		HEAD16	"Cap. bits"
+		lda	JIM + jim_offs_VERSION_cap_bits+3
+		jsr	PrintHexA
 		lda	JIM + jim_offs_VERSION_cap_bits+2
 		jsr	PrintHexA
 		lda	JIM + jim_offs_VERSION_cap_bits+1
@@ -909,43 +922,47 @@ tbl_capbits:	.byte	str_cap_CS - str_bld_base
 		.byte	str_cpu_SuperShadow - str_bld_base
 		.byte	str_10ns_ChipRAM - str_bld_base
 		.byte	str_45ns_BBRAM - str_bld_base
+		.byte   str_SDCARD - str_bld_base
+		.byte   str_XFLASH - str_bld_base
 		.byte	str_rv32 - str_bld_base
 		.byte	str_haz3 - str_bld_base
 
-CAP_IX_CS	= 0
-CAP_IX_DMA	= 1
-CAP_IX_BLITTER	= 2
-CAP_IX_AERIS	= 3
-CAP_IX_I2C	= 4
-CAP_IX_SND	= 5
-CAP_IX_HDMI	= 6
-CAP_IX_T65	= 7
-CAP_IX_65C02	= 8
-CAP_IX_6800	= 9
-CAP_IX_80188	= 10
-CAP_IX_65816	= 11
-CAP_IX_6X09	= 12
-CAP_IX_Z80	= 13
-CAP_IX_68008	= 14
-CAP_IX_68000	= 15
-CAP_IX_ARM2	= 16
-CAP_IX_Z180	= 17
+CAP_IX_CS		= 0
+CAP_IX_DMA		= 1
+CAP_IX_BLITTER		= 2
+CAP_IX_AERIS		= 3
+CAP_IX_I2C		= 4
+CAP_IX_SND		= 5
+CAP_IX_HDMI		= 6
+CAP_IX_T65		= 7
+CAP_IX_65C02		= 8
+CAP_IX_6800		= 9
+CAP_IX_80188		= 10
+CAP_IX_65816		= 11
+CAP_IX_6X09		= 12
+CAP_IX_Z80		= 13
+CAP_IX_68008		= 14
+CAP_IX_68000		= 15
+CAP_IX_ARM2		= 16
+CAP_IX_Z180		= 17
 CAP_IX_SuperShadow	= 18
 CAP_IX_10ns_ChipRAM	= 19
 CAP_IX_45ns_BBRAM	= 20
-CAP_IX_RV32		= 21
-CAP_IX_HAZ3		= 22
-CAP_IX_MAX=22
+CAP_IX_EXT_SDCARD	= 21
+CAP_IC_XFLASH		= 22
+CAP_IX_RV32		= 23
+CAP_IX_HAZ3		= 24
+CAP_IX_MAX		= 24
 
 
 str_bld_base:
-str_bld_bran:		TOPTERM	"Repository"
+str_bld_bran:		TOPTERM	"Repo."
 str_bld_ver:		TOPTERM	"Repo. ver"
-str_bld_date:		TOPTERM	"Build date"
-str_bld_name:		TOPTERM	"Board name"
-str_bld_swromx:		TOPTERM	"Swap Roms"
+str_bld_date:		TOPTERM	"Build"
+str_bld_name:		TOPTERM	"Board"
+str_bld_swromx:		TOPTERM	"SWROMX"
 str_bld_mosram:		TOPTERM	"MOSRAM"
-str_bld_memi:		TOPTERM	"ROM inhibit"
+str_bld_memi:		TOPTERM	"MEMI"
 str_sys_B:		TOPTERM	"Model B"
 str_sys_Elk:		TOPTERM	"Electron"
 str_sys_BPlus:		TOPTERM	"Model B+"
@@ -976,8 +993,10 @@ str_cpu_Z180:		TOPTERM	"Z180"
 str_cpu_SuperShadow:	TOPTERM	"SuperShadow"
 str_10ns_ChipRAM:	TOPTERM	"10ns ChipRAM"
 str_45ns_BBRAM:		TOPTERM	"45ns BB RAM"
-str_rv32:		TOPTERM "RiscV-PicoRV32"
-str_haz3:		TOPTERM "RiscV-Hazard3"
+str_SDCARD:		TOPTERM "Ext uSD"
+str_XFLASH:		TOPTERM "SPI FPGA flash"
+str_rv32:		TOPTERM "PicoRV32"
+str_haz3:		TOPTERM "Hazard3"
 
 
 		; these are in the order of bits 3..1 of the config byte for the 1st 8 then followed by the mk.3 specifics
@@ -1025,3 +1044,5 @@ str_cpu_MHz:		.byte	"Mhz",0
 
 str_Paula:		.byte  	"1M Paul", 'a' + $80
 str_map:		.byte	"ROM set ",0
+
+seven:			.byte   7
