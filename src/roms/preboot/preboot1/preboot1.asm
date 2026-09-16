@@ -80,6 +80,8 @@ handle_reset:	cld
 		sei
 		ldx	#$FF
 		txs
+		inx
+		stx	zp_cksm
 		
 		; prime JIM registers
 		lda	#JIM_DEVNO_BLITTER
