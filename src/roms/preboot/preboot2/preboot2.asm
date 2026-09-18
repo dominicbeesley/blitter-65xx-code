@@ -90,6 +90,7 @@ irqskip:
 handle_nmi:    
 		rti
 
+	.ifdef C20K
 dbph:		pha
 		lsr	A
 		lsr	A
@@ -106,6 +107,30 @@ dbp:		bit	debug_UART_status
 		bvs	dbp
 		sta	debug_UART_data
 		rts
+	.endif
+	.ifndef C20K
+dbph:		pha
+		lsr	A
+		lsr	A
+		lsr	A
+		lsr	A
+		jsr	dbphn
+		pla
+dbphn:		and	#$F
+		cmp	#10
+		bcc	@s
+		adc	#'A' - '0' - 10 - 1
+@s:		adc	#'0'
+dbp:		pha        	   		
+PC10:		lda	sheila_ACIA_CTL		;CHECK TX STATUS        		
+		and     	#ACIA_TDRE
+        		beq     	PC10			;READY ?
+        		pla
+        		sta	sheila_ACIA_DATA   	;TRANSMIT CHAR.
+        		rts
+
+	.endif
+
 
 handle_brk:	lda	#'B'
 		jsr	dbp
@@ -175,6 +200,15 @@ PER_1CS=10000
 		; TODO: check / report if not
 		lda	#$E
 		sta	sheila_ROMSEL
+
+		lda 	#$40
+		sta	sheila_SERIAL_ULA	; set for 19200/19200
+
+		lda	#%01010111
+		sta	sheila_ACIA_CTL	; master reset
+		lda	#%01010110
+		sta	sheila_ACIA_CTL	; RTS high, no interrupts, 8N1, div64
+		
 
 		jmp	crt0_startup
 

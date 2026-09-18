@@ -11,6 +11,13 @@ int debug_putc(int dev, int c) {
 	poke(debug_UART_data, c);
 
 #endif
+
+#ifndef C20K
+	while (!(peek(sheila_ACIA_CTL) & ACIA_TDRE))
+		;
+	poke(sheila_ACIA_DATA, c);
+
+#endif
 	
 	return c;
 }

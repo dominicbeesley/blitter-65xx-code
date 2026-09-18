@@ -73,7 +73,7 @@ flash2:		sta	sheila_SYSVIA_orb
 
 ks:
 		sta	sheila_SYSVIA_ora_nh
-		bit	sheila_SYSVIA_ora_nh
+		lda	sheila_SYSVIA_ora_nh
 		rts
 
 handle_reset:	cld
