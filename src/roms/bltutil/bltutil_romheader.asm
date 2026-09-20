@@ -56,6 +56,9 @@ utils_name:
 	.ifdef MACH_ELK
 		.byte " ELK"
 	.endif 
+	.ifdef INC_NOICE
+		.byte " NoIce"
+	.endif
 		.byte	0
 		VERSION_STRING
 		.byte	" ("
@@ -264,6 +267,7 @@ svc1_ClaimAbs:
 		; belt and braces write $f0 to flash to clear soft id mode
 		jsr	FlashReset_Q
 
+	.ifdef INC_NOICE
 		; detect NoICE and check we're in ROM#F
 		lda	zp_mos_curROM
 		cmp	#$0F
@@ -275,6 +279,7 @@ svc1_ClaimAbs:
 
 		jsr	noice_init
 @notromf:
+	.endif
 
 		lda	#OSBYTE_121_KEYB_SCAN
 		ldy	#0
@@ -781,12 +786,20 @@ dMOS_OSBYTE_162_WRITE_CMOS:
 svc8_OSWORD:
 		lda	zp_mos_OSBW_A
 		cmp	#OSWORD_BLTUTIL		
-		beq     oswordHandle
-		cmp	#OSWORD_SOUND
-		bne	@out
+		bne     @s1
+		jmp	heap_OSWORD_bltutil
+@s1:		cmp	#OSWORD_SOUND
+		bne	@s2
 		jmp	sound_OSWORD_SOUND
-@out:		jmp	ServiceOut
-oswordHandle:	jmp	heap_OSWORD_bltutil
+@s2:		
+	.ifndef	INC_NOICE
+		cmp	#OSWORD_RTC_READ
+		bne	@s3
+		jmp	rtc_OSWORD_READ
+@s3:
+	.endif
+
+		jmp	ServiceOut
 
 
 
@@ -799,8 +812,10 @@ tbl_commands:		.word	strCmdRoms, cmdRoms-1, helpRoms
 			.word	strCmdSRNUKE, cmdSRNUKE-1, 0
 			.word	strCmdSRLOAD, cmdSRLOAD-1, strHelpSRLOAD
 			.word	strCmdBLTurbo, cmdBLTurbo-1, strHelpBLTurbo
+	.ifdef INC_NOICE
 			.word	strCmdNOICE, cmdNoIce-1, strHelpNoIce
 			.word	strCmdNOICE_BRK, cmdNoIce_BRK-1, strHelpNoIce_BRK
+	.endif
 tbl_commands_PAULA:
 			.word	strCmdSound, cmdSound-1, strHelpSound	
 			.word	strCmdSoundSamLoad, cmdSoundSamLoad-1, strHelpSoundSamLoad
@@ -817,6 +832,9 @@ tbl_commands_General:
 	; Master/MOS substitute commands
 tbl_commands_MOS:	.word	strCmdCONFIG, cmdCONFIG-1, strHelpCONFIG
 			.word	strCmdSTATUS, cmdSTATUS-1, strHelpSTATUS
+	.ifndef INC_NOICE
+			.word   strCmdTIME, cmdTIME-1, strHelpTIME
+	.endif
 			.word	0
 
 strHELPKEY_BLTUTIL:	.byte	"BLTUTIL",0
@@ -833,10 +851,12 @@ strCmdSRLOAD:		.byte	"SRLOAD", 0
 strHelpSRLOAD:		.byte	"<filename> <id> [I][X|0|1]",0
 strCmdXMDUMP:		.byte	"XMDUMP",0
 strHelpXMdump:		.byte	"[-8|16] [#<dev>] <start> <end>|+<len>",0
+	.ifdef INC_NOICE
 strCmdNOICE:		.byte	"NOICE",0
 strHelpNoIce:		.byte	"[ON|OFF]",0
 strCmdNOICE_BRK:	.byte	"NOICEBRK",0
 strHelpNoIce_BRK:	.byte	0
+	.endif
 strCmdBLTurbo:		.byte	"BLTURBO",0
 strHelpBLTurbo:		.byte	"[M[-]] [L<pagemask>] [R<n>[-]] [T[-]] [?]",0
 strCmdSound:		.byte	"BLSOUND", 0
@@ -855,10 +875,14 @@ strHelpXMLoad:		.byte	"<file> [#dev] [<start>]",0
 strCmdXMSAVE:		.byte	"XMSAVE",0
 strHelpXMSave:		.byte	"<file> [#dev] <start> <end>|+<len>",0
 
-strCmdCONFIG:		.byte	"CONFIGURE", 0
+strCmdCONFIG:		.byte	"CONFIGURE"
 strHelpCONFIG:		.byte	0
-strCmdSTATUS:		.byte	"STATUS", 0
+strCmdSTATUS:		.byte	"STATUS"
 strHelpSTATUS:		.byte	0
+	.ifndef INC_NOICE
+strCmdTIME:		.byte   "TIME"
+strHelpTIME:		.byte	0
+	.endif
 
 	.macro ConfYN Name, Func, Flip, Bit, Offs
 		.word	Name
@@ -1081,8 +1105,8 @@ confYN:		bcs	statYN
 @s:		sta	zp_trans_tmp		; store flip mask, used to swap senses of bit
 		lda	(zp_mos_genPTR),Y
 		and	#$7			; the bit position used to store the config
-		
-		jsr	MaskBitA
+		tax
+		lda	tblMaskBits,X
 
 		sta	zp_trans_tmp+1		; store mask
 		and	zp_trans_tmp
@@ -1123,8 +1147,8 @@ statYN:		php
 @nflip:		stx	zp_trans_tmp		; store flip mask, used to swap senses of bit
 		lda	(zp_mos_genPTR),Y
 		and	#$7			; the bit position used to store the config
-		
-		jsr	MaskBitA
+		tax
+		lda	tblMaskBits,X
 
 		sta	zp_trans_tmp+1		; store mask
 		

@@ -190,6 +190,15 @@ go:
 
 
 again:
+		M_PRINT str_Testing
+		jsr	addrBase
+		jsr	PrintAddr
+		M_PRINT str_to
+		jsr	addrmax
+		jsr	PrintAddr
+		jsr	OSNEWL
+
+
 		M_PRINT str_TestDataLine
 
 data_W1:
@@ -350,18 +359,28 @@ addr_S1:
 @e:		jsr	passfail
 
 testP1:
+		lda	addr_base+1
+		eor	addr_max+1
+		sta	zp_data
+		lda	addr_base+2
+		eor	addr_max+2
+		ora	zp_data
+		beq	@nopage		; skip if range less than one page
+
 		M_PRINT str_TestP1
 		; page wide test
 		lda	#0
 		sta	zp_fail
 		
 		jsr	addrmax
-		lda	#0
+		lda	addr_base
 		sta	zp_addr+0
 @ll:		lda	zp_addr+2
-		eor	zp_addr+1
+		eor	zp_addr+1		
 		eor	#$FF
 		sta	zp_data
+;		jsr	PrintAddr
+;		jsr	OSNEWL
 		jsr	jimwrite
 		sec
 		lda	zp_addr+1
@@ -370,16 +389,17 @@ testP1:
 		lda	zp_addr+2
 		sbc	#0
 		sta	zp_addr+2
+		bcc	@ss2
 @ss:		jsr	cmpaddrbase
 		bcs	@ll
-
+@ss2:
 		jsr	addrBase
 @ll1:		lda	zp_addr+2
 		eor	zp_addr+1
 		eor	#$FF
 		sta	zp_data
 		jsr	jimcheck
-		bne	@e
+;		bne	@e
 		jsr	CheckESC
 		inc	zp_addr+1
 		bne	@ss1
@@ -388,6 +408,8 @@ testP1:
 		bcc	@ll1
 
 @e:		jsr	passfail
+
+@nopage:
 
 		bit	flag_soak
 		bpl	@out
@@ -859,7 +881,7 @@ decAcc:
 		sta	zp_trans_acc+2		
 		rts
 
-
+str_Testing:		.byte   "Testing region ",0
 str_TestDataLine:	.byte	"Testing data lines", $D, 0
 str_TestW1:		.byte	"Walking 1's", 0
 str_TestW0:		.byte	"Walking 0's", 0
@@ -869,6 +891,7 @@ str_TestP1:		.byte	"Page by page", 0
 str_TestAddrLine:	.byte	"Testing address lines", $D, 0
 str_Writing:		.byte	"Writing ", 0
 str_At:			.byte	" at ", 0
+str_to:			.byte	" to ", 0
 str_Init:		.byte	"JIM page-wide memory test", $D, 0
 str_OK:			.byte	$D, "OK.", $D, 0
 str_YN:			.byte	" (Y/N)?",0

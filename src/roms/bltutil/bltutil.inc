@@ -30,27 +30,13 @@ PG_EEPROM_BASE	:=	$9000				; base phys/jim address of EEPROM is $90 0000
 							; note: this is a second copy of the EEPROM which
 							; also appears based at $80 0000
 
-OSWORD_BLTUTIL	:=	$99				; blutils #
 
-OSWORD_OP_ALLOC :=	$10
-OSWORD_OP_FREE  :=	$11
-OSWORD_OP_I2C	:=	$13
 
 JIM_SCRATCH	:=	$00FD				; page address of scratch space
 
 ;offsets in scrarch page
 SCR_JIMDEVSAVE	:=	$00				; belt and braces used in cases of a BRK
 
-OSWORD_BLTUTIL_FLAG_CURRENT	:= $80
-OSWORD_BLTUTIL_FLAG_ALTERNATE	:= $40
-OSWORD_BLTUTIL_FLAG_IGNOREMEMI	:= $20
-OSWORD_BLTUTIL_FLAG_MAP1	:= $01
-
-OSWORD_BLTUTIL_RET_FLASH	:= $80			; if memory is chip flash
-OSWORD_BLTUTIL_RET_SYS		:= $40			; bank also base set to FF 80xx
-OSWORD_BLTUTIL_RET_MEMI		:= $20
-OSWORD_BLTUTIL_RET_ISCUR	:= $02
-OSWORD_BLTUTIL_RET_MAP1		:= $01
 
 .macro		VERSION_NAME
 		.byte	"BLTUTIL"

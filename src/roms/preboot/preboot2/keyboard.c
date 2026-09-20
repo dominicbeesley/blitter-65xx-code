@@ -100,7 +100,8 @@ void keyb_irq_ca2() {
 		buffer_add(BUFFER_KEYBOARD, ka);
 	}
 
-	poke(sheila_SYSVIA_ier, VIA_IFR_BIT_CA2);
+	if (key_prev)
+		poke(sheila_SYSVIA_ier, VIA_IFR_BIT_CA2);
 }
 
 void keyb_irq_t1() {

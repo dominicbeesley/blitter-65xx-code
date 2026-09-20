@@ -66,6 +66,7 @@ OSFIND_OPENUP				:= $C0
 
 OSWORD_SOUND				:= $07
 OSWORD_ENVELOPE				:= $08
+OSWORD_RTC_READ				:= $0E
 
 OSARGS_cmdtail				:= $01
 OSARGS_EXT				:= $02
@@ -278,3 +279,26 @@ vduvar_ix_FONT_LOC160_191		:= $6C	; Font location, characters 160-191
 vduvar_ix_FONT_LOC192_223		:= $6D	; Font location, characters 192-223
 vduvar_ix_FONT_LOC224_255		:= $6E	; Font location, characters 224-255
 vduvar_ix_PALLETTE			:= $6F	; Palette for colours 0 to 15
+
+
+
+;===================================
+; Blitter / C20K specific
+;===================================
+
+OSWORD_BLTUTIL	:=	$99				; blutils #
+
+OSWORD_OP_ALLOC :=	$10
+OSWORD_OP_FREE  :=	$11
+OSWORD_OP_I2C	:=	$13
+
+OSWORD_BLTUTIL_FLAG_CURRENT	:= $80
+OSWORD_BLTUTIL_FLAG_ALTERNATE	:= $40
+OSWORD_BLTUTIL_FLAG_IGNOREMEMI	:= $20
+OSWORD_BLTUTIL_FLAG_MAP1	:= $01
+
+OSWORD_BLTUTIL_RET_FLASH	:= $80			; if memory is chip flash
+OSWORD_BLTUTIL_RET_SYS		:= $40			; bank also base set to FF 80xx
+OSWORD_BLTUTIL_RET_MEMI		:= $20
+OSWORD_BLTUTIL_RET_ISCUR	:= $02
+OSWORD_BLTUTIL_RET_MAP1		:= $01

@@ -569,7 +569,8 @@ cmdBLTurboRomsParse:
 		jsr	setf				; had number, open number ready for '-'
 		lda	zp_trans_acc
 		sta	zp_trans_tmp+3			; remember last number (for ranges)
-		jsr	@setA
+		tax
+		jsr	@setX
 
 		jmp	@lp
 
@@ -578,23 +579,9 @@ cmdBLTurboRomsParse:
 @closerangenxt:
 		cpx	zp_trans_tmp+3
 		bcc	@clearng			; if end of range exit and reset range flags
-		txa
-		jsr	@setA
+		jsr	@setX
 		dex
 		bpl	@closerangenxt
-
-@setA:		cmp	#$8
-		php					; set Cy if in 2nd byte
-		and	#$7
-		jsr	MaskBitA
-		plp
-		bcs	@h
-		ora	zp_trans_tmp+1
-		sta	zp_trans_tmp+1
-		rts
-@h:		ora	zp_trans_tmp+2
-		sta	zp_trans_tmp+2
-		rts
 
 
 @clearng:	lda	#$FE
@@ -625,6 +612,26 @@ cmdBLTurboRomsParse:
 		bpl	@brkInvalidArgument3		; we've not had anything throw error
 		bne	@brkInvalidArgument3		; range left hanging
 		rol	zp_trans_tmp
+		rts
+
+
+@setX:		txa
+		pha
+		cpx	#$8
+		php					; set Cy if in 2nd byte
+		txa
+		and	#$7
+		tax
+		lda	tblMaskBits,X
+		plp
+		bcs	@h
+		ora	zp_trans_tmp+1
+		sta	zp_trans_tmp+1
+		bne	@e
+@h:		ora	zp_trans_tmp+2
+		sta	zp_trans_tmp+2
+@e:		pla
+		tax
 		rts
 
 
