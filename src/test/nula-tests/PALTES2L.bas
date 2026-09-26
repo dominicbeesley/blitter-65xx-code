@@ -1,6 +1,6 @@
     0REM >test palette flash and phys colour 
     1REM mapping to nula palette
-    2MODE 1:?&FE22=&40
+    2MODE 1:?&FE22=&40:?&FE22=&11
     3FOR I%=0 TO 15:READ N%:?&FE23=N%DIV256:?&FE23=N%:NEXT
     4:
     5REPEAT
@@ -32,26 +32,26 @@
    35DATA -1
    36DATA 0,129,"Teal on Navy"
    37DATA 1,128,"Navy on Teal"
-   38DATA 2,131,"Sky blue on Silver"
+   38DATA 2,131,"Dk.G on Dk. Cyan"
    39DATA -1
    41DATA "Test high palette palette"
    42DATA &A8,&B8,&E8,&F8,&8C,&9C,&CC,&DC,&2E,&3E,&6E,&7E,&0F,&1F,&4F,&5F,-1
-   43DATA 0,129,"Dk.Gy on Navy"
-   44DATA 1,128,"Navy on Dk.G
-   45DATA 2,131,"Sky blue on Silver"
+   43DATA 0,129,"Teal on Navy"
+   44DATA 1,128,"Navy on Teal"
+   45DATA 2,131,"Dk.G on Dk. Cyan"
    46DATA -1
    48DATA "Test high palette Flash"
    49DATA &A8,&B8,&E8,&F8,&8C,&9C,&CC,&DC,&2E,&3E,&6E,&7E,&0F,&1F,&4F,&5F,-1
-   50DATA 0,129,"Dk.G on Navy / White on Yellow"
-   51DATA 1,128,"Navy on Dk.G / Yellow on White "
-   52DATA 2,131,"Sky blue on White / D.Red on Dk.Gy"
+   50DATA 0,129,"Teal on Navy"
+   51DATA 1,128,"Navy on Teal"
+   52DATA 2,131,"Dk.G on Dk. Cyan"
    53DATA &FFFF228F,&FFFF229F
    54DATA -1
    56DATA "Test high palette Flash 2"
    57DATA &A8,&B8,&E8,&F8,&8C,&9C,&CC,&DC,&2E,&3E,&6E,&7E,&0F,&1F,&4F,&5F,-1
-   58DATA 0,129,"Black on Navy / Black on Yellow"
-   59DATA 1,128,"Navy on Black / Yellow on Black"
-   60DATA 2,131,"Cyan on Black / Red on Black"
+   58DATA 0,129,"Teal on Navy"
+   59DATA 1,128,"Navy on Teal"
+   60DATA 2,131,"Dk.G on Dk. Cyan"
    61DATA &FFFF23F0,&FFFF2300
    62DATA &FFFF2380,&FFFF2300
    63DATA -1

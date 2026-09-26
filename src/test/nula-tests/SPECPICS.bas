@@ -1,4 +1,4 @@
-REM >attributes type 2 test mode 1-ish
+REM >Speccy attributes test pics
 *VNRESET
 *VNVDU ON
 MODE0

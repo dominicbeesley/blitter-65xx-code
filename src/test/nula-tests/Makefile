@@ -8,7 +8,11 @@ DEPLOY=$(DEPLOY_TOP)/nulatest
 
 
 #BBC BASIC
-TARGETS_BBC=ATT1 ATT2 ATT3 ATT3L PALTES1 PALTES2 PALTES3 SCRTES1 SCRTES2 SPECPICS
+TARGETS_BBC=ATT1 ATT2 ATT3 ATT3L \
+			PALTES1 PALTES2 PALTES3 PALTES1L PALTES2L PALTES3L \
+			SCRTES1 SCRTES2 \
+			SPECPICS THOMSON \
+			256PIC
 #SPECCY SCREENS
 TARGETS_Z=$(basename $(wildcard *.mlt))
 
@@ -33,6 +37,7 @@ ssd:	all
 	dfs form -80 $(SSD)
 	dfs title $(SSD) "nulatest"
 	dfs add $(SSD) $(addsuffix .inf, $(TARGETS_O)) 
+	dfs add $(SSD) $(wildcard extras/*.inf)
 
 deploy:	ssd
 	mkdir -p $(DEPLOY)
