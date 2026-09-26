@@ -1,0 +1,12 @@
+    0M%=0
+    1REPEAT
+    2MODE M%
+    3PRINT "MODE ";M%
+    4E%=0:?&D0=2OR?&D0
+    5REPEAT
+    6X$=INKEY$(10):IF X$="M" OR X$="m" THEN M%=M%+1:E%=1
+    7*FX19
+    8?&FE22=&20OR(A%AND7):A%=A%+1
+    9FORI%=0TO40:VDU32+RND(90):NEXT
+   10UNTIL E%<>0
+   11UNTIL FALSE
