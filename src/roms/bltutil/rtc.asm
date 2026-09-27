@@ -149,7 +149,7 @@ convertTimeToString:
 		asl	A           
 		ldy	#$00        
 		tax             
-@l1:		lda	dayOfWeekStrings-4,x     ;-4 as 1=Sunday
+@l1:		lda	dayOfWeekStrings-4,x     ;-4 as 0=Sunday
 		sta	(zp_mos_OSBW_X),y
 		inx
 		iny
@@ -237,6 +237,9 @@ readclock:	ldx	#6
 		sta	zp_mos_OSBW_X
 		lda	#OSWORD_RTC_READ
 		sta	zp_mos_OSBW_A
+
+		inc	osfile_ctlblk + OS99_DATA_OFFS + RTCIX_DOW - RTCIX_BASE	; increment day of week RV-8263 is 0..6 not 1..7
+
 		jmp	maybeConvertToString
 
 	
