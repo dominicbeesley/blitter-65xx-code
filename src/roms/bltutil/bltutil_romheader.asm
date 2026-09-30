@@ -797,6 +797,10 @@ svc8_OSWORD:
 		bne	@s3
 		jmp	rtc_OSWORD_READ
 @s3:
+		cmp	#OSWORD_RTC_WRITE
+		bne	@s4
+		jmp	rtc_OSWORD_WRITE
+@s4:
 	.endif
 
 		jmp	ServiceOut
