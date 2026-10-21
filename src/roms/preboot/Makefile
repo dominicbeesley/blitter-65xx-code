@@ -36,9 +36,10 @@ $(BUILD)/preboot-mk2.jic: mk2_conv.cof $(BUILD)/romset-mk2.hex $(BUILD)/preboot2
 $(BUILD)/romset-mk2.bin: example-roms-list-mk2.romlst FORCE
 	$(SCRIPTS)/makeromset.pl example-roms-list-mk2.romlst $@
 
+$(BUILD)/preboot-c20k.bin: $(BUILD)/preboot2/c20k/preboot2.bin
+	cp $< $@
 
-
-all: $(SUBDIRS) $(BUILD)/romset-c20k.bin $(BUILD)/preboot-mk2.jic
+all: $(SUBDIRS) $(BUILD)/romset-c20k.bin $(BUILD)/preboot-mk2.jic $(BUILD)/preboot-c20k.bin
 
 mk2-program: $(BUILD)/preboot-mk2.jic
 	echo $(BUILD)/preboot-mk2.jic
@@ -54,6 +55,7 @@ c20k-program: $(BUILD)/romset-c20k.bin $(BUILD)/preboot2/c20k/preboot2.bin
 
 clean: $(SUBDIRS)
 	-rm $(BUILD)/romset-c20k.bin
+	-rm $(BUILD)/preboot-c20k.bin
 	-rm $(BUILD)/preboot-mk2.jic
 	-rm $(BUILD)/romset-mk2.bin
 	-rm $(BUILD)/romset-mk2.hex 

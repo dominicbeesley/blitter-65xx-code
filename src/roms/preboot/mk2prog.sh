@@ -22,4 +22,4 @@ srec_cat -Output $BUILD/romset.hex -Intel $BUILD/romset.bin -Binary
 srec_cat -Output $BUILDP2/preboot2.hex -Intel $BUILDP2/preboot2.bin -Binary
 
 $QUARTUS_CPF -c mk2_conv.cof
-$QUARTUS_PGM --no_banner --mode=jtag -o "IP;$BUILD/mk2-image.jic"
+$QUARTUS_PGM --no_banner --mode=jtag -o "IP;$BUILD/preboot-mk2.jic"
