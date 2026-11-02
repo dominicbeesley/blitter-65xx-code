@@ -45,6 +45,7 @@ zp_ptr			:=	$70
 zp_tmp			:=	$72
 zp_tmp2			:=	$73
 
+zp_ilace			:=	$74
 
 BASE_VIDPROC_VALUE	:= $9C ; (mode 0/3)
 
@@ -67,6 +68,7 @@ START:
 
 		lda	#BASE_VIDPROC_VALUE
 		sta	HDMI_ADDR_VIDPROC_CTL
+		sta	sysvar_VIDPROC_CTL_COPY
 
 		ldy	#$0b				; Y=11
 		ldx	#$0b
@@ -117,14 +119,23 @@ ppl:		sta	HDMI_ADDR_VIDPROC_PAL
 		dey
 		bne	@pp2
 
+		cli
+
 		; load font at FFFF3000 - assume this is mapped to gfx
+		lda	#$FF
+		ldx	#<FONT_FILE_O
+		ldy	#>FONT_FILE_O
+		jsr	OSFILE
+
+		; load font at FFFF4000 - assume this is mapped to gfx
 		lda	#$FF
 		ldx	#<FONT_FILE
 		ldy	#>FONT_FILE
 		jsr	OSFILE
 
-
 		jsr	wait
+
+		sei
 
 		; access text memory via JIM and fill with a repeating pattern of chars
 
@@ -132,7 +143,7 @@ ALPHA_BASE	:= $70	; page number in screen mem
 
 again:
 		; fill screen memory with attributes and chars
-		ldx	#32				; number of lines
+		ldx	#25				; number of lines
 		ldy	#0
 
 		lda	#>(HDMI_PAGE_MEM+ALPHA_BASE)
@@ -197,10 +208,44 @@ again:
 		inx
 		stx	HDMI_ADDR_SEQ_IX
 		lda	#$03
+		sta	zp_ilace
 		sta	HDMI_ADDR_SEQ_DAT		; font base
 
 
+		cli
 		jsr	wait
+		sei
+
+		; simpler test card
+		ldx	#0
+		stx	zp_tmp			; char
+		ldx	#$0F			; attr
+		ldy	#0
+
+		lda	#>(HDMI_PAGE_MEM+ALPHA_BASE)
+		sta	fred_JIM_PAGE_HI
+		lda	#<(HDMI_PAGE_MEM+ALPHA_BASE)
+		sta	fred_JIM_PAGE_LO
+@lpt:		lda	zp_tmp
+		inc	zp_tmp
+		bne	@scol
+		txa
+		clc
+		adc	#$11
+		tax
+@scol:		sta	JIM,Y
+		iny
+		txa
+		sta	JIM,Y		
+		iny
+		bne	@lpt
+		inc	fred_JIM_PAGE_LO
+		bpl	@lpt
+
+		cli
+		jsr	wait
+		sei
+
 
 ; copy test card image
 		
@@ -227,26 +272,73 @@ again:
 		bne	@flp2
 
 
+		cli
 		jsr	wait
+		sei
 
 		jmp	again
 
 wait:
 ; wait for some time
-		lda	#25
-		sta	zp_tmp
-		ldx	#0
+		lda	#129
+		ldx	#100
 		ldy	#0
-@wt:		dex
-		bne	@wt
-		dey
-		bne	@wt
-		dec 	zp_tmp
-		bne	@wt
+		jsr	OSBYTE
+
+		jsr	swilace
+
+		bcc	waitmore
 		rts
-FONT_FILE_NAME:		.byte	"F.VGA8",$D,0
-FONT_FILE:		.word	FONT_FILE_NAME
+
+waitmore:
+		lda	#129
+		ldx	#100
+		ldy	#0
+		jsr	OSBYTE
+
+		jsr	swilace
+
+		bcs	waitmore
+		rts
+
+swilace:		bcs	@sk
+		cpx	#'I'
+		bne	@sk
+
+		lda	#>HDMI_PAGE_REGS
+		sta	fred_JIM_PAGE_HI
+		lda	#<HDMI_PAGE_REGS
+		sta	fred_JIM_PAGE_LO
+
+		; poke sequencer register to select ANSI text mode
+		ldx	#1
+		stx	HDMI_ADDR_SEQ_IX
+		inc	zp_ilace
+		lda	zp_ilace
+		cmp	#5
+		bcc	@sk2
+		lda	#3
+@sk2:		sta	zp_ilace
+		sta	HDMI_ADDR_SEQ_DAT		; font base
+
+		pla
+		pla
+		jmp	waitmore
+
+@sk:		rts
+
+
+
+FONT_FILE_NAME_O:		.byte	"F.VGA8",$D,0
+FONT_FILE_O:		.word	FONT_FILE_NAME_O
 			.dword	$FFFF3000
+			.dword	0
+			.dword	0
+			.dword	0
+
+FONT_FILE_NAME:		.byte	"F.VGA8I",$D,0
+FONT_FILE:		.word	FONT_FILE_NAME
+			.dword	$FFFF4000
 			.dword	0
 			.dword	0
 			.dword	0
@@ -265,7 +357,7 @@ _ULA_SETTINGS:		.byte	$9c				; 10011100
 
 _CRTC_REG_TAB:		.byte	$7f				; 0 Horizontal Total	 =128
 			.byte	$50				; 1 Horizontal Displayed =80
-			.byte	$62				; 2 Horizontal Sync	 =&62
+			.byte	$64				; 2 Horizontal Sync	 =&62		; moved over 2 to get centred on HDMI
 			.byte	$28				; 3 HSync Width+VSync	 =&28  VSync=2, HSync Width=8
 			.byte	$26				; 4 Vertical Total	 =38
 			.byte	$00				; 5 Vertial Adjust	 =0

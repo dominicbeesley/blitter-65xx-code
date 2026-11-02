@@ -3,8 +3,8 @@
 SSD=$(SSDS)/model-c-test.ssd
 DEPLOY=$(DEPLOY_TOP)/modelctest
 
-SUBDIRS=ansi-text ansi-term sprites-test breakout siner
-OBJS=ansi-text/ansi-text.bin ansi-term/ansi-term.bin sprites-test/sprtest.tok breakout/breakout.tok breakout/sprites_all.bin siner/siner.bin
+SUBDIRS=ansi-text ansi-term sprites-test breakout siner vga-ilace
+OBJS=ansi-text/ansi-text.bin ansi-term/ansi-term.bin sprites-test/sprtest.tok breakout/breakout.tok breakout/sprites_all.bin siner/siner.bin vga-ilace/VGA8I.F16
 EXTRAS=$(basename $(wildcard extras/*.inf)) ansi-text/VGA8.F16
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
@@ -35,7 +35,7 @@ $(BUILD)/sprites-test/sprtest.tok:
 $(BUILD)/breakout/breakout.tok $(BUILD)/breakout/sprites_all.bin:
 	make -C ansi-term all
 
-$(SSD):	$(OBJS_O)
+$(SSD):	$(OBJS_O) $(EXTRAS)
 	dfs form -80 $(SSD)
 	dfs title $(SSD) "modctest"
 	dfs add $(SSD) $(addsuffix .inf, $(OBJS_O) $(EXTRAS))
