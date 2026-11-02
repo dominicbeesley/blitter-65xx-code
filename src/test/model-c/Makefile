@@ -5,7 +5,7 @@ DEPLOY=$(DEPLOY_TOP)/modelctest
 
 SUBDIRS=ansi-text ansi-term sprites-test breakout siner vga-ilace
 OBJS=ansi-text/ansi-text.bin ansi-term/ansi-term.bin sprites-test/sprtest.tok breakout/breakout.tok breakout/sprites_all.bin siner/siner.bin vga-ilace/VGA8I.F16
-EXTRAS=$(basename $(wildcard extras/*.inf)) ansi-text/VGA8.F16
+EXTRAS=$(basename $(wildcard extras/*.inf))
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))
 

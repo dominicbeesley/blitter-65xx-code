@@ -899,6 +899,12 @@ ppl:		sta	sheila_ULA_pal			; default logical to physical colours to straight map
 		dey
 		bne	@pp2
 
+		; turn off all flashing		
+		; TODO: not sure how to have flashing _and_ bright backgrounds
+		lda	#$F0
+		sta	sheila_NULA_ctlaux
+
+
 
 			jsr	_VDU_20
 
@@ -1693,32 +1699,35 @@ ansic_cbk:
 
 ansic_sgr:
 	; if no parameters fake a zero
-	dex
-	bpl	@s1
+	stx	v_ansi_tmp
+	bne	@s1
 	lda	#0
-	tax
-	beq	@s2
-	
+	jmp	ansic_A
+
+@s1:	ldx	#0
+@lp:	lda	v_ansip_buf,X
+	jsr	ansic_A
+	inx
+	cpx	v_ansi_tmp
+	bne	@lp
+	rts
+
+
 	; for each parameter search the table for matching code
-	
-@s1:	
-@plp:	lda	v_ansip_buf,X
-@s2:	ldy	#(ansi_colors*3)-3
+ansic_A:	ldy	#(ansi_colors*3)-3
 @clp:	cmp	ansi_color_table,Y
 	beq	@fnd
 	dey
 	dey
 	dey
 	bpl	@clp
-@mor:	dex
-	bpl	@plp
 	rts
 
 @fnd:	lda	VDU_T_OR_MASK			; attribute
 	and	ansi_color_table+1,Y
 	ora	ansi_color_table+2,Y
 	sta	VDU_T_OR_MASK
-	jmp	@mor
+	rts
 
 ansic_hvp:
 	bne	@p
@@ -1780,6 +1789,7 @@ v_ansip_offs:		.byte	0		; index into input buffer
 v_ansip_buf:		.res	ANSI_BUF_LEN
 v_ansip_quotechar:	.res	1		; current quote char
 v_ansi_save_curs:	.res	2
+v_ansi_tmp:		.res	1
 		.RODATA
 
 ansic_tab:		
@@ -1943,7 +1953,7 @@ crtcRegsAnsi:
 
 			.byte	$7f				; 0 Horizontal Total	 =128
 			.byte	$50				; 1 Horizontal Displayed =80
-			.byte	$62				; 2 Horizontal Sync	 =98
+			.byte	$65				; 2 Horizontal Sync	 =98 --- moved for HDMI
 			.byte	$28				; 3 HSync Width+VSync	 =&28  VSync=2, HSync Width=8
 			.byte	$26				; 4 Vertical Total	 =38
 			.byte	$00				; 5 Vertial Adjust	 =0
@@ -1984,10 +1994,11 @@ _TELETEXT_CHAR_TAB:	.byte	$23				; '#' -> '_'
 			.byte	$60				; '`' -> '#'
 			.byte	$23				; '#'
 
-ansi_colors		:=	22			; number of colors in table
+ansi_colors		:=	38			; number of colors in table
 ansi_color_table:
 	.byte	0, $00,$07		; all attribs off; normal.
-	.byte	1, $ff,$08		; bold
+	.byte	1, $f7,$08		; bold
+	.byte	2, $f7,$00		; un-bold
 	.byte	4, $f8,$01		; underline
 	.byte	5, $ff,$80		; blink
 	.byte	7, $f8,$70		; reverse
@@ -2002,6 +2013,16 @@ ansi_color_table:
 	.byte	36,$f8,$03		; cyan
 	.byte	37,$f8,$07		; white
 
+	.byte	90,$f0,$00		; dk black foreground
+	.byte	91,$f0,$0C		; br red
+	.byte	92,$f0,$0A		; br green
+	.byte	93,$f0,$0E		; br yellow
+	.byte	94,$f0,$09		; br blue
+	.byte	95,$f0,$0D		; br magenta
+	.byte	96,$f0,$0B		; br cyan
+	.byte	97,$f0,$0F		; br white
+
+
 	.byte	40,$8f,$00		; black background
 	.byte	41,$8f,$40		; red
 	.byte	42,$8f,$20		; green
@@ -2010,3 +2031,13 @@ ansi_color_table:
 	.byte	45,$8f,$50		; magenta
 	.byte	46,$8f,$30		; cyan
 	.byte	47,$8f,$70		; white
+
+	.byte	100,$0f,$00		; br black background
+	.byte	101,$0f,$C0		; br red
+	.byte	102,$0f,$A0		; br green
+	.byte	103,$0f,$E0		; br yellow
+	.byte	104,$0f,$90		; br blue
+	.byte	105,$0f,$D0		; br magenta
+	.byte	106,$0f,$B0		; br cyan
+	.byte	107,$0f,$F0		; br white	
+

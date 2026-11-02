@@ -211,7 +211,7 @@ PrintXY:		stx	zp_ptr
 @sk:		rts
 
 
-FONT_FILE_NAME:		.byte	"F.VGA8",$D,0
+FONT_FILE_NAME:		.byte	"F.VGA8I",$D,0
 FONT_FILE:		.word	FONT_FILE_NAME
 			.dword	$FFFF6000
 			.dword	0
