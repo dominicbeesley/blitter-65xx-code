@@ -1629,8 +1629,10 @@ ansic_nul:
 
 
 ansic_cup:
-	beq	ansic_nul
-	; cursor up don't scroll up if past top of window?!
+	bne	@s1
+	lda	#1
+	sta	v_ansip_buf
+@s1:	; cursor up don't scroll up if past top of window?!
 	lda	VDU_T_CURS_Y
 	sec
 	sbc	VDU_T_WIN_T
@@ -1651,8 +1653,10 @@ ansic_cup_cdn_do:
 	jmp	my_WRCHV
 	
 ansic_cdn:
-	beq	ansic_nul
-	; cursor down don't scroll up if past top of window?!
+	bne	@s1
+	lda	#1
+	sta	v_ansip_buf
+@s1:	; cursor down don't scroll up if past top of window?!
 	lda	VDU_T_CURS_Y
 	sec	
 	adc	v_ansip_buf
@@ -1666,8 +1670,10 @@ ansic_cdn:
 	jmp	ansic_cup_cdn_do
 
 ansic_cfw:
-	beq	ansic_nul
-	lda	VDU_T_CURS_X
+	bne	@s1
+	lda	#1
+	sta	v_ansip_buf
+@s1:	lda	VDU_T_CURS_X
 	clc
 	adc	v_ansip_buf
 	cmp	VDU_T_WIN_R
@@ -1689,8 +1695,10 @@ ansic_cfw_cbk_do:
 	jmp	my_WRCHV
 
 ansic_cbk:
-	beq	ansic_nul
-	lda	VDU_T_CURS_X
+	bne	@s1
+	lda	#1
+	sta	v_ansip_buf
+@s1:	lda	VDU_T_CURS_X
 	sec
 	sbc	v_ansip_buf
 	bcs	ansic_cfw_cbk_do
