@@ -406,64 +406,31 @@ cmdBLTurboMos:
 
 		lda	#OSWORD_BLTUTIL_RET_FLASH|OSWORD_BLTUTIL_RET_SYS
 		and	zp_blturbo_fl
-		beq	:+
-		jmp	cmdBLTurbo_MOSBadSlot
-:
+		bne	cmdBLTurbo_MOSBadSlot
 
 		lda	#OSWORD_BLTUTIL_RET_MEMI
 		and	zp_blturbo_fl
-		beq	:+
-		jmp	cmdBLTurbo_MOSInhib
-:
-
+		bne	cmdBLTurbo_MOSInhib
 
 		; check to see if rom #8 is booted
 @c20k:		lda	oswksp_ROMTYPE_TAB+8
-		beq	:+
-		jmp	cmdBLTurbo_MOSBadSlot
-:
+		beq	cmdBLTurbo_MOS_go
 
+cmdBLTurbo_MOSBadSlot:
+		M_ERROR
+		.byte	$FF, "Slot 8 is not RAM or is in use",0
 
-		; copy mos rom from FFCxxx to 7F0xxx
-		ldx	#$C0
-		stx	zp_tmp_ptr+1
-		ldy	#0
-		sty	zp_tmp_ptr
-@l1:		lda	(zp_tmp_ptr),Y
-		pha
-		lda	zp_blturbo_ptr
-		sta	fred_JIM_PAGE_LO
-		lda	zp_blturbo_ptr+1
-		sta	fred_JIM_PAGE_HI
-		pla
-		sta	JIM,Y
-		iny
-		bne	@l1
-		inc	zp_blturbo_ptr
-		inc	zp_tmp_ptr+1
-		beq	@s1
-		lda	zp_tmp_ptr+1
-		cmp	#$FC				; skip hardware pages		
-		bne	@l1
-		; skip pages FC-FE
-		inc	zp_tmp_ptr+1
-		inc	zp_tmp_ptr+1
-		inc	zp_tmp_ptr+1
-		inc	zp_blturbo_ptr		
-		inc	zp_blturbo_ptr		
-		inc	zp_blturbo_ptr		
-		bne	@l1
+cmdBLTurbo_MOSWarnAlready:
+		jsr	PrintImmedT
+		.byte	"Map 1: MOS already turbo"
+		.byte 	13|$80
 
-
-@s1:
-		sei
-		lda	SHEILA_ROMCTL_MOS
-		ora	#BITS_MEM_CTL_SWMOS		; start shadow mos
-		sta	SHEILA_ROMCTL_MOS	
-		bne	cmdBLTurbo_NextMOS	
+		jmp	cmdBLTurbo_NextMOS
+cmdBLTurbo_MOSInhib:
+		M_ERROR
+		.byte	$FF, "Blitter inhibited",0
 
 cmdBLTurboMos_off:
-
 		sei
 		iny					; skip -
 		lda	sheila_MEM_CTL
@@ -474,22 +441,79 @@ cmdBLTurbo_NextMOS:
 		pla
 		tay
 		jmp	cmdBLTurbo_NextClr
-cmdBLTurbo_MOSWarnAlready:
-		jsr	PrintImmedT
-		.byte	"Map 1: MOS already turbo"
-		.byte 	13|$80
-
-		jmp	cmdBLTurbo_NextMOS
-cmdBLTurbo_MOSBadSlot:
-		M_ERROR
-		.byte	$FF, "Slot 8 is not RAM or is in use",0
-cmdBLTurbo_MOSInhib:
-		M_ERROR
-		.byte	$FF, "Blitter inhibited",0
 
 cmdBLTurbo_NotSupp:
 		M_ERROR
 		.byte	$FF, "Not supported",0
+
+
+cmdBLTurbo_MOS_go:
+; copy mos rom from FFCxxx to 7F0xxx
+		ldx	#$C0
+		stx	zp_tmp_ptr+1
+		ldy	#0
+		sty	zp_tmp_ptr
+
+		; setup JIM
+		lda	zp_blturbo_ptr
+		sta	fred_JIM_PAGE_LO
+		lda	zp_blturbo_ptr+1
+		sta	fred_JIM_PAGE_HI
+
+		; copy a page at a time, disable autohazel when copying or 
+		; we don't see the right image! We need to disable interrupts
+		; in case an interrupt comes back here an need autohazel
+
+
+ 		; inverted mask for our auto-hazel bit, X = 0 (FE38) / 1 (FE39)
+                lda     zp_mos_curROM
+                jsr     hmask                   ; A = bit, Cy = ROM 8-15
+                eor     #$FF
+                sta     zp_blturbo_ptr          ; free now JIM is set up
+                ldx     #0
+                bcc     :+
+                inx
+:
+
+@plp1:		php
+		sei
+		lda     sheila_ROM_AUTOHAZEL_0,X
+                pha
+                and     zp_blturbo_ptr          ; clear only our bit (NMI ROMs keep theirs)
+                sta     sheila_ROM_AUTOHAZEL_0,X
+
+@l1:		lda	(zp_tmp_ptr),Y
+		sta	JIM,Y
+		iny
+		bne	@l1
+
+		pla
+                sta     sheila_ROM_AUTOHAZEL_0,X
+                plp
+
+		; bump source pointer and JIM page
+		inc	fred_JIM_PAGE_LO
+		inc	zp_tmp_ptr+1
+		beq	@s1
+		lda	zp_tmp_ptr+1
+		cmp	#$FC				; skip hardware pages		
+		bne	@plp1
+		; skip pages FC-FE
+		inc	zp_tmp_ptr+1
+		inc	zp_tmp_ptr+1
+		inc	zp_tmp_ptr+1
+		inc	fred_JIM_PAGE_LO		
+		inc	fred_JIM_PAGE_LO		
+		inc	fred_JIM_PAGE_LO		
+		bne	@plp1				; always we know this wont overflow
+
+
+@s1:
+		sei
+		lda	SHEILA_ROMCTL_MOS
+		ora	#BITS_MEM_CTL_SWMOS		; start shadow mos
+		sta	SHEILA_ROMCTL_MOS	
+		bne	cmdBLTurbo_NextMOS	
 
 
 cmdBLTurboRom:
@@ -550,11 +574,7 @@ cmdBLTurboRomsParse:
 :		jsr	ParseDecOrHex
 		bcs	@brkInvalidArgument3
 		
-		; check for 0..15
-		lda	zp_trans_acc+3
-		ora	zp_trans_acc+2
-		ora	zp_trans_acc+1
-		bne	@brkInvalidArgument3
+		; check for 0..15	 - don't worry if > 256
 		lda	zp_trans_acc+0
 		cmp	#16
 		bcs	@brkInvalidArgument3

@@ -27,6 +27,7 @@
 
 		.export autohazel_boot_first
 		.export autohazel_boot_second
+		.export hmask
 		
 
 ; As all the stuff in this file happens fairly early during boot we will
@@ -255,18 +256,18 @@ autohazel_boot_second:
 		plp
 		rts
 		
+setHBitA:	jsr	hmask
+@bsk:		bcs	@bsk2
+		ora	hwsp_srv_map
+		sta	hwsp_srv_map
+		rts
+@bsk2:		ora	hwsp_srv_map+1
+		sta	hwsp_srv_map+1		
+@sk2:		rts	
 
-
-
-setHBitA:	and	#$F
+hmask:		and	#$F
 		cmp	#8
 		and	#$7
 		tax
 		lda	tblMaskBits, X
-@bsk:		bcs	@bsk2
-		ora	hwsp_srv_map
-		sta	hwsp_srv_map
-		bne	@sk2			; always
-@bsk2:		ora	hwsp_srv_map+1
-		sta	hwsp_srv_map+1		
-@sk2:		rts	
+		rts
