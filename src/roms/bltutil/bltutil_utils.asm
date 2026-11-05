@@ -887,7 +887,7 @@ PushAcc:	pha
 		rts
 
 PopAcc:		pha
-		tax
+		txa
 		pha
 
 		; stack contains
