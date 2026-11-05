@@ -1336,7 +1336,7 @@ cmdSRNUKE_lang_brk:
 		jsr	OSNEWL
 
 		ldx	ZP_NUKE_S_TOP
-		tsx					; restore stack
+		txs					; restore stack
 
 		bne	cmdSRNUKE
 
