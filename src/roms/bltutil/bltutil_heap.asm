@@ -479,17 +479,19 @@ oswordAlloc:
 		sec
 		lda	JIM+SCRATCH_HEAPBOT
 		sbc	(zp_mos_OSBW_X),Y
-		sta	zp_trans_acc+1				; new heapbot / our base if success
+		sta	zp_trans_acc+1				; new heapbot LSB / our base if success
 		iny
 		lda	JIM+SCRATCH_HEAPBOT+1
 		sbc	(zp_mos_OSBW_X),Y
-		sta	zp_trans_acc+2				; new heapbot / our base if success
-		bmi	@fail3
-		cmp	JIM+SCRATCH_HEAPLIM+1
-		bcc	@fail3
+		sta	zp_trans_acc+2				; new heapbot MSB / our base if success
+		bmi	@fail3x
+
+		; check against the heap bottom limit (16-bit compare)
 		lda	zp_trans_acc+1
 		cmp	JIM+SCRATCH_HEAPLIM
-		lda	#ALLOC_ERR_OUTOFM
+		sta	zp_trans_acc+2
+		sbc	JIM+SCRATCH_HEAPLIM+1
+@fail3x:		lda	#ALLOC_ERR_OUTOFM
 		bcc	@fail3
 
 		lda	zp_trans_acc+2
