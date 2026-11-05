@@ -777,60 +777,66 @@ cfgMemSize:	stx	zp_trans_tmp
 ;-----------------------------------------------------------------------------
 ; cfgMemCheckAlias
 ;-----------------------------------------------------------------------------
-; checks if the memory at bank in X is aliased at bank in Y
-; performs a write to bank X
-; corrupts Y
-; returns CS and Z flags set memory is aliased
-;         CS and Z flags clear if not aliased
-;         CC if no writeable memory
-; corrupts A 
-; assumes interrupts off
+; Checks whether there is RAM at bank X and whether it is an alias of bank Y.
+; On entry:	X = bank to test, Y = reference bank (must be RAM, X <> Y)
+;		the JIM page lo register selects which page of each bank is
+;		used; bytes +0 and +1 of that page in bank X are written and
+;		then restored (if X aliases Y these are Y's bytes too)
+; On exit:	CC		no RAM at X
+;		CS, Z set	RAM at X, an alias of Y
+;		CS, Z clear	RAM at X, distinct from Y
+;		X, Y and the JIM page hi register preserved, A corrupted,
+;		zp_trans_tmp+2/+3 corrupted
+; Assumes interrupts off.
+;
+; Two patterns ($55 then $AA) are written to XX ??00 and its complement
+; to XX ??01. The second write drives the data bus away from the pattern, so 
+; if nothing is fitted at X the floating bus reads back the complement (or an
+; instruction byte, or $FF from pull-ups), not the pattern. X counts as RAM 
+; only if both patterns read back, and as an alias only if both are also
+; seen at YY ??00, so a coincidental value matches at most one of the two.
+
 cfgMemCheckAlias:
-		pha				; this will get overwritten with flags later
 		lda	fred_JIM_PAGE_HI
-		pha
+		pha				; caller's page hi
 		stx	fred_JIM_PAGE_HI
+		lda	JIM+1
+		pha				; X:+1
 		lda	JIM
-		pha
+		pha				; X:+0
+
+		lda	#0
+		sta	zp_trans_tmp+2		; patterns read back from X
+		sta	zp_trans_tmp+3		; patterns also seen at Y
 
 		lda	#$55
-		sta	JIM			; X = 55
-		sty	fred_JIM_PAGE_HI
-		bit	JIM+1			; force databus to something else
+@lp:		stx	fred_JIM_PAGE_HI
+		sta	JIM			; pattern to X:+0
+		eor	#$FF
+		sta	JIM+1			; complement to X:+1, drives the bus away
+		eor	#$FF
 		cmp	JIM
-		bne	@notsame
-		stx	fred_JIM_PAGE_HI
-		lda	#$AA
-		sta	JIM
-		sty	fred_JIM_PAGE_HI
-		bit	JIM+1			; force databus to something else
+		bne	@notX
+		inc	zp_trans_tmp+2
+@notX:		sty	fred_JIM_PAGE_HI
 		cmp	JIM
-		beq	@ex
+		bne	@notY
+		inc	zp_trans_tmp+3
+@notY:		eor	#$FF			; $55 -> $AA (loop again), $AA -> $55 (done)
+		bmi	@lp
 
-@notsame:	stx	fred_JIM_PAGE_HI
-		cmp	JIM
-		beq	@ok_noalias
-		clc
-		bcc	@ex			; no writeable
-
-@ok_noalias:	sec
-		lda	#1			; cause Z flag off
-@ex:		php
 		stx	fred_JIM_PAGE_HI
-		txa
-		pha
-		tsx
-		; move flags up stack for later PLP at exit
-		lda	$102,X
-		sta	$105,X
 		pla
-		tax
-		pla				; flags not needed
-		pla				; orig mem value
-		sta	JIM
+		sta	JIM			; restore X:+0
+		pla
+		sta	JIM+1			; restore X:+1
 		pla	
-		sta	fred_JIM_PAGE_HI	; reset JIM pointer
-		plp
+		sta	fred_JIM_PAGE_HI	; restore caller's page hi
+
+		lda	zp_trans_tmp+2
+		cmp	#2			; CS if both patterns read back from X
+		lda	zp_trans_tmp+3
+		eor	#2			; Z if both also seen at Y (C unchanged)
 		rts
 
 
