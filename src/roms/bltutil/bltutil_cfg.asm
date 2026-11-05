@@ -711,43 +711,43 @@ cmdInfo:	jsr	cfgGetAPILevel
 		jsr	PrintHexA
 
 cmdInfo_API0_mem:
-		; get BB RAM size (assume starts at bank 60 and is at most 20 banks long)		
-		ldx	#$60
-		ldy	#$00
-		jsr	cfgMemCheckAlias
-		bcc	@justChipRAM			;skip forwards if no writeable at 60
-		bne	@BBRAM_test			;skip forwards if 60 is not aliased at 0
+
+		jsr	cfgGetAPILevel
+		lda	JIM+jim_offs_VERSION_Board_level
+		cmp	#2
+		bne	@notmk2
 
 		; print combined
 		HEAD16	"Chip/BB RAM"
 		jmp	@noBB
 
-
-@BBRAM_test:	
-		ldy	#$80
-		jsr	cfgMemSize
-		jsr	zeroAcc
-		sta	zp_trans_acc+2
-
-		HEAD16	"BB RAM"
-
-		jsr	PrintSizeK
+@notmk2:		HEAD16	"BB RAM"
+		ldx	#SCRATCH_BBRAMSZ
+		jsr	PrSzPagesX
 
 @justChipRAM:
 		HEAD16	"Chip RAM"
 
 
 @noBB:
-@BBChipram:	ldx	#0
-		ldy	#$60
-		jsr	cfgMemSize
-		jsr	zeroAcc
-		sta	zp_trans_acc+2
-		jsr	PrintSizeK
+@BBChipram:
+		ldx	#SCRATCH_CHIPRAMSZ
+		jsr	PrSzPagesX
 
 		jmp	PrintNL
 
+
 _justChipRAM = @justChipRAM
+
+PrSzPagesX:	
+		jsr	zeroAcc
+		jsr	jimPageWorkspace
+		lda	JIM,X
+		sta	zp_trans_acc+1
+		lda	JIM+1,X
+		sta	zp_trans_acc+2		
+		jmp	PrintSizeK
+
 
 ;======================= end of *BLINFO
 
@@ -756,10 +756,9 @@ _justChipRAM = @justChipRAM
 ;-----------------------------------------------------------------------------
 ; on Entry X is base bank, Y is limit
 ; A contains # of banks at exit
+; assumes interrupts off
 		; TODO: when move this to boot use other zp variables?
-cfgMemSize:	php
-		sei
-		stx	zp_trans_tmp
+cfgMemSize:	stx	zp_trans_tmp
 		sty	zp_trans_tmp+1
 		txa
 		tay
@@ -773,7 +772,6 @@ cfgMemSize:	php
 @ms_sk0:	sec
 		txa
 		sbc	zp_trans_tmp
-		plp
 		rts
 
 ;-----------------------------------------------------------------------------
@@ -786,8 +784,9 @@ cfgMemSize:	php
 ;         CS and Z flags clear if not aliased
 ;         CC if no writeable memory
 ; corrupts A 
+; assumes interrupts off
 cfgMemCheckAlias:
-		pha				; this will get destroyed later
+		pha				; this will get overwritten with flags later
 		lda	fred_JIM_PAGE_HI
 		pha
 		stx	fred_JIM_PAGE_HI
@@ -797,18 +796,14 @@ cfgMemCheckAlias:
 		lda	#$55
 		sta	JIM			; X = 55
 		sty	fred_JIM_PAGE_HI
-		pha
-		lda	JIM+1			; force databus to something else
-		pla
+		bit	JIM+1			; force databus to something else
 		cmp	JIM
 		bne	@notsame
 		stx	fred_JIM_PAGE_HI
 		lda	#$AA
 		sta	JIM
 		sty	fred_JIM_PAGE_HI
-		pha
-		lda	JIM+1			; force databus to something else
-		pla
+		bit	JIM+1			; force databus to something else
 		cmp	JIM
 		beq	@ex
 

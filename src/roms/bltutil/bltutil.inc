@@ -151,9 +151,12 @@ PAGE_RAM_TOP_PAULA	:=	$0800
 
 			; offsets within scratch space
 SCRATCH_CHECKSUM	:=	$00			; not used currently (reset on break)
-SCRATCH_HEAPTOP		:=	$04			; top of head / ram
+SCRATCH_HEAPTOP		:=	$04			; top of heap / ram
 SCRATCH_HEAPBOT		:=	$06			; bottom of heap / extent allocated to heap (may contain holes)
 SCRATCH_HEAPLIM		:=	$08			; lower limit for heap, will not allocate below here
+SCRATCH_HEAPFREE	:=	$0A			; free
+SCRATCH_CHIPRAMSZ	:=	$0C			; number of pages of RAM in banks 00..5F
+SCRATCH_BBRAMSZ		:=	$0E			; number of pages of BBRAM in banks 60..7F or 0 if aliased with Chipram (mk.2)
 
 SAMTBL_SZ	:=	8			; size of a table entry
 SAMTBLOFFS_BASE :=	0			; page number of start of sample

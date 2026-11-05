@@ -50,7 +50,7 @@ HEAPFLAG_INUSE	:=	$80
 
 		.CODE
 
-		; on entry A contains the number of 64 banks to use for the heap
+		; on entry XY contains the number of PAGES banks to use for the heap (Y high)
 
 heap_init:	jsr	jimSetDEV_either		; either Blitter or Paula don't care which here
 		bcc	@ok1
@@ -60,15 +60,13 @@ heap_init:	jsr	jimSetDEV_either		; either Blitter or Paula don't care which here
 		jsr	jimPageWorkspace
 
 
-@s1:		ldx	#0
-		stx	JIM+SCRATCH_HEAPTOP
-		sta	JIM+SCRATCH_HEAPTOP+1		; as passed in in A - number of banks
+@s1:		stx	JIM+SCRATCH_HEAPTOP
+		sty	JIM+SCRATCH_HEAPTOP+1		; as passed in in XY - number of pages
 
 		ldx	#$01				; set lower limit at 64k
 		stx	JIM+SCRATCH_HEAPLIM+1
 		dex
 		stx	JIM+SCRATCH_HEAPLIM
-
 
 		jmp	heap_clear_int
 

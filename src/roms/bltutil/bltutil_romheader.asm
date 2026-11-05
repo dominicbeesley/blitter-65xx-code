@@ -190,6 +190,7 @@ ServiceOutA0retY:
 ;   SRNUKE and do other setup of auto hazel etc
 
 svc1_ClaimAbs: 
+	.ifndef INC_NOICE
 		; check to see if we are current language and put back 
 		; original
 		lda	sysvar_CUR_LANG
@@ -198,6 +199,7 @@ svc1_ClaimAbs:
 		lda	ZP_NUKE_PREVLANG
 		sta	sysvar_CUR_LANG
 @s:
+	.endif
 
 		; check for another BLTUTIL rom in higher slot and self-disable if there is one
 		; mainly to stop annoying messages
@@ -281,6 +283,8 @@ svc1_ClaimAbs:
 @notromf:
 	.endif
 
+	.ifndef INC_NOICE
+
 		lda	#OSBYTE_121_KEYB_SCAN
 		ldy	#0
 		ldx	#$A8
@@ -290,6 +294,8 @@ svc1_ClaimAbs:
 		jsr	cmdSRNUKE_lang
 		jmp	cmdSRNUKE_reboot
 @s2:		
+
+	.endif
 		lda	#0
 		pha					; indicate CMOS not reset
 
@@ -315,6 +321,8 @@ svc1_ClaimAbs:
 		jmp	@nope
 @sok1:
 
+		php
+		sei
 
 		; work out memory size (depends on board type)
 		; get BB RAM size (assume starts at bank 60 and is at most 20 banks long)		
@@ -328,11 +336,20 @@ svc1_ClaimAbs:
 		ldy	#$80				; limit
 		jsr	cfgMemSize
 		sta	zp_trans_acc+2
-@noBB:
+@noBB:		
 @BBChipram:	ldx	#0
 		ldy	#$60
 		jsr	cfgMemSize
 		pha					; save # of banks for heap_init
+		jsr	jimPageWorkspace
+		lda	#0
+		sta	JIM+SCRATCH_BBRAMSZ+0
+		sta	JIM+SCRATCH_CHIPRAMSZ+0		
+		lda	zp_trans_acc+2
+		sta	JIM+SCRATCH_BBRAMSZ+1
+		pla
+		pha
+		sta	JIM+SCRATCH_CHIPRAMSZ+1
 		clc
 		adc	zp_trans_acc+2
 		sta	zp_trans_acc+2
@@ -341,17 +358,30 @@ svc1_ClaimAbs:
 		jsr	PrintSizeK
 
 		; if this is Mk.2 board knock off room for ROM (4 banks)
+
 		jsr	cfgGetAPILevel
+		ldx	#0
+		ldy	#0
 		bcs	@s1			; no blitter continue
-		beq	@ismk2			; API 0 - assume mk.2 (old board) TODO: deprecated, remove?
+		ldy	#>(-$0400)		; lose 4 banks for mk.2 blitter shared BB/ChipRAM
+		ldx	#<(-$0400)
 		lda	JIM+jim_offs_VERSION_Board_level
 		cmp	#2
-		bne	@s1			; not mk.2
-@ismk2:		pla
-		sec
-		sbc	#4			; mk.2 clear way for BB roms
-		pha
-@s1:		pla
+		beq	@ismk2
+		ldy	#>(-$0080)
+		ldx	#<(-$0080)		; low 1/2 bank for mk.3 / C20K
+@ismk2:		
+@s1:		
+		; X contains low page #
+		clc
+		pla				; top bank
+		sty	zp_trans_tmp
+		adc	zp_trans_tmp		
+		tay		
+
+		plp				; restore interrupts
+
+
 		jsr	heap_init
 		jsr	sound_boot
 		jsr	PrintNL
@@ -813,7 +843,9 @@ svc8_OSWORD:
 tbl_commands:		.word	strCmdRoms, cmdRoms-1, helpRoms
 			.word	strCmdSRCOPY, cmdSRCOPY-1, strHelpSRCOPY
 			.word	strCmdSRERASE, cmdSRERASE-1, strHelpSRERASE
+	.ifndef INC_NOICE
 			.word	strCmdSRNUKE, cmdSRNUKE-1, 0
+	.endif
 			.word	strCmdSRLOAD, cmdSRLOAD-1, strHelpSRLOAD
 			.word	strCmdBLTurbo, cmdBLTurbo-1, strHelpBLTurbo
 	.ifdef INC_NOICE

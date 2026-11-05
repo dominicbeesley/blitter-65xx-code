@@ -41,9 +41,11 @@
 		.export cmdBLTurbo
 		.export cmdXMdump
 		.export cmdSRLOAD
+	.ifndef INC_NOICE
 		.export cmdSRNUKE
 		.export cmdSRNUKE_reboot
 		.export cmdSRNUKE_lang
+	.endif
 		.export cmdSRERASE
 		.export cmdSRCOPY
 		.export cmdRoms
@@ -1313,6 +1315,12 @@ brkFileNotFound:
 		M_ERROR
 		.byte	$D6, "File not found", 0
 
+;=======================================================================================
+; SRNUKE
+;=======================================================================================
+	.ifndef INC_NOICE
+
+
 		; BRK handler
 
 cmdSRNUKE_lang_brk:
@@ -1519,7 +1527,7 @@ cmdSRNUKE_RAM_len := cmdSRNuke_RAM_end-cmdSRNuke_RAM
 cmdSRNUKE_exit:
 		rts
 
-
+	.endif
 
 
 ;------------------------------------------------------------------------------
