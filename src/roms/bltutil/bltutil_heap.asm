@@ -271,7 +271,6 @@ heap_coalesceX:
 		and	#$3F
 		adc	JIM+1,Y
 		eor	JIM+1,X
-		and	#$3F			; unnecessary?
 		bne	@snbel
 
 		; it is below block at X, extend at Y and mark X free
@@ -426,12 +425,12 @@ oswordAlloc:
 		and	#$3F
 		sbc	zp_trans_acc+2
 		bcs	@fbsk
-@ok:		stx	zp_trans_acc+0
+@ok:		stx	zp_trans_acc+0				; store index
 		lda	JIM+2,X
-		stx	zp_trans_acc+1
+		sta	zp_trans_acc+1
 		lda	JIM+3,X
 		and	#$3F
-		stx	zp_trans_acc+2
+		sta	zp_trans_acc+2
 
 
 @fbsk:		inx
@@ -802,10 +801,11 @@ cmdHeapInfo:	jsr	CheckEitherPresentBrk
 		jsr	jimPageAllocTable
 		ldx	#0
 
-@llp:		lda	JIM+2,X
+@llp:		lda	JIM+3,X
 		and	#$C0
 		cmp	#$C0
 		bne	@lsk
+					; sec = not required here always set above
 		lda	JIM+2,X
 		sbc	zp_trans_acc+1
 		lda	JIM+3,X
