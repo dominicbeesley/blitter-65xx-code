@@ -366,14 +366,12 @@ svc1_ClaimAbs:
 		ldx	#0
 		ldy	#0
 		bcs	@s1			; no blitter continue
-		ldy	#>(-$0400)		; lose 4 banks for mk.2 blitter shared BB/ChipRAM
-		ldx	#<(-$0400)
 		lda	JIM+jim_offs_VERSION_Board_level
 		cmp	#2
-		beq	@ismk2
-		ldy	#>(-$0080)
-		ldx	#<(-$0080)		; low 1/2 bank for mk.3 / C20K
-@ismk2:		
+		bne	@isnotmk2
+		ldy	#>(-$0400)		; lose 4 banks for mk.2 blitter shared BB/ChipRAM
+		ldx	#<(-$0400)
+@isnotmk2:		
 @s1:		
 		; X contains low page #
 		clc

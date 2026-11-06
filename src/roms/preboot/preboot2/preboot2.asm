@@ -196,9 +196,12 @@ PER_1CS=10000
 		lda	#VIA_IFR_BIT_ANY|VIA_IFR_BIT_T1
 		sta	sheila_SYSVIA_ier
 
-		; page in rom E - assume this is RAM, 
-		; TODO: check / report if not
-		lda	#$E
+		; page in rom 1 - assume this is not used for now! 
+		; this should be "safe" in that it is Flash EEPROM
+		; so unlikely to get corrupted accidentally
+		; later look at making this a RAM shadowed ROM slot
+		; in ChipRAM
+		lda	#$1
 		sta	sheila_ROMSEL
 
 		lda 	#$40

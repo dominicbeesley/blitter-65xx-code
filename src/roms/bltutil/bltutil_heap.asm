@@ -631,22 +631,6 @@ oswordGetRomBase:
 		iny
 		iny					; Y=4		
 		pla
-		ldx	JIM+jim_offs_VERSION_Board_level
-		cpx	#VERSION_BOARD_MK2+1
-		bcc	@others
-		cmp	#$E
-		bne	@others
-		lda	#$1F
-		sta	(zp_mos_OSBW_X),Y
-		plp					; map in cy
-		lda	#0
-		ror	A		
-		ror	A		
-		dey					; Y=3
-		sta	(zp_mos_OSBW_X),Y
-		jmp	@retBWA
-
-@others:
 		and	#$0E
 		lsr	a
 		ror	_zp_tmp_99
