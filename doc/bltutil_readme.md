@@ -522,14 +522,23 @@ directly by processors that support >64k addressing i.e. 65816, 68008
                         |                       |    |
                         | Memory heap           | BP |  Used by various commands 
         HEAPTOP         |                       |    |       to load data
-        1C 0000 (B)     +-----------------------+----+  see HEAP OSWORD, ...    
+        1C 0000 (mk2)   +-----------------------+----+  see HEAP OSWORD, ...    
         08 0000 (P)     |                       |    |
-                        | SWRAM                 | B  |  
+        No SWRAM here   |                       |    |
+        for mk3/C20k    | SWRAM                 | mk2|  
                         |                       |    |  
         20 0000 (B)     +-----------------------+----+
-                        |                       |    |
-                        | RAM repeats           | B  |
+                        |                       | mk3|
+                        | Hole or extra chips   |C20K|
                         |                       |    |  
+        60 0000 (MK2)   +-----------------------+----+
+                (C20K)  |                       |    |  
+                        | BBRAM 1 or 2M         | mk3|          
+                        |                       |C20k|  
+        7C 0000 (MK2)   +-----------------------+----+
+                (C20K)  |                       |    |  
+                        | SWRAM                 | mk3|  
+                        |                       |C20k|  
         80 0000 (B)     +-----------------------+----+
                         |                       |    |
                         | Flash ROM             | B  |
@@ -562,7 +571,15 @@ ROM Workspace
         00 8006..7      HEAPBOT         (pages)         ; user memory top
         00 8008..9      HEAPLIM         (pages)         ; lower limit for heap
         00 800A..B      HEAPFREE        (pages)         ; first free heap block 
+        00 800C..D      CHIPRAMSZ       (pages)         ; total pages of "ChipRAM" at banks 00..5F
+        00 800E..F      BBRAMSZ         (pages)         ; total pages of "BBRAM" at bank 60..7F
+        00 8010..1      reserved        (pages)         ; to hold flash ROM size?
 ```
+
+Note: on the mk.2 the BBRAM will be reported as 0. ChipRAM and BBRAM are 
+aliased.
+Note: all boards so far have RAM in multiples of 1 bank so LSB's of CHIPRAMSZ
+and BBRAMSZ are 0
 
 SOUND sample pointer table
 --------------------------
