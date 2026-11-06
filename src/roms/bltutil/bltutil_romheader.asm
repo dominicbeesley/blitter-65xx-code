@@ -354,6 +354,8 @@ svc1_ClaimAbs:
 		adc	zp_trans_acc+2
 		sta	zp_trans_acc+2
 
+		plp				; restore interrupts
+
 		jsr	PrintSpc
 		jsr	PrintSizeK
 
@@ -378,8 +380,6 @@ svc1_ClaimAbs:
 		sty	zp_trans_tmp
 		adc	zp_trans_tmp		
 		tay		
-
-		plp				; restore interrupts
 
 
 		jsr	heap_init
