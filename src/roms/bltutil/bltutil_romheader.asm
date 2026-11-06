@@ -340,6 +340,8 @@ svc1_ClaimAbs:
 @BBChipram:	ldx	#0
 		ldy	#$60
 		jsr	cfgMemSize
+		plp					; restore interrupts
+
 		pha					; save # of banks for heap_init
 		jsr	jimPageWorkspace
 		lda	#0
@@ -354,7 +356,6 @@ svc1_ClaimAbs:
 		adc	zp_trans_acc+2
 		sta	zp_trans_acc+2
 
-		plp				; restore interrupts
 
 		jsr	PrintSpc
 		jsr	PrintSizeK
