@@ -606,13 +606,10 @@ oswordGetRomBase:
 							; hole in Elk for both maps
 	.else
 		bcs	@nohole				; Cy set above for map1
-		ldx	JIM+jim_offs_VERSION_Board_level
-		cpx	#VERSION_BOARD_C20K
-		bcs	@nohole				; assume > 4 has no roms hole
 	.endif
-
 		; check for C20K - no hole in either map
 		; x still contains board level - compare for C20k
+		ldx	JIM+jim_offs_VERSION_Board_level
 		cpx	#VERSION_BOARD_C20K
 		bcs	@nohole
 
