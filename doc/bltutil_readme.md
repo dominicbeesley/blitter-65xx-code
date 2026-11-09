@@ -512,6 +512,8 @@ directly by processors that support >64k addressing i.e. 65816, 68008
                         | BLTURBO shadow memory | B  |see BLTURBO command
         00 8000         +-----------------------+----+
                         | BLUTILS ROM workspace | BP |see below
+        00 8C00         +-----------------------+----+
+                        | 65816 extended vectors| B  |see below
         00 C000         +-----------------------+----+
                         | BBC B/Elk "Hazel"     | B  |  see HAZEL
         01 0000         +-----------------------+----+
@@ -618,11 +620,46 @@ SOUND buffers
         00 8400..A7     SOUND BUFFERS
 ```
 
-65816 native vectors
+65816 native vectors 
 --------------------
+
+00 8C00-00 8FFF
+
 When the 65816 is in native mode, the boot flag is set and a vector pull occurs
 it is fetched from 008Fxx. This can be used to add native vectors when running
-an unmodified MOS
+an unmodified MOS.
+
+This area is reserved as private workspace for use by the MOS extenders and the
+extended vectors at 00 8FE0 - 00 8FF9
+
+## 816 extended vectors
+
+The CPU's default addresses are remapped in hardware to avoid clashing with the
+Acorn MOS's API entry points.
+
+### Emulation mode
+
+|Address        |Description                            |        
+|---------------|---------------------------------------|
+| 00 8FF8,9     | ABORTB Hardware                       |
+| 00 8FF6,7     | (Reserved) Hardware                   |
+| 00 8FF4,5     | COP Software                          |
+| 00 8FF2,3     | (Reserved)                            |
+| 00 8FF0,1     | (Reserved)                            |
+
+### Native mode
+
+|Address        |Description                            |        
+|---------------|---------------------------------------|
+| 00 8FEE,F     | IRQB Hardware                         |
+| 00 8FEC,D     | (Reserved)                            |
+| 00 8FEA,B     | NMIB Hardware                         |
+| 00 8FE8,9     | ABORTB                                |
+| 00 8FE6,7     | BRK Software                          |
+| 00 8FE4,5     | COP Software                          |
+| 00 8FE2,3     | (Reserved)                            |
+| 00 8FE0,1     | (Reserved)                            |
+
 
 HEAP BLOCK
 ==========
