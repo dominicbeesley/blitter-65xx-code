@@ -4,7 +4,7 @@ SSD=$(SSDS)/tools816.ssd
 DEPLOY=$(DEPLOY_TOP)/tools816
 
 SUBDIRS=MOS-Extender
-OBJS=MOS-Extender/test-app/test.bin
+OBJS=MOS-Extender/test-app/test.bin MOS-Extender/mos-ext/mos-ext.bin
 EXTRAS=$(basename $(wildcard extras/*.inf))
 
 OBJS_O=$(addprefix $(BUILD)/, $(OBJS))

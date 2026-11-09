@@ -2,7 +2,7 @@
 
 Files:
   test.o:  000000000_text.far.main.0 100ce(b) hex
-  oslib.o:  000000001_text.far.create.0 100d9(3), .text 100dc(0) hex
+  oslib.o:  000000001_text.far.create.0 100d9(3) hex
   startup.o:  zpage 1000(40), 000000002_text.startup 10000(16) hex
   /home/domin/vbcc65816/vbcc65816_linux/vbcc/targets/65816-dom/lib/libvc.a (_main.o):  000000004_bss.far.inexit 10016(2), 000000005_bss.far.___firstexit 10018(4), 000000003_text.far._main 10028(a6) hex
   INITEXIT:  .dtors 1001c(6), .ctors 10022(6) hex
@@ -28,7 +28,6 @@ Section mapping (numbers in hex):
            00010028 - 000100ce _main.o(000000003_text.far._main)
            000100ce - 000100d9 test.o(000000000_text.far.main.0)
            000100d9 - 000100dc oslib.o(000000001_text.far.create.0)
-           000100dc - 000100dc oslib.o(.text)
 
 
 Symbols of zpage:
@@ -87,7 +86,6 @@ Symbols of far1:
   0x0100c7 lowlevel_exit: local reloc, size 0
   0x0100ce _main: global reloc, size 0
   0x0100d9 _os_wrch: global reloc, size 0
-  0x0100dc __OSLIB_INC__: local reloc, size 0
 
 Symbols of huge:
   0x0100dc _edata: global reloc, size 0
@@ -96,97 +94,270 @@ Symbols of huge:
 
 Absolute symbols:
   0x000000 SERVICE_0_NOP: local abs, size 0
+  0x000000 OSGBPB_WRITE_PTR: local abs, size 0
   0x000000 OSBYTE_0_HOST_OS: local abs, size 0
-  0x000000 COP_00_OPWRC: local abs, size 0
-  0x000000 FSCV_00_OPT: local abs, size 0
-  0x000000 EVENT_00_OUTPUT_BUF_EMPTY: local abs, size 0
+  0x000000 OSFILE_SAVE: local abs, size 0
+  0x000000 vduvar_ix_GRA_WINDOW_LEFT: local abs, size 0
+  0x000000 OSFILE_TYPE_NOTFOUND: local abs, size 0
+  0x000000 OSFIND_CLOSE: local abs, size 0
+  0x000000 OSFILE_OFS_FILENAME: local abs, size 0
+  0x000000 vduvar_ix_GRA_WINDOW: local abs, size 0
+  0x000001 OSWORD_BLTUTIL_RET_MAP1: local abs, size 0
   0x000001 SERVICE_1_ABSWKSP_REQ: local abs, size 0
-  0x000001 COP_01_OPWRS: local abs, size 0
-  0x000001 EVENT_01_INPUT_BUF_FULL: local abs, size 0
-  0x000001 FSCV_01_EOF: local abs, size 0
+  0x000001 OSFILE_TYPE_FILE: local abs, size 0
+  0x000001 OSARGS_cmdtail: local abs, size 0
+  0x000001 OSWORD_BLTUTIL_FLAG_MAP1: local abs, size 0
   0x000002 SERVICE_2_RELWKSP_REQ: local abs, size 0
-  0x000002 EVENT_02_INPUT_BUF_ENTER: local abs, size 0
-  0x000002 COP_02_OPWRA: local abs, size 0
-  0x000002 FSCV_02_RUN: local abs, size 0
-  0x000003 FSCV_03_FSCMD: local abs, size 0
+  0x000002 OSWORD_BLTUTIL_RET_ISCUR: local abs, size 0
+  0x000002 OSGBPB_WRITE_NOPTR: local abs, size 0
+  0x000002 OSARGS_EXT: local abs, size 0
+  0x000002 OSFILE_OFS_LOAD: local abs, size 0
+  0x000002 OSFILE_SET_LOAD: local abs, size 0
+  0x000002 OSFILE_TYPE_DIRECTORY: local abs, size 0
+  0x000002 vduvar_ix_GRA_WINDOW_BOTTOM: local abs, size 0
+  0x000003 OSGBPB_READ_PTR: local abs, size 0
   0x000003 SERVICE_3_AUTOBOOT: local abs, size 0
-  0x000003 COP_03_OPNLI: local abs, size 0
-  0x000003 EVENT_03_ADC_READY: local abs, size 0
-  0x000004 COP_04_OPRDC: local abs, size 0
-  0x000004 EVENT_04_VSYNC: local abs, size 0
+  0x000004 vduvar_ix_GRA_WINDOW_RIGHT: local abs, size 0
+  0x000004 OSGBPB_READ_NOPTR: local abs, size 0
+  0x000004 EVENT_NUM_4_VSYNC: local abs, size 0
   0x000004 SERVICE_4_UKCMD: local abs, size 0
-  0x000004 FSCV_04_RUN: local abs, size 0
-  0x000005 FSCV_05_CAT: local abs, size 0
-  0x000005 EVENT_05_INTERVAL: local abs, size 0
+  0x000005 OSFILE_CAT: local abs, size 0
+  0x000005 OSGBPB_READ_TITLE: local abs, size 0
   0x000005 SERVICE_5_UKINT: local abs, size 0
-  0x000005 COP_05_OPCLI: local abs, size 0
-  0x000006 FSCV_06_NEWFS: local abs, size 0
-  0x000006 EVENT_06_ESCAPE: local abs, size 0
+  0x000006 FSCV_6_NewFS: local abs, size 0
   0x000006 SERVICE_6_BRK: local abs, size 0
-  0x000006 COP_06_OPOSB: local abs, size 0
-  0x000006 COP_07_OPOSW: local abs, size 0
-  0x000007 EVENT_07_SERIAL_ERROR: local abs, size 0
+  0x000006 vduvar_ix_GRA_WINDOW_TOP: local abs, size 0
+  0x000006 OSGBPB_READ_DIR: local abs, size 0
+  0x000006 OSFILE_OFS_EXEC: local abs, size 0
+  0x000007 OSGBPB_READ_LIB: local abs, size 0
+  0x000007 OSWORD_SOUND: local abs, size 0
   0x000007 SERVICE_7_UKOSBYTE: local abs, size 0
-  0x000007 FSCV_07_FHRANGE: local abs, size 0
-  0x000008 SERVICE_7_UKOSWORD: local abs, size 0
-  0x000008 FSCV_08_CLI_INIT: local abs, size 0
-  0x000008 EVENT_08_NET: local abs, size 0
-  0x000008 COP_08_OPCAV: local abs, size 0
-  0x000009 EVENT_09_USER: local abs, size 0
-  0x000009 COP_09_OPADV: local abs, size 0
-  0x000009 FSCV_09_EX: local abs, size 0
+  0x000008 vduvar_ix_TXT_WINDOW_LEFT: local abs, size 0
+  0x000008 SERVICE_8_UKOSWORD: local abs, size 0
+  0x000008 OSGBPB_GET_DIRENT: local abs, size 0
+  0x000008 OSWORD_ENVELOPE: local abs, size 0
   0x000009 SERVICE_9_HELP: local abs, size 0
-  0x00000a OPMOD_OP_INSERT: local abs, size 0
-  0x00000a COP_0A_OPBGT: local abs, size 0
+  0x000009 vduvar_ix_TXT_WINDOW_BOTTOM: local abs, size 0
+  0x00000a OSFILE_OFS_START: local abs, size 0
   0x00000a SERVICE_A_ABSWKSP_CLAIM: local abs, size 0
-  0x00000a FSCV_0A_INFO: local abs, size 0
+  0x00000a vduvar_ix_TXT_WINDOW_RIGHT: local abs, size 0
+  0x00000a OSFILE_OFS_LEN: local abs, size 0
   0x00000b SERVICE_B_NMI_RELEASE: local abs, size 0
-  0x00000b FSCV_0B_RUN: local abs, size 0
+  0x00000b vduvar_ix_TXT_WINDOW_TOP: local abs, size 0
+  0x00000c vduvar_ix_GRA_ORG_EXT: local abs, size 0
   0x00000c SERVICE_C_NMI_CLAIM: local abs, size 0
-  0x00000c COP_0C_OPFILE: local abs, size 0
-  0x00000c FSCV_0C_RENAME: local abs, size 0
-  0x00000d COP_0D_OPFND: local abs, size 0
   0x00000d OSBYTE_13_DISABLE_EVENT: local abs, size 0
   0x00000d SERVICE_D_ROMFS_INIT: local abs, size 0
   0x00000e OSBYTE_14_ENABLE_EVENT: local abs, size 0
+  0x00000e OSWORD_RTC_READ: local abs, size 0
+  0x00000e OSFILE_OFS_END: local abs, size 0
   0x00000e SERVICE_E_ROMFS_GETB: local abs, size 0
-  0x00000e COP_0E_OPCOM: local abs, size 0
+  0x00000e OSFILE_OFS_ATTR: local abs, size 0
   0x00000f OSBYTE_15_FLUSH_INPUT: local abs, size 0
+  0x00000f OSWORD_RTC_WRITE: local abs, size 0
   0x00000f SERVICE_F_FSVEC_CLAIMED: local abs, size 0
+  0x000010 OSWORD_OP_ALLOC: local abs, size 0
+  0x000010 vduvar_ix_GRA_CUR_EXT: local abs, size 0
   0x000010 SERVICE_10_SPOOL_CLOSE: local abs, size 0
   0x000011 SERVICE_11_FONT_BANG: local abs, size 0
+  0x000011 OSWORD_OP_FREE: local abs, size 0
   0x000012 SERVICE_12_INITFS: local abs, size 0
   0x000013 SERVICE_13_SERIAL_CHAR: local abs, size 0
+  0x000013 OSWORD_OP_I2C: local abs, size 0
   0x000014 SERVICE_14_PRINT_CHAR: local abs, size 0
+  0x000014 vduvar_ix_GRA_CUR_INT_OLD: local abs, size 0
   0x000015 OSBYTE_21_FLUSH_BUFFER: local abs, size 0
   0x000015 SERVICE_15_100Hz: local abs, size 0
-  0x000015 COP_15_OPASC: local abs, size 0
+  0x000018 vduvar_ix_TXT_CUR_X: local abs, size 0
+  0x000019 vduvar_ix_TXT_CUR_Y: local abs, size 0
+  0x00001a vduvar_ix_GRA_CUR_CELL_LINE: local abs, size 0
+  0x00001b vduvar_ix_VDU_Q_START: local abs, size 0
+  0x000020 OSWORD_BLTUTIL_RET_MEMI: local abs, size 0
+  0x000020 OSWORD_BLTUTIL_FLAG_IGNOREMEMI: local abs, size 0
+  0x000024 vduvar_ix_VDU_Q_END: local abs, size 0
+  0x000024 vduvar_ix_GRA_CUR_INT: local abs, size 0
   0x000025 SERVICE_25_FSINFO: local abs, size 0
-  0x000026 COP_26_OPBHA: local abs, size 0
-  0x000027 COP_27_OPBHI: local abs, size 0
-  0x00002f COP_2F_OPIIQ: local abs, size 0
-  0x000030 COP_30_OPRIQ: local abs, size 0
-  0x000031 COP_31_OPMIQ: local abs, size 0
-  0x000032 COP_32_OPSUM: local abs, size 0
-  0x000034 COP_34_OPMOD: local abs, size 0
-  0x00003f COP_3F_OPBWV: local abs, size 0
+  0x000028 SERVICE_28_CONFIGURE: local abs, size 0
+  0x000028 vduvar_ix_TEMP_8: local abs, size 0
+  0x000029 SERVICE_29_STATUS: local abs, size 0
+  0x000030 vduvar_ix_GRA_WKSP: local abs, size 0
+  0x000040 OSFIND_OPENIN: local abs, size 0
+  0x000040 OSWORD_BLTUTIL_RET_SYS: local abs, size 0
+  0x000040 OSWORD_BLTUTIL_FLAG_ALTERNATE: local abs, size 0
+  0x00004a vduvar_ix_6845_CURSOR_ADDR: local abs, size 0
+  0x00004c vduvar_ix_TXT_WINDOW_WIDTH_BYTES: local abs, size 0
+  0x00004e vduvar_ix_SCREEN_BOTTOM_HIGH: local abs, size 0
+  0x00004f vduvar_ix_BYTES_PER_CHAR: local abs, size 0
+  0x000050 vduvar_ix_6845_SCREEN_START: local abs, size 0
+  0x000052 vduvar_ix_BYTES_PER_ROW: local abs, size 0
+  0x000054 vduvar_ix_SCREEN_SIZE_HIGH: local abs, size 0
+  0x000055 vduvar_ix_MODE: local abs, size 0
+  0x000056 vduvar_ix_MODE_SIZE: local abs, size 0
+  0x000057 vduvar_ix_TXT_FORE: local abs, size 0
+  0x000058 vduvar_ix_TXT_BACK: local abs, size 0
+  0x000059 vduvar_ix_GRA_FORE: local abs, size 0
+  0x00005a vduvar_ix_GRA_BACK: local abs, size 0
+  0x00005b vduvar_ix_GRA_PLOT_FORE: local abs, size 0
+  0x00005c vduvar_ix_GRA_PLOT_BACK: local abs, size 0
+  0x00005d vduvar_ix_VDU_VEC_JMP: local abs, size 0
+  0x00005f vduvar_ix_CUR_START_PREV: local abs, size 0
+  0x000060 vduvar_ix_COL_COUNT_MINUS1: local abs, size 0
+  0x000061 vduvar_ix_PIXELS_PER_BYTE_MINUS1: local abs, size 0
+  0x000062 vduvar_ix_LEFTMOST_PIX_MASK: local abs, size 0
+  0x000063 vduvar_ix_RIGHTMOST_PIX_MASK: local abs, size 0
+  0x000064 vduvar_ix_TEXT_IN_CUR_X: local abs, size 0
+  0x000065 vduvar_ix_TEXT_IN_CUR_Y: local abs, size 0
+  0x000066 vduvar_ix_MO7_CUR_CHAR: local abs, size 0
+  0x000067 vduvar_ix_EXPLODE_FLAGS: local abs, size 0
+  0x000068 vduvar_ix_FONT_LOC32_63: local abs, size 0
+  0x000069 vduvar_ix_FONT_LOC64_95: local abs, size 0
+  0x00006a vduvar_ix_FONT_LOC96_127: local abs, size 0
+  0x00006b vduvar_ix_FONT_LOC128_159: local abs, size 0
+  0x00006c vduvar_ix_FONT_LOC160_191: local abs, size 0
   0x00006c OSBYTE_108_WRITE_SHADOW_STATE: local abs, size 0
-  0x000076 OSBYTE_118_SET_KEYBOARD_LEDS: local abs, size 0
+  0x00006d vduvar_ix_FONT_LOC192_223: local abs, size 0
+  0x00006e vduvar_ix_FONT_LOC224_255: local abs, size 0
+  0x00006f vduvar_ix_PALLETTE: local abs, size 0
   0x000077 OSBYTE_119_CLOSE_SPOOL_AND_EXEC: local abs, size 0
+  0x000079 OSBYTE_121_KEYB_SCAN: local abs, size 0
   0x00007e OSBYTE_126_ESCAPE_ACK: local abs, size 0
+  0x000080 OSFIND_OPENOUT: local abs, size 0
+  0x000080 OSWORD_BLTUTIL_FLAG_CURRENT: local abs, size 0
+  0x000080 OSWORD_BLTUTIL_RET_FLASH: local abs, size 0
   0x000081 OSBYTE_129_INKEY: local abs, size 0
   0x000087 OSBYTE_135_GET_MODE: local abs, size 0
-  0x00008a OSBYTE_138_CHAR_IN_BUFFER: local abs, size 0
-  0x00008e OSBYTE_142_ENTER_LANGUAGE: local abs, size 0
   0x00008f OSBYTE_143_SERVICE_CALL: local abs, size 0
-  0x000099 OSBYTE_153_CHAR_IN_BUFFER_CK_ESC: local abs, size 0
+  0x000099 OSWORD_BLTUTIL: local abs, size 0
   0x00009c OSBYTE_156_SERIAL_STATE: local abs, size 0
   0x0000a0 OSBYTE_160_READ_VDU_VARIABLE: local abs, size 0
+  0x0000a1 OSBYTE_161_READ_CMOS: local abs, size 0
+  0x0000a2 OSBYTE_162_WRITE_CMOS: local abs, size 0
   0x0000a8 OSBYTE_168_READ_ROM_POINTER_TABLE: local abs, size 0
   0x0000aa OSBYTE_171_ROMTAB: local abs, size 0
+  0x0000c0 OSFIND_OPENUP: local abs, size 0
+  0x0000d6 ERR_FILE_NOT_FOUND: local abs, size 0
   0x0000e8 OSBYTE_232_VAR_IRQ_MASK_SERIAL: local abs, size 0
   0x0000ea OSBYTE_234_VAR_TUBE: local abs, size 0
   0x0000fd OSBYTE_253_VAR_LAST_RESET: local abs, size 0
+  0x0000fe SERVICE_FE_TUBEEXPLODE: local abs, size 0
+  0x0000ff SERVICE_FF_TUBEINIT: local abs, size 0
+  0x0000ff OSFILE_LOAD: local abs, size 0
+  0x000200 USERV: local abs, size 0
+  0x000202 BRKV: local abs, size 0
+  0x000204 IRQ1V: local abs, size 0
+  0x000206 IRQ2V: local abs, size 0
+  0x000208 CLIV: local abs, size 0
+  0x00020a BYTEV: local abs, size 0
+  0x00020c WORDV: local abs, size 0
+  0x00020e WRCHV: local abs, size 0
+  0x000210 RDCHV: local abs, size 0
+  0x000212 FILEV: local abs, size 0
+  0x000214 ARGSV: local abs, size 0
+  0x000216 BGETV: local abs, size 0
+  0x000218 BPUTV: local abs, size 0
+  0x00021a GBPBV: local abs, size 0
+  0x00021c FINDV: local abs, size 0
+  0x00021e FSCV: local abs, size 0
+  0x000220 EVNTV: local abs, size 0
+  0x000222 UPTV: local abs, size 0
+  0x000224 NETV: local abs, size 0
+  0x000226 VDUV: local abs, size 0
+  0x000228 KEYV: local abs, size 0
+  0x00022a INSV: local abs, size 0
+  0x00022c REMV: local abs, size 0
+  0x00022e CNPV: local abs, size 0
+  0x000230 SWI9V: local abs, size 0
+  0x000232 SW29V: local abs, size 0
+  0x000234 NMI9V: local abs, size 0
+  0x000d9f EXT_USERV: local abs, size 0
+  0x000da2 EXT_BRKV: local abs, size 0
+  0x000da5 EXT_IRQ1V: local abs, size 0
+  0x000da8 EXT_IRQ2V: local abs, size 0
+  0x000dab EXT_CLIV: local abs, size 0
+  0x000dae EXT_BYTEV: local abs, size 0
+  0x000db1 EXT_WORDV: local abs, size 0
+  0x000db4 EXT_WRCHV: local abs, size 0
+  0x000db7 EXT_RDCHV: local abs, size 0
+  0x000dba EXT_FILEV: local abs, size 0
+  0x000dbd EXT_ARGSV: local abs, size 0
+  0x000dc0 EXT_BGETV: local abs, size 0
+  0x000dc3 EXT_BPUTV: local abs, size 0
+  0x000dc6 EXT_GBPBV: local abs, size 0
+  0x000dc9 EXT_FINDV: local abs, size 0
+  0x000dcc EXT_FSCV: local abs, size 0
+  0x000dcf EXT_EVNTV: local abs, size 0
+  0x000dd2 EXT_UPTV: local abs, size 0
+  0x000dd5 EXT_NETV: local abs, size 0
+  0x000dd8 EXT_VDUV: local abs, size 0
+  0x000ddb EXT_KEYV: local abs, size 0
+  0x000dde EXT_INSV: local abs, size 0
+  0x000de1 EXT_REMV: local abs, size 0
+  0x000de4 EXT_CNPV: local abs, size 0
+  0x000de7 EXT_IND1V: local abs, size 0
+  0x000dea EXT_IND2V: local abs, size 0
+  0x000ded EXT_IND3V: local abs, size 0
+  0x00ff00 EXTVEC_ENTER_USERV: local abs, size 0
+  0x00ff03 EXTVEC_ENTER_BRKV: local abs, size 0
+  0x00ff06 EXTVEC_ENTER_IRQ1V: local abs, size 0
+  0x00ff09 EXTVEC_ENTER_IRQ2V: local abs, size 0
+  0x00ff0c EXTVEC_ENTER_CLIV: local abs, size 0
+  0x00ff0f EXTVEC_ENTER_BYTEV: local abs, size 0
+  0x00ff12 EXTVEC_ENTER_WORDV: local abs, size 0
+  0x00ff15 EXTVEC_ENTER_WRCHV: local abs, size 0
+  0x00ff18 EXTVEC_ENTER_RDCHV: local abs, size 0
+  0x00ff1b EXTVEC_ENTER_FILEV: local abs, size 0
+  0x00ff1e EXTVEC_ENTER_ARGSV: local abs, size 0
+  0x00ff21 EXTVEC_ENTER_BGETV: local abs, size 0
+  0x00ff24 EXTVEC_ENTER_BPUTV: local abs, size 0
+  0x00ff27 EXTVEC_ENTER_GBPBV: local abs, size 0
+  0x00ff2a EXTVEC_ENTER_FINDV: local abs, size 0
+  0x00ff2d EXTVEC_ENTER_FSCV: local abs, size 0
+  0x00ff30 EXTVEC_ENTER_EVNTV: local abs, size 0
+  0x00ff33 EXTVEC_ENTER_UPTV: local abs, size 0
+  0x00ff36 EXTVEC_ENTER_NETV: local abs, size 0
+  0x00ff39 EXTVEC_ENTER_VDUV: local abs, size 0
+  0x00ff3c EXTVEC_ENTER_KEYV: local abs, size 0
+  0x00ff3f EXTVEC_ENTER_INSV: local abs, size 0
+  0x00ff42 EXTVEC_ENTER_REMV: local abs, size 0
+  0x00ff45 EXTVEC_ENTER_CNPV: local abs, size 0
+  0x00ff48 EXTVEC_ENTER_IND1V: local abs, size 0
+  0x00ff4b EXTVEC_ENTER_IND2V: local abs, size 0
+  0x00ff4e EXTVEC_ENTER_IND3V: local abs, size 0
+  0x00ff8c DEBUGPRINTNEWL: local abs, size 0
+  0x00ff8f DEBUGPRINTHEX: local abs, size 0
+  0x00ff92 DEBUGPRINTA: local abs, size 0
+  0x00ff95 DEBUGPRINTX: local abs, size 0
+  0x00ff9b PRSTRING: local abs, size 0
+  0x00ffa1 SCANHEX: local abs, size 0
+  0x00ffa7 OSQUIT: local abs, size 0
+  0x00ffaa PRHEX: local abs, size 0
+  0x00ffad PR2HEX: local abs, size 0
+  0x00ffb0 USERINT: local abs, size 0
+  0x00ffb3 PRTEXT: local abs, size 0
+  0x00ffb9 OSRDRM: local abs, size 0
+  0x00ffb9 CLICOM: local abs, size 0
+  0x00ffbc ERRJMP: local abs, size 0
+  0x00ffbf OSINIT: local abs, size 0
+  0x00ffbf OSEVEN: local abs, size 0
+  0x00ffc2 GSINIT: local abs, size 0
+  0x00ffc5 GSREAD: local abs, size 0
+  0x00ffc8 OSRDCH_NV: local abs, size 0
+  0x00ffcb RAWVDU: local abs, size 0
+  0x00ffcb OSWRCH_NV: local abs, size 0
+  0x00ffce OSFIND: local abs, size 0
+  0x00ffd1 OSGBPB: local abs, size 0
+  0x00ffd4 OSBPUT: local abs, size 0
+  0x00ffd7 OSBGET: local abs, size 0
+  0x00ffda OSARGS: local abs, size 0
+  0x00ffdd OSFILE: local abs, size 0
+  0x00ffe0 OSRDCH: local abs, size 0
+  0x00ffe3 OSASCI: local abs, size 0
+  0x00ffe7 OSNEWL: local abs, size 0
+  0x00ffec OSWRCR: local abs, size 0
+  0x00ffee OSWRCH: local abs, size 0
+  0x00fff1 OSWORD: local abs, size 0
+  0x00fff4 OSBYTE: local abs, size 0
+  0x00fff7 OSCLI: local abs, size 0
 
 Linker symbols:
   0x010000 MEMSTART: global abs, size 0
