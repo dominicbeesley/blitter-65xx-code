@@ -1,0 +1,202 @@
+/home/domin/vbcc65816/vbcc65816_linux/vbcc/targets/65816-dom/lib/libvc.a (_main.o) needed due to ___main
+
+Files:
+  test.o:  000000000_text.far.main.0 100ce(b) hex
+  oslib.o:  000000001_text.far.create.0 100d9(3), .text 100dc(0) hex
+  startup.o:  zpage 1000(40), 000000002_text.startup 10000(16) hex
+  /home/domin/vbcc65816/vbcc65816_linux/vbcc/targets/65816-dom/lib/libvc.a (_main.o):  000000004_bss.far.inexit 10016(2), 000000005_bss.far.___firstexit 10018(4), 000000003_text.far._main 10028(a6) hex
+  INITEXIT:  .dtors 1001c(6), .ctors 10022(6) hex
+
+
+Section mapping (numbers in hex):
+------------------------------
+  00001000 zpage  (size 40, allocated 0)
+           00001000 - 00001040 startup.o(zpage)
+------------------------------
+  00010000 start  (size 16)
+           00010000 - 00010016 startup.o(000000002_text.startup)
+------------------------------
+  00010016 ndata  (size 6, allocated 0)
+           00010016 - 00010018 _main.o(000000004_bss.far.inexit)
+           00010018 - 0001001c _main.o(000000005_bss.far.___firstexit)
+------------------------------
+  0001001c constr  (size c, allocated 6)
+           0001001c - 00010022 INITEXIT(.dtors)
+           00010022 - 00010028 INITEXIT(.ctors)
+------------------------------
+  00010028 far1  (size b4)
+           00010028 - 000100ce _main.o(000000003_text.far._main)
+           000100ce - 000100d9 test.o(000000000_text.far.main.0)
+           000100d9 - 000100dc oslib.o(000000001_text.far.create.0)
+           000100dc - 000100dc oslib.o(.text)
+
+
+Symbols of zpage:
+  0x001000 r0: global reloc, size 0
+  0x001002 r1: global reloc, size 0
+  0x001004 r2: global reloc, size 0
+  0x001006 r3: global reloc, size 0
+  0x001008 r4: global reloc, size 0
+  0x00100a r5: global reloc, size 0
+  0x00100c r6: global reloc, size 0
+  0x00100e r7: global reloc, size 0
+  0x001010 r8: global reloc, size 0
+  0x001012 r9: global reloc, size 0
+  0x001014 r10: global reloc, size 0
+  0x001016 r11: global reloc, size 0
+  0x001018 r12: global reloc, size 0
+  0x00101a r13: global reloc, size 0
+  0x00101c r14: global reloc, size 0
+  0x00101e r15: global reloc, size 0
+  0x001020 r16: global reloc, size 0
+  0x001022 r17: global reloc, size 0
+  0x001024 r18: global reloc, size 0
+  0x001026 r19: global reloc, size 0
+  0x001028 r20: global reloc, size 0
+  0x00102a r21: global reloc, size 0
+  0x00102c r22: global reloc, size 0
+  0x00102e r23: global reloc, size 0
+  0x001030 r24: global reloc, size 0
+  0x001032 r25: global reloc, size 0
+  0x001034 r26: global reloc, size 0
+  0x001036 r27: global reloc, size 0
+  0x001038 r28: global reloc, size 0
+  0x00103a r29: global reloc, size 0
+  0x00103c r30: global reloc, size 0
+  0x00103e r31: global reloc, size 0
+
+Symbols of start:
+  0x010000 _start: local reloc, size 0
+  0x010012 ___exit: global reloc, size 0
+
+Symbols of ndata:
+  0x010016 in_exit: local reloc, size 0
+  0x010018 ___firstexit: global reloc, size 0
+
+Symbols of constr:
+  0x01001c ___DTOR_LIST__: global reloc object, size 6
+  0x010022 ___CTOR_LIST__: global reloc object, size 6
+
+Symbols of far1:
+  0x010028 indir_call_r0: local reloc, size 0
+  0x01002b ___main: global reloc, size 0
+  0x010056 _exit: global reloc, size 0
+  0x01005d do_exit: local reloc, size 0
+  0x01009d __Exit: global reloc, size 0
+  0x0100a0 __Exit_stacked: local reloc, size 0
+  0x0100c7 lowlevel_exit: local reloc, size 0
+  0x0100ce _main: global reloc, size 0
+  0x0100d9 _os_wrch: global reloc, size 0
+  0x0100dc __OSLIB_INC__: local reloc, size 0
+
+Symbols of huge:
+  0x0100dc _edata: global reloc, size 0
+  0x0100dc _bss: global reloc, size 0
+  0x0100dc _ebss: global reloc, size 0
+
+Absolute symbols:
+  0x000000 SERVICE_0_NOP: local abs, size 0
+  0x000000 OSBYTE_0_HOST_OS: local abs, size 0
+  0x000000 COP_00_OPWRC: local abs, size 0
+  0x000000 FSCV_00_OPT: local abs, size 0
+  0x000000 EVENT_00_OUTPUT_BUF_EMPTY: local abs, size 0
+  0x000001 SERVICE_1_ABSWKSP_REQ: local abs, size 0
+  0x000001 COP_01_OPWRS: local abs, size 0
+  0x000001 EVENT_01_INPUT_BUF_FULL: local abs, size 0
+  0x000001 FSCV_01_EOF: local abs, size 0
+  0x000002 SERVICE_2_RELWKSP_REQ: local abs, size 0
+  0x000002 EVENT_02_INPUT_BUF_ENTER: local abs, size 0
+  0x000002 COP_02_OPWRA: local abs, size 0
+  0x000002 FSCV_02_RUN: local abs, size 0
+  0x000003 FSCV_03_FSCMD: local abs, size 0
+  0x000003 SERVICE_3_AUTOBOOT: local abs, size 0
+  0x000003 COP_03_OPNLI: local abs, size 0
+  0x000003 EVENT_03_ADC_READY: local abs, size 0
+  0x000004 COP_04_OPRDC: local abs, size 0
+  0x000004 EVENT_04_VSYNC: local abs, size 0
+  0x000004 SERVICE_4_UKCMD: local abs, size 0
+  0x000004 FSCV_04_RUN: local abs, size 0
+  0x000005 FSCV_05_CAT: local abs, size 0
+  0x000005 EVENT_05_INTERVAL: local abs, size 0
+  0x000005 SERVICE_5_UKINT: local abs, size 0
+  0x000005 COP_05_OPCLI: local abs, size 0
+  0x000006 FSCV_06_NEWFS: local abs, size 0
+  0x000006 EVENT_06_ESCAPE: local abs, size 0
+  0x000006 SERVICE_6_BRK: local abs, size 0
+  0x000006 COP_06_OPOSB: local abs, size 0
+  0x000006 COP_07_OPOSW: local abs, size 0
+  0x000007 EVENT_07_SERIAL_ERROR: local abs, size 0
+  0x000007 SERVICE_7_UKOSBYTE: local abs, size 0
+  0x000007 FSCV_07_FHRANGE: local abs, size 0
+  0x000008 SERVICE_7_UKOSWORD: local abs, size 0
+  0x000008 FSCV_08_CLI_INIT: local abs, size 0
+  0x000008 EVENT_08_NET: local abs, size 0
+  0x000008 COP_08_OPCAV: local abs, size 0
+  0x000009 EVENT_09_USER: local abs, size 0
+  0x000009 COP_09_OPADV: local abs, size 0
+  0x000009 FSCV_09_EX: local abs, size 0
+  0x000009 SERVICE_9_HELP: local abs, size 0
+  0x00000a OPMOD_OP_INSERT: local abs, size 0
+  0x00000a COP_0A_OPBGT: local abs, size 0
+  0x00000a SERVICE_A_ABSWKSP_CLAIM: local abs, size 0
+  0x00000a FSCV_0A_INFO: local abs, size 0
+  0x00000b SERVICE_B_NMI_RELEASE: local abs, size 0
+  0x00000b FSCV_0B_RUN: local abs, size 0
+  0x00000c SERVICE_C_NMI_CLAIM: local abs, size 0
+  0x00000c COP_0C_OPFILE: local abs, size 0
+  0x00000c FSCV_0C_RENAME: local abs, size 0
+  0x00000d COP_0D_OPFND: local abs, size 0
+  0x00000d OSBYTE_13_DISABLE_EVENT: local abs, size 0
+  0x00000d SERVICE_D_ROMFS_INIT: local abs, size 0
+  0x00000e OSBYTE_14_ENABLE_EVENT: local abs, size 0
+  0x00000e SERVICE_E_ROMFS_GETB: local abs, size 0
+  0x00000e COP_0E_OPCOM: local abs, size 0
+  0x00000f OSBYTE_15_FLUSH_INPUT: local abs, size 0
+  0x00000f SERVICE_F_FSVEC_CLAIMED: local abs, size 0
+  0x000010 SERVICE_10_SPOOL_CLOSE: local abs, size 0
+  0x000011 SERVICE_11_FONT_BANG: local abs, size 0
+  0x000012 SERVICE_12_INITFS: local abs, size 0
+  0x000013 SERVICE_13_SERIAL_CHAR: local abs, size 0
+  0x000014 SERVICE_14_PRINT_CHAR: local abs, size 0
+  0x000015 OSBYTE_21_FLUSH_BUFFER: local abs, size 0
+  0x000015 SERVICE_15_100Hz: local abs, size 0
+  0x000015 COP_15_OPASC: local abs, size 0
+  0x000025 SERVICE_25_FSINFO: local abs, size 0
+  0x000026 COP_26_OPBHA: local abs, size 0
+  0x000027 COP_27_OPBHI: local abs, size 0
+  0x00002f COP_2F_OPIIQ: local abs, size 0
+  0x000030 COP_30_OPRIQ: local abs, size 0
+  0x000031 COP_31_OPMIQ: local abs, size 0
+  0x000032 COP_32_OPSUM: local abs, size 0
+  0x000034 COP_34_OPMOD: local abs, size 0
+  0x00003f COP_3F_OPBWV: local abs, size 0
+  0x00006c OSBYTE_108_WRITE_SHADOW_STATE: local abs, size 0
+  0x000076 OSBYTE_118_SET_KEYBOARD_LEDS: local abs, size 0
+  0x000077 OSBYTE_119_CLOSE_SPOOL_AND_EXEC: local abs, size 0
+  0x00007e OSBYTE_126_ESCAPE_ACK: local abs, size 0
+  0x000081 OSBYTE_129_INKEY: local abs, size 0
+  0x000087 OSBYTE_135_GET_MODE: local abs, size 0
+  0x00008a OSBYTE_138_CHAR_IN_BUFFER: local abs, size 0
+  0x00008e OSBYTE_142_ENTER_LANGUAGE: local abs, size 0
+  0x00008f OSBYTE_143_SERVICE_CALL: local abs, size 0
+  0x000099 OSBYTE_153_CHAR_IN_BUFFER_CK_ESC: local abs, size 0
+  0x00009c OSBYTE_156_SERIAL_STATE: local abs, size 0
+  0x0000a0 OSBYTE_160_READ_VDU_VARIABLE: local abs, size 0
+  0x0000a8 OSBYTE_168_READ_ROM_POINTER_TABLE: local abs, size 0
+  0x0000aa OSBYTE_171_ROMTAB: local abs, size 0
+  0x0000e8 OSBYTE_232_VAR_IRQ_MASK_SERIAL: local abs, size 0
+  0x0000ea OSBYTE_234_VAR_TUBE: local abs, size 0
+  0x0000fd OSBYTE_253_VAR_LAST_RESET: local abs, size 0
+
+Linker symbols:
+  0x010000 MEMSTART: global abs, size 0
+  0x000400 STACKLEN: global abs, size 0
+  0x200000 RAMSIZE: global abs, size 0
+  0x001040 _text: global abs, size 0
+  0x0100dc _etext: global abs, size 0
+  0x0100dc _data: global abs, size 0
+  0x0100dc ___heap: global abs, size 0
+  0x0100dc _end: global abs, size 0
+  0x200000 ___heapend: global abs, size 0
+  0x200000 _heapend: global abs, size 0
+  0x010016 __DBR_init: global abs, size 0
