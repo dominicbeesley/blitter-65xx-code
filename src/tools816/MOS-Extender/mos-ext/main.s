@@ -9,6 +9,9 @@ TRAMPOLINES 	ezp	0x80
 TRAMPO_NAT2EMU	ezp	TRAMPOLINES
 TRAMPO_EMU2NAT	ezp	TRAMPOLINES+3
 
+zp_tmpLEN	reserve	2
+zp_tmpPTR	reserve	2
+
 	section text.startup
 
 enter:		jmp	main
@@ -19,6 +22,11 @@ main:
 
 		a8
 		x8
+
+		; TODO: do this properly
+		ldx	#<BLTURBOSTR
+		ldy	#>BLTURBOSTR
+		jsr	OSCLI
 
 		lda	#0		
 		inc	A
@@ -162,7 +170,47 @@ fnd:
 		dex
 		bne	.tlp
 
+		; now set up hardware vectors in bank 0 - boot mode at 00 8F Ex..FF and again at 00 FFE0..FF
+		; note: we can't use far addressing here as we're poking to bank 0 that gets remapped in emu mode
+		ldx	#0x20			; length
+		lda	#0
+		sta	fred_JIM_PAGE_HI
+.tlp2:		lda	hw_vectors_data-1,X
+		ldy	#0x8F
+		sty	fred_JIM_PAGE_LO
+		ldy	#0xFF
+		sty	fred_JIM_PAGE_LO
+		sta	JIM+0xE0-1,X
+		dex
+		bne	.tlp2
 		
+		; now set up hardware handlers in bank 0
+		lda	#0
+		sta	fred_JIM_PAGE_HI
+		lda	#0x8C
+		sta	fred_JIM_PAGE_LO
+
+		lda	#<_nat_handlers_start
+		sta	zp_tmpPTR
+		lda	#>_nat_handlers_start
+		sta	zp_tmpPTR+1
+
+		lda	#<_nat_handlers_len
+		sta	zp_tmpLEN
+		lda	#>_nat_handlers_len
+		sta	zp_tmpLEN+1
+
+		ldy	#0
+.tlp3:		lda	(zp_tmpPTR),Y
+		sta	JIM,Y
+		iny
+		bne	.np1
+		inc	fred_JIM_PAGE_LO
+		inc	zp_tmpPTR+1
+.np1:		dec	zp_tmpLEN
+		bne	.tlp3
+		dec	zp_tmpLEN+1
+		bpl	.tlp3
 
 		; push the starting flags and run address to the stack
 		lda	osfile_blk+8
@@ -174,6 +222,13 @@ fnd:
 		lda	#0b00000000		; interrupts enabled when program started TODO: what should it be?
 		pha
 		
+		; set correct boot mode
+		lda	sheila_MEM_CTL
+		and	#0xCF
+		ora	#0x30
+		sta	sheila_MEM_CTL
+
+
 		jmp	TRAMPO_EMU2NAT		; enter program
 
 
@@ -187,6 +242,26 @@ fnd:
 		sta	fred_JIM_DEVNO
 
 		rts
+
+
+	;;;;;;;;;;;;;;;;;;;;;;;; TODO: emu mode COP handler
+hw_emu_cop:	rti
+hw_emu_abort:	rti
+
+
+
+	;;;;;;;;;;;;;;;;;;;;;;; This gets copied to 00 8Cxx on
+		section	.nat_handler_text, "acrx"
+hw_nat_cop:	jmp	*
+hw_nat_brk:	jmp 	*
+hw_nat_abort:	jmp 	*
+hw_nat_nmi:	jmp 	*
+hw_nat_irq:	jmp 	*
+		rti
+
+
+		section	.text
+
 
 PrintHexA:	pha
 		lsr	a
@@ -219,6 +294,31 @@ trampolines_data:
 		clc
 		xce
 		rti
+
+		; the jump table copied into the native vectors area
+		; this will be copied to 008FE0-FF - the FA..FF aren't used
+hw_vectors_data:
+		word	0		; resv
+		word	0		; resv
+		word	hw_nat_cop	
+		word	hw_nat_brk
+		word	hw_nat_abort
+		word	hw_nat_nmi
+		word	0		; resv
+		word	hw_nat_irq
+
+		word	0		; resv
+		word	0		; resv
+		word	hw_emu_cop	
+		word	0		; resv
+		word	hw_emu_abort
+		word	0		; n/a
+		word	0		; n/a
+		word	0		; n/a
+
+
+BLTURBOSTR:	byte	"BLTURBO L01", 0x0D
+
 TRAMPOLINES_LENGTH equ *-trampolines_data
 
 

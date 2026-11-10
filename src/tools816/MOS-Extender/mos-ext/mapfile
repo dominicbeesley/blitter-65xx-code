@@ -1,23 +1,33 @@
 
 Files:
-  main.o:  zpage 0(0), text.startup 2000(3), .text 2003(141), .rodata 2144(6), .data 214a(0), .bss 214a(11f) hex
+  main.o:  zpage 0(4), text.startup 2000(3), .text 2003(19f), .rodata 21a2(32), .data 21d4(0), .nat_handler_text 8c00(10), .bss 21e4(11f) hex
 
 
 Section mapping (numbers in hex):
 ------------------------------
+  00000000 zpage  (size 4, allocated 0)
+           00000000 - 00000004 main.o(zpage)
+------------------------------
   00002000 start  (size 3)
            00002000 - 00002003 main.o(text.startup)
 ------------------------------
-  00002003 text  (size 141)
-           00002003 - 00002144 main.o(.text)
+  00002003 text  (size 19f)
+           00002003 - 000021a2 main.o(.text)
 ------------------------------
-  00002144 ndata  (size 6)
-           00002144 - 0000214a main.o(.rodata)
-           0000214a - 0000214a main.o(.data)
+  000021a2 ndata  (size 32)
+           000021a2 - 000021d4 main.o(.rodata)
+           000021d4 - 000021d4 main.o(.data)
 ------------------------------
-  0000214a bss  (size 11f, allocated 0)
-           0000214a - 00002269 main.o(.bss)
+  000021d4 vdata  (size 10)
+           00008c00 - 00008c10 main.o(.nat_handler_text)
+------------------------------
+  000021e4 bss  (size 11f, allocated 0)
+           000021e4 - 00002303 main.o(.bss)
 
+
+Symbols of zpage:
+  0x000000 zp_tmpLEN: local reloc, size 0
+  0x000002 zp_tmpPTR: local reloc, size 0
 
 Symbols of start:
   0x002000 enter: local reloc, size 0
@@ -26,20 +36,31 @@ Symbols of text:
   0x002003 __HARDWARE_INC__: local reloc, size 0
   0x002003 main: local reloc, size 0
   0x002003 __MOSROM_INC__: local reloc, size 0
-  0x002010 brkNo65816: local reloc, size 0
-  0x00202f go816: local reloc, size 0
-  0x002075 brkFileNotFound: local reloc, size 0
-  0x002086 fnd: local reloc, size 0
-  0x002128 PrintHexA: local reloc, size 0
-  0x002137 PrintHexNybA: local reloc, size 0
+  0x002017 brkNo65816: local reloc, size 0
+  0x002036 go816: local reloc, size 0
+  0x00207c brkFileNotFound: local reloc, size 0
+  0x00208d fnd: local reloc, size 0
+  0x002184 hw_emu_cop: local reloc, size 0
+  0x002185 hw_emu_abort: local reloc, size 0
+  0x002186 PrintHexA: local reloc, size 0
+  0x002195 PrintHexNybA: local reloc, size 0
 
 Symbols of ndata:
-  0x002144 trampolines_data: local reloc, size 0
+  0x0021a2 trampolines_data: local reloc, size 0
+  0x0021a8 hw_vectors_data: local reloc, size 0
+  0x0021c8 BLTURBOSTR: local reloc, size 0
+
+Symbols of vdata:
+  0x008c00 hw_nat_cop: local reloc, size 0
+  0x008c03 hw_nat_brk: local reloc, size 0
+  0x008c06 hw_nat_abort: local reloc, size 0
+  0x008c09 hw_nat_nmi: local reloc, size 0
+  0x008c0c hw_nat_irq: local reloc, size 0
 
 Symbols of bss:
-  0x00214a osfile_blk: local reloc, size 0
-  0x00215c gbpb_blk: local reloc, size 0
-  0x002169 buf: local reloc, size 0
+  0x0021e4 osfile_blk: local reloc, size 0
+  0x0021f6 gbpb_blk: local reloc, size 0
+  0x002203 buf: local reloc, size 0
 
 Absolute symbols:
   0x000000 VIA_ACR_SHIFTMODE_0: local abs, size 0
@@ -145,7 +166,6 @@ Absolute symbols:
   0x000005 SERVICE_5_UKINT: local abs, size 0
   0x000006 FSCV_6_NewFS: local abs, size 0
   0x000006 VIA_PCR_CA2_INT_POS_EDGE: local abs, size 0
-  0x000006 TRAMPOLINES_LENGTH: local abs, size 0
   0x000006 SERVICE_6_BRK: local abs, size 0
   0x000006 vduvar_ix_GRA_WINDOW_TOP: local abs, size 0
   0x000006 OSGBPB_READ_DIR: local abs, size 0
@@ -270,6 +290,7 @@ Absolute symbols:
   0x00002c CS_BLIT_ADDR_D_offs: local abs, size 0
   0x000030 vduvar_ix_GRA_WKSP: local abs, size 0
   0x000030 BLITCON_ACT_MODE_8BBP: local abs, size 0
+  0x000032 TRAMPOLINES_LENGTH: local abs, size 0
   0x000040 BITS_MEM_TURBO2_THROTTLE_MOS: local abs, size 0
   0x000040 BITS_MEM_CTL_SWMOS_DEBUG_5C: local abs, size 0
   0x000040 VIA_ACR_T1_CONT: local abs, size 0
@@ -921,4 +942,7 @@ Linker symbols:
   0x010000 MEMSTART: global abs, size 0
   0x000400 STACKLEN: global abs, size 0
   0x200000 RAMSIZE: global abs, size 0
-  0x000000 _text: global abs, size 0
+  0x000004 _text: global abs, size 0
+  0x0021d4 _nat_handlers_start: global abs, size 0
+  0x0021e4 _nat_handlers_end: global abs, size 0
+  0x000010 _nat_handlers_len: global abs, size 0
