@@ -370,13 +370,15 @@ hw_nat_irq:	jmp 	*
 ;		********************************************************************************
 	
 callmos:
+		php			; push flags _before_ forcing other regs
+					; to 16-bits
+
 		sep	#$30
 		a8
 		x8
 
-		php
-		pha
-		phx
+		pha			; push 16-bits - irrespective of caller mode
+		phx			
 
 		sei			; disable interrupts whilst we swap
 
