@@ -266,7 +266,7 @@ enter_cont1:
 		; push the starting flags and run address to the stack
 		lda	>$ff0000+osfile_blk+7
 		pha
-		lda	>$ff0000+osfile_blk+4
+		lda	>$ff0000+osfile_blk+5
 		and	#$FF00			; flag=0 interrupts enabled when program started TODO: what should it be?
 		pha
 				
