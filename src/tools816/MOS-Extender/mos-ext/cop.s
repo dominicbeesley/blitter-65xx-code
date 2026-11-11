@@ -3,6 +3,7 @@
 
 	include cop.inc
 	include "oslib.inc"
+	include "oslib-nat.inc"
 
 	global handle_nat_cop
 	global handle_emu_cop
@@ -131,8 +132,55 @@ cop_dispatch_int:
 		bra	.ret
 
 tblCOPDispatch:	addr	COP_00		;OPWRC 	00 = OSWRCH
+		addr	COP_01		;OPWRS 	01 = Write String Immediate
+		addr	COP_02		;OPWRA 	02 = Write string at BHA
+		addr	COP_03		;OPNLI 	03 = OSNEWL - write CR/LF
+		addr	COP_NotImpl	;OPRDC 	04 = OSRDCH - read a char
+		addr	COP_NotImpl	;OPCLI 	05 = OPCLI - execute command at BYX [deprecated]
+		addr	COP_NotImpl	;OPOSB 	06 = OSBYTE
+		addr	COP_NotImpl	;OPOSW 	07 = OSWORD
+		addr	COP_NotImpl	;OPCAV 	08 = Call A Vector **NEW**
+		addr	COP_NotImpl	;OPCAV 	08 = Add to Vector **NEW**
+		addr	COP_NotImpl	;A	BGET
+		addr	COP_NotImpl	;B	BPUT
+		addr	COP_NotImpl	;OPFILE 	0C = OSFILE **NEW**
+		addr	COP_NotImpl	;D
+		addr	COP_NotImpl	;OPCOM 	0E = OPCOM - execute command at BHA
+		addr	COP_NotImpl	;F
+
+		addr	COP_NotImpl	;10
+		addr	COP_NotImpl	;11
+		addr	COP_NotImpl	;12
+		addr	COP_NotImpl	;13
+		addr	COP_NotImpl	;14
+		addr	COP_15		;OPASC = OSASCI - write and expand <CR> to <LF><CR>
 tblCopDispatchLen equ *-tblCOPDispatch
 
+
+;		********************************************************************************
+;		* COP 15 - OPASC - BBC OPASCI                                                  *
+;		*                                                                              *
+;		* Action: Send the byte in A to the VDU drivers. If the byte is &0D (carriage  *
+;		* return) then send &0A, &0D to the VDU drivers (line feed+ carriage return).  *
+;		*                                                                              *
+;		* On entry: A = character code.                                                *
+;		* On exit:  DBAXY preserved                                                    *
+;		********************************************************************************
+COP_15:		and   #$00ff
+		cmp   #$000d
+		bne   COP_00
+;		********************************************************************************
+;		* COP 03 - OSNLI - BBC OSNEWL                                                  *
+;		*                                                                              *
+;		* Action: Send LF CR to the VDU drivers. Line feed is ASCII 10 (decimal),      *
+;		* carriage return is ASCII 13 (decimal).                                       *
+;		*                                                                              *
+;		* On entry: No requirement                                                     *
+;		* On exit:  DBAXY preserved                                                    *
+;		********************************************************************************
+COP_03:		lda   #$000a
+		jsl   COP_00
+		lda   #$000d
 
 ;		********************************************************************************
 ;		* COP 00 - OPWRC - Write Char in A                                             *
@@ -146,4 +194,60 @@ tblCopDispatchLen equ *-tblCOPDispatch
 
 COP_00:		pea	OSWRCH
 		jsl	callmos
+		rtl
+
+;		********************************************************************************
+;		* COP 01 - OPWRS - write string immediate                                      *
+;		*                                                                              *
+;		* read characters from bytes following cop, check for 0 and pass on to write   *
+;		* character routine                                                            *
+;		********************************************************************************
+COP_01:		inc	DPCOP_PC
+		sep	#$20
+		a8
+                lda	[DPCOP_PC]
+                sta	DPCOP_AH
+                rep	#$20
+                a16
+                beq	.ret
+                phd
+                jsl	COP_00
+                pld
+                bra	COP_01
+
+.ret:		rtl
+
+;		********************************************************************************
+;		* COP 02 - OPWRA - write string at BHA                                         *
+;		*                                                                              *
+;		* TODO: DOCO: NOTE: This seems to imply that X is set to 0,1 for 0 terminated  *
+;		* 2,3 for control terminated string - not in systems manual                    *
+;		*                                                                              *
+;		********************************************************************************
+COP_02:		lda	DPCOP_X         ;get passed X and check is < 2 and use to determine type of terminator
+		lsr	A
+		cmp	#$0002
+		bcc	.skok
+		brk	#$00
+
+		byte "COP `OPWRA: invalid termination option",0
+
+.skok:		tax
+                ldy	#$0000
+.lp:		lda	[DPCOP_AH],y    ;use BHA at 05 as pointer
+                and	#$00ff
+                beq	.ret            ;check for 0 terminator
+                cpx	#$0001
+                bne	.sknocc         ;if X<>1 skip forwards
+                cmp	#$0020
+                bcc	.ret            ;else exit on control character
+.sknocc:	cop	#COP_00_OPWRC
+                iny
+                bra   .lp
+
+.ret:		rtl
+
+
+COP_NotImpl:	sec
+		stz	DPCOP_X
 		rtl
