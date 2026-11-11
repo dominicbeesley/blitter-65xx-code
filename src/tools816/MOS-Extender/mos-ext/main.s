@@ -163,6 +163,11 @@ fnd:
 .done:		plp
 		bcc	.tloop
 
+		; close the file
+		lda	#0
+		ldy	gbpb_blk+0
+		jsr	OSFIND
+
 		; now set up the trampolines in ZP
 		ldx	#TRAMPOLINES_LENGTH
 .tlp:		lda	trampolines_data-1,X
