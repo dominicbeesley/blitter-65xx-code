@@ -4,7 +4,7 @@ RAMSIZE = 0x200000;
 
 MEMORY
 {
- zero : org = 0x00 , len = 0x80
+ zero : org = 0x80 , len = 0x0A
  ram: org = 0x2000, len = 0x1000
  FFram: org = 0xFF2000, len = 0x1000
  natv: org = 0x8C00, len = 0x01E0
