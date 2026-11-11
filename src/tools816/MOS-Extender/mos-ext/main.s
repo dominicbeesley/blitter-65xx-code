@@ -429,7 +429,7 @@ callmos:
 		plb
 		phk
 		plb
-	
+
 		; EMU stack should now contain
 		;	+6..7	RTS address of our exit
 		;	+4..5	RTI address of MOS routine
@@ -437,11 +437,24 @@ callmos:
 		;	+2	caller A
 		;	+1	caller X
 
+		; NAT mode stack is now
+		;	+7..8	16-bit MOS routine address
+		;	+4..6	RTL from here
+		;	+3	caller P
+		;	+2	caller A
+		;	+1	caller X
+	
 		; move RTL address up on native mode stack
 		lda	5,X
 		sta	7,X
-		lda	4,X
-		sta	6,X
+		lda	3,X
+		sta	5,X
+
+		; NAT mode stack is now
+		;	+6..8	RTL from here
+		;	+5	caller P
+		;	+1..4	spare
+
 
 		; back to 8 bits
 		sep	#$30
@@ -485,6 +498,11 @@ callmos:
 		xba
 		lda	zp_nat_sp
 		tcs
+
+		; native stack is
+		;	6..8	RTL to callmos caller
+		;	5	Caller P
+		;	1..4	spare
 
 		; merge caller's P and MOS return P, keep X/M/I bits of caller
 		lda	$103,X		; mos P
