@@ -10,12 +10,12 @@ INCS=../includes
 CC=${COMPILER_ROOT}/vc
 CFLAGS=-O3 +./dom-10000 -c99 -I${INCS}
 LD=${COMPILER_ROOT}/vlink
-LDFLAGS=-m -Mmapfile -b rawbin1 -nowarn=22 -Cvbcc -T./vlink.cmd 
+LDFLAGS=-m -b rawbin1 -nowarn=22 -Cvbcc -T./vlink.cmd 
 AS=${COMPILER_ROOT}/vasm6502_oldstyle
 ASFLAGS= -816 -Fvobj -I${INCS}
 
 TARGETS=mos-ext.bin mos-ext.dis.asm
-OBJS=main
+OBJS=main cop
 
 
 OBJS_B=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
@@ -32,7 +32,7 @@ $(BUILD)/%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $^	
 
 $(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym: $(OBJS_B)
-	$(LD) $(LDFLAGS) -symfile $(basename $@).sym -symfmt "DEF %s %06llx"  $(OBJS_B) -o $@
+	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx"  $(OBJS_B) -o $@
 	echo "$$.mos-ext 0002000 0002000" >$@.inf
 
 $(BUILD)/mos-ext.dis.asm:$(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym

@@ -5,7 +5,9 @@ RAMSIZE = 0x200000;
 MEMORY
 {
  zero : org = 0x00 , len = 0x80
+ dp0tramp : org = 0x8A, len = 6
  ram: org = 0x2000, len = 0x1000
+ FFram: org = 0xFF2000, len = 0x1000
  natv: org = 0x8C00, len = 0x01E0
 }
 
@@ -17,12 +19,19 @@ SECTIONS
   start : { *(*text.startup)} >ram
   text:   { *(*.text*)} >ram
   ndata : { *(*data*) *(*.near.*) *(*rodata*) } >ram
-_nat_handlers_start = .;
-  vdata : { *(*nat_handler_text) } >natv AT>ram 
+_nat_wksp_start = .;
+  vdata : { *(*nat_wksp_text) } >natv AT>ram 
   /* a dummy to reset to >ram numbering */
   vv :  {} >ram     
-_nat_handlers_end = .;
-_nat_handlers_len = _nat_handlers_end - _nat_handlers_start;
+_nat_wksp_end = .;
+_nat_wksp_len = _nat_wksp_end - _nat_wksp_start;
+  
+  bob = .;
+
+  fftext 0xFF0000 + bob : { 
+    *(*nat_handler_text) 
+  } >FFram AT>ram 
+
 
   bss (NOLOAD):    { *(*bss*)} >ram
 }
