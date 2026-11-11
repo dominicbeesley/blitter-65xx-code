@@ -236,11 +236,12 @@ fnd:
 
 		; get to native mode and continue from native workspace
 
+		sei				; disable interrupts over switch
+
 		; RTI address of enter_cont1
 		phk
 		pea	enter_cont1
 		php
-		sei				; disable interrupts over switch
 
 		jmp	TRAMPO_EMU2NAT		; enter program
 
@@ -470,6 +471,7 @@ callmos:
 
 .callmos_continue
 		; we've returned from a MOS call, still in emu mode
+		sei
 
 		php
 		pha
