@@ -237,7 +237,7 @@ fnd:
 		; get to native mode and continue from native workspace
 
 		; RTI address of enter_cont1
-		phb
+		phk
 		pea	enter_cont1
 		php
 		sei				; disable interrupts over switch
@@ -260,7 +260,7 @@ enter_cont1:
 		lda	#NAT_STACK_TOP-1
 		tcs
 
-		phb				; program bank 0
+		phk				; program bank 0
 		pea	enter_cont2-1		; return from program address
 		
 		; push the starting flags and run address to the stack
@@ -476,7 +476,7 @@ callmos:
 		phx		
 
 		; push an RTI
-		phb
+		phk
 		pea	.callmos_continue2
 		php
 		jmp	TRAMPO_EMU2NAT
