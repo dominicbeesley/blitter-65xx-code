@@ -377,7 +377,7 @@ callmos:
 		a8
 		x8
 
-		pha			; push 16-bits - irrespective of caller mode
+		pha			; push 8-bits - irrespective of caller mode
 		phx			
 
 		sei			; disable interrupts whilst we swap
