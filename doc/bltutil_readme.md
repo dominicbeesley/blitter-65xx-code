@@ -514,8 +514,12 @@ directly by processors that support >64k addressing i.e. 65816, 68008
                         | BLUTILS ROM workspace | BP |see below
         00 8C00         +-----------------------+----+
                         | 65816 extended vectors| B  |see below
+        00 9000         +-----------------------+----+
+                        | FREE                  |    |  
         00 C000         +-----------------------+----+
                         | BBC B/Elk "Hazel"     | B  |  see HAZEL
+        00 E000         +-----------------------+----+
+                        | FREE                  |    |        
         01 0000         +-----------------------+----+
                         |                       |    |
                         | User memory           | BP |
