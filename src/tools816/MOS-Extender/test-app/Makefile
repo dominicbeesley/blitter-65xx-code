@@ -11,7 +11,7 @@ INCS=../includes
 CC=${COMPILER_ROOT}/vc
 CFLAGS=-O3 +./dom-10000 -c99 -I${INCS}
 LD=${COMPILER_ROOT}/vlink
-LDFLAGS=-m -Mmapfile -b rawbin1 -nowarn=22 -Cvbcc -T${VBCC}/targets/65816-dom/vlink.cmd -L${VBCC}/targets/65816-dom/lib
+LDFLAGS=-m -b rawbin1 -nowarn=22 -Cvbcc -T${VBCC}/targets/65816-dom/vlink.cmd -L${VBCC}/targets/65816-dom/lib
 AS=${COMPILER_ROOT}/vasm6502_oldstyle
 ASFLAGS= -816 -Fvobj -I${INCS}
 
@@ -33,7 +33,7 @@ $(BUILD)/%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $^	
 
 $(BUILD)/test.bin $(BUILD)/test.sym: $(OBJS_B)
-	$(LD) $(LDFLAGS) -symfile $(basename $@).sym -symfmt "DEF %s %06llx"  $(OBJS_B) -o $@ -lvc
+	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx"  $(OBJS_B) -o $@ -lvc
 	echo "$$.TEST 0010000 0010000" >$@.inf
 
 $(BUILD)/test.dis.asm:$(BUILD)/test.bin $(BUILD)/test.sym
