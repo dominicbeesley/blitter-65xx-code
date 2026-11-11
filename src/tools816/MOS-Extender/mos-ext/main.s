@@ -144,7 +144,9 @@ fnd:
 		; transfer up thru JIM
 		lda	gbpb_blk+5		; number of bytes _not_ transferred by GBPB
 		eor	#0xFF	
-		sta	gbpb_blk+5		; count to transfer
+		tax
+		inx
+		stx	gbpb_blk+5		; count to transfer
 		ldy	osfile_blk+2		; LSB of hi memory pointer
 		ldx	#0
 .ll1		lda	buf,X
