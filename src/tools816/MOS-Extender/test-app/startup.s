@@ -3,15 +3,52 @@
  zpage r2
  zpage r3
  global ___exit
+ global __DBR_init
+ global _bss
+ global _ebss
  section DONTMERGE_text.startup
 _start:
- clc
- xce
- rep #48
+;;; clc
+;;; xce
+;; assume already in native mode
+
+ pea #^__DBR_init
+ plb
+ sep	#$20
+ pla
+
+ rep #$30
  a16
+ x16
  lda #r0
  and #0xff00
  tcd
+
+
+; clear BSS
+ lda #<_bss
+ sta r0
+ lda #^_bss
+ sta r1
+ lda #<_ebss
+ sta r4
+ lda #^_ebss
+ sta r5
+ jsl clear
+
+; clear NBSS
+ lda #<_nbss
+ sta r0
+ lda #^_nbss
+ sta r1
+ lda #<_nebss
+ sta r4
+ lda #^_nebss
+ sta r5
+ jsl clear
+
+ tsx
+ stx oldsp
 
 ; TODO - we assume that the passed in stack from the MOS-Extender is sufficient
 
@@ -20,8 +57,35 @@ _start:
  lda #0
  jsl ___main
 ___exit:
- lda #0
+ ldx	oldsp
+ txs 
  rtl				;; TODO - OSEXIT palaver?
+
+clear:
+ jmp l2
+l1:
+ sep #32
+ a8
+ lda #0
+ sta [r0]
+ rep #32
+ a16
+ inc r0
+ bne l2
+ inc r1
+l2:
+ lda r0
+ cmp r4
+ bne l1
+ lda r1
+ cmp r5
+ bne l1
+ rtl
+
+ section .bss,"aurw"
+oldsp:
+ reserve 2
+
  section zpage,"adrwz"
 r0: reserve 2
 r1: reserve 2
