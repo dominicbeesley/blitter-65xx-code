@@ -8,6 +8,7 @@
 	.export handle_emu_cop
 	.import callmos
 	.import COP_07
+	.import COP_06
 
 
 	.exportzp DPCOP_Y
@@ -123,12 +124,37 @@ cop_dispatch_int:
 		lda	tblCOPDispatch+1,X
 		pha
 		lda	tblCOPDispatch-1,X
-		and	#$FF00
+
+		; restore B
+		eor	DPCOP_B
+		and	#$00FF
+		eor	tblCOPDispatch-1,X
 		pha
 		plb
+
 		php
+		ldx	DPCOP_X			;restore X from stack
 		lda	DPCOP_AH		;restore A from stack
 		rti
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;; enter COP_HANDLER ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; The cop_handler will be entered when the RTI is executed
+; A cop handler should expect the following register values
+;	Reg	Size	Value
+;	A 	16	Caller's	
+;	X 	16	Caller's	
+;	Y 	16	Caller's	
+;	DP	16	points at registers on stack - see cop.inc for offsets
+;	P	8	The I flag will be as caller, D,M,X clear, CZV unspecified
+;	S	16	ready for an RTL 
+;
+;	DP = S + 5 on entry, this may be used to restore DP if stacking is inconvenient
+;
+; 	The cop handler may return with DP, register sizes changes and A,X,Y undefined
+;
+;	B,A,X,Y,DP,P are loaded back from the frame on the stack so to return values
+;	to the caller the handler should update these.
 		
 @ret:		rep   #$30
 		.a16
@@ -159,7 +185,7 @@ tblCOPDispatch:	.faraddr	COP_00		;OPWRC 	00 = OSWRCH
 		.faraddr	COP_03		;OPNLI 	03 = OSNEWL - write CR/LF
 		.faraddr	COP_NotImpl	;OPRDC 	04 = OSRDCH - read a char
 		.faraddr	COP_NotImpl	;OPCLI 	05 = OPCLI - execute command at BYX [deprecated]
-		.faraddr	COP_NotImpl	;OPOSB 	06 = OSBYTE
+		.faraddr	COP_06		;OPOSB 	06 = OSBYTE
 		.faraddr	COP_07		;OPOSW 	07 = OSWORD
 		.faraddr	COP_NotImpl	;OPCAV 	08 = Call A Vector **NEW**
 		.faraddr	COP_NotImpl	;OPCAV 	08 = Add to Vector **NEW**
