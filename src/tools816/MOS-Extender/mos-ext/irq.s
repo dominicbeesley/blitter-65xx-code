@@ -1,14 +1,9 @@
 		.include "mosrom.inc"
 		.include "oslib.inc"
 		.include "oslib-nat.inc"
+		.include "emu_zp.inc"
 
 		.export 	handle_nat_irq
-		.importzp 	TRAMPO_NAT2EMU
-		.importzp 	TRAMPO_EMU2NAT
-
-		.importzp 	zp_emu_sp
-		.importzp 	zp_nat_sp
-
 
 		.segment	"NATHANDLER"
 

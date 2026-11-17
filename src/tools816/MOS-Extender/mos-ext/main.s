@@ -2,6 +2,7 @@
 	.include "mosrom.inc"
 	.include "hardware.inc"
 	.include "defs.inc"
+	.include "emu_zp.inc"
 
 	.import handle_nat_cop
 	.import handle_emu_cop
@@ -9,26 +10,6 @@
 	.import callmos
 	.import _nat_wksp_start
 	.import _nat_wksp_len
-
-	.exportzp zp_emu_sp
-	.exportzp zp_nat_sp	
-
-
-
-	.zeropage
-
-
-		.export   TRAMPO_NAT2EMU
-		.export   TRAMPO_EMU2NAT
-
-TRAMPOLINES 	:=	$8A
-TRAMPO_NAT2EMU	:=	TRAMPOLINES
-TRAMPO_EMU2NAT	:=	TRAMPOLINES+3
-
-zp_tmpLEN:	.res	2
-zp_tmpPTR:	.res	2
-zp_emu_sp:	.res  1
-zp_nat_sp:	.res  2
 
 	.segment	"STARTUP"
 

@@ -1,10 +1,6 @@
+		.include "emu_zp.inc"
+
 		.export callmos
-
-		.importzp	zp_emu_sp
-		.importzp	zp_nat_sp
-		.importzp	TRAMPO_NAT2EMU
-		.importzp	TRAMPO_EMU2NAT
-
 		.segment	"NATWKSP"
 
 

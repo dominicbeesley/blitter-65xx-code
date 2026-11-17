@@ -1,7 +1,6 @@
 ; COP.S - this file contains the handler to translate the
 ; native mode COP API into the emu mode MOS API
 
-	.include "cop.inc"
 	.include "oslib.inc"
 	.include "oslib-nat.inc"
 
@@ -9,6 +8,28 @@
 	.export handle_emu_cop
 	.import callmos
 	.import COP_07
+
+
+	.exportzp DPCOP_Y
+	.exportzp DPCOP_X
+	.exportzp DPCOP_AH
+	.exportzp DPCOP_B
+	.exportzp DPCOP_DP
+	.exportzp DPCOP_P
+	.exportzp DPCOP_PC
+	.exportzp DPCOP_K
+	.exportzp DPCOP_BHA
+
+DPCOP_Y		:=  1 	; offset of Y in COP entry/exit frame
+DPCOP_X		:=  3	; offset of X in COP entry/exit frame
+DPCOP_AH	:=  5	; offset of AH in COP entry/exit frame
+DPCOP_B		:=  7	; offset of B(ank) in COP entry/exit frame
+DPCOP_DP	:=  8	; offset of DP in COP entry/exit frame
+DPCOP_P		:= 10	; offset of P in COP entry/exit frame
+DPCOP_PC	:= 11	; offset of PC in COP entry/exit frame
+DPCOP_K		:= 13	; offset of K (program bank) in COP entry/exit frame
+DPCOP_BHA	:=	DPCOP_AH
+
 
 ;==================================================================
 ; EMU mode code
