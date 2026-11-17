@@ -15,7 +15,8 @@ COP_08_OPCAV				:=	$08		; Call A Vector - !*bad call on Communicator
 COP_09_OPADV				:=	$09		; Add to vector - ?
 
 COP_0A_OPBGT				:=	$0A		; OSBGET
-COP_0C_OPFILE				:=      $0C		; OSFILE **NEW**
+COP_0B_OPBPT				:=  $0B		; OSBPUT
+COP_0C_OPFILE				:=  $0C		; OSFILE **NEW**
 
 COP_0D_OPFND				:=	$0D		; OSFIND - deprecated on Commy - not sure need to work out for MOS/16 bit handles?
 COP_0E_OPCOM				:=	$0E		; OPCOM  - execute *command at BHA

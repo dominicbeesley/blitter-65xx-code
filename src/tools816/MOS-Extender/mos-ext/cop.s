@@ -190,7 +190,7 @@ tblCOPDispatch:	.faraddr	COP_00		;OPWRC 	00 = OSWRCH
 		.faraddr	COP_07		;OPOSW 	07 = OSWORD
 		.faraddr	COP_NotImpl	;OPCAV 	08 = Call A Vector **NEW**
 		.faraddr	COP_NotImpl	;OPCAV 	08 = Add to Vector **NEW**
-		.faraddr	COP_NotImpl	;A	BGET
+		.faraddr	COP_0A		;A	BGET
 		.faraddr	COP_NotImpl	;B	BPUT
 		.faraddr	COP_NotImpl	;OPFILE 	0C = OSFILE **NEW**
 		.faraddr	COP_NotImpl	;D
@@ -502,6 +502,36 @@ EMUBUF 		:= $FF0000 + buf
 		lda	DPCOP_P
 		and	#$FFFE
 		sta	DPCOP_P
+		
+		rtl
+
+		.endproc
+
+; ********************************************************************************
+; * COP 0A - OPBGT - BGET                                                        *
+; *                                                                              *
+; * Action: Read one byte from an open device or file. The channel must          *
+; * previously have been opened using OPOPN.                                     *
+; *                                                                              *
+; * On entry: Y contains the handle from OPOPN.                                  *
+; * On exit:  A contains the byte read from the file.                            *
+; *           if C = I then an error (EOF) has occurred, and A is invalid.       *
+; *           No registers preserved                                             *
+; ********************************************************************************
+
+		.a16
+		.i16
+		.proc COP_0A:far
+
+		pea	OSBGET
+		jsl	callmos
+		sep	#$20
+		.a8
+		sta	DPCOP_AH
+		php
+		ror	DPCOP_P
+		plp
+		rol	DPCOP_P
 		
 		rtl
 

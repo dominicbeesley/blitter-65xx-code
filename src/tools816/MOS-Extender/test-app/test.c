@@ -8,6 +8,7 @@ extern void os_writes(const char *c);
 extern void os_word(unsigned char op, void *block);
 extern const char *os_find_open(const char *c, unsigned char mode, int *handle);
 extern const char *os_find_close(int handle);
+extern int os_bget(int handle);
 
 size_t __write(int h, const char *p, size_t l) {
 	int i = 0;
@@ -37,7 +38,13 @@ void dump(const char *name) {
 
 	printf("Here comes %s\r\n", name);
 
-
+	for (int i = 0; i < 8; i++) {
+		int x = os_bget(f);
+		if (x < 0)
+			break;
+		printf("%02X ", x);
+	}
+	printf ("\r\n");
 
 	os_find_close(f);
 }

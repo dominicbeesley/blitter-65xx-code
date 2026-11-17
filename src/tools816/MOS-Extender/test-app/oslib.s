@@ -114,5 +114,15 @@ _os_find_close:
 		; assume no error
 		lda	#0
 		tax
-
 		rtl
+
+		global _os_bget
+_os_bget:	tay			; (handle)
+		cop	#COP_0A_OPBGT
+		bcc	.ok
+		; Cy=EOF
+		lda	#$FFFF		; -1 = EOF
+		rtl
+.ok:		and	#$00FF
+		rtl
+
