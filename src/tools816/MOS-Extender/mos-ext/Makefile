@@ -1,22 +1,14 @@
 		include ../../../Makefile.defs
 
 
-export VBCC        = /home/domin/vbcc65816/vbcc65816_linux/vbcc
-COMPILER_ROOT	=	${VBCC}/bin
-export PATH     := ${COMPILER_ROOT}:$(PATH)
-
-INCS=../includes
-
-CC=${COMPILER_ROOT}/vc
-CFLAGS=-O3 +./dom-10000 -c99 -I${INCS}
-LD=${COMPILER_ROOT}/vlink
-LDFLAGS=-m -b rawbin1 -nowarn=22 -Cvbcc -T./vlink.cmd 
-AS=${COMPILER_ROOT}/vasm6502_oldstyle
-ASFLAGS= -816 -Fvobj -I${INCS}
+AS=ca65
+ASFLAGS=--cpu 65816 -I . -I $(INC)
+LD=ld65
+LDFLAGS=-vm -C mos-ext.cfg
 
 TARGETS=mos-ext.bin mos-ext.dis.asm
 OBJS=main cop irq callmos osword
-DEPS_S=$(wildcard $(INCS)/*.inc) $(wildcard *.inc)
+DEPS_S=$(OSINCS) $(wildcard *.inc)
 
 OBJS_B=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_B=$(addprefix $(BUILD)/, $(TARGETS))
@@ -25,14 +17,12 @@ all: $(TARGETS_B)
 ssd:	all
 deploy:	ssd
 
-$(BUILD)/%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $^
-
 $(BUILD)/%.o: %.s $(DEPS_S)
 	$(AS) $(ASFLAGS) -o $@ $(filter %.s, $^)
 
-$(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym: $(OBJS_B)
-	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx"  $(OBJS_B) -o $@
+$(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym: $(OBJS_B) mos-ext.cfg
+	$(LD) $(LDFLAGS) -m $(basename $@).map -o $@ $(OBJS_B)
+	$(SCRIPTS)/ld65map2noi.pl <$(basename $@).map >$(basename $@).sym
 	echo "$$.mos-ext 0002000 0002000" >$@.inf
 
 $(BUILD)/mos-ext.dis.asm:$(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym
@@ -41,4 +31,3 @@ $(BUILD)/mos-ext.dis.asm:$(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym
 clean:
 	-rm $(OBJS_B)
 	-rm $(TARGETS_B)
-

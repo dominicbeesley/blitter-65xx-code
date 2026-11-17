@@ -1,9 +1,11 @@
-		global callmos
+		.export callmos
 
-		zpage	zp_emu_sp
-		zpage	zp_nat_sp
+		.importzp	zp_emu_sp
+		.importzp	zp_nat_sp
+		.importzp	TRAMPO_NAT2EMU
+		.importzp	TRAMPO_EMU2NAT
 
-		section	.nat_wksp_text, "acrx"
+		.segment	"NATWKSP"
 
 
 ;		********************************************************************************
@@ -25,8 +27,8 @@ callmos:
 		phd			; preserve caller D
 
 		sep	#$30
-		a8
-		x8
+		.a8
+		.i8
 
 		pha			; push 8-bits - irrespective of caller mode
 		phx			
@@ -54,8 +56,8 @@ callmos:
 		lda	zp_emu_sp
 
 		rep	#$30
-		a16
-		x16
+		.a16
+		.i16
 
 		; save native mode stack to restore later
 		tsx
@@ -65,20 +67,20 @@ callmos:
 		tcs
 
 		; set continue address on emu stack
-		lda	#.callmos_continue-1
+		lda	#@callmos_continue-1
 		pha
 		; copy 16-bit MOS routine addr to emu stack
 		lda 	9,X
 		pha
 		sep	#$20
-		a8
+		.a8
 		; copy P,A to emu stack
 		lda 	5,X
 		pha
 		lda 	2,X
 		pha
 		rep	#$20
-		a16
+		.a16
 		; copy X,rubbish to emu stack
 		lda	0,X
 		pha
@@ -120,17 +122,17 @@ callmos:
 
 		; back to 8 bits
 		sep	#$30
-		a8
-		x8
+		.a8
+		.i8
 
 		plx
 		pla
 		jmp	TRAMPO_NAT2EMU
 
-		section	.text
+		.code
 
 
-.callmos_continue
+@callmos_continue:
 		; we've returned from a MOS call, still in emu mode
 		sei
 
@@ -140,18 +142,18 @@ callmos:
 
 		; push an RTI
 		phk
-		pea	.callmos_continue2
+		pea	@callmos_continue2
 		php
 		jmp	TRAMPO_EMU2NAT
 
-		section	.nat_wksp_text, "acrx"
+		.segment	"NATWKSP"
 
 		;we're now back in native mode jump back to caller
-.callmos_continue2
+@callmos_continue2:
 		
 		;we're still a8, x8 
-		a8
-		x8
+		.a8
+		.i8
 		
 		tsx
 		stx	zp_emu_sp

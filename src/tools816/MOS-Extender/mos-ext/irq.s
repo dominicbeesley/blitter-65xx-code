@@ -1,23 +1,21 @@
-		include "mosrom.inc"
-		include "oslib.inc"
-		include "oslib-nat.inc"
+		.include "mosrom.inc"
+		.include "oslib.inc"
+		.include "oslib-nat.inc"
 
-		global 	handle_nat_irq
-		global 	TRAMPO_NAT2EMU
+		.export 	handle_nat_irq
+		.importzp 	TRAMPO_NAT2EMU
+		.importzp 	TRAMPO_EMU2NAT
 
-		global 	zp_emu_sp
-		zpage	zp_emu_sp
-		global 	zp_nat_sp
-		zpage	zp_nat_sp
+		.importzp 	zp_emu_sp
+		.importzp 	zp_nat_sp
 
 
-		section	.nat_handler_text, "acrx"
+		.segment	"NATHANDLER"
 
-		global handle_nat_irq
 handle_nat_irq:	; save _all_ regs (possibly 16 bit)
 		rep	#$30
-		a16
-		x16
+		.a16
+		.i16
 		pha
 		phx
 		phy
@@ -56,9 +54,9 @@ handle_nat_irq:	; save _all_ regs (possibly 16 bit)
 
 		jml	TRAMPO_NAT2EMU
 
-		section .text
-		a8
-		x8
+		.code
+		.a8
+		.i8
 handle_nat_irq_out:
 		; back from emu mode irq
 
@@ -68,15 +66,15 @@ handle_nat_irq_out:
 		php
 		jml	TRAMPO_EMU2NAT
 
-		section	.nat_handler_text, "acrx"
+		.segment	"NATHANDLER"
 handle_nat_irq_out_2:		
 		; swap to nat stack
 		tsx
 		stx	zp_emu_sp
 
 		rep	#$30
-		a16
-		x16
+		.a16
+		.i16
 		lda	zp_nat_sp
 		tcs		
 

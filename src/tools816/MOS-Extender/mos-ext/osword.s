@@ -1,8 +1,9 @@
-		include cop.inc
+		.include "cop.inc"
 
-		include "oslib.inc"
+		.include "oslib.inc"
 
-		global buf
+		.import buf
+		.import callmos
 
 ; TODO: this has a different API - BHA is the pointer instead of 0YX, Y contains the reason code!
 ;	********************************************************************************
@@ -35,29 +36,29 @@
 ;	It is preferred to use the update OPRDLIN API to read a line of text
 ;	using 32 bit addressing
 
-		section	.nat_handler_text, "acrx"
+		.segment	"NATHANDLER"
 
 OSWORDBUF := $FF0000 + buf
 
-		global	COP_07
-COP_07		
+		.export	COP_07
+COP_07:		
 		sep	#$30
-		a8
-		x8
+		.a8
+		.i8
 		tya
 		tax
-		bpl	.low		
+		bpl	@low		
 		lda	[DPCOP_BHA]		; get length from block+0
 		tay		
-		bra	.go		
-.low		phk
+		bra	@go		
+@low:		phk
 		plb
 		ldy	WordLengthsArgs,X
 		cpx	#$15
-		bcc	.go
+		bcc	@go
 		ldy	#16
 
-.go		; X is function code
+@go:		; X is function code
 		; Y is length of arguments in block
 		; copy arguments to buf that is MOS-visible
 
@@ -65,13 +66,13 @@ COP_07
 		lda	#$FF
 		pha
 		plb
-		bra	.cpyent
+		bra	@cpyent
 
-.cpy		dey
+@cpy:		dey
 		lda	[DPCOP_BHA],Y
 		sta	OSWORDBUF,Y
-.cpyent		cpy	#0
-		bne	.cpy
+@cpyent:		cpy	#0
+		bne	@cpy
 
 		pea	OSWORD
 		txa
@@ -82,36 +83,36 @@ COP_07
 		phy	; we return Y/Cy for OSWORD 0
 
 		;; assume registers small here!?
-		a8
-		x8
+		.a8
+		.i8
 		
 		; get back reson code
 		ldx	DPCOP_Y
-		bpl	.low2
+		bpl	@low2
 		ldy	#1
 		lda	[DPCOP_BHA],Y		; get length from block+1
 		tay		
-		bra	.go2		
-.low2		phk
+		bra	@go2		
+@low2:		phk
 		plb
 		ldy	WordLengthsReturn,X
 		cpx	#$15
-		bcc	.go2
+		bcc	@go2
 		ldy	#16
 		
-.go2		; X is function code
+@go2:		; X is function code
 		; Y is length of arguments in block
 		; copy arguments to buf that is MOS-visible
 		lda	#$FF
 		pha
 		plb
-		bra	.cpyent2
+		bra	@cpyent2
 
-.cpy2		dey
+@cpy2:		dey
 		lda	OSWORDBUF,Y
 		sta	[DPCOP_BHA],Y
-.cpyent2		cpy	#0
-		bne	.cpy2
+@cpyent2:		cpy	#0
+		bne	@cpy2
 
 		; TODO: This returns Y/P for all OSWORDS not just OSWORD 0
 
@@ -132,47 +133,47 @@ COP_07
 
 ; OSWORD control block lengths
 
-WordLengthsArgs
-		byte	$05
-		byte	$00
-		byte	$05
-		byte	$00
-		byte	$05
-		byte	$04
-		byte	$05
-		byte	$08
-		byte	$0E
-		byte	$04
-		byte	$01
-		byte	$01
-		byte	$05
-		byte	$00
-		byte	$08
-		byte	$20
-		byte	$10
-		byte	$0D
-		byte	$00
-		byte	$04
-		byte	$80
-WordLengthsReturn
-		byte	$00
-		byte	$05
-		byte	$00
-		byte	$05
-		byte	$00
-		byte	$05
-		byte	$00
-		byte	$00
-		byte	$00
-		byte	$05
-		byte	$09
-		byte	$05
-		byte	$00
-		byte	$08
-		byte	$19
-		byte	$00
-		byte	$01
-		byte	$0D
-		byte	$80
-		byte	$04
-		byte	$80
+WordLengthsArgs:
+		.byte	$05
+		.byte	$00
+		.byte	$05
+		.byte	$00
+		.byte	$05
+		.byte	$04
+		.byte	$05
+		.byte	$08
+		.byte	$0E
+		.byte	$04
+		.byte	$01
+		.byte	$01
+		.byte	$05
+		.byte	$00
+		.byte	$08
+		.byte	$20
+		.byte	$10
+		.byte	$0D
+		.byte	$00
+		.byte	$04
+		.byte	$80
+WordLengthsReturn:
+		.byte	$00
+		.byte	$05
+		.byte	$00
+		.byte	$05
+		.byte	$00
+		.byte	$05
+		.byte	$00
+		.byte	$00
+		.byte	$00
+		.byte	$05
+		.byte	$09
+		.byte	$05
+		.byte	$00
+		.byte	$08
+		.byte	$19
+		.byte	$00
+		.byte	$01
+		.byte	$0D
+		.byte	$80
+		.byte	$04
+		.byte	$80

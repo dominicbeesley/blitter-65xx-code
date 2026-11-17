@@ -1,4 +1,4 @@
-	ifndef __COP_INC__
+	.IFNDEF __COP_INC__
 __COP_INC__:
 
 
@@ -12,8 +12,7 @@ DPCOP_PC	:= 11	; offset of PC in COP entry/exit frame
 DPCOP_K		:= 13	; offset of K (program bank) in COP entry/exit frame
 DPCOP_BHA	:=	DPCOP_AH
 
-		zpage DPCOP_Y, DPCOP_X, DPCOP_AH, DPCOP_B, DPCOP_DP, DPCOP_P, DPCOP_PC, DPCOP_K, DPCOP_BHA
 
 
 
-		endif
+		.ENDIF
