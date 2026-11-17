@@ -202,8 +202,11 @@ fnd:
 		lda	#0
 		sta	fred_JIM_PAGE_HI
 @tlp2:		lda	hw_vectors_data-1,X
+
 		ldy	#$8F
 		sty	fred_JIM_PAGE_LO
+		sta	JIM+$E0-1,X
+
 		ldy	#$FF
 		sty	fred_JIM_PAGE_LO
 		sta	JIM+$E0-1,X
