@@ -35,6 +35,10 @@ COP_34_OPMOD				:=	$34		; Different API to commy - c.f. OS_Module on Risc OS
 OPMOD_OP_INSERT				:=	$0A
 
 COP_3F_OPBWV 				:=      $3F		; NEW OS Byte/Word Vector - add handler for OSBYTE/WORD
+
+COP_44_OPOPN				:=	$44		; open a file
+COP_45_OPCLS				:=	$45		; close a file
+
 ;;;; Service calls
 
 

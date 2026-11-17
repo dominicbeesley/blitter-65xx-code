@@ -9,6 +9,7 @@
 	.import callmos
 	.import COP_07
 	.import COP_06
+	.import buf
 
 
 	.exportzp DPCOP_Y
@@ -202,6 +203,68 @@ tblCOPDispatch:	.faraddr	COP_00		;OPWRC 	00 = OSWRCH
 		.faraddr	COP_NotImpl	;13
 		.faraddr	COP_NotImpl	;14
 		.faraddr	COP_15		;OPASC = OSASCI - write and expand <CR> to <LF><CR>
+		.faraddr	COP_NotImpl	;16
+		.faraddr	COP_NotImpl	;17
+		.faraddr	COP_NotImpl	;18
+		.faraddr	COP_NotImpl	;19
+		.faraddr	COP_NotImpl	;1A
+		.faraddr	COP_NotImpl	;1B
+		.faraddr	COP_NotImpl	;1C
+		.faraddr	COP_NotImpl	;1D
+		.faraddr	COP_NotImpl	;1E
+		.faraddr	COP_NotImpl	;1F
+
+		.faraddr	COP_NotImpl	;20
+		.faraddr	COP_NotImpl	;21
+		.faraddr	COP_NotImpl	;22
+		.faraddr	COP_NotImpl	;23
+		.faraddr	COP_NotImpl	;24
+		.faraddr	COP_NotImpl	;24
+		.faraddr	COP_26		;OPBHA - return address of immediate string in BHA
+		.faraddr	COP_27		;OPBHI - return immediate far address in BHA ** NEW
+		.faraddr	COP_NotImpl	;28
+		.faraddr	COP_NotImpl	;29
+		.faraddr	COP_NotImpl	;2A
+		.faraddr	COP_NotImpl	;2B
+		.faraddr	COP_NotImpl	;2C
+		.faraddr	COP_NotImpl	;2D
+		.faraddr	COP_NotImpl	;2E
+		.faraddr	COP_NotImpl	;OPIIQ - insert interrupt handler
+
+		.faraddr	COP_NotImpl	;OPRIQ - remove interrupt handler
+		.faraddr	COP_NotImpl	;OPMIQ - modify interrupt handler
+		.faraddr	COP_NotImpl	;OPSUM - do carry-round checksum of memory area
+		.faraddr	COP_NotImpl	;33
+		.faraddr	COP_NotImpl	;OPMOD - module management functions
+		.faraddr	COP_NotImpl	;34
+		.faraddr	COP_NotImpl	;36
+		.faraddr	COP_NotImpl	;37
+		.faraddr	COP_NotImpl	;38
+		.faraddr	COP_NotImpl	;39
+		.faraddr	COP_NotImpl	;3A
+		.faraddr	COP_NotImpl	;3B
+		.faraddr	COP_NotImpl	;3C
+		.faraddr	COP_NotImpl	;3D
+		.faraddr	COP_NotImpl	;3E
+		.faraddr	COP_NotImpl	;OPBWV - OS Byte/Word Vector
+
+		.faraddr	COP_NotImpl	;40
+		.faraddr	COP_NotImpl	;41
+		.faraddr	COP_NotImpl	;42
+		.faraddr	COP_NotImpl	;43
+		.faraddr	COP_44		;44	OPOPN - OSFIND - open a file
+		.faraddr	COP_45		;45	OPCLS - OSFINE - close a file
+		.faraddr	COP_NotImpl	;46
+		.faraddr	COP_NotImpl	;47
+		.faraddr	COP_NotImpl	;48
+		.faraddr	COP_NotImpl	;49
+		.faraddr	COP_NotImpl	;4A
+		.faraddr	COP_NotImpl	;4B
+		.faraddr	COP_NotImpl	;4C	OPBGB - OSGBPB get/put block
+		.faraddr	COP_NotImpl	;4D
+		.faraddr	COP_NotImpl	;4E
+		.faraddr	COP_NotImpl	;4F
+
 tblCopDispatchLen = *-tblCOPDispatch
 
 
@@ -299,3 +362,147 @@ COP_02:		lda	DPCOP_X         ;get passed X and check is < 2 and use to determine
 COP_NotImpl:	sec
 		stz	DPCOP_X
 		rtl
+
+; ********************************************************************************
+; * COP 26 - OPBHA                                                               *
+; *                                                                              *
+; * returns the immediate string following the COP call as BHA                   *
+; ********************************************************************************
+                .a16
+                .i16
+COP_26:	        lda   DPCOP_PC+1
+                sta   DPCOP_AH+1
+                lda   DPCOP_PC
+                inc   A
+                sta   DPCOP_AH
+; This skips over any string following the cop call
+@copExitImmedStr:
+		inc  DPCOP_PC
+                lda   [DPCOP_PC]
+                and   #$00ff
+                bne   @copExitImmedStr
+                rtl
+
+; ********************************************************************************
+; * COP 27 - OPBHI                                                               *
+; *                                                                              *
+; * returns the immediate far address following the cop call as BHA              *
+; ********************************************************************************
+                .a16
+                .i16
+COP_27:	        inc	DPCOP_PC
+		lda	[DPCOP_PC]
+		sta	DPCOP_AH
+		inc	DPCOP_PC
+		lda	[DPCOP_PC]
+		sta	DPCOP_AH+1
+		inc	DPCOP_PC
+                rtl
+
+	; this address to be used from native mode
+EMUBUF 		:= $FF0000 + buf
+
+
+; ********************************************************************************
+; * COP 44 - OPOPN - open file (or device driver)                                *
+; * Action: This call opens a device driver.                                     *
+; * On entry: BHA points to the name (with colon). terminated by CR(&0D).        *
+; *           Y = &40 for input                                                  *
+; *           Y = &80 for output                                                 *
+; *           Y = &C0 for update                                                 *
+; * On exit:  C = 0 means that the device driver is open and Y = handle.         *
+; *           If C= I then the device failed to open, the error code is in X     *
+; *           and BHA points to a zeroterminated error message.                  *
+; *           D preserved                                                        *
+; *                                                                              *
+; * This translates to OSFIND                                                    *
+; *                                                                              *
+; *                                                                              *
+; ********************************************************************************
+
+		.a16
+		.i16
+		.proc	COP_44:far
+		; copy filename at BHA to safe emu-mode buffer
+		sep	#$30
+		.a8
+		.i8
+		ldy	#0
+		ldx	#0
+@lp:		lda	[DPCOP_BHA], Y
+		sta	f:EMUBUF,X
+		cmp	#13
+		beq	@s
+		iny
+		inx
+		bne	@lp
+
+@s:		lda	DPCOP_Y
+		beq	@ign			;ignore Y=0
+		ldx	#<buf
+		ldy	#>buf
+		pea	OSFIND
+		jsl	callmos
+
+		cmp	#0
+		bne	@clcretA
+
+		cop	COP_26_OPBHA
+		.byte	"File not opened", 0
+		phb
+		plx
+		stx	DPCOP_B
+		rep	#$30
+		.a16
+		.i16
+		sta	DPCOP_AH
+		; return error
+		lda	#1
+		sta	DPCOP_X
+		ror	DPCOP_P
+		sec
+		rol	DPCOP_P
+		rtl
+
+
+@clcretA:	.a8
+		.i8
+		sta	DPCOP_Y
+		stz	DPCOP_Y+1
+		lda	DPCOP_P
+		and	#$FE
+		sta	DPCOP_P
+@ign:		rtl
+
+	.endproc
+
+
+
+; ********************************************************************************
+; * COP 45 - OPCLS - close device driver                                         *
+; * Action: This call closes a device driver which has been opened using OPOPN.  *
+; *                                                                              *
+; * On entry: Y = handle allocated by OPOPN.                                     *
+; * On exit:  If C = 0 then driver is closed.                                    *
+; *           If C = 1 then the driver close failed, X = error code and BHA      *
+; *           points to a zero-terminated error message.                         *
+; *           D preserved                                                        *
+; ********************************************************************************
+
+		.a16
+		.i16
+		.proc COP_45:far
+
+		lda	#0
+		pea	OSFIND
+		jsl	callmos
+
+		; I don't think it can fail?
+
+		lda	DPCOP_P
+		and	#$FFFE
+		sta	DPCOP_P
+		
+		rtl
+
+		.endproc

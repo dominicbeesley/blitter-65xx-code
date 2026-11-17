@@ -6,6 +6,8 @@ extern void os_wrch(char c);
 extern void os_newl();
 extern void os_writes(const char *c);
 extern void os_word(unsigned char op, void *block);
+extern const char *os_find_open(const char *c, unsigned char mode, int *handle);
+extern const char *os_find_close(int handle);
 
 size_t __write(int h, const char *p, size_t l) {
 	int i = 0;
@@ -24,6 +26,22 @@ struct osword_timer_block
 
 struct osword_timer_block b;
 
+void dump(const char *name) {
+	int f = 0xA5;
+	const char *err;
+	err = os_find_open(name, 0x40, &f);
+	if (err) {
+		printf ("ERROR opening %s: %s\r\n", name, (err)?err:"NULL", f);
+		return;
+	} 
+
+	printf("Here comes %s\r\n", name);
+
+
+
+	os_find_close(f);
+}
+
 int main(void) {
 	
 	long l;
@@ -34,12 +52,12 @@ int main(void) {
 
 	os_newl();
 
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 5; i++) {
 		os_writes("Big fat pants");
 		os_newl();
 	}
 
-	for (int i = 0; i < 10000; i++) {
+	for (int i = 0; i < 5; i++) {
 
 		os_word(1, &b);
 
@@ -47,4 +65,9 @@ int main(void) {
 
 		printf("DOG %ld\r\n", l);
 	}
+
+
+	dump("BOB");
+	dump("TEST");
+
 }

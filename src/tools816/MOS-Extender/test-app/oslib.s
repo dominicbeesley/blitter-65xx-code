@@ -44,3 +44,75 @@ _os_word:	phb
 		; note this won't return Y for RDLIN
 		plb
 		rtl
+		
+		global _os_find_open
+_os_find_open:	phb
+		phd
+		phk
+		phx
+		pha
+
+		; stack	
+		;	14..17  handle pointer
+		;	12..13	mode
+		;	9..11	RTL
+		;	8	B
+		;	6..7	D
+		;	5	- dummy (for easy cleanup)
+		;	1..4	X/A pointer
+
+		lda	12,S
+		and	#$00FF
+		tay			; mode
+
+		pla
+		plb
+		pld			; discard stuff
+		cop	#COP_44_OPOPN
+
+		; stack	
+		;	9..12	handle pointer
+		;	7..8	mode
+		;	4..6	RTL
+		;	3	B
+		;	1..2	D
+
+
+		bcs	.err
+
+		tsc
+		tcd
+
+		tya
+		sta	[<9]
+
+		lda	#0
+		tax
+		pld
+		plb
+		rtl
+
+.err:		pha
+		sep	#$30
+		phb
+		plx
+		rep	#$30
+		tsc
+		tcd
+		lda	#0
+		sta	[<11]		
+		pla
+		pld
+		plb
+		rtl
+
+		global _os_find_close
+_os_find_close:	
+		tay
+		cop	#COP_45_OPCLS
+
+		; assume no error
+		lda	#0
+		tax
+
+		rtl
