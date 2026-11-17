@@ -191,7 +191,7 @@ tblCOPDispatch:	.faraddr	COP_00		;OPWRC 	00 = OSWRCH
 		.faraddr	COP_NotImpl	;OPCAV 	08 = Call A Vector **NEW**
 		.faraddr	COP_NotImpl	;OPCAV 	08 = Add to Vector **NEW**
 		.faraddr	COP_0A		;A	BGET
-		.faraddr	COP_NotImpl	;B	BPUT
+		.faraddr	COP_0B		;B	BPUT
 		.faraddr	COP_NotImpl	;OPFILE 	0C = OSFILE **NEW**
 		.faraddr	COP_NotImpl	;D
 		.faraddr	COP_NotImpl	;OPCOM 	0E = OPCOM - execute command at BHA
@@ -533,6 +533,30 @@ EMUBUF 		:= $FF0000 + buf
 		plp
 		rol	DPCOP_P
 		
+		rtl
+
+		.endproc
+
+; ********************************************************************************
+; * COP 0B - OPBPT - BPUT                                                        *
+; *                                                                              *
+; * Action: Write one byte to an open file or device. The channel must           *
+; * previously have been opened using OPOPN.                                     *
+; *                                                                              *
+; * On entry: Y contains the file handle from OPOPN.                             *
+; *           A contains the byte to be written.                                 *
+; * On exit:  No registers preserved                                             *
+; ********************************************************************************
+
+		.a16
+		.i16
+		.proc COP_0B:far
+
+		pea	OSBPUT
+		jsl	callmos
+		
+		; assume success?
+
 		rtl
 
 		.endproc

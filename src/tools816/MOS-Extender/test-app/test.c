@@ -9,6 +9,7 @@ extern void os_word(unsigned char op, void *block);
 extern const char *os_find_open(const char *c, unsigned char mode, int *handle);
 extern const char *os_find_close(int handle);
 extern int os_bget(int handle);
+extern void os_bput(int handle, unsigned char b);
 
 size_t __write(int h, const char *p, size_t l) {
 	int i = 0;

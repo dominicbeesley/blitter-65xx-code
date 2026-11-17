@@ -126,3 +126,10 @@ _os_bget:	tay			; (handle)
 .ok:		and	#$00FF
 		rtl
 
+		global _os_bput
+_os_bput:	tay			; (handle)
+		lda	4,S		; (char)
+		cop	#COP_0B_OPBPT
+		rtl
+
+
