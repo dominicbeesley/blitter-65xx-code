@@ -15,8 +15,8 @@ AS=${COMPILER_ROOT}/vasm6502_oldstyle
 ASFLAGS= -816 -Fvobj -I${INCS}
 
 TARGETS=mos-ext.bin mos-ext.dis.asm
-OBJS=main cop
-
+OBJS=main cop irq callmos osword
+DEPS_S=$(wildcard $(INCS)/*.inc) $(wildcard *.inc)
 
 OBJS_B=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
 TARGETS_B=$(addprefix $(BUILD)/, $(TARGETS))
@@ -28,8 +28,8 @@ deploy:	ssd
 $(BUILD)/%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $^
 
-$(BUILD)/%.o: %.s
-	$(AS) $(ASFLAGS) -o $@ $^	
+$(BUILD)/%.o: %.s $(DEPS_S)
+	$(AS) $(ASFLAGS) -o $@ $(filter %.s, $^)
 
 $(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym: $(OBJS_B)
 	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx"  $(OBJS_B) -o $@

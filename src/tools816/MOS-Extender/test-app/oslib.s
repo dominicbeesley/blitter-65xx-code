@@ -21,3 +21,26 @@ _os_writes:	; pointer in X/A
 		ldx	#0
 		cop	#COP_02_OPWRA
 		rtl
+
+		global _os_word
+_os_word:	phb		
+
+		sta	<r2
+		lda	5,S
+		sta	<r0
+		lda	7,S
+		sta	<r1
+		ldy	<r2
+
+		; is now r0/r1 points at block, Y contains reason code
+		phk		; make an off push on stack
+		lda	<r1
+		pha
+		plb
+		pla
+		lda	<r0
+		cop	#COP_07_OPOSW
+
+		; note this won't return Y for RDLIN
+		plb
+		rtl

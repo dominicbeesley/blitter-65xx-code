@@ -33,7 +33,7 @@ $(BUILD)/%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $^	
 
 $(BUILD)/test.bin $(BUILD)/test.sym: $(OBJS_B)
-	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx"  $(OBJS_B) -o $@ -lvc
+	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx" $(OBJS_B) -o $@ -lvc 
 	echo "$$.TEST 0010000 0010000" >$@.inf
 
 $(BUILD)/test.dis.asm:$(BUILD)/test.bin $(BUILD)/test.sym

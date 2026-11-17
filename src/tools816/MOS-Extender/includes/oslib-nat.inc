@@ -9,7 +9,7 @@ COP_03_OPNLI				:=	$03		; Write LF/CR
 COP_04_OPRDC				:=	$04		; Wait for and read a char from input stream
 COP_05_OPCLI				:=	$05		; OPCLI  - execute *command at BYX [deprecated]
 COP_06_OPOSB				:=	$06		; OBYTE
-COP_07_OPOSW				:=	$06		; OBWORD
+COP_07_OPOSW				:=	$07		; OBWORD
 
 COP_08_OPCAV				:=	$08		; Call A Vector - !*bad call on Communicator
 COP_09_OPADV				:=	$09		; Add to vector - ?

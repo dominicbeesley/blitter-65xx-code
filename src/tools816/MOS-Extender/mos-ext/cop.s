@@ -138,7 +138,7 @@ tblCOPDispatch:	addr	COP_00		;OPWRC 	00 = OSWRCH
 		addr	COP_NotImpl	;OPRDC 	04 = OSRDCH - read a char
 		addr	COP_NotImpl	;OPCLI 	05 = OPCLI - execute command at BYX [deprecated]
 		addr	COP_NotImpl	;OPOSB 	06 = OSBYTE
-		addr	COP_NotImpl	;OPOSW 	07 = OSWORD
+		addr	COP_07		;OPOSW 	07 = OSWORD
 		addr	COP_NotImpl	;OPCAV 	08 = Call A Vector **NEW**
 		addr	COP_NotImpl	;OPCAV 	08 = Add to Vector **NEW**
 		addr	COP_NotImpl	;A	BGET

@@ -1,15 +1,23 @@
 	include "oslib.inc"
 	include "mosrom.inc"
 	include "hardware.inc"
+	include "defs.inc"
 
 	global handle_nat_cop
 	global handle_emu_cop
+	global handle_nat_irq
 	global callmos
+
+	global zp_emu_sp
+	global zp_nat_sp	
+
 
 
 	section zpage,"adrwz"
 
-NAT_STACK_TOP	equ	0xAFFF
+
+		global   TRAMPO_NAT2EMU
+		global   TRAMPO_EMU2NAT
 
 TRAMPOLINES 	ezp	0x8A
 TRAMPO_NAT2EMU	ezp	TRAMPOLINES
@@ -352,192 +360,10 @@ hw_nat_cop:	jml	handle_nat_cop
 hw_nat_brk:	jmp 	*
 hw_nat_abort:	jmp 	*
 hw_nat_nmi:	jmp 	*
-hw_nat_irq:	jmp 	*
+hw_nat_irq:	jml 	handle_nat_irq
 		rti
 
-;		********************************************************************************
-;		* callmos - Call down to MOS from native mode                                  *
-;		*                                                                              *
-;		* Action: The 16-bit address of a MOS API entry point has been pushed pn the   *
-;		*         stack - we call "down" to the MOS to this address after entering     *
-;		*         emulation mode. The stack is adjusted and we return long to the      *
-;		*         The stack is also switched to the emulation mode stack before        *
-;		*         and the native mode stack is trimmed ready for a return              *
-;		*                                                                              *
-;		* On entry: AXY = parameters to MOS routine                                    *
-;		* On exit:  D=0, B=0, AXYP as MOS routine exit                                 *
-;		*                                                                              *
-;		*         TODO: flags not passed on to MOS routine                             *
-;		********************************************************************************
-	
-callmos:
-		php			; push flags _before_ forcing other regs
-					; to 16-bits
 
-		sep	#$30
-		a8
-		x8
-
-		pha			; push 8-bits - irrespective of caller mode
-		phx			
-
-		sei			; disable interrupts whilst we swap
-
-		; NAT mode stack is now
-		;	+7..8	16-bit MOS routine address
-		;	+4..6	RTL from here
-		;	+3	caller P
-		;	+2	caller A
-		;	+1	caller X
-
-		phk			; direct page to 0 - caller needs to worry about their DP
-		phk
-		pld
-
-		phk			; bank 0
-		plb
-
-		; calculate native mode stack
-		lda	#1
-		xba
-		lda	zp_emu_sp
-
-		rep	#$30
-		a16
-		x16
-
-		; save native mode stack to restore later
-		tsx
-		stx	zp_nat_sp	; X is now native stack pointer	
-		
-		; switch to emu-mode stack
-		tcs
-
-		; set continue address on emu stack
-		lda	#.callmos_continue-1
-		pha
-		; copy 16-bit MOS routine addr to emu stack
-		lda 	7,X
-		pha
-		; copy P,A to emu stack
-		lda 	2,X
-		pha
-		; copy X,rubbish to emu stack
-		lda	0,X
-		pha
-
-		; lose a byte from stack then restore B=0
-		plb
-		phk
-		plb
-
-		; EMU stack should now contain
-		;	+6..7	RTS address of our exit
-		;	+4..5	RTI address of MOS routine
-		;	+3	RTI flags
-		;	+2	caller A
-		;	+1	caller X
-
-		; NAT mode stack is now
-		;	+7..8	16-bit MOS routine address
-		;	+4..6	RTL from here
-		;	+3	caller P
-		;	+2	caller A
-		;	+1	caller X
-	
-		; move RTL address up on native mode stack
-		lda	5,X
-		sta	7,X
-		lda	3,X
-		sta	5,X
-
-		; NAT mode stack is now
-		;	+6..8	RTL from here
-		;	+5	caller P
-		;	+1..4	spare
-
-
-		; back to 8 bits
-		sep	#$30
-		a8
-		x8
-
-		plx
-		pla
-		jmp	TRAMPO_NAT2EMU
-
-		section	.text
-
-
-.callmos_continue
-		; we've returned from a MOS call, still in emu mode
-		sei
-
-		php
-		pha
-		phx		
-
-		; push an RTI
-		phk
-		pea	.callmos_continue2
-		php
-		jmp	TRAMPO_EMU2NAT
-
-		section	.nat_wksp_text, "acrx"
-
-		;we're now back in native mode jump back to caller
-.callmos_continue2
-		
-		;we're still a8, x8 
-		a8
-		x8
-		
-		tsx
-		stx	zp_emu_sp
-
-		; switch to NAT caller's stack
-		lda	zp_nat_sp+1
-		xba
-		lda	zp_nat_sp
-		tcs
-
-		; native stack is
-		;	6..8	RTL to callmos caller
-		;	5	Caller P
-		;	1..4	spare
-
-		; merge caller's P and MOS return P, keep X/M/I bits of caller
-		lda	$103,X		; mos P
-		eor	5,S
-		and	#$34
-		eor	$103,X
-		sta	5,S
-
-		lda	$101,X
-		sta	3,S
-		lda	$102,X
-		sta	4,S
-
-		; reset emu mode stack
-		inc	zp_emu_sp
-		inc	zp_emu_sp
-		inc	zp_emu_sp
-		
-		; native stack is
-		;	6..8	RTL to callmos caller
-		;	5	P
-		;	4	A
-		;	3	X
-		;	1..2	spare
-
-		; return to original callmos caller
-		plx
-		plx
-		plx
-		pla
-		plp
-		rtl
-		
 
 		section .rodata
 		; test instructions are copied top 008A..008F and used as "shared trampoline data"
@@ -590,4 +416,5 @@ BLTURBOSTR:	byte	"BLTURBO L01", 0x0D
 	; an 8-bit OSFILE block
 osfile_blk:	reserve	18
 gbpb_blk:	reserve	13
+		global buf
 buf:		reserve  256
