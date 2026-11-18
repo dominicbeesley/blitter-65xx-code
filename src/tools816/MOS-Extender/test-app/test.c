@@ -1,23 +1,19 @@
 	#include <stdlib.h>
 	#include <stdio.h>
+	#include "oslib.h"
 
-
-extern void os_wrch(char c);
-extern void os_newl();
-extern void os_writes(const char *c);
-extern void os_word(unsigned char op, void *block);
-extern const char *os_find_open(const char *c, unsigned char mode, int *handle);
-extern const char *os_find_close(int handle);
-extern int os_bget(int handle);
-extern void os_bput(int handle, unsigned char b);
 
 size_t __write(int h, const char *p, size_t l) {
-	int i = 0;
-	while (i < l) {
-		os_wrch(*p++);
-		i++;
-	}
-	return i;
+        size_t i = 0;
+        while (i < l) {
+                char c = *p++;
+                if (c == '\n')
+                        os_newl();
+                else
+                        os_wrch(c);
+                i++;
+        }
+        return i;
 }
 
 typedef unsigned char byte;
@@ -33,11 +29,11 @@ void dump(const char *name) {
 	const char *err;
 	err = os_find_open(name, 0x40, &f);
 	if (err) {
-		printf ("ERROR opening %s: %s\r\n", name, (err)?err:"NULL", f);
+		printf ("ERROR opening %s: %s\n", name, (err)?err:"NULL", f);
 		return;
 	} 
 
-	printf("Here comes %s\r\n", name);
+	printf("Here comes %s\n", name);
 
 	for (int i = 0; i < 8; i++) {
 		int x = os_bget(f);
@@ -45,7 +41,7 @@ void dump(const char *name) {
 			break;
 		printf("%02X ", x);
 	}
-	printf ("\r\n");
+	printf ("\n");
 
 	os_find_close(f);
 }
@@ -55,6 +51,9 @@ int main(void) {
 	long l;
 
 	b.b[4] = 4;
+
+	os_wrch('')
+
 
 	os_wrch('h');
 
@@ -71,7 +70,7 @@ int main(void) {
 
 		l = *(long *)&b.b;
 
-		printf("DOG %ld\r\n", l);
+		printf("DOG %ld\n", l);
 	}
 
 
