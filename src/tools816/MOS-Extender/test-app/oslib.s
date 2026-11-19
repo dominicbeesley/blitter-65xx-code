@@ -151,6 +151,25 @@ _os_gbpb:	phb
 		plb
 		rtl
 
+		global _os_file
+_os_file:	phb
+		tay			; function code
+		; stack is 
+		;	+5..8	block address
+		;	+4	caller B
+		; 	+1..3	RTL
+
+		lda	6,S
+		pha
+		plb
+		plb			; set bank
+		lda	5,S
+		cop	#COP_0C_OPFILE
+
+		plb
+		rtl
+
+
 
 
 

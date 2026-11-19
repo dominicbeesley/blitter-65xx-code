@@ -23,4 +23,15 @@ union os_gbpb_blk {
 	} rw;
 };
 
-extern void os_gbpb(byte funcode, struct os_gbpbp_blk *blk);
+extern void os_gbpb(byte funcode, union os_gbpb_blk *blk);
+
+
+struct os_file_blk {
+	const char *filename;
+	void *load;
+	void *exec;
+	long length;
+	long attributes;
+};
+
+extern void os_file(byte funtion, struct os_file_blk *blk);

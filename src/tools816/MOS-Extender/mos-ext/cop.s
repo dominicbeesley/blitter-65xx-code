@@ -12,6 +12,7 @@
         .import COP_06
         .import buf
         .import gbpb_blk
+        .import file_blk
 
 
         .exportzp DPCOP_Y
@@ -34,6 +35,9 @@ DPCOP_PC        := 11   ; offset of PC in COP entry/exit frame
 DPCOP_K         := 13   ; offset of K (program bank) in COP entry/exit frame
 DPCOP_BHA       :=      DPCOP_AH
 
+LOGBPBBLK       := $FF0000 + gbpb_blk
+LOFILEBLK       := $FF0000 + file_blk
+EMUBUF          := $FF0000 + buf
 
 ;==================================================================
 ; EMU mode code
@@ -401,9 +405,32 @@ COP_27:         inc     DPCOP_PC
                 inc     DPCOP_PC
                 rtl
 
-        ; this address to be used from native mode
-EMUBUF          := $FF0000 + buf
 
+
+                ; copies filename (control terminated) from [BHA],Y
+                ; to EMUBUF - max 255 chars and adds a <CR>
+
+                .proc   filename2emubuf:near
+                php
+                sep     #$30
+                .a8
+                .i8
+                ldx     #1
+@lp:            lda     [DPCOP_BHA], Y
+                sta     f:EMUBUF-1,X
+                cmp     #32+1
+                bcc     @s
+                iny
+                inx
+                bne     @lp
+
+                ; force a CR terminator in our buffer
+@s:             lda     #13
+                sta     f:EMUBUF-1,X
+                plp
+                rts
+
+                .endproc
 
 ; ********************************************************************************
 ; * COP 44 - OPOPN - open file (or device driver)                                *
@@ -425,23 +452,14 @@ EMUBUF          := $FF0000 + buf
                 .a16
                 .i16
                 .proc   COP_44:far
-                ; copy filename at BHA to safe emu-mode buffer
+
                 sep     #$30
                 .a8
                 .i8
-                ldy     #0
-                ldx     #0
-@lp:            lda     [DPCOP_BHA], Y
-                sta     f:EMUBUF,X
-                cmp     #32+1
-                bcc     @s
-                iny
-                inx
-                bne     @lp
 
-                ; force a CR terminator in our buffer
-@s:             lda     #13
-                sta     f:EMUBUF,X
+                ; copy filename at BHA to safe emu-mode buffer
+                ldy     #0
+                jsr     filename2emubuf
 
                 lda     DPCOP_Y
                 beq     @ign                    ;ignore Y=0
@@ -584,7 +602,6 @@ EMUBUF          := $FF0000 + buf
 ; TODO: optimise - use B=FF to eliminate far addressing?
 
 
-LOGBPBBLK       := $FF0000 + gbpb_blk
         .proc   COP_4C:far
                 
                 cpy     #0
@@ -786,48 +803,6 @@ LOGBPBBLK       := $FF0000 + gbpb_blk
 
         .endproc
 
-;;To build a filing-system-agnostic wrapper for OSGBPB (A=1..8) on 8-bit Acorn MOS, do not rely on A=0 or the Carry flag (C) on exit. Instead, use a combination of identifying the active filing system via OSARGS (A=0, Y=0) and checking whether the control block was modified by the call.
-;;
-;;Why Exit Registers Alone Fail
-;;
-;;• MOS 1.20 Tape / ROM (CFS / RFS): The default GBPBV handler does nothing and returns with A preserved and C=1.
-;;• MOS 3.20 / 3.50 Tape / ROM: Master MOS added support for A=1..4 (byte read/write), while A=5..8 remain unsupported and return immediately without updating the control block.
-;;• Acorn DFS / ADFS: Both execute A=1..8 properly, yet neither clears A to 0 on exit.
-;;
-;;Recommended Wrapper Strategy (3 Steps)
-;;
-;;
-;;1. Check the Active Filing System (OSARGS A=0, Y=0)
-;;
-;;Before calling OSGBPB, query the current filing system number via OSARGS (&FFDA) with A=0 and Y=0.
-;;• FS 0 (None): Always unsupported.
-;;• FS 1 (Cassette / TAPE) & FS 2 (ROM): Only A=1..4 are supported on Master MOS 3.20+, and nothing is supported on MOS 1.20.
-;;• FS 3 (DFS), FS 4 (DFS on Master), FS 5 (ANFS / Econet), FS 8 (ADFS), FS 16 (HADFS): All standard A=1..8 calls are supported.
-;;
-;;2. Use the Control Block as a "Canary"
-;;
-;;For calls where you still pass through to OSGBPB, check if the filing system actually touched the 13-byte parameter block.
-;;• For A=1..4 (Read/Write Bytes) & A=8 (Read Filenames): Record the initial 32-bit transfer count at block+5..+8 before calling &FFD1. If the count at block+5..+8 is completely unchanged after the call (and A is non-zero), the filing system ignored the call.
-;;• For A=5, 6, 7 (Media Title, Current Dir, Library Dir): Set the destination buffer's first byte (length byte) to &FF before calling &FFD1. Because valid length bytes are always 0..10 (or 0..12), seeing &FF remain after OSGBPB proves the filing system did not execute the call.
-;;
-;;3. Normalise Your Wrapper's Return Convention
-;;
-;;Have your wrapper translate these checks into a clean, consistent contract for your callers.
-;;• Supported & Complete: Return C=0 and A=0 (or remaining count = 0).
-;;• Supported & Partial (e.g. EOF reached on A=3, 4 or end of directory on A=8): Return C=1 with A=0 (meaning the call worked, but hit EOF/end-of-catalogue).
-;;• Unsupported Operation: Return C=1 with A non-zero (e.g. A=&FF).
-;;
-;;Summary Table by Filing System
-;;
-;;
-;;Filing System OSARGS ID       A=1..4 (Bytes)  A=5..8 (Catalogue/Info) Exit A Behaviour
-;;MOS 1.20 Tape / ROM   1, 2    Unsupported     Unsupported     A preserved, C=1
-;;Master MOS 3.20+ Tape / ROM   1, 2    Supported       Unsupported     A preserved for 5..8
-;;Acorn DFS / ADFS      3, 4, 8 Supported       Supported       A preserved (non-zero)
-;;Econet (NFS / ANFS)   5       Supported       Supported       A=0 on success
-;;
-;;(Note: For A=1..4 on MOS 1.20 Tape/ROM where OSGBPB is missing, you can also optionally fall back inside your wrapper to a simple loop calling OSBGET (&FFD7) or OSBPUT (&FFD4) so your API supports byte-block transfers uniformly across every filing system.)
-
 
 
 ; ********************************************************************************
@@ -843,7 +818,8 @@ LOGBPBBLK       := $FF0000 + gbpb_blk
 ; *               16    end address                                              *
 ; *                                                                              *
 ; * On exit                                                                      *
-; *     block is updated byte at offset 3 is the 8-bit return code               *
+; *     block is updated                                                         *
+; *     Y       Object type or preserved if unsupported                          *
 ; *                                                                              *
 ; *                                                                              *
 ; * This call may be translated into an OPEN/GBPB*/CLOSE operations when an      *
@@ -851,4 +827,165 @@ LOGBPBBLK       := $FF0000 + gbpb_blk
 ; *                                                                              *
 ; *                                                                              *
 ; ********************************************************************************
-COP_0C:         rtl
+                .a16
+                .i16
+        .proc   COP_0C:far
+                
+                sep     #$30
+                .a8
+                .i8
+
+                cpy     #$FF
+                beq     @load
+                cpy     #$5
+                beq     @load
+                rtl
+
+@load:          ; code is FF = load or 05 read file attributes
+
+                ; copy filename pointer to zp_mvn 
+                ldy     #0
+                lda     [DPCOP_BHA],Y
+                sta     f:zp_mvn
+                iny
+                lda     [DPCOP_BHA],Y
+                sta     f:zp_mvn+1
+                iny
+                lda     [DPCOP_BHA],Y
+                sta     f:zp_mvn+2
+                
+                phd
+                lda     #0
+                xba
+                lda     #zp_mvn-DPCOP_BHA
+                tcd
+
+                ; copy filename to buf
+                ldy     #0
+                jsr     filename2emubuf
+
+                pld
+
+                lda     #<buf
+                sta     f:LOFILEBLK
+                lda     #>buf
+                sta     f:LOFILEBLK+1
+
+                lda     #$05                    ; get catalogue information
+                ldx     #<file_blk
+                ldy     #>file_blk
+     
+                pea     OSFILE
+                jsl     callmos
+
+                ldy     DPCOP_Y
+                iny
+                beq     @skFF
+                ; op 5 exit
+                ldy     #0
+                sty     DPCOP_Y                 ; mark as supported/done
+                rtl                             ; exit from fn 5
+@skFF:          
+                sty     DPCOP_Y                 ; mark as supported/done
+                cmp     #0
+                bne     @skFNF
+@brkFilenotFound:
+                brk     214
+                .byte   "File not found", 0
+@skFNF:         ; emu file block now contains the file's info
+                ; work out which pointer to use in gbpb block
+                ; depending on LSB of exec address in passed in block
+                ldy     #8
+                lda     [DPCOP_BHA],Y
+
+                rep     #$30
+                .a16
+                .i16
+
+                beq     @sknold
+                ; copy loaded load address back up to here
+                
+                ldy     #4
+                lda     f:LOFILEBLK+2
+                sta     [DPCOP_BHA],Y
+                lda     f:LOFILEBLK+4
+                iny
+                iny
+                sta     [DPCOP_BHA],Y
+
+@sknold:
+                ;make GBPB block on stack
+                tsc
+                sec
+                sbc     #13
+                tcs
+
+                ; gbpb block data pointer
+                ldy     #4
+                lda     [DPCOP_BHA],Y
+                sta     2,S
+                iny
+                iny
+                lda     [DPCOP_BHA],Y
+                sta     4,S
+
+                ; gbgp length from file info
+                lda     f:LOFILEBLK+10
+                sta     6,S
+                lda     f:LOFILEBLK+12
+                sta     8,S
+
+
+                ; open file using COP call
+                ldy     #1
+                lda     [DPCOP_BHA],Y
+                pha
+                plb
+                plb
+                lda     [DPCOP_BHA]
+                ldy     #$40
+                cop     COP_44_OPOPN
+                bcs     @brkFilenotFound
+                tya
+                sep     #$20
+                .a8
+                sta     1,S             ; set file handle in gbpb lo block
+                rep     #$20
+                .a16
+
+                lda     #0
+                pha
+                plb
+                plb
+                tsc
+                inc     A
+                ldy     #4
+                cop     COP_4C_OPGBPB
+
+                ; TODO: check for errors and do something here but what?
+
+                lda     1,S
+                and     #$00FF
+                cop     COP_45_OPCLS
+
+
+                ; restore stack
+                tsc
+                clc
+                adc     #13
+                tcs
+
+                ; now copy file info back to caller's block
+                ldx     #18
+                ldy     #20
+@llp:           lda     f:LOFILEBLK,X
+                sta     [DPCOP_BHA],Y
+                dey
+                dey
+                dex
+                dex
+                bne     @llp
+
+                rtl
+
+        .endproc

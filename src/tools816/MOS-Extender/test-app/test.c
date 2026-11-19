@@ -86,15 +86,28 @@ int main(void) {
 	int f = open("7.TEST");
 	if (f > 0) {
 		gblk.rw.handle = f;
-		gblk.rw.data = (void *)0xFF7C00;
+		gblk.rw.data = (void *)(0xFF8000L-800L);
 		gblk.rw.count = 800;
 		os_gbpb(4, &gblk);
 
-		printf("RET: %lX %lX %lX\n", gblk.rw.data, gblk.rw.count, gblk.rw.offset);
+		printf("RET: %lX %lX %lX\n", (long)gblk.rw.data, gblk.rw.count, gblk.rw.offset);
 
 		os_find_close(f);
 	}
 
+	struct os_file_blk fblk;
 
-	
+	//try at specified address
+	fblk.filename = "7.TEST";
+	fblk.exec = 0;
+	fblk.load = (void *)0xFF7B00;
+	os_file(0xFF, &fblk);
+
+	//try at address in attributes
+	fblk.filename = "7.TEST";
+	fblk.exec = 0xFF;
+	fblk.load = 0x;
+	os_file(0xFF, &fblk);
+
+	printf("RET: %lX %lX %lX %lX\n", (long)fblk.load, (long)fblk.exec, fblk.length, fblk.attributes);
 }

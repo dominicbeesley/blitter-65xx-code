@@ -24,7 +24,7 @@ $(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym: $(OBJS_B) mos-ext.cfg
 	$(LD) $(LDFLAGS) -Ln $(basename $@).sy2 -m $(basename $@).map --dbgfile $(basename $@).dbg -o $@ $(filter %.o, $^) -C $(filter %.cfg, $^)
 	$(SCRIPTS)/ld65map2noi.pl <$(basename $@).map >$(basename $@).sym
 	$(SCRIPTS)/ca65lstupdate.pl $(basename $@).dbg $(BUILD)
-	echo "$$.mos-ext 0002000 0002000" >$@.inf
+	echo "$$.mos-ext 0001900 0001900" >$@.inf
 
 $(BUILD)/mos-ext.dis.asm:$(BUILD)/mos-ext.bin $(BUILD)/mos-ext.sym
 	/mnt/c/Users/domin/OneDrive/Documents/GitHub/DeIce68k/TestDisassArm/bin/Debug/net8.0/TestDisass.exe 65816 "$(shell wslpath -w ${BUILD}/mos-ext.bin)" 0x2000 "$(shell wslpath -w ${BUILD}/mos-ext.sym)" >$@

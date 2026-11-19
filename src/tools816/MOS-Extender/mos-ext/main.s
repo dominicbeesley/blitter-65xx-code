@@ -403,5 +403,7 @@ BLTURBOSTR:	.byte	"BLTURBO L01", $0D
 osfile_blk:	.res	18
 		.export gbpb_blk
 gbpb_blk:	.res	13
+		.export file_blk
+file_blk:	.res	18
 		.export buf
 buf:		.res  256
