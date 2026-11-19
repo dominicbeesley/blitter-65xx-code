@@ -831,9 +831,6 @@ COP_27:         inc     DPCOP_PC
                 .i16
         .proc   COP_0C:far
                 
-                sep     #$30
-                .a8
-                .i8
 
                 cpy     #$FF
                 beq     @load
@@ -841,7 +838,14 @@ COP_27:         inc     DPCOP_PC
                 beq     @load
                 rtl
 
-@load:          ; code is FF = load or 05 read file attributes
+                
+
+
+@load:          
+                sep     #$30
+                .a8
+                .i8
+                ; code is FF = load or 05 read file attributes
 
                 ; copy filename pointer to zp_mvn 
                 ldy     #0
@@ -877,18 +881,23 @@ COP_27:         inc     DPCOP_PC
      
                 pea     OSFILE
                 jsl     callmos
-
+                                                ; save the returned file type
                 ldy     DPCOP_Y
                 iny
                 beq     @skFF
-                ; op 5 exit
-                ldy     #0
-                sty     DPCOP_Y                 ; mark as supported/done
-                rtl                             ; exit from fn 5
-@skFF:          
-                sty     DPCOP_Y                 ; mark as supported/done
-                cmp     #0
-                bne     @skFNF
+                tay
+                rep     #$30
+                .a16
+                .i16
+                sty     DPCOP_Y                 ; return file type
+                jmp     @op5_exit
+
+                .a8
+                .i8
+@skFF:          tay
+                sty     DPCOP_Y                 ; store file type
+                cmp     #1
+                beq     @skFNF
 @brkFilenotFound:
                 brk     214
                 .byte   "File not found", 0
@@ -976,6 +985,7 @@ COP_27:         inc     DPCOP_PC
                 adc     #13
                 tcs
 
+@op5_exit:
                 ; now copy file info back to caller's block
                 ldx     #18-2
                 ldy     #20-2
