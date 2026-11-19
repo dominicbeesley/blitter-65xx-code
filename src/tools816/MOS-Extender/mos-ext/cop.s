@@ -977,8 +977,8 @@ COP_27:         inc     DPCOP_PC
                 tcs
 
                 ; now copy file info back to caller's block
-                ldx     #18
-                ldy     #20
+                ldx     #18-2
+                ldy     #20-2
 @llp:           lda     f:LOFILEBLK,X
                 sta     [DPCOP_BHA],Y
                 dey
