@@ -11,5 +11,6 @@ __EMU_ZP_INC__:
 		.importzp	zp_tmpPTR
 		.importzp	zp_emu_sp
 		.importzp	zp_nat_sp
+		.importzp	zp_mvn
 
 	.ENDIF

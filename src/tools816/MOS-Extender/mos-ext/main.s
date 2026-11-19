@@ -401,6 +401,7 @@ BLTURBOSTR:	.byte	"BLTURBO L01", $0D
 
 	; an 8-bit OSFILE block
 osfile_blk:	.res	18
+		.export gbpb_blk
 gbpb_blk:	.res	13
 		.export buf
 buf:		.res  256

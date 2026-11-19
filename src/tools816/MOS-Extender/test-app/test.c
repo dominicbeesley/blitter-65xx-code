@@ -16,22 +16,25 @@ size_t __write(int h, const char *p, size_t l) {
         return i;
 }
 
-typedef unsigned char byte;
-
-struct osword_timer_block
-   {  byte b [5];
-   }; 
-
 struct osword_timer_block b;
 
-void dump(const char *name) {
+int open(const char *name) {
 	int f = 0xA5;
 	const char *err;
 	err = os_find_open(name, 0x40, &f);
 	if (err) {
-		printf ("ERROR opening %s: %s\n", name, (err)?err:"NULL", f);
-		return;
+		printf ("ERROR opening %s: %s\n", name, (err)?err:"NULL");
+		return -1;
 	} 
+	else
+		return f;
+}
+
+void dump(const char *name) {
+
+	int f = open(name);
+	if (f < 0)
+		return;
 
 	printf("Here comes %s\n", name);
 
@@ -52,8 +55,9 @@ int main(void) {
 
 	b.b[4] = 4;
 
-	os_wrch('')
-
+	// mode 7
+	os_wrch(22);
+	os_wrch(7);
 
 	os_wrch('h');
 
@@ -77,4 +81,20 @@ int main(void) {
 	dump("BOB");
 	dump("TEST");
 
+	//load test file at FF7C00
+	union os_gbpb_blk gblk;
+	int f = open("7.TEST");
+	if (f > 0) {
+		gblk.rw.handle = f;
+		gblk.rw.data = (void *)0xFF7C00;
+		gblk.rw.count = 800;
+		os_gbpb(4, &gblk);
+
+		printf("RET: %lX %lX %lX\n", gblk.rw.data, gblk.rw.count, gblk.rw.offset);
+
+		os_find_close(f);
+	}
+
+
+	
 }

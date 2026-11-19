@@ -40,6 +40,8 @@ COP_3F_OPBWV 				:=      $3F		; NEW OS Byte/Word Vector - add handler for OSBYTE
 COP_44_OPOPN				:=	$44		; open a file
 COP_45_OPCLS				:=	$45		; close a file
 
+COP_4C_OPGBPB				:=  $4C		; OPGPBP - Different API to commy
+
 ;;;; Service calls
 
 

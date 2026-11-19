@@ -132,6 +132,25 @@ _os_bput:	tay			; (handle)
 		cop	#COP_0B_OPBPT
 		rtl
 
-		
+
+		global _os_gbpb
+_os_gbpb:	phb
+		tay			; function code
+		; stack is 
+		;	+5..8	block address
+		;	+4	caller B
+		; 	+1..3	RTL
+
+		lda	6,S
+		pha
+		plb
+		plb			; set bank
+		lda	5,S
+		cop	#COP_4C_OPGBPB
+
+		plb
+		rtl
+
+
 
 

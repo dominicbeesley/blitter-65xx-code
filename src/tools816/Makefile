@@ -29,7 +29,7 @@ $(SUBDIRS):
 $(BUILD)/MOS-Extender/test-app/test.bin:
 	make -C MOS-Extender all
 
-$(SSD):	$(OBJS_O)
+$(SSD):	$(OBJS_O) $(EXTRAS)
 	dfs form -80 $(SSD)
 	dfs title $(SSD) "tools816"
 	dfs add $(SSD) $(addsuffix .inf, $(OBJS_O) $(EXTRAS))
