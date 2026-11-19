@@ -966,6 +966,7 @@ COP_27:         inc     DPCOP_PC
 
                 lda     1,S
                 and     #$00FF
+                tay
                 cop     COP_45_OPCLS
 
 
