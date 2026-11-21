@@ -324,7 +324,9 @@ COP_NotImpl:    ERRV errNotImpl
         .proc COP_03:far
                 lda   #$000a
                 jsl   COP_00
-                lda   #$000d
+                bvc   @s
+                rtl
+@s:             lda   #$000d
         .endproc
 
 ; ********************************************************************************
@@ -359,9 +361,10 @@ COP_01:         inc     DPCOP_PC
                 and     #$00FF
                 beq     @ret
                 jsl     COP_00
+                bvs     @err
                 bra     COP_01
 @ret:           clv
-                rtl
+@err:           rtl
 
 ; ********************************************************************************
 ; * COP 02 - OPWRA - write string at X:A                                         *
@@ -387,19 +390,20 @@ COP_02:         lda     DPCOP_Y         ;get passed X and check is < 2 and use t
                 ; TODO: change to .i8, .a8 to save a few bytes
 @skok:          tax
                 ldy     #$0000
-@lp:            lda     [DPCOP_XHA],y   ;use XHA at 05 as pointer
+@lp:            lda     [DPCOP_XHA],Y   ;use XHA at 05 as pointer
                 and     #$00ff
                 beq     @ret            ;check for 0 terminator
                 cpx     #$0001
                 bne     @sknocc         ;if X<>1 skip forwards
                 cmp     #$0020
                 bcc     @ret            ;else exit on control character
-@sknocc:        cop     COP_00_OPWRC
+@sknocc:        cop     COP_00_OPWRC    ;use COP to preserve Y register
+                bvs     @err
                 iny
                 bra   @lp
 
 @ret:           clv
-                rtl
+@err:           rtl
 
 
 
@@ -942,7 +946,8 @@ COP_27:         inc     DPCOP_PC
                 .a16
                 .i16
                 sty     DPCOP_Y                 ; return file type
-@e1:            jmp     @op5_exit
+                jmp     @op5_exit
+@e1:            rtl                             ; initial callmos OSFILE failed - exit early no block update
 
                 .a8
                 .i8
@@ -1018,11 +1023,10 @@ COP_27:         inc     DPCOP_PC
                 phx
                 pha
 
-                ; TODO: check for errors and do something here but what?
-
                 lda     6,S
                 tay
                 cop     COP_45_OPCLS
+                ;; assume works, drop errors
 
                 pla
                 plx

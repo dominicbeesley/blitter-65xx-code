@@ -41,6 +41,9 @@ OSWORDBUF := $FF0000 + buf
 
 		.export	COP_07
 COP_07:		
+		; we swap to .i8 here but if we change that then mask
+		; Y AND #$00FF to ensure 8-bit reason
+
 		sep	#$30
 		.a8
 		.i8

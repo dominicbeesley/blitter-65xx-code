@@ -52,6 +52,12 @@ register (B) is not used to pass addresses.
   Y. OSBYTE is the exception: it keeps the 8-bit MOS registers (A = reason,
   X and Y = parameters).
 
+## 8-bit function codes
+
+Where a function code is passed in Y and is interpreted as 8-bits the caller
+should ensure that the MSB is 0. Care should be taken when doing TAY if H might
+be non-zero.
+
 ## Errors
 
 V is the error flag:

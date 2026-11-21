@@ -4,22 +4,23 @@
 		a16
 		x16
 
-		global	_os_wrch
-_os_wrch:	cop	#COP_00_OPWRC	;; call OS
-		rtl
+		global	_xos_wrch
+_xos_wrch:	cop	#COP_00_OPWRC	;; call OS
+		jmp	retcheck
 
-		global   _os_newl
-_os_newl:	cop	#COP_03_OPNLI	;; call OS
-		rtl
+		global   _xos_newl
+_xos_newl:	cop	#COP_03_OPNLI	;; call OS
+		jmp	retcheck
 
-		global	_os_writes
-_os_writes:	ldy	#0
+		global	_xos_writes
+_xos_writes:	ldy	#0
 		; pointer in X/A
 		cop	#COP_02_OPWRA
-		rtl
+		jmp	retcheck
 
-		global _os_word
-_os_word:	tay			; reason code
+		global _xos_word
+_xos_word:	and	#$00FF
+		tay			; reason code
 		lda	6,S
 		tax
 		lda	4,S
@@ -27,10 +28,10 @@ _os_word:	tay			; reason code
 		cop	#COP_07_OPOSW
 
 		; note this won't return Y for RDLIN
-		rtl
+		jmp	retcheck
 		
-		global _os_find_open
-_os_find_open:	
+		global _xos_find_open
+_xos_find_open:	
 		pha
 		lda	6,S
 		tay
@@ -50,54 +51,55 @@ _os_find_open:
 
 .reterr:	rtl
 
-		global _os_find_close
-_os_find_close:	
+		global _xos_find_close
+_xos_find_close:	
 		tay
-		cop	#COP_45_OPCLS
-
-		; assume no error
+		cop	#COP_45_OPCLS		
+retcheck:	bvs	.reterr
 		lda	#0
 		tax
-		rtl
+.reterr:	rtl
 
-		global _os_bget
-_os_bget:	tay			; (handle)
+		global _xos_bget
+_xos_bget:	tay			; (handle)
+		lda 	4,S
+		sta	<r0
+		lda 	6,S
+		sta	<r0+2
 		cop	#COP_0A_OPBGT
-		bcc	.ok
+		bvs	.reterr
+		bcc	.neof
 		; Cy=EOF
 		lda	#$FFFF		; -1 = EOF
-		rtl
-.ok:		and	#$00FF
-		rtl
+.neof:		sta	[r0]
+		lda	#0
+		tax
+.reterr		rtl
 
-		global _os_bput
-_os_bput:	tay			; (handle)
+		global _xos_bput
+_xos_bput:	tay			; (handle)
 		lda	4,S		; (char)
 		cop	#COP_0B_OPBPT
-		rtl
+		jmp	retcheck
 
 
-		global _os_gbpb
-_os_gbpb:	tay			; function code
+		global _xos_gbpb
+_xos_gbpb:	and	#$00FF
+		tay			; function code
 		lda	6,S
 		tax
 		lda	4,S
 		cop	#COP_4C_OPGBPB
-		bvs	.err
-		lda	#0
-		tax
-.err:		rtl
+		jmp	retcheck
 
-		global _os_file
-_os_file:	tay			; function code
+		global _xos_file
+_xos_file:	and	#$00FF
+		tay			; function code
 		lda	6,S
 		tax
 		lda	4,S
 		cop	#COP_0C_OPFILE
-		bvs	.err
-		lda	#0
-		tax
-.err:		rtl
+		jmp	retcheck
 
 
 
