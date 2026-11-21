@@ -223,10 +223,8 @@ fnd:
 		bpl	@tlp3
 
 		; set correct boot mode
-		lda	sheila_MEM_CTL
-		and	#$CF
-		ora	#$30
-		sta	sheila_MEM_CTL
+		lda	#$30
+		tsb	sheila_MEM_CTL
 
 		; get to native mode and continue from native workspace
 

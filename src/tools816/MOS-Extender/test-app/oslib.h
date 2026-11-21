@@ -5,25 +5,30 @@ struct osword_timer_block
    }; 
 
 
+struct os_error {
+	long errcode;
+	char errmsg[251];
+};
+
 extern void os_wrch(char c);
 extern void os_newl();
 extern void os_writes(const char *c);
 extern void os_word(byte op, void *block);
-extern const char *os_find_open(const char *c, byte mode, int *handle);
-extern const char *os_find_close(int handle);
+extern const struct os_error *os_find_open(const char *c, byte mode, int *handle);
+extern const struct os_error *os_find_close(int handle);
 extern int os_bget(int handle);
 extern void os_bput(int handle, byte b);
 
 union os_gbpb_blk {
 	 struct rw {
-		byte handle;
+		int handle;
 		void *data;
 		unsigned long count;
 		unsigned long offset;
 	} rw;
 };
 
-extern void os_gbpb(byte funcode, union os_gbpb_blk *blk);
+extern const struct os_error *os_gbpb(byte funcode, union os_gbpb_blk *blk);
 
 
 struct os_file_blk {
@@ -34,4 +39,4 @@ struct os_file_blk {
 	long attributes;
 };
 
-extern void os_file(byte funtion, struct os_file_blk *blk);
+extern const struct os_error *os_file(byte funtion, struct os_file_blk *blk);

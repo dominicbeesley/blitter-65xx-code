@@ -23,7 +23,7 @@ COP_0E_OPCOM				:=	$0E		; OPCOM  - execute *command at BHA
 
 COP_15_OPASC				:=	$15		; OPASC = OSASCI - write characte, translate newlines
 
-COP_26_OPBHA				:=	$26		; OPBHA - return address of immediate string in BHA
+COP_26_OPXHA				:=	$26		; OPXHA - return address of immediate string in XHA
 COP_27_OPBHI				:=	$27		; OPBHI - return following far address in BHA
 
 COP_2F_OPIIQ				:=	$2F		; Add an IRQ handler

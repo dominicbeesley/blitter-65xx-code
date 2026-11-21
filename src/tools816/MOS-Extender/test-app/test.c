@@ -17,13 +17,13 @@ size_t __write(int h, const char *p, size_t l) {
 }
 
 struct osword_timer_block b;
+const struct os_error *err;
 
 int open(const char *name) {
 	int f = 0xA5;
-	const char *err;
 	err = os_find_open(name, 0x40, &f);
 	if (err) {
-		printf ("ERROR opening %s: %s\n", name, (err)?err:"NULL");
+		printf ("ERROR opening %s: %lx, %s\n", name, err->errcode, err->errmsg);
 		return -1;
 	} 
 	else
@@ -88,12 +88,17 @@ int main(void) {
 		gblk.rw.handle = f;
 		gblk.rw.data = (void *)(0xFF8000L-800L);
 		gblk.rw.count = 800;
-		os_gbpb(4, &gblk);
+		err = os_gbpb(4, &gblk);
+
+		if (err) {
+			printf("GBPB ERR: %lx %s\n", (long)err->errcode, err->errmsg);
+		}
 
 		printf("RET: %lX %lX %lX\n", (long)gblk.rw.data, gblk.rw.count, gblk.rw.offset);
 
 		os_find_close(f);
 	}
+
 
 	struct os_file_blk fblk;
 
@@ -101,13 +106,22 @@ int main(void) {
 	fblk.filename = "7.TEST";
 	fblk.exec = 0;
 	fblk.load = (void *)0xFF7B00;
-	os_file(0xFF, &fblk);
+	err = os_file(0xFF, &fblk);
+	if (err) {
+		printf("OSFILE ERR: %lx %s\n", (long)err->errcode, err->errmsg);
+	}
 
 	//try at address in attributes
 	fblk.filename = "7.TEST";
 	fblk.exec = 0xFF;
 	fblk.load = 0x;
-	os_file(0xFF, &fblk);
+	err = os_file(0xFF, &fblk);
+	if (err) {
+		printf("OSFILE ERR: %lx %s\n", (long)err->errcode, err->errmsg);
+		return;
+	}
 
-	printf("RET: %lX %lX %lX %lX\n", (long)fblk.load, (long)fblk.exec, fblk.length, fblk.attributes);
+	printf("RET: %lX %lX %lX %lX\n", (long)fblk.load, (long)fblk.exec, (long)fblk.length, (long)fblk.attributes);
+
+	return 0;
 }

@@ -14,7 +14,8 @@
 ;		*         and the native mode stack is trimmed ready for a return              *
 ;		*                                                                              *
 ;		* On entry: AXYP = parameters to MOS routine                                   *
-;		* On exit:  D=preserved, B=0, AXYP as MOS routine exit                         *
+;		* On exit:  D=preserved, B=0, AXYP as MOS routine exit, H=0                    *
+;		* 	   VS = error and XA points at 32-bit error block		       *
 ;		********************************************************************************
 	
 callmos:
@@ -160,6 +161,9 @@ callmos:
 		lda	zp_nat_sp
 		tcs
 
+		lda	#0
+		xba				; clear A MSB
+
 		; native stack is
 		;	+8..10	RTL from here
 		;	+7	caller P
@@ -198,5 +202,6 @@ callmos:
 		pla
 		pld
 		plp
+		clv			; TODO: catch errors!
 		rtl
 		

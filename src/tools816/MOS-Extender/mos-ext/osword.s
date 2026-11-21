@@ -5,25 +5,24 @@
 		.import buf
 		.import callmos
 
-; TODO: this has a different API - BHA is the pointer instead of 0YX, Y contains the reason code!
-;	********************************************************************************
-;	* COP 07 - OPOSW = OSWORD                                                      *
-;	*                                                                              *
-;	* Action: This call caries out various operations, the specific operation      *
-;	* depending on the contents of A on entry. BHA points to a control block in    *
-;	* memory, and this block contains data for the call, and will contain results  *
-;	* from the call.                                                               *
-;	* On entry:                                                                    *
-;	* 	 BHA points to a control block in memory                              *
-;	* Y contains the reason code. The reason code determines the function of the   *
-;	* call.                                                                        *
-;	* On exit: D preserved                                                         *
-;	*                                                                              *
-;	* For OPOSW with Y = 0 (read line from input)                                  *
-;	* Y = line length (including CR if applicable).                                *
-;	* If C = 0 then CR termimated input.                                           *
-;	* If C = 1 then ESCAPE terminated input                                        *
-;	********************************************************************************
+; ********************************************************************************
+; * COP 07 - OPOSW - OSWORD                                                      *
+; *                                                                              *
+; * Action: Call the 8-bit MOS OSWORD. The operation depends on the reason       *
+; * code in Y. The control block is copied to MOS memory, OSWORD is called       *
+; * and the results are copied back. The block layouts are those of the          *
+; * 8-bit MOS (no handle field).                                                 *
+; *                                                                              *
+; * On entry: X:A = pointer to the control block                                 *
+; *           Y   = reason code (8 bits)                                         *
+; * On exit:  block updated with the results                                     *
+; *           For Y = 0 (read line): Y = line length (including CR),             *
+; *           C = 1 if Escape ended the input                                    *
+; *                                                                              *
+; * Note (OSWORD 0): the buffer address inside the block is a 16-bit MOS         *
+; * address (bank FF, or the shared 00 0000-00 0FFF area). A replacement         *
+; * read-line call with a 32-bit buffer is planned (OPRDLN).                     *
+; ********************************************************************************
 ;
 ;	OSWORD exceptions/notes
 ;
@@ -48,7 +47,7 @@ COP_07:
 		tya
 		tax
 		bpl	@low		
-		lda	[DPCOP_BHA]		; get length from block+0
+		lda	[DPCOP_XHA]		; get length from block+0
 		tay		
 		bra	@go		
 @low:		phk
@@ -69,7 +68,7 @@ COP_07:
 		bra	@cpyent
 
 @cpy:		dey
-		lda	[DPCOP_BHA],Y
+		lda	[DPCOP_XHA],Y
 		sta	OSWORDBUF,Y
 @cpyent:		cpy	#0
 		bne	@cpy
@@ -90,7 +89,7 @@ COP_07:
 		ldx	DPCOP_Y
 		bpl	@low2
 		ldy	#1
-		lda	[DPCOP_BHA],Y		; get length from block+1
+		lda	[DPCOP_XHA],Y		; get length from block+1
 		tay		
 		bra	@go2		
 @low2:		phk
@@ -110,13 +109,15 @@ COP_07:
 
 @cpy2:		dey
 		lda	OSWORDBUF,Y
-		sta	[DPCOP_BHA],Y
+		sta	[DPCOP_XHA],Y
 @cpyent2:		cpy	#0
 		bne	@cpy2
 
 		; TODO: This returns Y/P for all OSWORDS not just OSWORD 0
 
 		ply
+		lda	DPCOP_Y
+		beq	@not0
 		sty	DPCOP_Y
 		stz	DPCOP_Y+1
 
@@ -126,7 +127,7 @@ COP_07:
 		and	#$34
 		eor	1,S	
 		sta	DPCOP_P
-		pla			; discard
+@not0:		pla			; discard pushed P
 
 		rtl			; return to cop dispatcher
 

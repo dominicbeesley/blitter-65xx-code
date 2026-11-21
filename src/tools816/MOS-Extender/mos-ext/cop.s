@@ -4,6 +4,7 @@
         .include "oslib.inc"
         .include "oslib-nat.inc"
         .include "emu_zp.inc"
+        .include "errors.inc"
 
         .export handle_nat_cop
         .export handle_emu_cop
@@ -23,17 +24,17 @@
         .exportzp DPCOP_P
         .exportzp DPCOP_PC
         .exportzp DPCOP_K
-        .exportzp DPCOP_BHA
+        .exportzp DPCOP_XHA
 
 DPCOP_Y         :=  1   ; offset of Y in COP entry/exit frame
-DPCOP_X         :=  3   ; offset of X in COP entry/exit frame
-DPCOP_AH        :=  5   ; offset of AH in COP entry/exit frame
+DPCOP_AH        :=  3   ; offset of AH in COP entry/exit frame
+DPCOP_X         :=  5   ; offset of X in COP entry/exit frame
 DPCOP_B         :=  7   ; offset of B(ank) in COP entry/exit frame
 DPCOP_DP        :=  8   ; offset of DP in COP entry/exit frame
 DPCOP_P         := 10   ; offset of P in COP entry/exit frame
 DPCOP_PC        := 11   ; offset of PC in COP entry/exit frame
 DPCOP_K         := 13   ; offset of K (program bank) in COP entry/exit frame
-DPCOP_BHA       :=      DPCOP_AH
+DPCOP_XHA       :=      DPCOP_AH
 
 LOGBPBBLK       := $FF0000 + gbpb_blk
 LOFILEBLK       := $FF0000 + file_blk
@@ -55,8 +56,8 @@ handle_nat_cop: plp
                 .i16
                 phd                   ;8
                 phb                   ;7
-                pha                   ;5
-                phx                   ;3
+                phx                   ;5
+                pha                   ;1
                 phy                   ;1
         ; Stack
         ;       +13     PBR
@@ -64,8 +65,8 @@ handle_nat_cop: plp
         ;       +10     P
         ;       +8..9   DP
         ;       +7      B
-        ;       +5..6   A
-        ;       +3..4   X
+        ;       +5..6   X
+        ;       +3..4   A
         ;       +1..2   Y
                 jsr     cop_dispatch_int
         ; Stack
@@ -74,14 +75,14 @@ handle_nat_cop: plp
         ;       +10     P
         ;       +8..9   DP
         ;       +7      B
-        ;       +5..6   A
-        ;       +3..4   X
+        ;       +5..6   X
+        ;       +3..4   A
         ;       +1..2   Y
 
 
                 ply
-                plx
                 pla
+                plx
                 plb
                 pld
                 plp
@@ -111,8 +112,8 @@ cop_dispatch_int:
 ; +13   P
 ; +11   DP
 ; +10   B
-; +8    A
-; +6    X
+; +8    X
+; +6    A
 ; +4    Y
 ; +1    FE/B673 - return address of COP dispatcher
 ; 
@@ -123,8 +124,8 @@ cop_dispatch_int:
 ; +10   P
 ; +8    DP
 ; +7    B
-; +5    A
-; +3    X
+; +5    X
+; +3    A
 ; +1    Y
                 phk
                 plb
@@ -163,28 +164,42 @@ cop_dispatch_int:
 ;       B,A,X,Y,DP,P are loaded back from the frame on the stack so to return values
 ;       to the caller the handler should update these.
                 
+                .a16
+                .i16
+@ret_unimplemented:
+                ERRV    errNotImpl
+                bra     @ret
+
+                .a16
+                .i16
 @ret:           rep   #$30
                 .a16
                 .i16
+                pha
                 tsc
                 inc     a
                 inc     a
+                inc     a
+                inc     a
                 tcd                             ; point DP at Stacked registers
-        ; internal API Change cop handlers must set DPCOP_P explicitly
-        ; TODO: use V as error flag here !?
-;;              php
-;;              ror     DPCOP_P
-;;              plp
-;;              rol     DPCOP_P                 ; get returned Cy into flags
+                pla
+                
+                bvs     @err
+
+                lda     #$0040
+                trb     DPCOP_P
+
+                rts
+
+@err:           ; set V from caller
+                sta     DPCOP_AH
+                stx     DPCOP_X
+                lda     #$0040
+                tsb     DPCOP_P
                 rts
 
                 .a16
                 .i16
-@ret_unimplemented:
-                stz     DPCOP_X                 ;clear saved X
-                lda     #$41
-                tsb     DPCOP_P                 ;return error/V/Cy
-                bra     @ret
 
 tblCOPDispatch: .faraddr        COP_00          ;OPWRC  00 = OSWRCH
                 .faraddr        COP_01          ;OPWRS  01 = Write String Immediate
@@ -274,84 +289,105 @@ tblCOPDispatch: .faraddr        COP_00          ;OPWRC  00 = OSWRCH
 tblCopDispatchLen = *-tblCOPDispatch
 
 
-;               ********************************************************************************
-;               * COP 15 - OPASC - BBC OPASCI                                                  *
-;               *                                                                              *
-;               * Action: Send the byte in A to the VDU drivers. If the byte is &0D (carriage  *
-;               * return) then send &0A, &0D to the VDU drivers (line feed+ carriage return).  *
-;               *                                                                              *
-;               * On entry: A = character code.                                                *
-;               * On exit:  DBAXY preserved                                                    *
-;               ********************************************************************************
-COP_15:         and   #$00ff
-                cmp   #$000d
-                bne   COP_00
-;               ********************************************************************************
-;               * COP 03 - OSNLI - BBC OSNEWL                                                  *
-;               *                                                                              *
-;               * Action: Send LF CR to the VDU drivers. Line feed is ASCII 10 (decimal),      *
-;               * carriage return is ASCII 13 (decimal).                                       *
-;               *                                                                              *
-;               * On entry: No requirement                                                     *
-;               * On exit:  DBAXY preserved                                                    *
-;               ********************************************************************************
-COP_03:         lda   #$000a
-                jsl   COP_00
-                lda   #$000d
-
-;               ********************************************************************************
-;               * COP 00 - OPWRC - Write Char in A                                             *
-;               *                                                                              *
-;               * Action: Send the byte in A to the VDU drivers.                               *
-;               *                                                                              *
-;               * On entry: A = character code                                                 *
-;               * On exit:  DBAXY preserved                                                    *
-;               *                                                                              *
-;               ********************************************************************************
-
-COP_00:         pea     OSWRCH
-                jsl     callmos
+; ********************************************************************************
+; * COP X - NotImpelmented                                                       *
+; *                                                                              *
+; * returns V/error for not implemented                                          *
+; ********************************************************************************
+COP_NotImpl:    ERRV errNotImpl
                 rtl
 
-;               ********************************************************************************
-;               * COP 01 - OPWRS - write string immediate                                      *
-;               *                                                                              *
-;               * read characters from bytes following cop, check for 0 and pass on to write   *
-;               * character routine                                                            *
-;               ********************************************************************************
+
+; ********************************************************************************
+; * COP 15 - OPASC - BBC OSASCI                                                  *
+; *                                                                              *
+; * Action: Send the byte in A to the VDU drivers. If the byte is &0D            *
+; * (carriage return) send &0A, &0D (line feed, carriage return) instead.        *
+; *                                                                              *
+; * On entry: A = character code (low byte)                                      *
+; * On exit:  -                                                                  *
+; ********************************************************************************
+        .proc COP_15:far
+                and   #$00ff
+                cmp   #$000d
+                bne   COP_00
+                ; fall thru!
+        .endproc
+; ********************************************************************************
+; * COP 03 - OPNLI - BBC OSNEWL                                                  *
+; *                                                                              *
+; * Action: Send LF CR (&0A, &0D) to the VDU drivers.                            *
+; *                                                                              *
+; * On entry: -                                                                  *
+; * On exit:  -                                                                  *
+; ********************************************************************************
+        .proc COP_03:far
+                lda   #$000a
+                jsl   COP_00
+                lda   #$000d
+        .endproc
+
+; ********************************************************************************
+; * COP 00 - OPWRC - write character                                             *
+; *                                                                              *
+; * Action: Send the byte in A to the VDU drivers (OSWRCH).                      *
+; *                                                                              *
+; * On entry: A = character code (low byte)                                      *
+; * On exit:  -                                                                  *
+; ********************************************************************************
+        .proc COP_00:far
+                pea     OSWRCH
+                jsl     callmos
+                clv
+                rtl
+        .endproc
+
+; ********************************************************************************
+; * COP 01 - OPWRS - write string immediate                                      *
+; *                                                                              *
+; * Action: Write the zero-terminated string that follows the COP signature      *
+; * byte. Execution continues after the terminating zero.                        *
+; *                                                                              *
+; * On entry: inline string, terminated by &00                                   *
+; * On exit:  -                                                                  *
+; *                                                                              *
+; * Example:  cop COP_01_OPWRS                                                   *
+; *           .byte "Hello", 13, 10, 0                                           *
+; ********************************************************************************
 COP_01:         inc     DPCOP_PC
-                sep     #$20
-                .a8
                 lda     [DPCOP_PC]
-                sta     DPCOP_AH
-                rep     #$20
-                .a16
+                and     #$00FF
                 beq     @ret
-                phd
                 jsl     COP_00
-                pld
                 bra     COP_01
+@ret:           clv
+                rtl
 
-@ret:           rtl
-
-;               ********************************************************************************
-;               * COP 02 - OPWRA - write string at BHA                                         *
-;               *                                                                              *
-;               * TODO: DOCO: NOTE: This seems to imply that X is set to 0,1 for 0 terminated  *
-;               * 2,3 for control terminated string - not in systems manual                    *
-;               *                                                                              *
-;               ********************************************************************************
-COP_02:         lda     DPCOP_X         ;get passed X and check is < 2 and use to determine type of terminator
+; ********************************************************************************
+; * COP 02 - OPWRA - write string at X:A                                         *
+; *                                                                              *
+; * Action: Write the string at X:A to the VDU drivers.                          *
+; *                                                                              *
+; * On entry: X:A = pointer to the string                                        *
+; *           Y   = terminator option:                                           *
+; *                 0 = terminated by &00                                        *
+; *                 2 = terminated by &00 or any control character (< &20)       *
+; * On exit:  -                                                                  *
+; *                                                                              *
+; * Errors:   invalid terminator option                                          *
+; ********************************************************************************
+COP_02:         lda     DPCOP_Y         ;get passed X and check is < 2 and use to determine type of terminator
                 lsr     a
                 cmp     #$0002
                 bcc     @skok
-                brk     $00
 
-                .byte "COP `OPWRA: invalid termination option",0
+                ERRV errOPWRAinv
+                rtl
 
+                ; TODO: change to .i8, .a8 to save a few bytes
 @skok:          tax
                 ldy     #$0000
-@lp:            lda     [DPCOP_AH],y    ;use BHA at 05 as pointer
+@lp:            lda     [DPCOP_XHA],y   ;use XHA at 05 as pointer
                 and     #$00ff
                 beq     @ret            ;check for 0 terminator
                 cpx     #$0001
@@ -362,47 +398,57 @@ COP_02:         lda     DPCOP_X         ;get passed X and check is < 2 and use t
                 iny
                 bra   @lp
 
-@ret:           rtl
-
-
-COP_NotImpl:    sec
-                stz     DPCOP_X
+@ret:           clv
                 rtl
 
+
+
 ; ********************************************************************************
-; * COP 26 - OPBHA                                                               *
+; * COP 26 - OPXHA - address of immediate string                                 *
 ; *                                                                              *
-; * returns the immediate string following the COP call as BHA                   *
+; * Action: Return the address of the zero-terminated string that follows        *
+; * the COP signature byte. Execution continues after the terminating zero.      *
+; *                                                                              *
+; * On entry: inline string, terminated by &00                                   *
+; * On exit:  X:A = pointer to the string                                        *
 ; ********************************************************************************
                 .a16
                 .i16
-COP_26:         lda   DPCOP_PC+1
-                sta   DPCOP_AH+1
-                lda   DPCOP_PC
-                inc   A
-                sta   DPCOP_AH
+COP_26:         lda     DPCOP_PC+2
+                and     #$00FF
+                sta     DPCOP_XHA+2
+                lda     DPCOP_PC
+                inc     A
+                sta     DPCOP_XHA
 ; This skips over any string following the cop call
 @copExitImmedStr:
-                inc  DPCOP_PC
-                lda   [DPCOP_PC]
-                and   #$00ff
-                bne   @copExitImmedStr
+                inc     DPCOP_PC
+                lda     [DPCOP_PC]
+                and     #$00ff
+                bne     @copExitImmedStr
+                clv
                 rtl
 
 ; ********************************************************************************
-; * COP 27 - OPBHI                                                               *
+; * COP 27 - OPBHI - immediate far address                                       *
 ; *                                                                              *
-; * returns the immediate far address following the cop call as BHA              *
+; * Action: Return the 3-byte address that follows the COP signature byte.       *
+; * Execution continues after it.                                                *
+; *                                                                              *
+; * On entry: inline 24-bit address (low byte first)                             *
+; * On exit:  X:A = the address (top byte 0)                                     *
 ; ********************************************************************************
                 .a16
                 .i16
 COP_27:         inc     DPCOP_PC
                 lda     [DPCOP_PC]
-                sta     DPCOP_AH
+                sta     DPCOP_XHA
+                inc     DPCOP_PC
                 inc     DPCOP_PC
                 lda     [DPCOP_PC]
-                sta     DPCOP_AH+1
-                inc     DPCOP_PC
+                and     #$0FF
+                sta     DPCOP_XHA+2
+                clv
                 rtl
 
 
@@ -416,7 +462,7 @@ COP_27:         inc     DPCOP_PC
                 .a8
                 .i8
                 ldx     #1
-@lp:            lda     [DPCOP_BHA], Y
+@lp:            lda     [DPCOP_XHA], Y
                 sta     f:EMUBUF-1,X
                 cmp     #32+1
                 bcc     @s
@@ -433,20 +479,16 @@ COP_27:         inc     DPCOP_PC
                 .endproc
 
 ; ********************************************************************************
-; * COP 44 - OPOPN - open file (or device driver)                                *
-; * Action: This call opens a device driver.                                     *
-; * On entry: BHA points to the name (with colon). terminated by CR(&0D).        *
-; *           Y = &40 for input                                                  *
-; *           Y = &80 for output                                                 *
-; *           Y = &C0 for update                                                 *
-; * On exit:  C = 0 means that the device driver is open and Y = handle.         *
-; *           If C= I then the device failed to open, the error code is in X     *
-; *           and BHA points to a zeroterminated error message.                  *
-; *           D preserved                                                        *
+; * COP 44 - OPOPN - open file                                                   *
 ; *                                                                              *
-; * This translates to OSFIND                                                    *
+; * Action: Open a file (OSFIND).                                                *
 ; *                                                                              *
+; * On entry: X:A = pointer to the filename, terminated by CR, control           *
+; *                 character or space                                           *
+; *           Y   = mode: &40 = input, &80 = output, &C0 = update                *
+; * On exit:  Y   = handle (16 bits)                                             *
 ; *                                                                              *
+; * Errors:   filing system errors; the file could not be opened                 *
 ; ********************************************************************************
 
                 .a16
@@ -462,55 +504,30 @@ COP_27:         inc     DPCOP_PC
                 jsr     filename2emubuf
 
                 lda     DPCOP_Y
-                beq     @ign                    ;ignore Y=0
+                beq     @ok                    ;ignore Y=0 silently
                 ldx     #<buf
                 ldy     #>buf
                 pea     OSFIND
                 jsl     callmos
-
-                cmp     #0
-                bne     @clcretA
-
-                cop     COP_26_OPBHA
-                .byte   "File not opened", 0
-                phb
-                plx
-                stx     DPCOP_B
-                rep     #$30
-                .a16
-                .i16
-                sta     DPCOP_AH
-                ; return error
-                lda     #1
-                sta     DPCOP_X
-                ror     DPCOP_P
-                sec
-                rol     DPCOP_P
-                rtl
-
-
-@clcretA:       .a8
-                .i8
-                sta     DPCOP_Y
-                stz     DPCOP_Y+1
-                lda     DPCOP_P
-                and     #$FE
-                sta     DPCOP_P
-@ign:           rtl
-
+                bvs     @notok
+@ok1:           tay                             ; set Z
+                bne     @ok2                    ; V is still clear from callmos
+                ERRV    errNotOpened
+@notok:         rtl
+@ok2:           sty     DPCOP_Y
+@ok:            clv
+                rtl                             
         .endproc
 
 
 
 ; ********************************************************************************
-; * COP 45 - OPCLS - close device driver                                         *
-; * Action: This call closes a device driver which has been opened using OPOPN.  *
+; * COP 45 - OPCLS - close file                                                  *
 ; *                                                                              *
-; * On entry: Y = handle allocated by OPOPN.                                     *
-; * On exit:  If C = 0 then driver is closed.                                    *
-; *           If C = 1 then the driver close failed, X = error code and BHA      *
-; *           points to a zero-terminated error message.                         *
-; *           D preserved                                                        *
+; * Action: Close a file opened with OPOPN (OSFIND 0).                           *
+; *                                                                              *
+; * On entry: Y = handle; Y = 0 closes all open files                            *
+; * On exit:  -                                                                  *
 ; ********************************************************************************
 
                 .a16
@@ -520,27 +537,20 @@ COP_27:         inc     DPCOP_PC
                 lda     #0
                 pea     OSFIND
                 jsl     callmos
-
-                ; I don't think it can fail?
-
-                lda     DPCOP_P
-                and     #$FFFE
-                sta     DPCOP_P
-                
-                rtl
+@notok:         rtl
 
                 .endproc
 
 ; ********************************************************************************
 ; * COP 0A - OPBGT - BGET                                                        *
 ; *                                                                              *
-; * Action: Read one byte from an open device or file. The channel must          *
-; * previously have been opened using OPOPN.                                     *
+; * Action: Read one byte from an open file.                                     *
 ; *                                                                              *
-; * On entry: Y contains the handle from OPOPN.                                  *
-; * On exit:  A contains the byte read from the file.                            *
-; *           if C = I then an error (EOF) has occurred, and A is invalid.       *
-; *           No registers preserved                                             *
+; * On entry: Y = handle (from OPOPN)                                            *
+; * On exit:  A = byte read (zero-extended)                                      *
+; *           C = 1 if end of file was reached; A is then undefined              *
+; *                                                                              *
+; * End of file is an indication, not an error (V stays clear).                  *
 ; ********************************************************************************
 
                 .a16
@@ -549,27 +559,25 @@ COP_27:         inc     DPCOP_PC
 
                 pea     OSBGET
                 jsl     callmos
-                sep     #$20
-                .a8
+                bvs     @notok
                 sta     DPCOP_AH
                 php
                 ror     DPCOP_P
                 plp
                 rol     DPCOP_P
-                
-                rtl
+                ; V cleared by callmos         
+@notok:         rtl
 
                 .endproc
 
 ; ********************************************************************************
 ; * COP 0B - OPBPT - BPUT                                                        *
 ; *                                                                              *
-; * Action: Write one byte to an open file or device. The channel must           *
-; * previously have been opened using OPOPN.                                     *
+; * Action: Write one byte to an open file.                                      *
 ; *                                                                              *
-; * On entry: Y contains the file handle from OPOPN.                             *
-; *           A contains the byte to be written.                                 *
-; * On exit:  No registers preserved                                             *
+; * On entry: Y = handle (from OPOPN)                                            *
+; *           A = byte to write (low byte)                                       *
+; * On exit:  -                                                                  *
 ; ********************************************************************************
 
                 .a16
@@ -578,38 +586,52 @@ COP_27:         inc     DPCOP_PC
 
                 pea     OSBPUT
                 jsl     callmos
-                
-                ; assume success?
-
                 rtl
 
                 .endproc
 
 ; ********************************************************************************
-; * COP 4C - OPGBPB - Get/Put bytes/Read directories                             *
+; * COP 4C - OPGBPB - multiple byte get/put (OSGBPB)                             *
 ; *                                                                              *
-; * Action: Depending on the function code may read/write bytes in blocks to/    *
-; * from an open file or read directory entries. See original MOS OSGBPB for     *
-; * details.                                                                     *
+; * Action: Read or write a block of bytes from/to an open file, as the          *
+; * 8-bit MOS OSGBPB but with a 16-bit handle and 32-bit fields. Transfers       *
+; * are bounced through a MOS-side buffer in chunks.                             *
 ; *                                                                              *
-; * On entry: Y contains the function code                                       *
-; *           BHA contains a pointer to the control block                        *
-; * On exit:  Y=0 if handled                                                     *
-; *           Other information is returned in control block                     *
-; * TODO: Cy for EOF?
+; * On entry: X:A = pointer to the control block                                 *
+; *           Y   = reason code:                                                 *
+; *                 1 = put bytes at the pointer given in the block              *
+; *                 2 = put bytes at the current file pointer                    *
+; *                 3 = get bytes from the pointer given in the block            *
+; *                 4 = get bytes from the current file pointer                  *
+; *                                                                              *
+; * Control block:                                                               *
+; *    +0   handle (16 bits)                                                     *
+; *    +2   data address (32 bits)                                               *
+; *    +6   number of bytes to transfer (32 bits)                                *
+; *    +10  file pointer (32 bits, reasons 1 and 3)                              *
+; *                                                                              *
+; * On exit:  +2  advanced by the number of bytes transferred                    *
+; *           +6  = number of bytes NOT transferred                              *
+; *           +10 = the new file pointer                                         *
+; *                                                                              *
+; * End of file (reasons 3, 4) is not an error: it shows as a non-zero           *
+; * count at +6 on exit.                                                         *
+; *                                                                              *
+; * Errors:   unsupported reason code (0, 5-8): Not implemented                  *
 ; ********************************************************************************
-;
+
 ; TODO: optimise - use B=FF to eliminate far addressing?
 
 
         .proc   COP_4C:far
                 
                 cpy     #0
-                beq     @rtl
+                beq     @errNotImpl
                 cpy     #5
                 bcc     @lt4
 
-@rtl:           rtl
+@errNotImpl:    ERRV    errNotImplOp       
+                rtl
 
 
                 ; we have a file-transfer we'll bounce this up through the low memory
@@ -621,21 +643,24 @@ COP_27:         inc     DPCOP_PC
 @tloop:         ; setup emu memory block
 
                 ; count first
-                ldy     #5
-                lda     [DPCOP_BHA],Y
+                ldy     #6
+                lda     [DPCOP_XHA],Y
                 and     #$FF00
                 iny
                 iny
-                ora     [DPCOP_BHA],Y
+                ora     [DPCOP_XHA],Y
                 beq     @lt256
                 lda     #$100           ; do 256 bytes max
                 bra     @sk1
 @lt256:         dey
                 dey
-                lda     [DPCOP_BHA],Y   ; get low length
+                lda     [DPCOP_XHA],Y   ; get low length
 @sk1:           sta     f:LOGBPBBLK+5
 
-                pha                     ; push the count - we need this later
+                clv
+                bne     @not0
+                jmp     @done0
+@not0:          pha                     ; push the count - we need this later
 
                 lda     #0
                 sta     f:LOGBPBBLK+7
@@ -646,18 +671,19 @@ COP_27:         inc     DPCOP_PC
                 sta     f:LOGBPBBLK+1
 
                 ; offset
-                ldy     #9
-                lda     [DPCOP_BHA],Y
+                ldy     #10
+                lda     [DPCOP_XHA],Y
                 sta     f:LOGBPBBLK+9
                 iny
                 iny
-                lda     [DPCOP_BHA],Y
+                lda     [DPCOP_XHA],Y
                 sta     f:LOGBPBBLK+11
 
                 sep     #$20
                 .a8
-                ; handle
-                lda     [DPCOP_BHA]
+                ; handle - note as we're calling nat2emu - we truncate the handle
+                ; in model-c-mos we'd check and do something else here to pass to 16-bit FS?
+                lda     [DPCOP_XHA]
                 sta     f:LOGBPBBLK+0
                 rep     #$20
                 .a16
@@ -671,14 +697,14 @@ COP_27:         inc     DPCOP_PC
                 lda     #$FF54                  ; A contains dest bank in MSB, MVP in 
                 sta     f:zp_mvn
 
-                ldy     #3
-                lda     [DPCOP_BHA],Y           ; A contains src bank in LSB
+                ldy     #4
+                lda     [DPCOP_XHA],Y           ; A contains src bank in LSB
                 and     #$00FF
                 ora     #$6B00                  ; A contains src bank, RTL
                 sta     f:zp_mvn+2
 
                 ldy     #1
-                lda     [DPCOP_BHA],Y           
+                lda     [DPCOP_XHA],Y           
                 tax                             ; X contains src
 
                 lda     f:LOGBPBBLK+5           ; A contains number to copy
@@ -700,22 +726,33 @@ COP_27:         inc     DPCOP_PC
                 
                 pea     OSGBPB
                 jsl     callmos
-
-                lda     DPCOP_Y
-                cmp     #3
-                
-                rep     #$30
+                bvs     @okk
+; it looks like we can't rely on A=0 as an indicator of FS that supports
+; the function code.
+;;;                cmp     #0
+;;;                beq     @okk
+;;;                pla                             
+;;;                pla                             ; discard stacked length
+;;;                ERRV    errNotImplOp
+;;;                jmp     @done0
+@okk:           rep     #$30
                 .a16
                 .i16
 
+                phx                             ; and save any X/A returned in case of errors
+                pha
+                php                             ; save return for later
+
+                lda     DPCOP_Y
+                cmp     #3
                 bcc     @notread
 
                 ; we need to copy the byte transferred from buf to 
                 ; nat-mode memory
 
 
-                ldy     #2
-                lda     [DPCOP_BHA],Y           ; A contains src bank in LSB
+                ldy     #3
+                lda     [DPCOP_XHA],Y           ; A contains dest bank in MSB
                 and     #$FF00
                 ora     #$0054                  ; A contains dest bank in MSB, MVP in           
                 sta     f:zp_mvn
@@ -724,11 +761,10 @@ COP_27:         inc     DPCOP_PC
                 sta     f:zp_mvn+2
 
                 dey
-                lda     [DPCOP_BHA],Y           
+                lda     [DPCOP_XHA],Y           
                 tay                             ; Y contains dest
 
-                pla                             ; get length
-                pha
+                lda     6,S                     ; get length
                 sec
                 sbc     f:LOGBPBBLK+5           ; subtract remainder reported by OSGBPB - assume not wrapped!
                 beq     @notread                ; nowt to do
@@ -744,88 +780,105 @@ COP_27:         inc     DPCOP_PC
                 ; there's more left
 
                 ; copy back file pointer
-                ldy     #9
+                ldy     #10
                 lda     f:LOGBPBBLK+9
-                sta     [DPCOP_BHA],Y
+                sta     [DPCOP_XHA],Y
                 iny
                 iny
                 lda     f:LOGBPBBLK+11
-                sta     [DPCOP_BHA],Y
+                sta     [DPCOP_XHA],Y
 
                 ; move the data pointer on
-                ldy     #1
-                pla
-                pha
+                ldy     #2
+                lda     6,S                     ; get length
                 sec
                 sbc     f:LOGBPBBLK+5           ; subtract remainder
                 clc
-                adc     [DPCOP_BHA],Y
-                sta     [DPCOP_BHA],Y
+                adc     [DPCOP_XHA],Y
+                sta     [DPCOP_XHA],Y
                 iny
                 iny
                 lda     #0
-                adc     [DPCOP_BHA],Y
-                sta     [DPCOP_BHA],Y
+                adc     [DPCOP_XHA],Y
+                sta     [DPCOP_XHA],Y
 
                 ; decrement the length
-                pla                             ; get back length
+                lda     6,S                     ; get back length
                 sec
                 sbc     f:LOGBPBBLK+5           ; subtract remainder
                 eor     #$FFFF
                 sec                             ; negate (EOR+1)
-                ldy     #5
-                adc     [DPCOP_BHA],Y
-                sta     [DPCOP_BHA],Y
+                ldy     #6
+                adc     [DPCOP_XHA],Y
+                sta     [DPCOP_XHA],Y
                 iny
                 iny
                 lda     #$FFFF
-                adc     [DPCOP_BHA],Y
-                sta     [DPCOP_BHA],Y
+                adc     [DPCOP_XHA],Y
+                sta     [DPCOP_XHA],Y
+
+                plp
+                php
+                bvs     @done
 
                 lda     f:LOGBPBBLK+5
                 bne     @done                   ; keep going if we got 0 as the remainder (ignore Cy)
                                                 ; from OSGBPB as it's unreliable
 
-                lda     [DPCOP_BHA],Y
+                plp                             ; discard error return from callmos
+                pla
+                pla
+                pla                             ; discard saved length
+
+
+                lda     [DPCOP_XHA],Y
                 dey
                 dey
-                ora     [DPCOP_BHA],Y
-                beq     @done
+                ora     [DPCOP_XHA],Y
+                beq     @done0
                 jmp     @tloop
 
-@done:          ldy     #0
-                sty     DPCOP_Y
+@done:          plp
+                pla
+                plx                             ; assume callmos has set this correctly for errors!
+                ply                             ; discard stacked count
+
+@done0:                 
                 rtl
-
-
-@eof:
 
 
         .endproc
 
 
-
 ; ********************************************************************************
-; * COP 0C OPFILE - call filing system's OSFILE entry                            *
+; * COP 0C - OPFILE - whole-file operations (OSFILE)                             *
 ; *                                                                              *
-; * On Entry                                                                     *
-; *     Y       Function code (as for 8-bit MOS)                                 *
-; *     BHA     Points to a **NEW** OSFILE block:                                *
-; *               0     32-bit address of filename                               *
-; *               4     load address                                             *
-; *               8     exec address                                             *
-; *               12    start address                                            *
-; *               16    end address                                              *
+; * Action: Whole-file operations, as the 8-bit MOS OSFILE but with 32-bit       *
+; * fields. With an 8-bit filing system a load is carried out as                 *
+; * OPEN / GBPB / CLOSE operations.                                              *
 ; *                                                                              *
-; * On exit                                                                      *
-; *     block is updated                                                         *
-; *     Y       Object type or preserved if unsupported                          *
+; * On entry: X:A = pointer to the control block                                 *
+; *           Y   = reason code:                                                 *
+; *                  - see 8-bit MOS for reasons                                 *
 ; *                                                                              *
+; * Control block:                                                               *
+; *    +0   pointer to filename (32 bits), terminated by CR, control             *
+; *         character or space                                                   *
+; *    +4   load address (32 bits)                                               *
+; *    +8   exec address (32 bits)                                               *
+; *    +12  length (32 bits)                                                     *
+; *    +16  attributes (32 bits)                                                 *
 ; *                                                                              *
-; * This call may be translated into an OPEN/GBPB*/CLOSE operations when an      *
-; * 8-bit filing system is in operation.                                         *
+; * On exit:  Y = object type: 0 = not found, 1 = file, 2 = directory            *
+; *           block +4..+19 = the object's catalogue information                 *
 ; *                                                                              *
+; * Load (&FF): if the low byte of the exec address (+8) is 0 the file is        *
+; * loaded to the address at +4, otherwise to the file's own load address.       *
+; * The address is used as a native 32-bit address (bank = byte +6); there       *
+; * is no Tube/I/O processor address mapping.                                    *
 ; *                                                                              *
+; * Errors:   &FF on an object that is not a file: &D6 File not found            *
+; *           unsupported reason code: Not implemented                           *
 ; ********************************************************************************
                 .a16
                 .i16
@@ -836,11 +889,8 @@ COP_27:         inc     DPCOP_PC
                 beq     @load
                 cpy     #$5
                 beq     @load
+                ERRV    errNotImplOp
                 rtl
-
-                
-
-
 @load:          
                 sep     #$30
                 .a8
@@ -849,20 +899,20 @@ COP_27:         inc     DPCOP_PC
 
                 ; copy filename pointer to zp_mvn 
                 ldy     #0
-                lda     [DPCOP_BHA],Y
+                lda     [DPCOP_XHA],Y
                 sta     f:zp_mvn
                 iny
-                lda     [DPCOP_BHA],Y
+                lda     [DPCOP_XHA],Y
                 sta     f:zp_mvn+1
                 iny
-                lda     [DPCOP_BHA],Y
+                lda     [DPCOP_XHA],Y
                 sta     f:zp_mvn+2
                 
                 phd
                 lda     #0
                 xba
-                lda     #zp_mvn-DPCOP_BHA
-                tcd
+                lda     #zp_mvn-DPCOP_XHA       ; this will setup the DP register such that the pointer
+                tcd                             ; we've just copied is at the right offset - TODO: call filename copy with XA instead?
 
                 ; copy filename to buf
                 ldy     #0
@@ -881,7 +931,9 @@ COP_27:         inc     DPCOP_PC
      
                 pea     OSFILE
                 jsl     callmos
+
                                                 ; save the returned file type
+                bvs     @e1                     ; got an error from OSFILE return straight away
                 ldy     DPCOP_Y
                 iny
                 beq     @skFF
@@ -890,7 +942,7 @@ COP_27:         inc     DPCOP_PC
                 .a16
                 .i16
                 sty     DPCOP_Y                 ; return file type
-                jmp     @op5_exit
+@e1:            jmp     @op5_exit
 
                 .a8
                 .i8
@@ -899,13 +951,14 @@ COP_27:         inc     DPCOP_PC
                 cmp     #1
                 beq     @skFNF
 @brkFilenotFound:
-                brk     214
-                .byte   "File not found", 0
+                ERRV    errFileNotFound
+                rtl
+
 @skFNF:         ; emu file block now contains the file's info
                 ; work out which pointer to use in gbpb block
                 ; depending on LSB of exec address in passed in block
                 ldy     #8
-                lda     [DPCOP_BHA],Y
+                lda     [DPCOP_XHA],Y
 
                 rep     #$30
                 .a16
@@ -916,87 +969,108 @@ COP_27:         inc     DPCOP_PC
                 
                 ldy     #4
                 lda     f:LOFILEBLK+2
-                sta     [DPCOP_BHA],Y
+                sta     [DPCOP_XHA],Y
                 lda     f:LOFILEBLK+4
                 iny
                 iny
-                sta     [DPCOP_BHA],Y
+                sta     [DPCOP_XHA],Y
 
 @sknold:
                 ;make GBPB block on stack
                 tsc
                 sec
-                sbc     #13
+                sbc     #14
                 tcs
 
                 ; gbpb block data pointer
                 ldy     #4
-                lda     [DPCOP_BHA],Y
-                sta     2,S
+                lda     [DPCOP_XHA],Y
+                sta     3,S
                 iny
                 iny
-                lda     [DPCOP_BHA],Y
-                sta     4,S
+                lda     [DPCOP_XHA],Y
+                sta     5,S
 
                 ; gbgp length from file info
                 lda     f:LOFILEBLK+10
-                sta     6,S
+                sta     7,S
                 lda     f:LOFILEBLK+12
-                sta     8,S
+                sta     9,S
 
 
                 ; open file using COP call
-                ldy     #1
-                lda     [DPCOP_BHA],Y
-                pha
-                plb
-                plb
-                lda     [DPCOP_BHA]
+                ldy     #2
+                lda     [DPCOP_XHA],Y
+                tax
+                lda     [DPCOP_XHA]
                 ldy     #$40
                 cop     COP_44_OPOPN
-                bcs     @brkFilenotFound
+                bvs     @nok2
                 tya
-                sep     #$20
-                .a8
                 sta     1,S             ; set file handle in gbpb lo block
-                rep     #$20
-                .a16
 
-                lda     #0
-                pha
-                plb
-                plb
+                ldx     #0
                 tsc
                 inc     A
                 ldy     #4
                 cop     COP_4C_OPGBPB
+                php
+                phx
+                pha
 
                 ; TODO: check for errors and do something here but what?
 
-                lda     1,S
-                and     #$00FF
+                lda     6,S
                 tay
                 cop     COP_45_OPCLS
 
+                pla
+                plx
+                plp                     ; keep GPBPB errors, ignore CLOSE errors
 
+@nok2:
                 ; restore stack
+                php                     ; keep possible V flag
+
+                ; stack
+                ;       +2..15  rubbish OSGBPB block (14 bytes)
+                ;       +1      P above
+
+                sta     14,S            ; keep possible A error
+                lda     0,S             ; 0,S (rubbish) the P from 1,S
+                sta     12,S            ; move P up
+                             
+                ; stack
+                ;       +14..15 A
+                ;       +13     P above
+                ;       +1..12  rubbish
+
                 tsc
                 clc
-                adc     #13
+                adc     #14-2           ; minus 2 for the extra A we saved
                 tcs
 
-@op5_exit:
+                plp
+                pla
+
+
+@op5_exit:      rep     #$30
+                .a16
+                .i16
+                phx
+                pha
                 ; now copy file info back to caller's block
                 ldx     #18-2
                 ldy     #20-2
 @llp:           lda     f:LOFILEBLK,X
-                sta     [DPCOP_BHA],Y
+                sta     [DPCOP_XHA],Y
                 dey
                 dey
                 dex
                 dex
                 bne     @llp
-
+                pla
+                plx
                 rtl
 
         .endproc

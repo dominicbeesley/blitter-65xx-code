@@ -10,7 +10,7 @@ __COP_INC__:
 		.importzp	DPCOP_P
 		.importzp	DPCOP_PC
 		.importzp	DPCOP_K
-		.importzp	DPCOP_BHA		
+		.importzp	DPCOP_XHA		
 
 
 		.ENDIF
