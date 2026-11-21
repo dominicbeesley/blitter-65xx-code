@@ -1,8 +1,7 @@
 # MOS-Extender native API
 
 This document describes the COP calls a native 65816 program uses to call
-the MOS-Extender. It is a first cut of the new conventions. Some calls do
-not follow it yet: see "Changes to the code" at the end.
+the MOS-Extender. It is a first cut of the new conventions. 
 
 ## Calling a COP
 
@@ -279,7 +278,7 @@ be allocated.
 
 ```
 ; ********************************************************************************
-; * COP 26 - OPBHA - address of immediate string                                 *
+; * COP 26 - OPXHA - address of immediate string                                 *
 ; *                                                                              *
 ; * Action: Return the address of the zero-terminated string that follows        *
 ; * the COP signature byte. Execution continues after the terminating zero.      *
@@ -358,44 +357,3 @@ be allocated.
 ; * Errors:   unsupported reason code (0, 5-8): Not implemented                  *
 ; ********************************************************************************
 ```
-
-## Changes to the code (from the current mos-ext)
-
-Not part of the API; this list is for implementing the draft. Delete it
-once done.
-
-- **Dispatcher:**
-  - push X before A, so that the frame holds A lo, A hi, X lo next to each
-    other and `[DPCOP_AX]` works as `[DPCOP_BHA]` does now. The DPCOP_
-    offsets change.
-  - `@ret_unimplemented`: set V and return X:A pointing to a "Not
-    implemented" error.
-  - clear V on every normal exit.
-- **COP_02:** the terminator option moves from X to Y. An invalid option
-  returns an error instead of BRK.
-- **COP_26/27:** return the address in X:A (X = bank).
-- **COP_44:**
-  - name in X:A;
-  - failure returns V and an error block (it used C, with X = code and
-    BHA = message);
-  - Y = handle, 16 bits.
-- **COP_07:** the block moves from BHA to X:A. Y and C should be returned
-  only for OSWORD 0 (it currently returns them for every reason; see the
-  TODO).
-- **COP_0C:**
-  - block in X:A;
-  - "File not found" returns an error instead of BRK;
-  - Y = object type on exit;
-  - unsupported reasons return an error;
-  - the internal calls to COPs 44/4C/45 check V.
-- **COP_4C:**
-  - block in X:A;
-  - the handle is now 16 bits at +0, so the other fields move up 1 byte
-    (+2, +6, +10);
-  - Y is no longer set to 0;
-  - unsupported reasons return an error.
-- **callmos:** catch BRKs from the MOS and return them as errors (see the
-  workspace notes on BRK capture). Until then, MOS errors still go to the
-  8-bit BRK handler.
-- **test-app oslib:** the wrappers change to match (X:A pointers; check V,
-  not C).
