@@ -113,11 +113,9 @@ COP_07:
 @cpyent2:		cpy	#0
 		bne	@cpy2
 
-		; TODO: This returns Y/P for all OSWORDS not just OSWORD 0
-
 		ply
 		lda	DPCOP_Y
-		beq	@not0
+		bne	@not0
 		sty	DPCOP_Y
 		stz	DPCOP_Y+1
 
