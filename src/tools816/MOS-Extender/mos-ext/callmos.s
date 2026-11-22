@@ -15,7 +15,7 @@
 ;		*                                                                              *
 ;		* On entry: AXYP = parameters to MOS routine                                   *
 ;		* On exit:  D=preserved, B=0, AXYP as MOS routine exit, H=0                    *
-;		* 	   VS = error and XA points at 32-bit error block		       *
+;		* 	   VS = error and XA points at 32-bit error block, Y undefined, B=0   *
 ;		********************************************************************************
 	
 callmos:
@@ -122,6 +122,10 @@ callmos:
 		.a8
 		.i8
 
+		lda	#$80
+		sta	f:$FF0000 + callmos_active
+
+
 		plx
 		pla
 		jmp	TRAMPO_NAT2EMU
@@ -161,7 +165,9 @@ callmos:
 		lda	zp_nat_sp
 		tcs
 
+		; clear callmos active flag
 		lda	#0
+		sta	f:$FF0000 + callmos_active
 		xba				; clear A MSB
 
 		; native stack is
@@ -204,4 +210,105 @@ callmos:
 		plp
 		clv			; TODO: catch errors!
 		rtl
-		
+	
+		.code
+
+		; this point is entered in emulation mode from the BRK handler		
+		;.emu
+		.global	callmos_brk	
+callmos_brk:	; assume SEI already in force
+
+		; push an RTI
+		phk
+		pea	@callmos_brk2
+		php
+		jmp	TRAMPO_EMU2NAT
+
+		.segment	"NATWKSP"
+@callmos_brk2:	; TODO: what to do with emu mode stack - do we reset it to extender entry?
+		; for now kick that can down the road.
+
+		; switch to NAT caller's stack
+		lda	zp_nat_sp+1
+		xba
+		lda	zp_nat_sp
+		tcs
+
+		lda	#0
+		sta	f:$FF0000 + callmos_active
+		xba				; clear A MSB
+
+		; native stack is
+		;	+8..10	RTL from here
+		;	+7	caller P
+		;	+5..6	caller DP
+		;	+1..4	spare
+
+		; set caller's P to have VS
+		lda	7,S
+		ora	#$40
+		sta	7,S
+
+
+		rep	#$10
+		.i16
+
+		phb
+		lda	#$FF
+		pha
+		plb
+
+		ldy	#0
+		lda	($FD),Y
+		sta	a:emu_err_buf
+		lda	#0
+		sta	a:emu_err_buf+1
+		sta	a:emu_err_buf+2
+		sta	a:emu_err_buf+3
+		iny
+@lp:		lda	($FD),Y
+		beq	@s
+		sta	a:emu_err_buf+3,Y		; copy string
+		iny
+		cpy	#251
+		bne	@lp
+		lda	#0
+@s:		sta	a:emu_err_buf+3,Y		; zero terminate
+
+		plb
+
+		sep	#$10
+		.i8
+
+		; set H to be middle byte of error buffer
+		lda	#>emu_err_buf
+		xba
+		lda	#<emu_err_buf
+		sta	4,S
+		lda	#$FF
+		sta	3,S
+
+		; native stack is
+		;	+8..10	RTL from here
+		;	+7	caller P
+		;	+5..6	caller DP
+		;	4	A
+		;	3	X
+		;	1..2	spare
+
+		; return to original callmos caller
+		plx
+		plx
+		plx
+		pla
+		pld
+		plp
+		rtl
+
+
+
+		.bss
+		.global callmos_active
+callmos_active:	.res	1		; if negative a callmos call is in progress and 
+					; emu mode brk's will return to callmos_brk
+emu_err_buf:	.res	256		; buffer for emu mode errors - in 32bit number, 252 str format

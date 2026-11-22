@@ -18,6 +18,7 @@ size_t __write(int h, const char *p, size_t l) {
 
 struct osword_timer_block b;
 const struct os_error *err;
+int x;
 
 int open(const char *name) {
 	int f = 0xA5;
@@ -39,7 +40,6 @@ void dump(const char *name) {
 	printf("Here comes %s\n", name);
 
 	for (int i = 0; i < 8; i++) {
-		int x;
 		err = xos_bget(f, &x);
 		if (err) {
 			printf ("BGET ERR: %lx, %s\n", err->errcode, err->errmsg);
@@ -128,6 +128,13 @@ int main(void) {
 	}
 
 	printf("RET: %lX %lX %lX %lX\n", (long)fblk.load, (long)fblk.exec, (long)fblk.length, (long)fblk.attributes);
+
+	f = 0xFF;		//assume a bad channel number
+	err = xos_bget(f, &x);
+
+	if (err) {
+		printf("BGET ERR: %lX, %s\n", (long)err->errcode, err->errmsg);
+	}
 
 	return 0;
 }

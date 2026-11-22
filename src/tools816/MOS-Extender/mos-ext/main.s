@@ -8,6 +8,8 @@
 	.import handle_emu_cop
 	.import handle_nat_irq
 	.import callmos
+	.import callmos_active
+	.import emu_brk
 	.import _nat_wksp_start
 	.import _nat_wksp_len
 
@@ -230,6 +232,20 @@ fnd:
 
 		sei				; disable interrupts over switch
 
+		lda	#0
+		sta	callmos_active
+
+		lda 	BRKV+1
+		pha
+		lda 	BRKV
+		pha
+
+		; take over break vector
+		lda	#<emu_brk
+		sta	BRKV
+		lda	#>emu_brk
+		sta	BRKV+1
+
 		; RTI address of enter_cont1
 		phk
 		pea	enter_cont1
@@ -297,7 +313,12 @@ enter_cont2:	; main program has exited - tidy up and return to 8-bit MOS
 ; exit_ext - this is where the program will return to
 
 
-exit_ext:
+exit_ext:	
+		; restore emu mode break handler
+		pla
+		sta	BRKV
+		pla
+		sta	BRKV+1
 
 		pla	
 		sta	fred_JIM_PAGE_LO
@@ -396,6 +417,10 @@ BLTURBOSTR:	.byte	"BLTURBO L01", $0D
 
 
 	.bss
+
+emu_S_top:	.res	1		; this is set at entry to the native mode program
+					; emu BRK's will reset to this point if not inside
+					; callmos
 
 	; an 8-bit OSFILE block
 osfile_blk:	.res	18

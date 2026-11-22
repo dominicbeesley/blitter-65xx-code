@@ -7,7 +7,7 @@ LD=ld65
 LDFLAGS=-vm
 
 TARGETS=mos-ext.bin mos-ext.dis.asm
-OBJS=main cop irq callmos osword osbyte emu_zp errors
+OBJS=main cop irq callmos osword osbyte emu_zp errors emu_brk
 DEPS_S=$(OSINCS) $(wildcard *.inc)
 
 OBJS_B=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
