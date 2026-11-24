@@ -40,7 +40,7 @@
 OSWORDBUF := $FF0000 + buf
 
 		.export	COP_07
-COP_07:		
+		.proc COP_07:far
 		; we swap to .i8 here but if we change that then mask
 		; Y AND #$00FF to ensure 8-bit reason
 
@@ -131,7 +131,7 @@ COP_07:
 @not0:		pla			; discard pushed P
 
 		rtl			; return to cop dispatcher
-
+		.endproc
 
 ; OSWORD control block lengths
 

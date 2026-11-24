@@ -9,6 +9,7 @@
 		.exportzp	zp_emu_sp
 		.exportzp	zp_nat_sp
 		.exportzp	zp_mvn
+		.exportzp	zp_wksp
 
 TRAMPOLINES 	:=	$8A
 TRAMPO_NAT2EMU	:=	TRAMPOLINES
@@ -22,3 +23,4 @@ zp_nat_sp:	.res	2
 
 zp_mvn:		.res	4	
 
+zp_wksp:	.res	32		; general purpose wksp used in COP handlers

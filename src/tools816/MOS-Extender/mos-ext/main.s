@@ -4,10 +4,12 @@
 	.include "defs.inc"
 	.include "emu_zp.inc"
 
-	.import handle_nat_cop
+	.import handle_nat_brk:far
+	.import handle_nat_cop:far
 	.import handle_emu_cop
-	.import handle_nat_irq
-	.import callmos
+	.import handle_nat_irq:far
+	.import def_nat_vecs:far
+	.import callmos:far
 	.import callmos_active
 	.import emu_brk
 	.import _nat_wksp_start
@@ -269,6 +271,17 @@ enter_cont1:
 		lda	#NAT_STACK_TOP-1
 		tcs
 
+		; setup default native vectors
+		ldx	#.loword(def_nat_vecs)
+		ldy 	#.loword(NAT_OS_VECS)
+		lda	#IX_VEC_MAX*3
+		mvn	#^def_nat_vecs,#^NAT_OS_VECS
+
+		; TODO figure a better API but for now pass DP to program and
+		; it can use DP..00 C000 in bank 0 as private WKSP
+		lda	#NAT_FREE_1
+		tcd
+
 		phk				; program bank 0
 		pea	enter_cont2-1		; return from program address
 		
@@ -281,7 +294,7 @@ enter_cont1:
 				
 		rti
 
-
+		.export enter_cont2:far
 enter_cont2:	; main program has exited - tidy up and return to 8-bit MOS
 		
 		;TODO preserve registers?
@@ -362,7 +375,7 @@ hw_emu_abort:	rti
 	;;;;;;;;;;;;;;;;;;;;;;; This gets copied to 00 8Cxx on
 		.segment	"NATWKSP"
 hw_nat_cop:	jml	handle_nat_cop
-hw_nat_brk:	jmp 	*
+hw_nat_brk:	jml	handle_nat_brk
 hw_nat_abort:	jmp 	*
 hw_nat_nmi:	jmp 	*
 hw_nat_irq:	jml 	handle_nat_irq

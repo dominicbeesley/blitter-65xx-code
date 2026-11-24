@@ -284,6 +284,40 @@ be allocated.
 
 ```
 ; ********************************************************************************
+; * COP 22 - OPRLN - read line from input                                        *
+; *                                                                              *
+; * Action: Read a line of characters from the current input stream into a       *
+; * buffer, with the usual line editing (DELETE, CTRL-U). Characters outside     *
+; * the low..high range are not stored; the bell sounds if the buffer is full.   *
+; * The line ends with CR, which is stored in the buffer but not counted.        *
+; * (Same purpose as Communicator OPRLN, but a different control block.)         *
+; *                                                                              *
+; * On entry: X:A = pointer to the control block:                                *
+; *             +0  4 bytes  buffer address                                      *
+; *             +4  2 bytes  buffer length - 1 = most characters accepted,       *
+; *                          not counting the CR (as OS_ReadLine32 R1)           *
+; *             +6  1 byte   lowest character accepted                           *
+; *             +7  1 byte   highest character accepted                          *
+; *             +8  1 byte   password character, echoed instead of each          *
+; *                          accepted character when flags bit 6 is set          *
+; *             +9  1 byte   flags:                                              *
+; *                            bit 7 = don't echo characters that are not        *
+; *                                    accepted into the buffer                  *
+; *                            bit 6 = echo the password character (+10)         *
+; *                            bits 0-5 reserved, 0                              *
+; * On exit:  Y   = number of characters read, not counting the CR               *
+; *           C   = 0: line read, terminated by CR                               *
+; *           C   = 1: ESCape pressed; Y and the buffer hold the line so far.    *
+; *                 The caller must acknowledge the escape (OSBYTE &7E)          *
+; *           X:A = preserved (control block)                                    *
+; *                                                                              *
+; * Errors:   none raised by the call itself; V=1 only for errors from the       *
+; *           input stream                                                       *
+; ********************************************************************************
+```
+
+```
+; ********************************************************************************
 ; * COP 26 - OPXHA - address of immediate string                                 *
 ; *                                                                              *
 ; * Action: Return the address of the zero-terminated string that follows        *

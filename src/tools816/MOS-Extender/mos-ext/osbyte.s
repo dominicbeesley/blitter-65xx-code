@@ -26,7 +26,7 @@
 		.segment	"NATHANDLER"
 
 		.export	COP_06
-COP_06:		
+		.proc COP_06:far
 		sep	#$30
 		.a8
 		.i8
@@ -51,3 +51,4 @@ COP_06:
 		rol	z:DPCOP_P
 
 		rtl
+		.endproc

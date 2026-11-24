@@ -23,6 +23,7 @@ COP_0E_OPCOM				:=	$0E		; OPCOM  - execute *command at BHA
 
 COP_15_OPASC				:=	$15		; OPASC = OSASCI - write characte, translate newlines
 
+COP_22_OPRLN				:=  $22		; OPRLN - read a line of text from RDCH
 COP_26_OPXHA				:=	$26		; OPXHA - return address of immediate string in XHA
 COP_27_OPBHI				:=	$27		; OPBHI - return following far address in BHA
 

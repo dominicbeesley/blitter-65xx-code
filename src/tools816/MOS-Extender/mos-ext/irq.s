@@ -3,7 +3,7 @@
 		.include "oslib-nat.inc"
 		.include "emu_zp.inc"
 
-		.export 	handle_nat_irq
+		.export 	handle_nat_irq:far
 
 		.segment	"NATHANDLER"
 

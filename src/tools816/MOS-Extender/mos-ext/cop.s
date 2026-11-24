@@ -9,8 +9,9 @@
         .export handle_nat_cop
         .export handle_emu_cop
         .import callmos
-        .import COP_07
-        .import COP_06
+        .import COP_07:far
+        .import COP_06:far
+        .import COP_22:far
         .import buf
         .import gbpb_blk
         .import file_blk
@@ -49,7 +50,8 @@ handle_emu_cop: rti
 
 
                 .segment        "NATHANDLER"
-handle_nat_cop: plp
+                .proc handle_nat_cop:far
+                plp
                 php                   ;reestablish interrupts
                 rep   #$38
                 .a16
@@ -198,14 +200,16 @@ cop_dispatch_int:
                 tsb     DPCOP_P
                 rts
 
+                .endproc
+
                 .a16
                 .i16
 
 tblCOPDispatch: .faraddr        COP_00          ;OPWRC  00 = OSWRCH
                 .faraddr        COP_01          ;OPWRS  01 = Write String Immediate
-                .faraddr        COP_02          ;OPWRA  02 = Write string at BHA
+                .faraddr        COP_02          ;OPWRA  02 = Write string at XHA
                 .faraddr        COP_03          ;OPNLI  03 = OSNEWL - write CR/LF
-                .faraddr        COP_NotImpl     ;OPRDC  04 = OSRDCH - read a char
+                .faraddr        COP_04          ;OPRDC  04 = OSRDCH - read a char
                 .faraddr        COP_NotImpl     ;OPCLI  05 = OPCLI - execute command at BYX [deprecated]
                 .faraddr        COP_06          ;OPOSB  06 = OSBYTE
                 .faraddr        COP_07          ;OPOSW  07 = OSWORD
@@ -237,7 +241,7 @@ tblCOPDispatch: .faraddr        COP_00          ;OPWRC  00 = OSWRCH
 
                 .faraddr        COP_NotImpl     ;20
                 .faraddr        COP_NotImpl     ;21
-                .faraddr        COP_NotImpl     ;22
+                .faraddr        COP_22          ;OPLN - read a line of text
                 .faraddr        COP_NotImpl     ;23
                 .faraddr        COP_NotImpl     ;24
                 .faraddr        COP_NotImpl     ;24
@@ -340,9 +344,32 @@ COP_NotImpl:    ERRV errNotImpl
         .proc COP_00:far
                 pea     OSWRCH
                 jsl     callmos
-                clv
                 rtl
         .endproc
+
+; ********************************************************************************
+; * COP 04 - OPRDC - read a character from input                                 *
+; *                                                                              *
+; * No conditions                                                                *
+; *                                                                              *
+; * On exit:                                                                     *
+; * if C = 0 then HA contains the ASCII value of the character.                  *
+; * if C = 1 then                                                                *
+; *   HA = $1B (@SCESC) then the ESCAPE key was pressed                          *
+; ********************************************************************************
+        .proc COP_04:far
+                pea     OSRDCH
+                jsl     callmos
+                bvs     @err
+                php
+                ror     DPCOP_P
+                plp
+                rol     DPCOP_P
+                sta     DPCOP_AH
+@err:           rtl
+        .endproc
+
+
 
 ; ********************************************************************************
 ; * COP 01 - OPWRS - write string immediate                                      *
