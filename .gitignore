@@ -3,3 +3,4 @@ build/*
 *.bak
 *.sublime*
 *.NoiCtx
+*__pycache__/
