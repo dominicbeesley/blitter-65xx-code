@@ -145,7 +145,7 @@ strCopyright:
         .IFDEF MOSEXT
                 brl     MOSEXTStart
 strCopyright:
-                .byte   "65816 BASIC (c) 2026 Dossy",$0a,$0d,$00                
+                .byte   "65816 BASIC (c) 2026 Dossy",$00                
         .ENDIF
 
 
@@ -895,21 +895,6 @@ MOSEXTStart:
                 stz     $44
                 stz     $45
                 stz     $46
-
-                ; copy copyright string to buffer
-                ldx     #^strCopyright
-                sta     DP_BAS_Report+2
-                lda     #>strCopyright
-                sta     DP_BAS_Report+1
-                lda     #<strCopyright
-                sta     DP_BAS_Report+0
-
-                lda     #0
-                sta     f:MOS_ERROR_BUF+0
-                sta     f:MOS_ERROR_BUF+1
-                sta     f:MOS_ERROR_BUF+2
-                sta     f:MOS_ERROR_BUF+3
-                sta     f:MOS_ERROR_BUF+4
 
                 ; TODO: setup BRK handler here - use os_change_environment?
 NATBRKV := $FD03
@@ -5721,7 +5706,8 @@ doREPORT:
                 jsr     doListPrintTokenA
                 iny
                 bra     @lp
-@sk:            rts
+@sk:            jsr     PrintCRLFresetCOUNT             ; MOSEXT: we don't embed CRLF in report or error messages
+                rts
         .ENDIF
 
 
