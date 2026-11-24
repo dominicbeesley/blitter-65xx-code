@@ -924,55 +924,7 @@ NATBRKV := $FD03
 
                 jmp     braNEW2
 
-                .a8
-                .i8
-copyXAtoERROR_BUF:
-                php
-                rep     #$10
-                .i16
-                phx
-                phy
-                phb
-
-                pea     256*(^MOS_ERROR_BUF)
-                plb
-                plb
-
-                ; assume we can use INT_WA here
-                stx     DP_BAS_INT_WA+2
-                sta     DP_BAS_INT_WA+0
-                xba
-                sta     DP_BAS_INT_WA+1
-                ldy     #0
-                lda     [DP_BAS_INT_WA],Y
-                sta     MOS_ERROR_BUF     
-                iny
-                lda     [DP_BAS_INT_WA],Y
-                sta     MOS_ERROR_BUF+1
-                iny
-                lda     [DP_BAS_INT_WA],Y
-                sta     MOS_ERROR_BUF+2   
-                iny
-                lda     [DP_BAS_INT_WA],Y
-                sta     MOS_ERROR_BUF+3   
-                iny
-
-                ldx     #5
-@lp:            lda     [DP_BAS_INT_WA],Y
-                iny
-                sta     f:MOS_ERROR_BUF-1,X
-                beq     @s
-                inx
-                bne     @lp
-                lda     #0
-                sta     f:MOS_ERROR_BUF-1,X
-@s:             
-                plb
-                ply
-                plx
-                plp
-                rts
-                
+        
 
                 .proc XAeqDPplusX:near
                 php
@@ -10704,6 +10656,7 @@ BRK_HANDLER:
                 ; copy error to buffer
                 tsc
                 tcd
+                dec     2                       ; point back at start of code
                 ldy     #256-2
                 ldx     #256
 @clp:           lda     [2],Y
@@ -10717,6 +10670,8 @@ BRK_HANDLER:
                 tcd
                 lda     z:DP_stack_save
                 tcs
+
+                ;;inc     2                     ; restore return address - not needed?
                 
                 sep		#$30
                 .a8
