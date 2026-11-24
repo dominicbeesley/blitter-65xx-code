@@ -8,6 +8,8 @@ DEPS=$(INCS)
 OBJS=	bas816new arith_new
 ROMNO=
 ASFLAGS=$(foreach dir,$(INCDIRS),-I $(dir)) 
+ASDEFS=-D MOSEXT
+LINT=$(SCRIPTS)/lint65816.py
 
 TARGETS=bas816new_MOS_EXT
 
@@ -16,13 +18,16 @@ TARGETS_O = $(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
 
 .PHONY: all clean
 
-all:	$(TARGETS_O)
+all:	$(TARGETS_O) lint
 ssd:	all
 deploy:	all
 
 
+lint::
+	$(LINT) $(ASDEFS) $(foreach d,$(INCDIRS), -I $(d)) $(addsuffix .asm, $(OBJS))
+
 $(BUILD)/%.o: 	%.asm $(DEPS) 
-	$(AS) $(ASFLAGS) -g -D MOSEXT -o $@ -g -l $(basename $@).lst $<
+	$(AS) $(ASFLAGS) -g $(ASDEFS) -o $@ -g -l $(basename $@).lst $<
 
 $(BUILD)/%.bin: $(OBJS_O) %.cfg
 	$(LD) -vm -Ln $(basename $@).sy2 -m $(basename $@).map --dbgfile $(basename $@).dbg -o $@ -C $(filter %.cfg, $^) $(OBJS_O) $(LIBS)

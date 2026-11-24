@@ -71,12 +71,12 @@
         .ENDIF
 
         .IFDEF MOSEXT
-                .macro M_BRK n
+                .macro M_BRK n  ;.noreturn
                 .byte   0
                 .dword  n
                 .endmacro
         .ELSE
-                .macro M_BRK n
+                .macro M_BRK n  ;.noreturn
                 brk     n
                 .endmacro
         .ENDIF
