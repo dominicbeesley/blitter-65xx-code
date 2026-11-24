@@ -1,4 +1,5 @@
 ; X is 8-bit after sep #$10 but the file says .i16.
+; MAX-EXAMPLES: 1
                 .p816
                 .a16
                 .i16

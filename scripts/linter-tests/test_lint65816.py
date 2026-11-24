@@ -4,7 +4,8 @@
 
 Each cases/*.s file is linted. Lines that should give a message carry
 "; EXPECT: error" or "; EXPECT: warning". A "; DEFINES: A B" line passes
--D A -D B. The test fails if the messages (line, level) differ.
+-D A -D B; a "; MAX-EXAMPLES: 1" line passes --max-examples 1. The test
+fails if the messages (line, level) differ.
 """
 
 import glob
@@ -21,7 +22,7 @@ CASES = sorted(glob.glob(os.path.join(HERE, "cases", "*.s")))
 
 
 def expected(path):
-    exp, defines = set(), {}
+    exp, defines, opts = set(), {}, {}
     with open(path) as f:
         for n, text in enumerate(f, 1):
             m = re.search(r";\s*EXPECT:\s*(error|warning)", text)
@@ -30,7 +31,10 @@ def expected(path):
             m = re.search(r";\s*DEFINES:\s*(.*)", text)
             if m:
                 defines.update({d: 1 for d in m.group(1).split()})
-    return exp, defines
+            m = re.search(r";\s*MAX-EXAMPLES:\s*(\d+)", text)
+            if m:
+                opts["max_examples"] = int(m.group(1))
+    return exp, defines, opts
 
 
 class LintCases(unittest.TestCase):
@@ -39,8 +43,8 @@ class LintCases(unittest.TestCase):
 
 def make_test(path):
     def test(self):
-        exp, defines = expected(path)
-        msgs = lint65816.lint(path, defines, [])
+        exp, defines, opts = expected(path)
+        msgs = lint65816.lint(path, defines, [], **opts)
         got = {(m.line, m.level) for m in msgs if m.file == path}
         detail = "\n".join(str(m) for m in msgs)
         self.assertEqual(got, exp, "messages were:\n" + detail)

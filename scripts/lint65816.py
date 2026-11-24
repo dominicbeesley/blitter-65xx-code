@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """lint65816 - first-cut M/X register-size checker for ca65 65816 sources.
 
-Usage: lint65816.py [-D NAME[=VAL]]... [-I DIR]... file.s ...
+Usage: lint65816.py [-D NAME[=VAL]]... [-I DIR]... [--max-examples N]
+                    file.s ...
+
+Errors with one cause (paths of different sizes meeting at a join, or
+one wrong size directive) are grouped: up to N examples with different
+causes are printed (default 10, nearest the cause first), the rest are
+counted. For a directive, the examples are split between paths of the
+wrong size (errors) and paths that match it (bullets on the first error),
+or a bullet says no path matches.
 
 Each file is linted on its own (with its .includes). For every instruction
 whose length depends on the register size (immediate operands), the size
@@ -56,7 +64,12 @@ class Msg:
 
     def __str__(self):
         where = f"{self.file}:{self.line}" if self.line else self.file
-        return f"{where}: {self.level}: {self.text}"
+        # text is a string, or a list: a headline then detail bullets
+        if isinstance(self.text, list):
+            head, *rest = self.text
+            return "\n".join([f"{where}: {self.level} : {head}"]
+                             + [f"    - {t}" for t in rest])
+        return f"{where}: {self.level} : {self.text}"
 
 
 def split_comment(line):
@@ -419,11 +432,11 @@ def check_in(unit, ins, state, contract, what, report):
     for reg, cur in (("a", state[0]), ("i", state[1])):
         want = req.get(reg, "*")
         if want in ("8", "16") and cur in (8, 16) and cur != int(want):
-            report("error", ins, f"{what} needs {reg.upper()} {want}-bit, "
-                   f"CPU is {cur}-bit")
+            f = "M" if reg == "a" else "X"
+            report("error", ins, f"{what} needs {f}={want}, CPU {f}={cur}")
 
 
-def lint(path, defines, incdirs):
+def lint(path, defines, incdirs, max_examples=10):
     u = Unit(path, defines, incdirs)
     msgs = u.msgs
     seen = set()
@@ -445,6 +458,7 @@ def lint(path, defines, incdirs):
     state_at = {}
     work = []
     joins = {}      # (idx, reg) -> (origin, origin) where 8 and 16 first met
+    edges = {}      # idx -> indexes the flow went to (incl. into callees)
 
     # A state is (a, i, ps, oa, oi): a/i are the sizes (8, 16, None, "D",
     # "C") and ps the saved (a, i) values for php/plp. oa/oi say where the
@@ -456,6 +470,8 @@ def lint(path, defines, incdirs):
     def push(idx, st, frm=None):
         if idx is None or idx >= len(u.ins):
             return
+        if frm is not None:
+            edges.setdefault(frm, set()).add(idx)
         old = state_at.get(idx)
         if old is None:
             state_at[idx] = st
@@ -478,7 +494,7 @@ def lint(path, defines, incdirs):
             if y == "C":
                 return y, oy
             if x in (8, 16) and y in (8, 16):
-                joins.setdefault((idx, reg), (ox, oy))
+                joins.setdefault((idx, reg), ((x, ox), (y, oy)))
             return v, ("join", idx, None)
         return v, oy
 
@@ -500,8 +516,13 @@ def lint(path, defines, incdirs):
             if t is not None:
                 targets.add(t)
     labelled = set(u.labels.values()) | set(u.anon)
-    seeds = sorted({0} | {x for x in u.entries if x in u.contracts}
-                   | (labelled - targets)) if u.ins else []
+    # Only the first instruction and contract labels start at once. Other
+    # untargeted labels are started one at a time, in source order, only if
+    # nothing has reached them yet: a label that code falls into (e.g. its
+    # only branch was in a skipped .if) is not entered from outside.
+    seeds = sorted({0} | {x for x in u.entries if x in u.contracts}) \
+        if u.ins else []
+    untargeted = labelled - targets
     u.joins = joins
     u.join_msgs = {}       # (join idx, reg) -> [first Msg, further uses]
     u.data_hint = {}       # macro -> (first use, uses followed by data)
@@ -513,16 +534,54 @@ def lint(path, defines, incdirs):
             idx = work.pop()
             step(u, idx, state_at[idx], push, report)
         # anything still unreached (e.g. only called from dead code)
-        rest = sorted(x for x in labelled if x not in state_at)
+        rest = sorted(x for x in untargeted if x not in state_at) \
+            or sorted(x for x in labelled if x not in state_at)
         seeds = rest[:1]
+    bad = {m[0] for g in u.join_msgs.values() for m in g["members"]}
     for key, g in u.join_msgs.items():
-        _, ins, text = g["first"]
-        n = g["n"] - 1
-        if n:
-            why = "after the same join" if key[0] == "join" else \
-                "with the same size directive"
-            text += f" (and {n} more {why}, up to line {g['last'][1]})"
-        report("error", ins, text)
+        # Show only examples that add something: a different "from ..."
+        # (directive groups). A join group's members all share one cause,
+        # so it shows one.
+        if not g["n"]:
+            continue            # only right-size uses: nothing to report
+        wrong, seen_why = [], set()
+        for ins, text in in_order(u, edges, g):
+            why = tuple(text[1:])
+            if why not in seen_why:
+                seen_why.add(why)
+                wrong.append((ins, text))
+        # an instruction traced again later may have become an error
+        ok = sorted(((o, ln) for o, (ln, i) in g["ok"].items()
+                     if i not in bad), key=lambda kv: kv[1])
+        # directive groups: split the examples between wrong and right
+        # paths, half each, the rest to whichever has more
+        most = max(1, max_examples)
+        n_ok = min(len(ok), most // 2) if key[0] == "decl" else 0
+        n_wrong = max(1, min(len(wrong), most - n_ok))
+        n_ok = min(len(ok), most - n_wrong) if key[0] == "decl" else 0
+        shown = wrong[:n_wrong]
+        n = g["n"] - len(shown)
+        if key[0] == "decl":
+            ins0, text0 = shown[0]
+            size = ins0["a" if key[2] == "a" else "i"]
+            f = "M" if key[2] == "a" else "X"
+            if ok:
+                extra = [f"CPU {f}={size} at line {ln}, from {o}"
+                         for o, ln in ok[:n_ok]]
+                if len(ok) > n_ok:
+                    extra.append(f"and {len(ok) - n_ok} more paths with "
+                                 f"{f}={size}")
+            else:
+                extra = [f"no path reaches code under this directive with "
+                         f"{f}={size}"]
+            shown[0] = (ins0, text0 + extra)
+        for k, (ins, text) in enumerate(shown):
+            if n and k == len(shown) - 1:
+                why = "after the same join" if key[0] == "join" else \
+                    "with the same size directive"
+                text = [text[0] + f" (and {n} more {why}, up to line "
+                                  f"{g['last'][1]})"] + text[1:]
+            report("error", ins, text)
     for name, (ins, n) in u.data_hint.items():
         msgs.append(Msg("warning", ins["line"].file, ins["line"].lineno,
                         f"tracing falls through data after macro {ins['line'].word} "
@@ -530,6 +589,26 @@ def lint(path, defines, incdirs):
                         f"returns, add ;.noreturn "
                         f"to its .macro line"))
     return msgs
+
+
+def in_order(u, edges, g):
+    """The group's members, those the CPU reaches first from the cause
+    (the join) first: breadth-first along the traced flow, ties (and
+    groups without a root) by line."""
+    members = g["members"]
+    dist = {r: 0 for r in g["roots"]}
+    todo = sorted(dist)
+    while todo:
+        nxt = []
+        for k in todo:
+            for t in edges.get(k, ()):
+                if t not in dist:
+                    dist[t] = dist[k] + 1
+                    nxt.append(t)
+        todo = nxt
+    far = len(u.ins) + 1
+    members = sorted(members, key=lambda m: (dist.get(m[0], far), m[1]))
+    return [(u.ins[m[0]], m[2]) for m in members]
 
 
 def step(u, idx, st, push, report):
@@ -547,9 +626,9 @@ def step(u, idx, st, push, report):
     # the size check itself
     if arg.startswith("#"):
         if op in M_IMM:
-            chk(u, ins, "A", "a", ins["a"], a, oa, report)
+            chk(u, idx, ins, "A", "a", ins["a"], a, oa, report)
         elif op in X_IMM:
-            chk(u, ins, "X", "i", ins["i"], i, oi, report)
+            chk(u, idx, ins, "X", "i", ins["i"], i, oi, report)
 
     nxt = idx + 1
     if op == "rep" or op == "sep":
@@ -627,13 +706,26 @@ def where(u, ins, idx):
     return f"{os.path.basename(ln.file)}:{ln.lineno}"
 
 
+def named(u, ins, idx):
+    """'label (123)' when a non-local label is on idx, else '123'."""
+    if not hasattr(u, "_names"):
+        u._names = {}
+        for key, i in u.labels.items():
+            name = key[-1] if isinstance(key, tuple) else key
+            if not str(name).startswith("@"):
+                u._names.setdefault(i, name)
+    n = u._names.get(idx)
+    w = where(u, ins, idx)
+    return f"{n} ({w})" if n else w
+
+
 def origin(u, ins, o):
     """Say where a size came from, e.g. 'sep at 12 (via jsr at 40)'."""
     kind, idx, call = o
     if kind == "set":
         t = f"{u.ins[idx]['op']} at {where(u, ins, idx)}"
     elif kind == "entry":
-        t = f"entry at {where(u, ins, idx)}"
+        t = f"entry at {named(u, ins, idx)}"
     else:
         t = f"an earlier join at {where(u, ins, idx)}"
     if call is not None:
@@ -653,47 +745,76 @@ def declared_at(u, ins, r):
     return f"{ln.word or ln.op} at {w}"
 
 
-def chk(u, ins, reg, r, declared, traced, o, report):
+def new_group(ins):
+    pos = (ins["line"].file, ins["line"].lineno)
+    # members: errors (idx, pos, text); ok: origin -> first line for
+    # instructions under the same directive that were the right size
+    return {"n": 0, "members": [], "roots": set(), "last": pos, "ok": {}}
+
+
+def chk(u, idx, ins, reg, r, declared, traced, o, report):
     if traced == "D":
         return
-    decl = f"assembled as {declared}-bit by {declared_at(u, ins, r)}"
+    f = "M" if r == "a" else "X"
+    d, at = f".{r}{declared}", declared_at(u, ins, r)
+    decl = at if at.startswith(d + " ") else f"{d} ({at})"
     if traced == "C":
         j = o[1]
-        x, y = u.joins.get((j, r), (None, None))
-        text = f"{ins['op']} #: {reg} may be 8 or 16-bit here ({decl})"
-        if x is not None:
-            text += (f"; paths meet at line {where(u, ins, j)}: one from "
-                     f"{origin(u, ins, x)}, one from {origin(u, ins, y)}")
+        paths = u.joins.get((j, r))
+        text = [f"{ins['op']} # : {decl}"]
+        if paths is None:
+            text.append(f"CPU {f}=8 or 16 here")
+        else:
+            text.append(f"CPU {f}=8 or 16 here: paths with {f}=8 and "
+                        f"{f}=16 meet at {named(u, ins, j)}")
+            for size, po in sorted(paths, key=lambda p: p[0]):
+                text.append(f"CPU {f}={size} from {origin(u, ins, po)}")
         key = ("join", j, r)
+        root = j
     elif traced is None:
-        report("warning", ins, f"{ins['op']} #: {reg} size unknown here "
-               f"({decl})")
+        report("warning", ins, [f"{ins['op']} # : {decl}",
+                                f"CPU {f} unknown here"])
         return
     elif traced != declared:
-        text = (f"{ins['op']} #: {reg} is {traced}-bit (from "
-                f"{origin(u, ins, o)}) but {decl}")
+        text = [f"{ins['op']} # : {decl}",
+                f"CPU {f}={traced} from {origin(u, ins, o)}"]
         # group mismatches caused by the same size directive
         key = ("decl", id(ins["da" if r == "a" else "di"]), r)
+        root = None     # directive groups: the lowest line, nearest it
     else:
+        # right size: remember it, so that a directive group with errors
+        # can also show paths that do match the directive
+        key = ("decl", id(ins["da" if r == "a" else "di"]), r)
+        g = u.join_msgs.setdefault(key, new_group(ins))
+        g["ok"].setdefault(origin(u, ins, o), (ins["line"].lineno, idx))
         return
     # Errors with the same cause (one join, or one size directive) are
-    # grouped: the lowest line is reported, the rest are counted.
+    # grouped and counted. A join group is reported where the CPU first
+    # meets it after the join (see first_reached); a directive group at
+    # its lowest line, the first after the directive.
     pos = (ins["line"].file, ins["line"].lineno)
-    g = u.join_msgs.setdefault(key, {"n": 0, "first": None, "last": pos})
+    g = u.join_msgs.setdefault(key, new_group(ins))
+    if any(m[0] == idx for m in g["members"]):
+        return
     g["n"] += 1
     g["last"] = max(g["last"], pos)
-    if g["first"] is None or pos < g["first"][0]:
-        g["first"] = (pos, ins, text)
+    g["members"].append((idx, pos, text))
+    if root is not None:
+        g["roots"].add(root)
 
 
 def main(argv):
     defines, incdirs, files = {}, [], []
+    max_examples = 10
     it = iter(argv)
     for arg in it:
         if arg.startswith("-D"):
             d = arg[2:] or next(it)
             k, _, v = d.partition("=")
             defines[k] = parse_number(v) if v else 1
+        elif arg.startswith("--max-examples"):
+            v = arg.partition("=")[2] or next(it)
+            max_examples = int(v)
         elif arg.startswith("-I"):
             incdirs.append(arg[2:] or next(it))
         else:
@@ -704,7 +825,7 @@ def main(argv):
     errors = 0
     for f in files:
         done = set()
-        msgs = lint(f, defines, incdirs)
+        msgs = lint(f, defines, incdirs, max_examples)
         msgs.sort(key=lambda m: (m.file, m.line))
         for m in msgs:
             text = str(m)
