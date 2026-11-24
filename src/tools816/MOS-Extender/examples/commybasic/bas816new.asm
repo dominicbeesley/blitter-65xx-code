@@ -5706,8 +5706,7 @@ doREPORT:
                 jsr     doListPrintTokenA
                 iny
                 bra     @lp
-@sk:            jsr     PrintCRLFresetCOUNT             ; MOSEXT: we don't embed CRLF in report or error messages
-                rts
+@sk:            rts
         .ENDIF
 
 
