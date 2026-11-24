@@ -353,7 +353,7 @@ ServiceHandler: pld
         .ENDIF ; COMMUNICATOR
 
 do_FNnul:       clc
-        .IF .defined(BUGFIX) || .defined(MOS)
+        .IF .defined(BUGFIX) || .defined(MOS) || .defined(MOSEXT)
                 INTRTL
         .ELSE
                 rts                             ; BUG: on Communicator this should be a JSL!
@@ -509,13 +509,19 @@ arith_init:
                 rts
 
 
-arith_enter:
+arith_enter:    php
                 phd
+
+                rep     #$30
+                pha
+
                 tdc
                 xba
                 inc     A
                 xba
                 tcd
+
+                pla        
 
                 sep     #$30
                 .a8
@@ -564,7 +570,7 @@ arith_enter:
                 clc
                 rtl
 
-        .ENDIF ; MOS
+        .ENDIF ; MOSEXT
 
 
 do_FNintADD:    jsr     copyWKSPtoPtrB
