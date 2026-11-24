@@ -2,7 +2,8 @@
 		.import	__SHIMS_SIZE__, __SHIMS_RUN__, __SHIMS_LOAD__
 		.import	__NATVEC_SIZE__, __NATVEC_RUN__, __NATVEC_LOAD__
 
-;;;OPTIMIZE_SIZE := 1
+OPTIMIZE_SIZE := 1
+BUGFIX := 1
 
 ;=========================================================================
 ; MOS-EXT specifics

@@ -9063,7 +9063,6 @@ exec_POINT:     jsr     evalAtYcheckTypeInAConvert2INT
                 jsr     MOS_OSWORD
         .ENDIF
         .IFDEF MOSEXT
-                ldy     #OSWORD_9_POINT
                 ldx     #DP_BAS_INT_WA
                 jsr     XAeqDPplusX
                 cop     COP_07_OPOSW
@@ -9558,6 +9557,11 @@ exec_TIME:      iny
         .IFDEF MOS
                 ldx     #<DP_BAS_INT_WA
                 ldy     #0
+                lda     #OSWORD_1_READTIME
+                jsr     MOS_OSWORD
+        .ENDIF
+        .IFDEF MOSEXT
+                ldx     #<DP_BAS_INT_WA
                 lda     #OSWORD_1_READTIME
                 jsr     MOS_OSWORD
         .ENDIF
@@ -10876,9 +10880,8 @@ sndPullBthenAtoTMP6ptr_OSWORD_A:
                 tya
         .IFDEF MOSEXT
                 ldx     #DP_BAS_TMP6
-                jsr     XAeqDPplusX
 OSWORD_continue:
-                cop     COP_07_OPOSW
+                jsr     MOS_OSWORD
                 bra     jmp_Continue
         .ELSE
                 ldx     #DP_BAS_TMP6
@@ -12188,7 +12191,6 @@ DP_RDLINBLK := DP_BAS_TMP6
 
 ReadKeysTo_InBuf:
                 lda     DP_BAS_STRWKSP_L+2
-                phb
                 pha
                 lda     DP_BAS_STRWKSP_L
                 sta     DP_RDLINBLK+0
@@ -12197,7 +12199,6 @@ ReadKeysTo_InBuf:
 
 ReadKeysTo_MEMBASE:
                 lda     DP_BAS_MEMBASE+2
-                phb
                 pha
                 lda     DP_BAS_MEMBASE
                 sta     DP_RDLINBLK
@@ -12287,9 +12288,6 @@ L9619:          stz     DP_BAS_COUNT
                 ldy     DP_BAS_TMP6+6
         .ENDIF
         .IFDEF MOS
-                ply
-        .ENDIF
-        .IFDEF MOSEXT
                 ply
         .ENDIF
                 lda     #RETV_STR
@@ -12980,7 +12978,11 @@ doLOAD:         lda     DP_BAS_PAGE
         .ENDIF
         .IFDEF MOSEXT
                 jsr     evalYExpectStringOSFILEblkatTMP6
-                TODO    "OSFILE LOAD"
+                stz     DP_BAS_TMP6+8           ; indicate load at supplied address
+                ldx     #DP_BAS_TMP6
+                jsr     XAeqDPplusX
+                ldy     #$FF                    ; save
+                cop     COP_0C_OPFILE
         .ENDIF
         .IFDEF MOS
                 jsr     evalYExStringStPAGEat61
@@ -13121,7 +13123,7 @@ strTerm:        ldy     DP_BAS_STRLEN
                 sta     [DP_BAS_STRWKSP_L],y
                 rts
 
-evalYExpectString:
+evalYExpectStringTerminatedPTRatTMP6:
                 jsr     evalExpressionMAIN
                 bne     jmp_brk06_type_mismatch2
                 jsr     strAtTermPTRatTMP6
@@ -13129,9 +13131,9 @@ evalYExpectString:
 
         .IF .DEFINED(MOS) | .DEFINED(COMMUNICATOR)
 evalYExStringStPAGEat61:
-                jsr     evalYExpectString
+                jsr     evalYExpectStringTerminatedPTRatTMP6
                 lda     DP_BAS_PAGE
-                sta     DP_BAS_TMP6+12
+                sta     DP_BAS_TMP6+12          ; Load/Save location
                 lda     DP_BAS_PAGE+1
                 sta     DP_BAS_TMP6+13
                 lda     DP_BAS_PAGE+2
@@ -13140,14 +13142,37 @@ evalYExStringStPAGEat61:
                 rts
         .ENDIF
 L9B1D:          ldx     DP_BAS_PAGE+2
-                stx     DP_BAS_TMP6+6
+                stx     DP_BAS_TMP6+6           ; LOAD high (zeroed for SAVE!?)
                 ldy     #$00
                 sty     DP_BAS_TMP6+7
                 rts
 
         .IFDEF MOSEXT
 evalYExpectStringOSFILEblkatTMP6:
-                TODO    "OSFILEBLK"
+                jsr     evalYExpectStringTerminatedPTRatTMP6
+
+                ; set program LOAD and memory start address
+                lda     DP_BAS_PAGE
+                sta     DP_BAS_TMP6+4
+                sta     DP_BAS_TMP6+12
+                lda     DP_BAS_PAGE+1
+                sta     DP_BAS_TMP6+5
+                sta     DP_BAS_TMP6+13
+                lda     DP_BAS_PAGE+2
+                sta     DP_BAS_TMP6+6
+                sta     DP_BAS_TMP6+14
+                stz     DP_BAS_TMP6+7
+                sta     DP_BAS_TMP6+15
+
+                ;TODO set a phoney EXEC address FFFFF8023
+                lda     #$23
+                sta     DP_BAS_TMP6+8
+                lda     #$80
+                sta     DP_BAS_TMP6+9
+                lda     #$FF
+                sta     DP_BAS_TMP6+10
+                sta     DP_BAS_TMP6+11
+                rts
         .ENDIF
 
 exec_SAVE:      jsr     findTOP
@@ -13156,18 +13181,18 @@ exec_SAVE:      jsr     findTOP
                 rep     #$30
                 .a16
                 .i16
-                stz     DP_BAS_TMP6+4
-                stz     DB_BAS_UNK_5A_6+1
-                stz     DB_BAS_UNK_5A_6+3
-                stz     DP_FPB_mant
+                stz     DP_BAS_TMP6+4           ; load address
+                stz     DP_BAS_TMP6+6           
+                stz     DP_BAS_TMP6+8           ; exec address
+                stz     DP_BAS_TMP6+10
                 sec
                 lda     DP_BAS_TOP
                 sbc     DP_BAS_PAGE
-                sta     DP_FP_TMP
+                sta     DP_BAS_TMP6+16          ; memory length
                 lda     DP_BAS_TOP+2
                 sbc     DP_BAS_PAGE+2
                 and     #$00ff
-                sta     DP_FP_TMP+2
+                sta     DP_BAS_TMP6+18          
                 phb
                 lda     #DP_BAS_TMP6
                 cop     COP_24_OPCVD
@@ -13180,7 +13205,24 @@ exec_SAVE:      jsr     findTOP
         .ENDIF
         .IFDEF MOSEXT
                 jsr     evalYExpectStringOSFILEblkatTMP6
-                TODO    "OSFILE SAVE"
+                rep     #$30
+                .a16
+                .i16
+                sec
+                lda     DP_BAS_TOP
+                sbc     DP_BAS_PAGE
+                sta     DP_BAS_TMP6+16          ; end address
+                lda     DP_BAS_TOP+2
+                sbc     DP_BAS_PAGE+2
+                and     #$00ff
+                sta     DP_BAS_TMP6+18          
+                sep     #$30
+                .a8
+                .i8
+                ldx     #DP_BAS_TMP6
+                jsr     XAeqDPplusX
+                ldy     #0                      ; save
+                cop     COP_0C_OPFILE
         .ENDIF
         .IFDEF MOS
         .IFDEF DOSSY
@@ -13283,7 +13325,7 @@ exec_SAVE:      jsr     findTOP
         .ENDIF
                 bra     jmpEOS
 
-exec_OSCLI:     jsr     evalYExpectString
+exec_OSCLI:     jsr     evalYExpectStringTerminatedPTRatTMP6
         .IFDEF COMMUNICATOR
                 phb
                 lda     DP_BAS_STRWKSP_L+2
@@ -13561,15 +13603,16 @@ printTMP6ptr:   jsr     incTMP6ptrLDA
                 lda     #OSWORD_5_READ_IO_MEM
                 phx
                 ldx     #DP_BAS_INT_WA
-                ldy     #>DP_BAS_INT_WA
         .IFDEF COMMUNICATOR
+                ldy     #>DP_BAS_INT_WA
                 jsr     cop_OSWORD
         .ENDIF
         .IFDEF MOS
+                ldy     #>DP_BAS_INT_WA
                 jsr     MOS_OSWORD
         .ENDIF
         .IFDEF MOSEXT
-                TODO    "OSWORD5!"
+                jsr     MOS_OSWORD
         .ENDIF
                 plx
                 lda     DP_FPA_sgn
@@ -13606,11 +13649,16 @@ call_OSBYTE:    cop     COP_06_OPOSB
 cop_OSWORD:     cop     COP_07_OPOSW
                 rts
         .ENDIF
+
         .IFDEF MOSEXT
+
 call_OSBYTE:    cop     COP_06_OPOSB
                 rts
 
-cop_OSWORD:     cop     COP_07_OPOSW
+                ; A, X are setup on entry X is an offset to DP
+MOS_OSWORD:     tay
+                jsr     XAeqDPplusX
+                cop     COP_07_OPOSW
                 rts
         .ENDIF
         .IFDEF MOS
