@@ -27,23 +27,26 @@ SOFTWARE.
 #ifndef __ADV_GLOBALS_H_
 #define __ADV_GLOBALS_H_
 
+#include <stdint.h>
 
 extern char tilemap[];
 
-#define RLE_LOADBUF	((unsigned char *)0xFF6000)
+#define DMA_SCREEN ((void *)0xFF3000)
+
+#define RLE_LOADBUF	((void *)0xFF6000)
 #define RLE_LOADBUFSZ   8192
 
-#define DMA_LOADBUFFER  (0xFF4000)
-#define	DMA_CHARAC_SPR	0x150000L
+#define DMA_LOADBUFFER  ((void *)0xFF4000)
+#define	DMA_CHARAC_SPR	((void *)0x150000)
 #define CHARAC_SZ_X	16
 #define CHARAC_SZ_Y	24
 #define CHARAC_SPR_MO	(8*24)				// mask offset from start of spr
 #define CHARAC_SPR_SZ	((2*24)+(8*24))			// size of spr
 #define CHARAC_COL	16				// index of shadow/collision mask
 
-#define	DMA_BACK_SPR	0x110000L
-#define DMA_FRONT_SPR	0x120000L
-#define DMA_COLL_SPR	0x190000L
+#define	DMA_BACK_SPR	((void *)0x110000)
+#define DMA_FRONT_SPR	((void *)0x120000)
+#define DMA_COLL_SPR	((void *)0x190000)
 
 #define FRONT_SPR_MO	(8*24)				// mask offset from start of spr
 #define FRONT_SPR_SZ	((2*24)+(8*24))			// size of spr
@@ -53,10 +56,10 @@ extern char tilemap[];
 #define COLL_SPR_SZ	((2*24)+(8*24))			// size of spr
 #define COLL_SPR_MASK_BYTES_PER_LINE 2
 
-#define DMA_SPR_SAVE	0x130000L			// save area for sprites bitmaps
+#define DMA_SPR_SAVE	((void *)0x130000)			// save area for sprites bitmaps
 #define SPR_SAVE_MAX	80				// max sprites that can be saved per frame
 
-#define DMA_SCR_SHADOW	0x140000L			// draw to this screen then blit to SYS
+#define DMA_SCR_SHADOW	((void *)0x140000)			// draw to this screen then blit to SYS
 //#define DMA_SCR_SHADOW	0xFF3000L			// draw to this screen then blit to SYS
 
 #define ROOM_SZ_Y	10
@@ -89,7 +92,7 @@ extern char tilemap[];
 
 #define TILE_MAP_LAYER_SZ 	(TILE_MAP_MAX_W*TILE_MAP_MAX_H)				//tile map front offset
 #define TILE_MAP_SZ		(TILE_MAP_LAYER_SZ*3)
-#define DMA_TILE_MAP	0x180000L
+#define DMA_TILE_MAP	((void *)0x180000)
 
 #define LAYER_BACK 0
 #define LAYER_FRONT 1
@@ -97,25 +100,6 @@ extern char tilemap[];
 
 #define COLOBJ_FLAG_NOCOL 0x80
 #define COLOBJ_FLAG_BORDER_NORTH 0x01
-
-#define SET_DMA_BYTE(x,y) \
-	{*((byte volatile *)x) = (y);} 
-
-
-#define GET_DMA_BYTE(x) \
-	(*((byte volatile *)x))
-
-//WARNING: sets a 32 bit address - may have consequences
-#define SET_DMA_ADDR(x,y) \
-	{*((unsigned long volatile *)x) = y;}
-
-#define SET_DMA_WORD(x,y) \
-	{*((unsigned volatile *)x) = y;}
-
-#define GET_DMA_WORD(x) \
-	(*((unsigned volatile *)x))
-
-
 
 #endif
 

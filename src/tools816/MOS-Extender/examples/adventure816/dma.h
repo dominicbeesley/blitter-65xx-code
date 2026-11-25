@@ -27,8 +27,10 @@ SOFTWARE.
 #ifndef _DMA_H_
 #define _DMA_H_
 
-extern void dma_copy_block(unsigned char halt, long dma_src_addr, long dma_dest_addr, unsigned int countminus1);
-extern void dma_clear(long dma_dest_addr, unsigned char value, unsigned int countminus1);
-extern unsigned char dma_act(void);
+#include <types.h>
+
+extern void dma_copy_block(BOOL halt, LPTR dma_src_addr, LPTR dma_dest_addr, uint16_t count);
+extern void dma_clear(LPTR dma_dest_addr, uint8_t value, uint16_t count);
+extern BOOL dma_act(void);
 
 #endif

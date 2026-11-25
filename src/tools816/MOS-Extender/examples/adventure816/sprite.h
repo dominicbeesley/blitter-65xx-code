@@ -26,15 +26,15 @@ SOFTWARE.
 #ifndef __SPRITE_H_
 #define __SPRITE_H_
 
-extern void spr_plotXY(signed int x, signed int y, unsigned char w, unsigned char h);
+extern void spr_plotXY(int16_t x, int16_t y, uint8_t w, uint8_t h);
 
 extern void spr_restore_init();
 extern void spr_restore();
 extern void spr_save_start();
 
-extern void spr_plot(unsigned char w, unsigned char h, unsigned char execmask, unsigned int scr_dma_addr16);
-extern void spr_save_and_plot(unsigned char w, unsigned char h, unsigned char execmask, unsigned int scr_dma_addr16);
-extern void charac_spr_plot(signed int x, signed int y, unsigned char frameno);
+extern void spr_plot(uint8_t w, uint8_t h, uint8_t execmask, uint16_t scr_dma_addr16);
+extern void spr_save_and_plot(uint8_t w, uint8_t h, uint8_t execmask, uint16_t scr_dma_addr16);
+extern void charac_spr_plot(int16_t x, int16_t y, uint8_t frameno);
 extern void charac_spr_plot_start(void);
 extern void spr_init(void);
 

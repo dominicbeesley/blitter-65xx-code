@@ -367,7 +367,7 @@ void set_map(mapdef_t *map) {
 	map_layer_size = map_width * map_height;
 
 	//get map from DMA to tiles buffer
-	dma_copy_block(1,DMA_TILE_MAP + (unsigned long)map->binary_offs, 0x000000L + (long)A_TILE_MAP, 3*map_layer_size);
+	dma_copy_block(1,DMA_TILE_MAP + (unsigned long)map->binary_offs, tilemap, 3*map_layer_size);
 
 }
 

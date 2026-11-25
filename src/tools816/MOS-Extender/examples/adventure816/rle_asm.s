@@ -33,25 +33,27 @@
 	.x16
 
 _rle_mem_write:
-	php
 	sep	#$20
 	.a8
-	sta     [<r0]
-	inc	_rle_ptr		; assume doesn't straddle bank!
-	bne	.s
-	inc	_rle_ptr+1
-.s:	plp
+	sta     [<r16]
+	rep	#$20
+	.a16
+	inc	<r16		; assume doesn't straddle bank!
 	rts
 
 
 	.a16
 	.x16
 _rle_load_loop:
+	pei	(r16)
+	pei	(r17)
+	pei	(r18)
+
 	; TODO: check rle_len >= 0
 	ldx     _rle_ptr
-	stx	<r0
+	stx	<r16
 	ldx     _rle_ptr+2
-	stx	<r0+2
+	stx	<r16+2
 .again:	
 	; get command byte
 	jsl	_rle_read
@@ -61,45 +63,57 @@ _rle_load_loop:
 	bne	.literal
 
 	; we have a run length
-	sta	<r4		; save run length
+	sta	<r18		; save run length
 	jsr	.declen
 	php
 	; read byte 
 	jsl	_rle_read	; assume its worked
 .lp:	jsr	_rle_mem_write
-	dec	<r4
+	dec	<r18
 	bpl	.lp
 	plp
 	bcs	.again
-	rtl
+	bra	.out
 
 .literal:
 	; we have a literal run
 	and	#$7F
-	sta	<r4
+	sta	<r18
 	jsr	.declen
 	php
 .lp2:	jsl	_rle_read
 	jsr	_rle_mem_write
-	dec	<r4
+	dec	<r18
 	bpl	.lp2
 	plp
 	bcs	.again
 
-.out:	rtl
+.out:	
+	lda	<r16
+	sta	_rle_ptr
+	lda	<r16+2
+	sta	_rle_ptr+2
+
+	pla
+	sta	<r18
+	pla
+	sta	<r17
+	pla
+	sta	<r16	
+
+	rtl
 
 
 .declen:; subtract cmd+1 from len
 	.a16
 	lda	_rle_len
 	clc
-	sbc	<r4
+	sbc	<r18
 	sta	_rle_len
 	lda	_rle_len+2
 	sbc	#0
 	sta	_rle_len+2
 	rts
-.endproc
 
 
 

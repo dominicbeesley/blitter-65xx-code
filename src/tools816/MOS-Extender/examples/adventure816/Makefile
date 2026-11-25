@@ -20,7 +20,9 @@ LDFLAGS=-m -b rawbin1 -nowarn=22 -Cvbcc -T${VBCC}/targets/65816-dom/vlink.cmd -L
 AS=${COMPILER_ROOT}/vasm6502_oldstyle
 ASFLAGS= -dotdir -816 -Fvobj $(foreach d,${INCS},-I$(d))
 
-EXTRA_ASM=$(addprefix $(BUILD)/, game.s dma.s loader.s wander.s adval.s brk.s sprite.s text.s tile_map.s)
+# all the C for each program is compiled together (vc -O3 cross-module) into
+# one .s file, kept for reading and linting
+EXTRA_ASM=$(addprefix $(BUILD)/, game_c.s loader_c.s wander_c.s)
 .SECONDARY:$(EXTRA_ASM)
 
 OSLIBEXT_DIR=../../clib/oslib-ext
@@ -29,9 +31,12 @@ OSLIBEXT_LIB:=$(abspath $(BUILD)/$(OSLIBEXT_DIR)/liboslibext.a)
 MOSEXT_DIR=../../mos-ext
 MOSEXT_BIN=$(abspath $(BUILD)/$(MOSEXT_DIR)/mos-ext.bin)
 
-GAME_OBJS=	game draw_map dma myos tile_map brk adval sprite screenmaths 
-WANDER_OBJS=	wander draw_map dma myos tile_map brk sprite screenmaths text
-LOADER_OBJS=	startup loader dma rle_asm
+GAME_C_OBJS=	game dma myos tile_map adval sprite
+GAME_S_OBJS=	draw_map brk screenmaths
+WANDER_C_OBJS=	wander dma myos tile_map sprite text
+WANDER_S_OBJS=	draw_map brk screenmaths
+LOADER_C_OBJS=	loader dma sprite screenmaths
+LOADER_S_OBJS=	startup rle_asm
 
 TILES=	$(BUILD)/tiles/charac.rle \
 		$(BUILD)/tiles/main.pal \
@@ -46,9 +51,9 @@ GROUPS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GROUPS)))
 GROUPS_H_O=$(addprefix $(BUILD)/tiles/, $(addsuffix .h, $(GROUPS)))
 
 TARGETS_O=$(addprefix $(BUILD)/, $(addsuffix .bin, $(TARGETS)))
-GAME_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_OBJS))) $(GROUPS_O)
-WANDER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_OBJS))) $(GROUPS_O)
-LOADER_OBJS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_OBJS)))
+GAME_OBJS_O=$(BUILD)/game_c.o $(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_S_OBJS))) $(GROUPS_O)
+WANDER_OBJS_O=$(BUILD)/wander_c.o $(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_S_OBJS))) $(GROUPS_O)
+LOADER_OBJS_O=$(BUILD)/loader_c.o $(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_S_OBJS)))
 
 .PHONY: all tiles ssd deploy FORCE
 
@@ -97,12 +102,18 @@ $(BUILD)/loader.bin: $(LOADER_OBJS_O) $(OSLIBEXT_LIB) loader.cfg
 	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx" $(LOADER_OBJS_O) $(OSLIBEXT_LIB) -o $@ -lvc 
 	$(SCRIPTS)/ld65map2noi.pl <$(basename $@).map >$(BUILD)/loader.noi
 
-$(patsubst %.c, $(BUILD)/%.s, $(wildcard *.c)): adv_globals.h
+$(EXTRA_ASM): adv_globals.h $(wildcard *.h)
 
 $(patsubst %.s, $(BUILD)/%.o, $(wildcard *.s)): adv_globals.inc
 
-$(BUILD)/%.s:	%.c
-		$(CC) $(CFLAGS) -S -o $@ $<
+$(BUILD)/game_c.s: $(addsuffix .c, $(GAME_C_OBJS))
+		$(CC) $(CFLAGS) -S -o $@ $(filter %.c, $^)
+
+$(BUILD)/wander_c.s: $(addsuffix .c, $(WANDER_C_OBJS))
+		$(CC) $(CFLAGS) -S -o $@ $(filter %.c, $^)
+
+$(BUILD)/loader_c.s: $(addsuffix .c, $(LOADER_C_OBJS))
+		$(CC) $(CFLAGS) -S -o $@ $(filter %.c, $^)
 
 
 $(BUILD)/%.o: $(BUILD)/%.s
@@ -136,7 +147,7 @@ $(BUILD)/tiles/over.tilecuts.xml \
 $(BUILD)/tiles/over.h &: $(wildcard maps/*.tmx) $(wildcard maps/*.tsx) maps/main.pal scripts/makemapsandcuts2.pl
 		scripts/makemapsandcuts2.pl $(BUILD)/tiles "over" 0 maps/main.pal $(wildcard maps/*.tmx)
 
-game.c:$(BUILD)/includes/all_maps.h
+$(BUILD)/game_c.s:$(BUILD)/includes/all_maps.h
 
 $(BUILD)/includes/all_maps.h:
 		echo "#ifndef __ALLMAPS_H__" > $@

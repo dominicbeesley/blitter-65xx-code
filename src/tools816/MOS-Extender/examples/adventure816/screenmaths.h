@@ -26,6 +26,8 @@ SOFTWARE.
 #ifndef __SCREENMATHS_H__
 #define __SCREENMATHS_H__
 
-extern unsigned long XY_to_dma_scr_adr(int x, int y);
+#include <stdint.h>
+
+extern uint16_t XY_to_dma_scr_adr16(int16_t x, int16_t y);
 
 #endif

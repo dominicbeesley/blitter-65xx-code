@@ -24,36 +24,35 @@ SOFTWARE.
 */
 
 
-typedef unsigned char byte;
 #include "hardware816.h"
 #include "dma.h"
+#include "types.h"
 
-
-void dma_clear(long dma_dest_addr, unsigned char value, unsigned int count)
+void dma_clear(LPTR dma_dest_addr, uint8_t value, uint16_t count)
 {
 	count--;
-	*((volatile byte *)CS_DMA_SEL) = 0;
-	*((volatile unsigned int *)CS_DMA_COUNT) = count;
-	*((volatile byte *)CS_DMA_DATA) = value;
-	*((volatile unsigned long *)CS_DMA_DEST_ADDR) = dma_dest_addr;
-	*((volatile byte *)CS_DMA_CTL) = DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_NOP;
+	SET_DMA_BYTE(CS_DMA_SEL, 0);
+	SET_DMA_WORD(CS_DMA_COUNT, count);
+	SET_DMA_BYTE(CS_DMA_DATA, value);
+	SET_DMA_ADDR(CS_DMA_DEST_ADDR, dma_dest_addr);
+	SET_DMA_BYTE(CS_DMA_CTL, DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_NOP);
 
 }
 
-void dma_copy_block(unsigned char halt, long dma_src_addr, long dma_dest_addr, unsigned int count)
+void dma_copy_block(BOOL halt, LPTR dma_src_addr, LPTR dma_dest_addr, uint16_t count)
 {
 	//php
 	//sei
 	count--;
-	*((volatile byte *)CS_DMA_SEL) = 0;
-	*((volatile unsigned int *)CS_DMA_COUNT) = count;
-	*((volatile unsigned long *)CS_DMA_SRC_ADDR) = dma_src_addr;
-	*((volatile unsigned long *)CS_DMA_DEST_ADDR) = dma_dest_addr;
-	*((volatile byte *)CS_DMA_CTL) = DMACTL_ACT + ((halt)?DMACTL_HALT:0) + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP;
+	SET_DMA_BYTE(CS_DMA_SEL, 0);
+	SET_DMA_WORD(CS_DMA_COUNT, count);
+	SET_DMA_ADDR(CS_DMA_SRC_ADDR, dma_src_addr);
+	SET_DMA_ADDR(CS_DMA_DEST_ADDR, dma_dest_addr);
+	SET_DMA_BYTE(CS_DMA_CTL, DMACTL_ACT + ((halt)?DMACTL_HALT:0) + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP);
 	//plp
 
 }
 
-unsigned char dma_act(void) {
-	return (*((volatile byte *)CS_DMA_CTL)) & DMACTL_ACT;
+BOOL dma_act(void) {
+	return GET_DMA_BYTE(CS_DMA_CTL) & DMACTL_ACT;
 }

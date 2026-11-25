@@ -33,6 +33,7 @@ SOFTWARE.
 
 #include "rle_asm.h"
 
+#include "sprite.h"
 
 ///TODO: move this to a library
 size_t __write(int h, const char *p, size_t l) {
@@ -61,16 +62,16 @@ void loadpal(void) {
 	puts("pal");
 	xos_file(0xFF, &blk);
 
-	*((volatile byte *)SHEILA_NULA_CTLAUX) = 0x40;
+	*((volatile uint8_t *)SHEILA_NULA_CTLAUX) = 0x40;
 
 	for (i=32; i>0; i--)
 	{
-		*((volatile byte *)SHEILA_NULA_PALAUX) = *pe++;
+		*((volatile uint8_t *)SHEILA_NULA_PALAUX) = *pe++;
 	}
 
 }
 
-unsigned char fh;
+uint16_t fh;
 int rle_read_ptr;
 unsigned rle_eof;
 long rle_len;
@@ -94,15 +95,17 @@ int rle_read() {
 			gbpb_blk.rw.data = RLE_LOADBUF;
 			gbpb_blk.rw.count = RLE_LOADBUFSZ;
 			xos_gbpb(4, &gbpb_blk);
-			rle_eof = gbpb_blk.rw.count != 0;
+			rle_eof = gbpb_blk.rw.count;
 		}	
 	}
-	return RLE_LOADBUF[rle_read_ptr++];
+	return ((uint8_t *)RLE_LOADBUF)[rle_read_ptr++];
 }
 
 void rle_load(const char *filename, void *chip_addr) {
 
 	rle_ptr = chip_addr;
+
+	printf("%s %lx\n", filename, (long)rle_ptr);
 
 	xos_find_open(filename, 0x40, &fh);
 	if (!fh)
@@ -119,13 +122,14 @@ void rle_load(const char *filename, void *chip_addr) {
 
 	rle_load_loop();
 	
-	puts("END");
+	printf("END %lx\n", (long)rle_ptr);
 
 	xos_find_close(fh);
 }
 
 void loadcharactersprites(void) {
 	puts("char");
+	rle_load("T.CHARAC", 0xFF3000);//DMA_CHARAC_SPR);
 	rle_load("T.CHARAC", DMA_CHARAC_SPR);
 }
 
@@ -169,6 +173,22 @@ int main(void) {
 //	loadtiles();
 
 	loadpal();
+
+	//test
+
+	dma_clear(DMA_SCR_SHADOW, 0x00, 0x5000);
+
+	spr_init();
+	spr_save_start();
+	charac_spr_plot_start();
+
+	charac_spr_plot(10,10,0);
+	charac_spr_plot(20,20,1);
+	charac_spr_plot(30,30,2);
+
+	puts("x");
+
+	dma_copy_block(TRUE, DMA_SCR_SHADOW, DMA_SCREEN, 0x5000);
 
 	return 0;
 }
