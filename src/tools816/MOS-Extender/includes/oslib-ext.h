@@ -41,3 +41,10 @@ extern const os_error *xos_bget(int handle, int *ret);
 extern const os_error *xos_bput(int handle, byte b);
 extern const os_error *xos_gbpb(byte funcode, os_gbpb_blk *blk);
 extern const os_error *xos_file(byte funtion, os_file_blk *blk);
+
+
+#define OS_XSTR(x) __str(x)
+#define OS_BRK(num, msg) \
+    __asm("\tbrk\n\tdefl\t" OS_XSTR(num) "\n\tstring\t\"" msg "\"\n")
+
+    
