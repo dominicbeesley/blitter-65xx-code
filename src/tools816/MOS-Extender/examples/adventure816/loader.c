@@ -105,7 +105,7 @@ void rle_load(const char *filename, void *chip_addr) {
 
 	rle_ptr = chip_addr;
 
-	printf("%s %lx\n", filename, (long)rle_ptr);
+	printf("%s %lx - ", filename, (long)rle_ptr);
 
 	xos_find_open(filename, 0x40, &fh);
 	if (!fh)
@@ -128,32 +128,28 @@ void rle_load(const char *filename, void *chip_addr) {
 }
 
 void loadcharactersprites(void) {
-	puts("char");
-	rle_load("T.CHARAC", 0xFF3000);//DMA_CHARAC_SPR);
 	rle_load("T.CHARAC", DMA_CHARAC_SPR);
 }
 
 void loadbacktiles(void) {
-	puts("back");
 	rle_load("T.OBACK", DMA_BACK_SPR);	
 }
 
 void loadforetiles(void) {
-	puts("fore");
 	rle_load("T.OFRONT", DMA_FRONT_SPR);	
 }
 
 void loadcolltiles(void) {
-	puts("collision");
 	rle_load("T.OCOLL", DMA_COLL_SPR);	
 }
 
 void loadtiles(void) {
-	puts("tilemap");
 	rle_load("M.OVER", DMA_TILE_MAP);
 }
 
 int main(void) {
+
+	setvbuf(stdout, NULL, _IONBF, 0);
 
 //	//naughty - set jim devno but don't save old
 //	*((unsigned char *)0xEE) = JIM_DEVNO_BLITTER;
@@ -174,21 +170,6 @@ int main(void) {
 
 	loadpal();
 
-	//test
-
-	dma_clear(DMA_SCR_SHADOW, 0x00, 0x5000);
-
-	spr_init();
-	spr_save_start();
-	charac_spr_plot_start();
-
-	charac_spr_plot(10,10,0);
-	charac_spr_plot(20,20,1);
-	charac_spr_plot(30,30,2);
-
-	puts("x");
-
-	dma_copy_block(TRUE, DMA_SCR_SHADOW, DMA_SCREEN, 0x5000);
 
 	return 0;
 }
