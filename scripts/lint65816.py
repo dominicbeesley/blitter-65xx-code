@@ -2,7 +2,12 @@
 """lint65816 - first-cut M/X register-size checker for ca65 65816 sources.
 
 Usage: lint65816.py [-D NAME[=VAL]]... [-I DIR]... [--max-examples N]
-                    file.s ...
+                    [-s ca65|vasm] file.s ...
+
+-s vasm reads vasm oldstyle syntax (vasm6502_oldstyle, with or without
+-dotdir): a8/a16/x8/x16 (as/al, longa/longi), column-1 labels, .x and x$
+locals, "name macro" ... endm, if/ifd/ifnd/ifeq/ifne, include. The
+annotations below are the same for both syntaxes (.i8/.i16 for X).
 
 Errors with one cause (paths of different sizes meeting at a join, or
 one wrong size directive) are grouped: up to N examples with different
@@ -54,6 +59,74 @@ DATA = {".byte", ".byt", ".word", ".addr", ".faraddr", ".dword", ".dbyt",
         ".asciiz", ".res", ".lobytes", ".hibytes", ".bankbytes"}
 
 LABEL_RE = re.compile(r"^\s*(@?[A-Za-z_.][\w.]*|)\s*:(?![=:])")
+# vasm oldstyle (-s vasm): directive -> the ca65 directive it is read as
+VASM_DIRS = {
+    "a8": ".a8", "as": ".a8", "a16": ".a16", "al": ".a16",
+    "x8": ".i8", "xs": ".i8", "x16": ".i16", "xl": ".i16",
+    "macro": ".macro", "endm": ".endmacro", "endmacro": ".endmacro",
+    "if": ".if", "ifne": ".if", "ifeq": ".ifeq", "ifdef": ".ifdef",
+    "ifd": ".ifdef", "ifndef": ".ifndef", "ifnd": ".ifndef",
+    "else": ".else", "elif": ".elseif", "endif": ".endif", "endc": ".endif",
+    "include": ".include",
+    "byte": ".byte", "db": ".byte", "dfb": ".byte", "fcb": ".byte",
+    "text": ".byte", "asc": ".byte", "string": ".byte", "data": ".byte",
+    "word": ".word", "dw": ".word", "addr": ".word", "wor": ".word",
+    "long": ".dword", "dl": ".dword", "blk": ".res", "ds": ".res",
+    "dsb": ".res", "res": ".res", "fill": ".res", "spc": ".res",
+    "bss": ".res", "incbin": ".res", "dc": ".byte", "dc.b": ".byte",
+    "dc.w": ".word", "dc.l": ".dword",
+}
+VASM_EQU = {"=", ":=", "equ", "set", "ezp", "eqo"}
+
+
+def vasm_split(code):
+    """Read a vasm oldstyle line as (label, op, operand, word), with
+    directives renamed to their ca65 form (see VASM_DIRS). Labels start in
+    column 1 (colon optional); '.x' and 'x$' locals become ca65 '@' cheap
+    locals; 'sym = 1' / 'sym equ 1' are not labels."""
+    label = ""
+    if code[:1] not in ("", " ", "\t"):
+        m = re.match(r"([^\s:=]+|):?", code)
+        label, code = m.group(1) or ":", code[m.end():]
+    parts = code.strip().split(None, 1)
+    word = parts[0] if parts else ""
+    operand = parts[1].strip() if len(parts) > 1 else ""
+    op = word.lower()
+    if label != ":" and (op in VASM_EQU or op.startswith(("=", ":="))):
+        if op.startswith(("=", ":=")) and op not in VASM_EQU:
+            operand = (word.lstrip(":=") + " " + operand).strip()
+        return "", ".equ", f"{label} {operand}", word   # not a label
+    if op == "macro" and label:                 # name macro args
+        label, operand = "", (label + " " + operand).strip()
+    d = op[1:] if op.startswith(".") else op    # -dotdir spelling too
+    if d in VASM_DIRS:
+        op = VASM_DIRS[d]
+        if op == ".ifeq":
+            op, operand = ".if", f"!({operand})"
+    elif d in ("cpu", "setdp", "global", "extern", "xdef", "xref",
+               "section", "org", "rorg", "align", "even", "list", "nolist",
+               "end", "rept", "endr", "local", "weak", "assert", "fail",
+               "printt", "printv", "echo", "dsect", "dend", "zpage",
+               "longa", "longi", "mdat"):
+        if d in ("longa", "longi"):
+            on = operand.split()[0].lower() in ("on", "1") if operand \
+                else True
+            op = (".a" if d == "longa" else ".i") + ("16" if on else "8")
+        else:
+            op = "." + d
+    label = vasm_local(label)
+    return label, op, operand, word
+
+
+def vasm_local(name):
+    """'.loop' and 'loop$' (vasm locals) -> '@loop' / '@loop$'."""
+    if name.startswith(".") and len(name) > 1:
+        return "@" + name[1:]
+    if name.endswith("$") and len(name) > 1 and name != ":":
+        return "@" + name
+    return name
+
+
 ANN_SIZE_RE = re.compile(r"\.([ai])(8|16|\?)(?![\w])")
 CONTRACT_RE = re.compile(r"\.(in|out)\s+((?:[ai](?:8|16|\*|=|\?)\s*)+)")
 
@@ -134,7 +207,7 @@ class Line:
         self.comment = comment
 
 
-def read_lines(path, defines, incdirs, msgs, depth=0):
+def read_lines(path, defines, incdirs, msgs, depth=0, syntax="ca65"):
     """Expand .include and .if/.ifdef/.ifndef/.else/.elseif/.endif."""
     out = []
     try:
@@ -147,14 +220,18 @@ def read_lines(path, defines, incdirs, msgs, depth=0):
     in_macro = False
     for n, text in enumerate(raw, 1):
         code, comment = split_comment(text)
-        label = ""
-        m = LABEL_RE.match(code)
-        if m:
-            label = m.group(1) or ":"
-            code = code[m.end():]
-        parts = code.strip().split(None, 1)
-        op = parts[0].lower() if parts else ""
-        operand = parts[1].strip() if len(parts) > 1 else ""
+        if syntax == "vasm":
+            label, op, operand, word = vasm_split(code)
+            parts = [word] if word else []
+        else:
+            label = ""
+            m = LABEL_RE.match(code)
+            if m:
+                label = m.group(1) or ":"
+                code = code[m.end():]
+            parts = code.strip().split(None, 1)
+            op = parts[0].lower() if parts else ""
+            operand = parts[1].strip() if len(parts) > 1 else ""
         active = all(c[0] for c in cond)
 
         if in_macro or (active and op in (".macro", ".mac")):
@@ -206,7 +283,8 @@ def read_lines(path, defines, incdirs, msgs, depth=0):
             elif depth > 16:
                 msgs.append(Msg("error", path, n, "includes nested too deep"))
             else:
-                out += read_lines(found, defines, incdirs, msgs, depth + 1)
+                out += read_lines(found, defines, incdirs, msgs, depth + 1,
+                                  syntax)
             continue
         out.append(Line(path, n, label, op, operand, comment))
         out[-1].word = parts[0] if parts else ""
@@ -234,16 +312,26 @@ def eval_if(expr, defines, msgs, path, n):
 class Unit:
     """One file plus its includes, ready for tracing."""
 
-    def __init__(self, path, defines, incdirs):
+    def __init__(self, path, defines, incdirs, syntax="ca65"):
         self.msgs = []
-        lines = read_lines(path, defines, incdirs, self.msgs)
+        self.syntax = syntax
+        self.equs = {}
+        lines = read_lines(path, defines, incdirs, self.msgs, syntax=syntax)
         self.ins = []          # instruction/macro-call entries
         self.labels = {}       # (scope, name) -> index into ins
         self.anon = []         # indexes of anonymous labels
         self.entries = []      # (index, declared a, i, contract)
         self.contracts = {}    # label key or macro name -> contract
         self.macros = {}       # name -> contract
+        self.equs = {}         # symbol -> value, for rep/sep #SYMBOL
         self.build(lines)
+
+    def number(self, s):
+        """parse_number, also accepting a numeric equate (rep #FLAG)."""
+        v = parse_number(s)
+        if v is None:
+            v = self.equs.get(s.strip())
+        return v
 
     def build(self, lines):
         a, i = 8, 8
@@ -257,6 +345,16 @@ class Unit:
         data_line = None       # first data line since the last instruction
         for ln in lines:
             op = ln.op
+            # numeric equates: ca65 'X = 1' / 'X := 1', vasm 'X equ 1'
+            if op == ".equ" and self.syntax == "vasm":
+                name, _, val = ln.operand.partition(" ")
+                v = parse_number(val.split(";")[0])
+                if v is not None:
+                    self.equs[name] = v
+            elif ln.operand.startswith(("=", ":=")) and not ln.label:
+                v = parse_number(ln.operand.lstrip(":="))
+                if v is not None:
+                    self.equs[ln.word] = v
             ann = ANN_SIZE_RE.findall(ann_text(ln.comment))
             if in_macro is not None:
                 m = self.macros[in_macro]
@@ -276,7 +374,7 @@ class Unit:
                     m["_code"] = True   # has an instruction or macro use
                     m["_last"] = op     # last instruction in the body
                 if op in SIZE_OPS:
-                    v = parse_number(ln.operand.lstrip("#"))
+                    v = self.number(ln.operand.lstrip("#"))
                     if op in ("rep", "sep") and v is not None \
                             and not v & 0x30:
                         continue        # flags only (e.g. sep #$40 = SEV)
@@ -368,7 +466,7 @@ class Unit:
                 if "i" in mac.get("_decl", {}):
                     i, di = mac["_decl"]["i"], ln
             if smart and op in ("rep", "sep"):
-                v = parse_number(ln.operand.lstrip("#"))
+                v = self.number(ln.operand.lstrip("#"))
                 if v is not None:
                     size = 16 if op == "rep" else 8
                     if v & 0x20:
@@ -386,6 +484,8 @@ class Unit:
         """Find the instruction index a branch/jump/call operand names."""
         tok = re.split(r"[\s,]", arg.strip(), 1)[0]
         tok = re.sub(r"^[afz]:", "", tok)
+        if self.syntax == "vasm":
+            tok = vasm_local(tok.lstrip("<>!|"))
         if not tok or tok[0] in "([":
             return None
         ins = self.ins[idx]
@@ -436,8 +536,8 @@ def check_in(unit, ins, state, contract, what, report):
             report("error", ins, f"{what} needs {f}={want}, CPU {f}={cur}")
 
 
-def lint(path, defines, incdirs, max_examples=10):
-    u = Unit(path, defines, incdirs)
+def lint(path, defines, incdirs, max_examples=10, syntax="ca65"):
+    u = Unit(path, defines, incdirs, syntax)
     msgs = u.msgs
     seen = set()
 
@@ -632,7 +732,7 @@ def step(u, idx, st, push, report):
 
     nxt = idx + 1
     if op == "rep" or op == "sep":
-        v = parse_number(arg.lstrip("#"))
+        v = u.number(arg.lstrip("#"))
         size = 16 if op == "rep" else 8
         if v is None:
             a = i = None
@@ -757,7 +857,8 @@ def chk(u, idx, ins, reg, r, declared, traced, o, report):
         return
     f = "M" if r == "a" else "X"
     d, at = f".{r}{declared}", declared_at(u, ins, r)
-    decl = at if at.startswith(d + " ") else f"{d} ({at})"
+    ln = ins["da" if r == "a" else "di"]
+    decl = at if ln is not None and ln.op == d else f"{d} ({at})"
     if traced == "C":
         j = o[1]
         paths = u.joins.get((j, r))
@@ -806,6 +907,7 @@ def chk(u, idx, ins, reg, r, declared, traced, o, report):
 def main(argv):
     defines, incdirs, files = {}, [], []
     max_examples = 10
+    syntax = "ca65"
     it = iter(argv)
     for arg in it:
         if arg.startswith("-D"):
@@ -815,6 +917,11 @@ def main(argv):
         elif arg.startswith("--max-examples"):
             v = arg.partition("=")[2] or next(it)
             max_examples = int(v)
+        elif arg in ("-s", "--syntax") or arg.startswith("--syntax="):
+            syntax = arg.partition("=")[2] or next(it)
+            if syntax not in ("ca65", "vasm"):
+                print(f"unknown syntax {syntax}: use ca65 or vasm")
+                return 2
         elif arg.startswith("-I"):
             incdirs.append(arg[2:] or next(it))
         else:
@@ -825,7 +932,7 @@ def main(argv):
     errors = 0
     for f in files:
         done = set()
-        msgs = lint(f, defines, incdirs, max_examples)
+        msgs = lint(f, defines, incdirs, max_examples, syntax)
         msgs.sort(key=lambda m: (m.file, m.line))
         for m in msgs:
             text = str(m)

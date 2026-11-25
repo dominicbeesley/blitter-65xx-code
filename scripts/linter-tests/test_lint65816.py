@@ -4,7 +4,8 @@
 
 Each cases/*.s file is linted. Lines that should give a message carry
 "; EXPECT: error" or "; EXPECT: warning". A "; DEFINES: A B" line passes
--D A -D B; a "; MAX-EXAMPLES: 1" line passes --max-examples 1. The test
+-D A -D B; a "; MAX-EXAMPLES: 1" line passes --max-examples 1;
+a "; SYNTAX: vasm" line reads the case as vasm oldstyle. The test
 fails if the messages (line, level) differ.
 """
 
@@ -31,6 +32,9 @@ def expected(path):
             m = re.search(r";\s*DEFINES:\s*(.*)", text)
             if m:
                 defines.update({d: 1 for d in m.group(1).split()})
+            m = re.search(r";\s*SYNTAX:\s*(\w+)", text)
+            if m:
+                opts["syntax"] = m.group(1)
             m = re.search(r";\s*MAX-EXAMPLES:\s*(\d+)", text)
             if m:
                 opts["max_examples"] = int(m.group(1))
