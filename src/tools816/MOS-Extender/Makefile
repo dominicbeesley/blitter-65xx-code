@@ -1,6 +1,6 @@
 		include ../../Makefile.defs
 
-SUBDIRS=test-app mos-ext examples
+SUBDIRS=test-app mos-ext examples clib
 
 .DELETE_ON_ERROR:
 

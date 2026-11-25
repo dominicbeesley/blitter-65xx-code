@@ -15,8 +15,11 @@ LDFLAGS=-m -b rawbin1 -nowarn=22 -Cvbcc -T${VBCC}/targets/65816-dom/vlink.cmd -L
 AS=${COMPILER_ROOT}/vasm6502_oldstyle
 ASFLAGS= -816 -Fvobj -I${INCS}
 
+OSLIBEXT_DIR=../clib/oslib-ext
+OSLIBEXT_LIB:=$(abspath $(BUILD)/../clib/oslib-ext/liboslibext.a)
+
 TARGETS=test.bin test.dis.asm
-OBJS=test oslib startup
+OBJS=test startup
 
 
 OBJS_B=$(addprefix $(BUILD)/, $(addsuffix .o, $(OBJS)))
@@ -26,14 +29,18 @@ all: $(TARGETS_B)
 ssd:	all
 deploy:	ssd
 
+.PHONY: FORCE
+$(OSLIBEXT_LIB): FORCE
+	$(MAKE) -C $(OSLIBEXT_DIR)
+
 $(BUILD)/%.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $^
 
 $(BUILD)/%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $^	
 
-$(BUILD)/test.bin $(BUILD)/test.sym: $(OBJS_B)
-	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx" $(OBJS_B) -o $@ -lvc 
+$(BUILD)/test.bin $(BUILD)/test.sym: $(OBJS_B) $(OSLIBEXT_LIB)
+	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx" $(OBJS_B) $(OSLIBEXT_LIB) -o $@ -lvc 
 	echo "$$.TEST 0010000 0010000" >$@.inf
 
 $(BUILD)/test.dis.asm:$(BUILD)/test.bin $(BUILD)/test.sym

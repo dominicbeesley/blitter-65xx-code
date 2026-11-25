@@ -1,6 +1,6 @@
 	#include <stdlib.h>
 	#include <stdio.h>
-	#include "oslib.h"
+	#include "oslib-ext.h"
 
 
 size_t __write(int h, const char *p, size_t l) {
