@@ -1,6 +1,6 @@
 		include ../../../Makefile.defs
 
-SUBDIRS=commybasic
+SUBDIRS=commybasic adventure816
 
 .DELETE_ON_ERROR:
 

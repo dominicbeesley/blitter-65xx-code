@@ -1,0 +1,19 @@
+<!-- note paths are relative to build location -->
+<dest file="charac.til" size-x="16" size-y="24" mask="y">
+	<source file="src-graphics/character.png" />
+	<!-- walking down -->
+	<move x="0" y="6"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- walking right -->
+	<move x="0" y="38"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- walking up -->
+	<move x="0" y="68"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- walking left -->
+	<move x="0" y="100"/>
+	<cut x="4" y="1" dir="rd"/>
+	<!-- shadow and collision mask -->
+	<move x="132" y="135" />
+	<cut x="1" y="1" dir="rd" />
+</dest>
