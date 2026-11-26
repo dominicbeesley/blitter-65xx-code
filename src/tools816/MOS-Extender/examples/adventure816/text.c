@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <oslib/os.h>
+#include "oslib-ext.h"
 #include "adv_globals.h"
 #include "hardware816.h"
 #include "types.h"
@@ -45,9 +45,9 @@ DECL_WR8(WR8_CS_BLIT_SHIFT_A, CS_BLIT_SHIFT_A)
 DECL_WR8(WR8_CS_BLIT_WIDTH, CS_BLIT_WIDTH)
 //----------------------
 
-unsigned int cursor;
+uint16_t cursor;
 
-void setcursor(unsigned int addr16) {
+void setcursor(uint16_t addr16) {
 	cursor = addr16;
 }
 
@@ -57,32 +57,33 @@ void plot_char(char c) {
 	WR8_CS_BLIT_SHIFT_A(0x00);
 	WR8_CS_BLIT_MASK_FIRST(0xFF);
 	WR8_CS_BLIT_MASK_LAST(0xFF);
-	WR8_CS_BLIT_ADDR_C_BANK(DMA_SCR_SHADOW >> 16);
+	WR8_CS_BLIT_ADDR_C_BANK((uint8_t)((uint32_t)DMA_SCR_SHADOW >> 16));
 	WR16_CS_BLIT_ADDR_C(cursor);
 	WR16_CS_BLIT_STRIDE_D(SCREEN_D_STRIDE);
 	WR16_CS_BLIT_STRIDE_A(1);
 
-	WR8_CS_BLIT_ADDR_A_BANK(0xFF);
-	WR16_CS_BLIT_ADDR_A(0xC000 - (32*8) + ((unsigned)c)*8);
-	WR8_CS_BLIT_DATA_B(0x0F);
+	// TODO: FONT data bodge - how to find the physical address of MOS rom
+	WR8_CS_BLIT_ADDR_A_BANK(0x9F);			
+	WR16_CS_BLIT_ADDR_A(0x0000 + ((unsigned)(c-32)*8));
+	WR8_CS_BLIT_DATA_B(0x3F);
 	WR8_CS_BLIT_FUNCGEN(0xC0); // just plot data B through A
 	WR8_CS_BLIT_BLITCON(BLITCON_EXEC_A | BLITCON_EXEC_C | BLITCON_EXEC_D);
 	WR8_CS_BLIT_BLITCON(BLITCON_ACT_ACT | BLITCON_ACT_CELL | BLITCON_ACT_MODE_4BBP);
 	cursor+=4*8;
 }
 
-void plot_hexN(unsigned char i) {
+void plot_hexN(uint8_t i) {
 	if (i <= 9)
 		plot_char('0' + i);
 	else
 		plot_char('A' + i - 10);
 }
-void plot_hex8(unsigned char i) {
+void plot_hex8(uint8_t i) {
 	plot_hexN(i >> 4);
 	plot_hexN(i & 0x0F);
 
 }
-void plot_hex16(unsigned char i) {
+void plot_hex16(uint16_t i) {
 	plot_hex8(i >> 8);
 	plot_hex8(i);
 }

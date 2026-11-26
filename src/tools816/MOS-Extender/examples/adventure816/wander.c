@@ -25,6 +25,7 @@ SOFTWARE.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "oslib-ext.h"
 
@@ -34,7 +35,7 @@ SOFTWARE.
 
 #include "sprite.h"
 #include "screenmaths.h"
-//#include "text.h"
+#include "text.h"
 //#include "tile_map.h"
 //
 //#include "mapdef.h"
@@ -223,8 +224,12 @@ uint8_t getkey(void) {
 	return X;
 }
 
+uint8_t prev_cfs_to;
 
 int main(void) {
+
+	xos_wrch(22);
+	xos_wrch(2);
 
 	uint16_t room_exit = 0;
 
@@ -254,6 +259,7 @@ int main(void) {
 	// clear restore
 	spr_restore_init();
 
+
 	while (1) {
 		wait_vsync();
 
@@ -269,10 +275,12 @@ int main(void) {
 		charspr_ix++;
 		charspr_ix = charspr_ix & 0x0F;
 
-//		setcursor(0x4000);
-//		plot_hex16(framectr);
-//		plot_hex8(donumchars);
-//
+		setcursor(0x4000);
+		plot_hex16(framectr);
+		plot_hex8(donumchars);
+		plot_hex8(prev_cfs_to - *((volatile uint8_t *)0x0000240));
+		prev_cfs_to = *((volatile uint8_t *)0x0000240);
+
 		while (dma_act()) {};
 
 		spr_restore();
@@ -283,7 +291,7 @@ int main(void) {
 		curchar = chars;
 		for (i = 0; i < donumchars; i++)
 		{
-			charac_spr_plot(curchar->x, curchar->y, curchar->off + (charspr_ix >> 2));
+			charac_spr_plot(curchar->x, curchar->y, curchar->off + ((i + charspr_ix >> 2) & 0x3));
 			curchar++;
 		}
 		

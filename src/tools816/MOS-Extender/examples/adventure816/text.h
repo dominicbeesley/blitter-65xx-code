@@ -26,10 +26,12 @@ SOFTWARE.
 #ifndef __TEXT_H__
 #define __TEXT_H__
 
-extern void setcursor(unsigned int addr16);
+#include <stdint.h>
+
+extern void setcursor(uint16_t addr16);
 extern void plot_char(char c);
-extern void plot_hexN(unsigned char i);
-extern void plot_hex8(unsigned char i);
-extern void plot_hex16(unsigned char i);
+extern void plot_hexN(uint8_t i);
+extern void plot_hex8(uint8_t i);
+extern void plot_hex16(uint16_t i);
 
 #endif

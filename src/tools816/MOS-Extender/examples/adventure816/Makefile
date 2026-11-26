@@ -35,7 +35,7 @@ MOSEXT_BIN=$(abspath $(BUILD)/$(MOSEXT_DIR)/mos-ext.bin)
 
 GAME_C_OBJS=	game dma myos tile_map adval sprite screenmaths
 GAME_S_OBJS=	startup draw_map
-WANDER_C_OBJS=	wander dma sprite screenmaths # tile_map text
+WANDER_C_OBJS=	wander dma sprite screenmaths text # tile_map
 WANDER_S_OBJS=	startup #draw_map
 LOADER_C_OBJS=	loader dma
 LOADER_S_OBJS=	startup rle_asm
