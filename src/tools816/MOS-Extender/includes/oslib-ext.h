@@ -46,6 +46,8 @@ extern const os_error *xos_bget(uint16_t handle, uint16_t *ret);
 extern const os_error *xos_bput(uint16_t handle, uint8_t b);
 extern const os_error *xos_gbpb(uint8_t funcode, os_gbpb_blk *blk);
 extern const os_error *xos_file(uint8_t funtion, os_file_blk *blk);
+extern const os_error *xos_byte(uint8_t A, uint8_t X, uint8_t Y);
+extern const os_error *xos_byte_ret(uint8_t A, uint8_t *X, uint8_t *Y);
 
 
 #define OS_XSTR(x) __str(x)

@@ -42,7 +42,7 @@ typedef struct spr_save {
 } spr_save;
 
 spr_save* ptr_spr_save;
-spr_save spr_save_block[SPR_SAVE_MAX-1];
+spr_save spr_save_block[SPR_SAVE_MAX];
 
 //	scr_dma_addr16	- the address to plot to in screen ram (low 15 bits only)
 //	w		- width in char cells-1
@@ -55,7 +55,7 @@ void spr_save_and_plot(uint8_t w, uint8_t h, uint8_t execmask, uint16_t scr_dma_
 	SET_DMA_WORD(CS_BLIT_ADDR_C, scr_dma_addr16);
 	//SET_DMA_WORD(CS_BLIT_ADDR_D, scr_dma_addr16); //TODO: NEWABI
 
-	if (ptr_spr_save >= &spr_save_block[SPR_SAVE_MAX-1])
+	if (ptr_spr_save >= &spr_save_block[SPR_SAVE_MAX])
 		OS_BRK(0xFF, "SPR SAVE AREA FULL");
 
 	ptr_spr_save->scr_addr_16 = scr_dma_addr16;

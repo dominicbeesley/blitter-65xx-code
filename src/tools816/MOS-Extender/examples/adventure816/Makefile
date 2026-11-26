@@ -3,7 +3,7 @@
 _dummy := $(shell mkdir -p $(BUILD)/tiles $(BUILD)/maps $(BUILD)/includes)
 
 
-TARGETS=loader	#game loader wander
+TARGETS=loader wander	#game loader 
 
 SSD=$(SSDS)/advent816.ssd
 
@@ -11,14 +11,16 @@ export VBCC        = /home/domin/vbcc65816/vbcc65816_linux/vbcc
 COMPILER_ROOT	=	${VBCC}/bin
 export PATH     := ${COMPILER_ROOT}:$(PATH)
 
-INCS=../../includes $(BUILD)/includes/ . ../../../../includes
+INCS=../../includes $(BUILD)/includes/ $(BUILD)/maps/ . ../../../../includes
 
 CC=${COMPILER_ROOT}/vc
-CFLAGS=-O3 +./dom-10000 -c99 $(foreach d,${INCS},-I$(d))
+CFLAGS=-O3 -inline-size=0 +./dom-10000 -c99 $(foreach d,${INCS},-I$(d))
 LD=${COMPILER_ROOT}/vlink
 LDFLAGS=-m -b rawbin1 -nowarn=22 -Cvbcc -T${VBCC}/targets/65816-dom/vlink.cmd -L${VBCC}/targets/65816-dom/lib
 AS=${COMPILER_ROOT}/vasm6502_oldstyle
 ASFLAGS= -dotdir -816 -Fvobj $(foreach d,${INCS},-I$(d))
+# 65816 size linter: advisory only, runs on every make after the link
+LINT=$(SCRIPTS)/lint65816.py -s vasm $(foreach d,${INCS},-I$(d))
 
 # all the C for each program is compiled together (vc -O3 cross-module) into
 # one .s file, kept for reading and linting
@@ -31,11 +33,11 @@ OSLIBEXT_LIB:=$(abspath $(BUILD)/$(OSLIBEXT_DIR)/liboslibext.a)
 MOSEXT_DIR=../../mos-ext
 MOSEXT_BIN=$(abspath $(BUILD)/$(MOSEXT_DIR)/mos-ext.bin)
 
-GAME_C_OBJS=	game dma myos tile_map adval sprite
-GAME_S_OBJS=	draw_map brk screenmaths
-WANDER_C_OBJS=	wander dma myos tile_map sprite text
-WANDER_S_OBJS=	draw_map brk screenmaths
-LOADER_C_OBJS=	loader dma sprite screenmaths
+GAME_C_OBJS=	game dma myos tile_map adval sprite screenmaths
+GAME_S_OBJS=	startup draw_map
+WANDER_C_OBJS=	wander dma sprite screenmaths # tile_map text
+WANDER_S_OBJS=	startup #draw_map
+LOADER_C_OBJS=	loader dma
 LOADER_S_OBJS=	startup rle_asm
 
 TILES=	$(BUILD)/tiles/charac.rle \
@@ -45,7 +47,7 @@ TILES=	$(BUILD)/tiles/charac.rle \
 		$(BUILD)/tiles/over.collide.rle \
 		$(BUILD)/tiles/over.map.rle
 
-GROUPS=over
+GROUPS=#over
 
 GROUPS_O=$(addprefix $(BUILD)/, $(addsuffix .o, $(GROUPS)))
 GROUPS_H_O=$(addprefix $(BUILD)/tiles/, $(addsuffix .h, $(GROUPS)))
@@ -55,7 +57,12 @@ GAME_OBJS_O=$(BUILD)/game_c.o $(addprefix $(BUILD)/, $(addsuffix .o, $(GAME_S_OB
 WANDER_OBJS_O=$(BUILD)/wander_c.o $(addprefix $(BUILD)/, $(addsuffix .o, $(WANDER_S_OBJS))) $(GROUPS_O)
 LOADER_OBJS_O=$(BUILD)/loader_c.o $(addprefix $(BUILD)/, $(addsuffix .o, $(LOADER_S_OBJS)))
 
-.PHONY: all tiles ssd deploy FORCE
+# assembly the linter reads for each program: hand-written .s plus vc's output
+GAME_LINT_S=$(addsuffix .s, $(GAME_S_OBJS)) $(BUILD)/game_c.s
+WANDER_LINT_S=$(addsuffix .s, $(WANDER_S_OBJS)) $(BUILD)/wander_c.s
+LOADER_LINT_S=$(addsuffix .s, $(LOADER_S_OBJS)) $(BUILD)/loader_c.s
+
+.PHONY: all tiles ssd deploy lint FORCE $(addprefix lint-, $(TARGETS))
 
 $(OSLIBEXT_LIB): FORCE
 	$(MAKE) -C $(OSLIBEXT_DIR)
@@ -65,7 +72,20 @@ $(MOSEXT_BIN): FORCE
 
 tiles: $(TILES)
 
-all: $(TARGETS_O)
+all: $(TARGETS_O) lint
+
+# lint each built program; '-' so lint messages never stop the build.
+# Each depends on its .bin so it runs after the link.
+lint: $(addprefix lint-, $(TARGETS))
+
+lint-game: $(BUILD)/game.bin
+	-$(LINT) $(GAME_LINT_S)
+
+lint-wander: $(BUILD)/wander.bin
+	-$(LINT) $(WANDER_LINT_S)
+
+lint-loader: $(BUILD)/loader.bin
+	-$(LINT) $(LOADER_LINT_S)
 
 ssd: $(SSD) 
 
@@ -85,18 +105,18 @@ $(SSD): $(TILES) $(TARGETS_O) ./ssd/_21BOOT.xxx
 	dfs add -l FFFF2000 -e FFFF2000 -f 'T.OCOLL' $(SSD) $(BUILD)/tiles/over.collide.rle
 	dfs add -l FFFF2000 -e FFFF2000 -f 'M.OVER' $(SSD) $(BUILD)/tiles/over.map.rle
 	#	dfs add -l 00010000 -e 00010000 -f '$.GAME' $(SSD) $(BUILD)/game.bin
-	#dfs add -l 00010000 -e 00010000 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin
+	dfs add -l 00010000 -e 00010000 -f '$.WANDER' $(SSD) $(BUILD)/wander.bin
 	dfs add -l 00010000 -e 00010000 -f '$.LOADER' $(SSD) $(BUILD)/loader.bin
 	dfs add -l FFFFFFFF -e FFFFFFFF -f '$.!BOOT' $(SSD) ./ssd/_21BOOT.xxx
 	dfs add $(SSD) $(MOSEXT_BIN)
 
-$(BUILD)/game.bin: $(GAME_OBJS_O) game.cfg
+$(BUILD)/game.bin: $(GAME_OBJS_O) $(OSLIBEXT_LIB) game.cfg
 	$(LD) $(LDOPT) -C game.cfg -o $@ $(GAME_OBJS_O) $(CLIB) -m $@.map
 	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/game.bin.map >$(BUILD)/game.noi
 
-$(BUILD)/wander.bin: $(WANDER_OBJS_O) wander.cfg
-	$(LD) $(LDOPT) -C wander.cfg -o $@ $(WANDER_OBJS_O) $(CLIB) -m $@.map
-	$(SCRIPTS)/ld65map2noi.pl <$(BUILD)/wander.bin.map >$(BUILD)/wander.noi
+$(BUILD)/wander.bin: $(WANDER_OBJS_O) $(OSLIBEXT_LIB) wander.cfg
+	$(LD)  $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx" $(WANDER_OBJS_O) $(OSLIBEXT_LIB) -o $@ -lvc 
+	$(SCRIPTS)/ld65map2noi.pl <$(basename $@).map >$(BUILD)/wander.noi
 
 $(BUILD)/loader.bin: $(LOADER_OBJS_O) $(OSLIBEXT_LIB) loader.cfg
 	$(LD) $(LDFLAGS) -M$(basename $@).map -symfile $(basename $@).sym -symfmt "DEF %s %06llx" $(LOADER_OBJS_O) $(OSLIBEXT_LIB) -o $@ -lvc 
@@ -148,6 +168,7 @@ $(BUILD)/tiles/over.h &: $(wildcard maps/*.tmx) $(wildcard maps/*.tsx) maps/main
 		scripts/makemapsandcuts2.pl $(BUILD)/tiles "over" 0 maps/main.pal $(wildcard maps/*.tmx)
 
 $(BUILD)/game_c.s:$(BUILD)/includes/all_maps.h
+$(BUILD)/wander_c.s:$(BUILD)/includes/all_maps.h
 
 $(BUILD)/includes/all_maps.h:
 		echo "#ifndef __ALLMAPS_H__" > $@

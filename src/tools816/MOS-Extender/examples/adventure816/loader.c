@@ -151,10 +151,6 @@ int main(void) {
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 
-//	//naughty - set jim devno but don't save old
-//	*((unsigned char *)0xEE) = JIM_DEVNO_BLITTER;
-//	*((unsigned char *)fred_JIM_DEVNO) = JIM_DEVNO_BLITTER;
-
 	xos_wrch(22);
 	xos_wrch(2);
 
@@ -162,11 +158,8 @@ int main(void) {
 	loadbacktiles();
 	loadforetiles();
 	loadcolltiles();
-//
-//	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_CHIPSET & 0xFF;
-//	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_CHIPSET >> 8;
-//
-//	loadtiles();
+
+	loadtiles();
 
 	loadpal();
 

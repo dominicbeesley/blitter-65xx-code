@@ -24,23 +24,21 @@ SOFTWARE.
 */
 
 #include <stdio.h>
-#include <oslib/os.h>
-#include <oslib/osfile.h>
 #include <stdlib.h>
+
+#include "oslib-ext.h"
 
 #include "hardware.h"
 #include "adv_globals.h"
 #include "dma.h"
-#include "myos.h"
 
-#include "brk.h"
 #include "sprite.h"
 #include "screenmaths.h"
-#include "text.h"
-#include "tile_map.h"
-
-#include "mapdef.h"
-#include "all_maps.h"
+//#include "text.h"
+//#include "tile_map.h"
+//
+//#include "mapdef.h"
+//#include "all_maps.h"
 
 
 // 		setdp	0
@@ -52,17 +50,17 @@ SOFTWARE.
 // zp_spr_save_ram	equ	$74				; points at chip ram containing the save (only ls 2 bytes!)
 
 
-unsigned int framectr;
+uint16_t framectr;
 
 
 #define NUM_CHARS	79
 
 typedef struct {
-	signed int x;
-	signed char dx;
-	signed int y;
-	signed char dy; 
-	unsigned char off;
+	int16_t x;
+	int8_t dx;
+	int16_t y;
+	int8_t dy; 
+	uint8_t off;
 } charstuff;
 
 charstuff chars[NUM_CHARS];
@@ -75,12 +73,12 @@ void debug(unsigned int x)
 }
 
 void dma_shadow2_scr(void) {
-	dma_copy_block(0,DMA_SCR_SHADOW,0xFF3000,0x5000);
+	dma_copy_block(0,DMA_SCR_SHADOW,(void *)0xFF3000,0x5000);
 }			
 
 
 void wait_vsync() {
-	my_os_byteA(19);
+	xos_byte(19, 0, 0);
 }
 
 #define X_START	18
@@ -99,27 +97,27 @@ void wait_vsync() {
 #define KEY_UP 0x04
 #define KEY_LT 0x08
 
-unsigned char char_keyspressed;
-unsigned char char_facing;
-unsigned char joystick_facing;
-unsigned char char_mask_tmp;
+uint8_t char_keyspressed;
+uint8_t char_facing;
+uint8_t joystick_facing;
+uint8_t char_mask_tmp;
 
-unsigned char tmp_ix, tmp_iy;
+uint8_t tmp_ix, tmp_iy;
 
-const char keys[] = { 0xE8, 0xC2, 0xC8, 0xE1 };
+uint8_t keys[] = { 0xE8, 0xC2, 0xC8, 0xE1 };
 
-unsigned char charspr_ix;
-signed x, y;
+uint8_t charspr_ix;
+int16_t x, y;
 
-int i;
-unsigned char offswap;
+int16_t i;
+uint8_t offswap;
 
-int rndctr = 0;
-int donumchars = 5;
+uint16_t rndctr = 0;
+uint16_t donumchars = 5;
 charstuff *curchar;
 
 
-unsigned char diroff(signed char x, signed char y) {
+unsigned char diroff(int8_t x, int8_t y) {
 	if (x > 0) {
 		return 4;
 	} else if (x < 0) {
@@ -173,72 +171,11 @@ void randdir(void) {
 
 void move(void) {
 
-//
-// offswap = 0
-//
-	asm("		ldy	#0");
-	asm("		sty	_offswap");
-
-//
-// x = curchar->x;
-//
-	asm("		lda     _curchar+1");
-	asm("		sta     ptr1+1");
-	asm("		lda     _curchar");
-	asm("		sta     ptr1");
-
-	asm("		iny");
-	asm("		lda	(ptr1),y");
-	asm("		tax");
-	asm("		dey");
-	asm("		lda	(ptr1),y");
-
-	asm("		sta     _x");
-	asm("		stx     _x+1");
-//
-// x += curchar->dx;
-//
-	asm("		ldy     #$02");
-	asm("		lda	(ptr1),y");
-	asm("		ldx     #$00");
-	asm("		cmp     #$80");
-	asm("		bcc     x1");
-	asm("		dex");
-	asm("		clc");
-	asm("x1:");
-	asm("		adc     _x");
-	asm("		sta     _x");
-	asm("		txa");
-	asm("		adc     _x+1");
-	asm("		sta     _x+1");
-
-// 
-// y = curchar->y;
-// 
-	asm("		iny");
-	asm("		iny");
-	asm("		lda	(ptr1),y");
-	asm("		tax");
-	asm("		dey");
-	asm("		lda	(ptr1),y");
-	asm("		sta     _y");
-	asm("		stx     _y+1");
-//
-// y += curchar->dy;
-//
-	asm("		ldy     #$05");
-	asm("		lda	(ptr1),y");
-	asm("		ldx     #$00");
-	asm("		cmp     #$80");
-	asm("		bcc     L0137");
-	asm("		dex");
-	asm("		clc");
-	asm("L0137:	adc     _y");
-	asm("		sta     _y");
-	asm("		txa");
-	asm("		adc     _y+1");
-	asm("		sta     _y+1");
-
+	offswap = 0;
+	x = curchar->x;
+	x += curchar->dx;
+	y = curchar->y;
+	y += curchar->dy;
 
 	if (x < -20)
 	{
@@ -278,27 +215,18 @@ void move(void) {
 }
 
 
-unsigned char getkey(void) {
-	asm("lda	#$81");
-	asm("ldx	#0");
-	asm("ldy	#0");
-	asm("jsr	$FFF4");
-	asm("txa");
-	asm("bcc	s1");
-	asm("lda	#0");
-	asm("s1:");
+uint8_t getkey(void) {
+	uint8_t X, Y;
+	X=0;
+	Y=0;
+	xos_byte_ret(0x81, &X, &Y);
+	return X;
 }
 
 
-void main(void) {
+int main(void) {
 
-	unsigned room_exit = 0;
-
-	//naughty - set jim devno but don't save old
-	*((unsigned char *)0xEE) = JIM_DEVNO_BLITTER;
-	*((unsigned char *)fred_JIM_DEVNO) = JIM_DEVNO_BLITTER;
-	*((unsigned char *)fred_JIM_PAGE_LO) = jim_page_CHIPSET & 0xFF;
-	*((unsigned char *)fred_JIM_PAGE_HI) = jim_page_CHIPSET >> 8;
+	uint16_t room_exit = 0;
 
 	curchar = chars;
 	for (i = 0; i < NUM_CHARS; i++)
@@ -311,16 +239,16 @@ void main(void) {
 
 	dma_clear(DMA_SCR_SHADOW, 0, 0x5000-1);
 
-	set_map(&home_def);
-	set_offset(0,0);
-
-
-	dma_copy_block(1, DMA_TILE_MAP, 0x000000L + (long)A_TILE_MAP, TILE_MAP_SZ);
+//	set_map(&home_def);
+//	set_offset(0,0);
+//
+//
+//	dma_copy_block(1, DMA_TILE_MAP, 0x000000L + (long)A_TILE_MAP, TILE_MAP_SZ);
 
 	spr_init();
-	// draw background
-	draw_map(map_ptr_offset);
-	draw_front_nosave(0x03);
+//	// draw background
+//	draw_map(map_ptr_offset);
+//	draw_front_nosave(0x03);
 
 
 	// clear restore
@@ -341,10 +269,10 @@ void main(void) {
 		charspr_ix++;
 		charspr_ix = charspr_ix & 0x0F;
 
-		setcursor(0x4000);
-		plot_hex16(framectr);
-		plot_hex8(donumchars);
-
+//		setcursor(0x4000);
+//		plot_hex16(framectr);
+//		plot_hex8(donumchars);
+//
 		while (dma_act()) {};
 
 		spr_restore();
@@ -381,6 +309,8 @@ void main(void) {
 		else
 			debug(0);
 	}
+
+	return 0;
 }
 
 
