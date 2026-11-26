@@ -28,14 +28,26 @@ SOFTWARE.
 #include "dma.h"
 #include "types.h"
 
+//---------------------- register read/write declarations
+DECL_WR8(WR8_CS_DMA_SEL, CS_DMA_SEL)
+DECL_WR16(WR16_CS_DMA_COUNT, CS_DMA_COUNT)
+DECL_WR8(WR8_CS_DMA_DATA, CS_DMA_DATA)
+DECL_WR32(WR32_CS_DMA_DEST_ADDR, CS_DMA_DEST_ADDR)
+DECL_WR32(WR32_CS_DMA_SRC_ADDR, CS_DMA_SRC_ADDR)
+DECL_WR8(WR8_CS_DMA_CTL, CS_DMA_CTL)
+
+DECL_RD8(RD8_CS_DMA_CTL, CS_DMA_CTL)
+//----------------------
+
+
 void dma_clear(LPTR dma_dest_addr, uint8_t value, uint16_t count)
 {
 	count--;
-	SET_DMA_BYTE(CS_DMA_SEL, 0);
-	SET_DMA_WORD(CS_DMA_COUNT, count);
-	SET_DMA_BYTE(CS_DMA_DATA, value);
-	SET_DMA_ADDR(CS_DMA_DEST_ADDR, dma_dest_addr);
-	SET_DMA_BYTE(CS_DMA_CTL, DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_NOP);
+	WR8_CS_DMA_SEL(0);
+	WR16_CS_DMA_COUNT(count);
+	WR8_CS_DMA_DATA(value);
+	WR32_CS_DMA_DEST_ADDR((long)dma_dest_addr);
+	WR8_CS_DMA_CTL(DMACTL_ACT + DMACTL_HALT + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_NOP);
 
 }
 
@@ -44,15 +56,15 @@ void dma_copy_block(BOOL halt, LPTR dma_src_addr, LPTR dma_dest_addr, uint16_t c
 	//php
 	//sei
 	count--;
-	SET_DMA_BYTE(CS_DMA_SEL, 0);
-	SET_DMA_WORD(CS_DMA_COUNT, count);
-	SET_DMA_ADDR(CS_DMA_SRC_ADDR, dma_src_addr);
-	SET_DMA_ADDR(CS_DMA_DEST_ADDR, dma_dest_addr);
-	SET_DMA_BYTE(CS_DMA_CTL, DMACTL_ACT + ((halt)?DMACTL_HALT:0) + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP);
+	WR8_CS_DMA_SEL(0);
+	WR16_CS_DMA_COUNT(count);
+	WR32_CS_DMA_SRC_ADDR((long)dma_src_addr);
+	WR32_CS_DMA_DEST_ADDR((long)dma_dest_addr);
+	WR8_CS_DMA_CTL(DMACTL_ACT + ((halt)?DMACTL_HALT:0) + DMACTL_STEP_DEST_UP + DMACTL_STEP_SRC_UP);
 	//plp
 
 }
 
 BOOL dma_act(void) {
-	return GET_DMA_BYTE(CS_DMA_CTL) & DMACTL_ACT;
+	return RD8_CS_DMA_CTL() & DMACTL_ACT;
 }

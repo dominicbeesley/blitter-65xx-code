@@ -23,13 +23,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "hardware.h"
+#include "hardware816.h"
 #include <oslib/os.h>
 #include "adv_globals.h"
 #include "screenmaths.h"
 #include "sprite.h"
 #include "mapdef.h"
 #include "dma.h"
+
+//---------------------- register read/write declarations
+DECL_RD8(RD8_CS_BLIT_BLITCON, CS_BLIT_BLITCON)
+DECL_WR16(WR16_CS_BLIT_ADDR_A, CS_BLIT_ADDR_A)
+DECL_WR16(WR16_CS_BLIT_ADDR_B, CS_BLIT_ADDR_B)
+DECL_WR16(WR16_CS_BLIT_STRIDE_A, CS_BLIT_STRIDE_A)
+DECL_WR16(WR16_CS_BLIT_STRIDE_B, CS_BLIT_STRIDE_B)
+DECL_WR8(WR8_CS_BLIT_ADDR_A_BANK, CS_BLIT_ADDR_A+2)
+DECL_WR8(WR8_CS_BLIT_ADDR_B_BANK, CS_BLIT_ADDR_B+2)
+DECL_WR8(WR8_CS_BLIT_BLITCON, CS_BLIT_BLITCON)
+DECL_WR8(WR8_CS_BLIT_DATA_B, CS_BLIT_DATA_B)
+DECL_WR8(WR8_CS_BLIT_FUNCGEN, CS_BLIT_FUNCGEN)
+DECL_WR8(WR8_CS_BLIT_HEIGHT, CS_BLIT_HEIGHT)
+DECL_WR8(WR8_CS_BLIT_MASK_FIRST, CS_BLIT_MASK_FIRST)
+DECL_WR8(WR8_CS_BLIT_MASK_LAST, CS_BLIT_MASK_LAST)
+DECL_WR8(WR8_CS_BLIT_SHIFT_A, CS_BLIT_SHIFT_A)
+DECL_WR8(WR8_CS_BLIT_SHIFT_B, CS_BLIT_SHIFT_B)
+DECL_WR8(WR8_CS_BLIT_WIDTH, CS_BLIT_WIDTH)
+//----------------------
 
 mapdef_t *map_cur = NULL;
 unsigned char *map_ptr = A_TILE_MAP;
@@ -62,7 +81,7 @@ unsigned char get_tile_at(unsigned char layer, signed char x, signed char y) {
 
 
 unsigned char getbltcon() {
-	return GET_DMA_BYTE(jim_CS_BLIT_BLITCON);
+	return RD8_CS_BLIT_BLITCON();
 }
 
 
@@ -71,13 +90,13 @@ void front_spr_addr(unsigned char tileno)
 {
 	unsigned int a;
 
-	SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_FRONT_SPR >> 16);
-	SET_DMA_BYTE(jim_CS_BLIT_ADDR_A+2, DMA_FRONT_SPR >> 16);
+	WR8_CS_BLIT_ADDR_B_BANK(DMA_FRONT_SPR >> 16);
+	WR8_CS_BLIT_ADDR_A_BANK(DMA_FRONT_SPR >> 16);
 
 	a = ((unsigned int)FRONT_SPR_SZ)*((unsigned int)tileno);
-	SET_DMA_WORD(jim_CS_BLIT_ADDR_B, a);
+	WR16_CS_BLIT_ADDR_B(a);
 	a+= FRONT_SPR_MO; 
-	SET_DMA_WORD(jim_CS_BLIT_ADDR_A, a);
+	WR16_CS_BLIT_ADDR_A(a);
 	//Assume all tiles in single bank
 
 }
@@ -86,12 +105,12 @@ void front_spr_addr(unsigned char tileno)
 void coll_spr_addr(unsigned char tileno)
 {
 	unsigned int a = ((unsigned int)COLL_SPR_SZ)*((unsigned int)tileno);
-	SET_DMA_WORD(jim_CS_BLIT_ADDR_B, a);
+	WR16_CS_BLIT_ADDR_B(a);
 	a+= FRONT_SPR_MO;
-	SET_DMA_WORD(jim_CS_BLIT_ADDR_A, a);
+	WR16_CS_BLIT_ADDR_A(a);
 	//Assume all tiles in single bank
-	SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_COLL_SPR >> 16);
-	SET_DMA_BYTE(jim_CS_BLIT_ADDR_A+2, DMA_COLL_SPR >> 16);
+	WR8_CS_BLIT_ADDR_B_BANK(DMA_COLL_SPR >> 16);
+	WR8_CS_BLIT_ADDR_A_BANK(DMA_COLL_SPR >> 16);
 
 }
 
@@ -110,12 +129,12 @@ void draw_front_nosave(unsigned char flags) {
 
 	scr_addr16 = XY_to_dma_scr_adr(0,0);
 
-	SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0);
-	SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
-	SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
+	WR8_CS_BLIT_SHIFT_A(0);
+	WR8_CS_BLIT_MASK_FIRST(0xFF);
+	WR8_CS_BLIT_MASK_LAST(0xFF);
 
-	SET_DMA_WORD(jim_CS_BLIT_STRIDE_A, TILE_X_SZ >> 3);
-	SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, TILE_X_SZ >> 1);
+	WR16_CS_BLIT_STRIDE_A(TILE_X_SZ >> 3);
+	WR16_CS_BLIT_STRIDE_B(TILE_X_SZ >> 1);
 
 	tile_ptr = (unsigned char *)(map_ptr_offset + map_layer_size);
 	coll_ptr = tile_ptr + map_layer_size;
@@ -150,12 +169,12 @@ void draw_front(unsigned char flags) {
 
 	scr_addr16 = XY_to_dma_scr_adr(0,0);
 
-	SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0);
-	SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
-	SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
+	WR8_CS_BLIT_SHIFT_A(0);
+	WR8_CS_BLIT_MASK_FIRST(0xFF);
+	WR8_CS_BLIT_MASK_LAST(0xFF);
 
-	SET_DMA_WORD(jim_CS_BLIT_STRIDE_A, TILE_X_SZ >> 3);
-	SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, TILE_X_SZ >> 1);
+	WR16_CS_BLIT_STRIDE_A(TILE_X_SZ >> 3);
+	WR16_CS_BLIT_STRIDE_B(TILE_X_SZ >> 1);
 
 	tile_ptr = (char *)(map_ptr_offset + map_layer_size);
 	coll_ptr = tile_ptr + map_layer_size;
@@ -190,12 +209,12 @@ void draw_front(unsigned char flags) {
 void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, unsigned char colourB) {
 
 	scr_addr16 = XY_to_dma_scr_adr(x *TILE_X_SZ, y * TILE_Y_SZ);
-	SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, 0);
-	SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, 0xFF);
-	SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, 0xFF);
+	WR8_CS_BLIT_SHIFT_A(0);
+	WR8_CS_BLIT_MASK_FIRST(0xFF);
+	WR8_CS_BLIT_MASK_LAST(0xFF);
 
-	SET_DMA_WORD(jim_CS_BLIT_STRIDE_A, TILE_X_SZ >> 3);
-	SET_DMA_BYTE(jim_CS_BLIT_DATA_B, colourB);
+	WR16_CS_BLIT_STRIDE_A(TILE_X_SZ >> 3);
+	WR8_CS_BLIT_DATA_B(colourB);
 
 	coll_spr_addr(tileno-1);
 	spr_save_and_plot((TILE_X_SZ>>1)-1, TILE_Y_SZ-1, BLITCON_EXEC_A + BLITCON_EXEC_C + BLITCON_EXEC_D + BLITCON_EXEC_E, scr_addr16);
@@ -272,26 +291,26 @@ unsigned char colcheck(
 			shiftB = -offsx;
 		}
 
-		SET_DMA_BYTE(jim_CS_BLIT_SHIFT_A, shiftA);
-		SET_DMA_BYTE(jim_CS_BLIT_SHIFT_B, shiftB);  
-		SET_DMA_BYTE(jim_CS_BLIT_MASK_FIRST, mask_first);
-		SET_DMA_BYTE(jim_CS_BLIT_MASK_LAST, mask_last);
+		WR8_CS_BLIT_SHIFT_A(shiftA);
+		WR8_CS_BLIT_SHIFT_B(shiftB);  
+		WR8_CS_BLIT_MASK_FIRST(mask_first);
+		WR8_CS_BLIT_MASK_LAST(mask_last);
 
 
-		SET_DMA_BYTE(jim_CS_BLIT_ADDR_A+2, DMA_CHARAC_SPR >> 16);
-		SET_DMA_WORD(jim_CS_BLIT_ADDR_A, ch_addr);
+		WR8_CS_BLIT_ADDR_A_BANK(DMA_CHARAC_SPR >> 16);
+		WR16_CS_BLIT_ADDR_A(ch_addr);
 
-		SET_DMA_BYTE(jim_CS_BLIT_ADDR_B+2, DMA_COLL_SPR >> 16);
-		SET_DMA_WORD(jim_CS_BLIT_ADDR_B, coll_addr);
+		WR8_CS_BLIT_ADDR_B_BANK(DMA_COLL_SPR >> 16);
+		WR16_CS_BLIT_ADDR_B(coll_addr);
 
-		SET_DMA_BYTE(jim_CS_BLIT_WIDTH, bw-1);
-		SET_DMA_WORD(jim_CS_BLIT_STRIDE_A, COLL_SPR_MASK_BYTES_PER_LINE);
-		SET_DMA_WORD(jim_CS_BLIT_STRIDE_B, COLL_SPR_MASK_BYTES_PER_LINE);
-		SET_DMA_BYTE(jim_CS_BLIT_HEIGHT, h-1);
+		WR8_CS_BLIT_WIDTH(bw-1);
+		WR16_CS_BLIT_STRIDE_A(COLL_SPR_MASK_BYTES_PER_LINE);
+		WR16_CS_BLIT_STRIDE_B(COLL_SPR_MASK_BYTES_PER_LINE);
+		WR8_CS_BLIT_HEIGHT(h-1);
 
-		SET_DMA_BYTE(jim_CS_BLIT_FUNCGEN, 0xC0); //A&B
-		SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_EXEC_A | BLITCON_EXEC_B);
-		SET_DMA_BYTE(jim_CS_BLIT_BLITCON, BLITCON_ACT_ACT + BLITCON_ACT_MODE_1BBP + BLITCON_ACT_COLLIDE);
+		WR8_CS_BLIT_FUNCGEN(0xC0); //A&B
+		WR8_CS_BLIT_BLITCON(BLITCON_EXEC_A | BLITCON_EXEC_B);
+		WR8_CS_BLIT_BLITCON(BLITCON_ACT_ACT + BLITCON_ACT_MODE_1BBP + BLITCON_ACT_COLLIDE);
 
 		//check result -- bodge using a function to get round ca65's lack of volatile
 		if (getbltcon() & BLITCON_ACT_COLLIDE)

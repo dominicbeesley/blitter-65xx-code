@@ -9,23 +9,31 @@
 #define TRUE 1
 #define FALSE 0
 
-#define SET_DMA_BYTE(x,y) \
-	{*((uint8_t volatile *)x) = (y);} 
+#define XSTR(x) #x
+#define STR(x)  XSTR(x)
 
-#define GET_DMA_BYTE(x) \
-	(*((uint8_t volatile *)x))
+#define DECL_WR8(name, addr) \
+        void name(__reg("a") unsigned char v) = \
+        "\tsep\t#32\n\tsta\t>" STR(addr) "\n\trep\t#32";
+#define DECL_WR16(name, addr) \
+        void name(__reg("a") unsigned short v) = "\tsta\t>" STR(addr);
+#define DECL_WR32(name, addr) \
+        void name(__reg("a/x") unsigned long v) = \
+        "\tsta\t>" STR(addr) "\n" \
+        "\tpha\n\ttxa\n\tsta\t>" STR(addr) "+2\n\tpla";
+#define DECL_WR24(name, addr) \
+        void name(__reg("a/x") unsigned long v) = \
+        "\tsta\t>" STR(addr) "\n" \
+        "\tpha\n\ttxa\n\tsep\t#$20\n\tsta\t>" STR(addr) "+2\n\trep\t#$20\n\tpla";
 
-//WARNING: sets a 32 bit address - may have consequences
-#define SET_DMA_ADDR(x,y) \
-	{*((uint32_t volatile *)x) = (uint32_t)y;}
 
-#define SET_DMA_WORD(x,y) \
-	{*((uint16_t volatile *)x) = y;}
 
-#define GET_DMA_WORD(x) \
-	(*((uint16_t volatile *)x))
-
-#define ADD_DMA_WORD(x, y) \
-	{*((uint16_t volatile *)x) += y;}
+#define DECL_RD8(name, addr) \
+        unsigned char name(void) = "\tsep\t#32\n\tlda\t>" STR(addr) "\n\trep\t#32";
+#define DECL_RD16(name, addr) \
+        unsigned short name(void) = "\tlda\t>" STR(addr);
+#define DECL_RD32(name, addr) \
+        unsigned long name(void) = \
+        "\tlda\t>" STR(addr) "+2\n\ttax\n\tlda\t>" STR(addr);
 
 #endif
