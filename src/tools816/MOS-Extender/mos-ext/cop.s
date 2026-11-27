@@ -734,7 +734,7 @@ COP_27:         inc     DPCOP_PC
                 ora     #$6B00                  ; A contains src bank, RTL
                 sta     f:zp_mvn+2
 
-                ldy     #1
+                ldy     #2
                 lda     [DPCOP_XHA],Y           
                 tax                             ; X contains src
 
