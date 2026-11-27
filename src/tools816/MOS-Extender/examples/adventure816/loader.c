@@ -73,7 +73,7 @@ void loadpal(void) {
 
 uint16_t fh;
 int rle_read_ptr;
-unsigned rle_eof;
+int16_t rle_eof;
 long rle_len;
 void *rle_ptr;
 //unsigned char rle_tmp;
@@ -85,17 +85,17 @@ void nofile(void) {
 }
 
 int rle_read() {
-	if (rle_read_ptr >= RLE_LOADBUFSZ || rle_read_ptr >= rle_eof)
+	while (rle_read_ptr >= rle_eof)
 	{
 		rle_read_ptr = 0;	
-		if (rle_eof)
+		if (!rle_eof)
 			return -1;
 		else {
 			gbpb_blk.rw.handle = fh;
 			gbpb_blk.rw.data = RLE_LOADBUF;
 			gbpb_blk.rw.count = RLE_LOADBUFSZ;
 			xos_gbpb(4, &gbpb_blk);
-			rle_eof = gbpb_blk.rw.count;
+			rle_eof = RLE_LOADBUFSZ - gbpb_blk.rw.count;
 		}	
 	}
 	return ((uint8_t *)RLE_LOADBUF)[rle_read_ptr++];
@@ -112,7 +112,7 @@ void rle_load(const char *filename, void *chip_addr) {
 		nofile();
 
 	rle_read_ptr = 0;
-	rle_eof = 0;
+	rle_eof = -1;
 
 	gbpb_blk.rw.handle = fh;
 	gbpb_blk.rw.data = &rle_len;
@@ -120,8 +120,11 @@ void rle_load(const char *filename, void *chip_addr) {
 
 	xos_gbpb(4, &gbpb_blk);
 
-	rle_load_loop();
+	rle_len--;
+	if (rle_len > 0)
+		rle_load_loop();
 	
+	printf("%X", rle_eof);
 	printf("END %lx\n", (long)rle_ptr);
 
 	xos_find_close(fh);

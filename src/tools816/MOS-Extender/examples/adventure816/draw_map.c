@@ -1,0 +1,50 @@
+#include <stdint.h>
+#include "types.h"
+#include "hardware816.h"
+#include "adv_globals.h"
+#include "screenmaths.h"
+
+extern uint8_t map_width;
+
+DECL_WR16(WR16_CS_BLIT_STRIDE_B, CS_BLIT_STRIDE_B)
+DECL_WR16(WR16_CS_BLIT_STRIDE_D, CS_BLIT_STRIDE_D)
+DECL_WR8(WR8_CS_BLIT_HEIGHT, CS_BLIT_HEIGHT)
+DECL_WR8(WR8_CS_BLIT_WIDTH, CS_BLIT_WIDTH)
+DECL_WR8(WR8_CS_BLIT_FUNCGEN, CS_BLIT_FUNCGEN)
+DECL_WR8(WR8_CS_BLIT_BLITCON, CS_BLIT_BLITCON)
+DECL_WR16(WR16_CS_BLIT_ADDR_B, CS_BLIT_ADDR_B)
+DECL_WR16(WR16_CS_BLIT_ADDR_D, CS_BLIT_ADDR_D)
+DECL_WR8(WR8_CS_BLIT_ADDR_B_BANK, CS_BLIT_ADDR_B+2)
+DECL_WR8(WR8_CS_BLIT_ADDR_D_BANK, CS_BLIT_ADDR_D+2)
+
+void draw_map(uint8_t *p)
+{
+	uint16_t scr, rows, cols;
+
+	WR16_CS_BLIT_STRIDE_B(TILE_B_STRIDE);
+	WR16_CS_BLIT_STRIDE_D(SCREEN_D_STRIDE);
+	WR8_CS_BLIT_HEIGHT(TILE_Y_SZ-1);
+	WR8_CS_BLIT_WIDTH(TILE_B_STRIDE-1);
+	WR8_CS_BLIT_FUNCGEN(0xCC);
+	WR8_CS_BLIT_BLITCON(BLITCON_EXEC_B + BLITCON_EXEC_D);
+	
+	scr = XY_to_dma_scr_adr16(0, 0);
+	
+	WR8_CS_BLIT_ADDR_D_BANK(((uint32_t)DMA_SCR_SHADOW) >> 16);
+	WR8_CS_BLIT_ADDR_B_BANK(((uint32_t)DMA_BACK_SPR) >> 16);
+	
+	for (rows = ROOM_SZ_Y; rows; rows--) {
+		for (cols = ROOM_SZ_X; cols; cols--) {
+			uint8_t t = *p++;
+			if (t) {
+				uint16_t u = (uint16_t)(t - 1) << 6; 
+				WR16_CS_BLIT_ADDR_B(u+u+u); 
+				WR16_CS_BLIT_ADDR_D(scr);
+				WR8_CS_BLIT_BLITCON(BLITCON_ACT_ACT + BLITCON_ACT_CELL + BLITCON_ACT_MODE_4BBP);
+			}
+			scr += 64;
+		}
+		scr += SCREEN_D_STRIDE * 2;
+		p += map_width - ROOM_SZ_X;
+	}
+}

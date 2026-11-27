@@ -232,14 +232,17 @@ foreach my $map (@maps) {
 	print $fh_map_c "\t" . mapref($map, "east") . ",\n";
 	print $fh_map_c "\t" . mapref($map, "west") . ",\n";
 
-	# objects
-	print $fh_map_c "\t{\n";
-
-	foreach my $obj (@{$map->{objects}}) {
-		printf $fh_map_c "\t\tMAPDEF_OBJ_TYPE_%s, %d, %d, { %s },\n", uc($obj->{type}), $obj->{x}, $obj->{y}, $obj->{val};
+	# objects: each object braced; an empty list is { 0 } (C99 has no
+	# empty {}; members not given are zeroed)
+	if (@{$map->{objects}}) {
+		print $fh_map_c "\t{\n";
+		foreach my $obj (@{$map->{objects}}) {
+			printf $fh_map_c "\t\t{ MAPDEF_OBJ_TYPE_%s, %d, %d, { %s } },\n", uc($obj->{type}), $obj->{x}, $obj->{y}, $obj->{val};
+		}
+		print $fh_map_c "\t}\n";
+	} else {
+		print $fh_map_c "\t{ 0 }\n";
 	}
-
-	print $fh_map_c "\t}\n";
 
 
 	print $fh_map_c "};\n";

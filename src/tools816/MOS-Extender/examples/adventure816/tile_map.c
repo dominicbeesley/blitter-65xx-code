@@ -23,8 +23,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include <stddef.h>
+
 #include "hardware816.h"
-#include <oslib/os.h>
 #include "adv_globals.h"
 #include "screenmaths.h"
 #include "sprite.h"
@@ -51,49 +52,49 @@ DECL_WR8(WR8_CS_BLIT_WIDTH, CS_BLIT_WIDTH)
 //----------------------
 
 mapdef_t *map_cur = NULL;
-unsigned char *map_ptr = A_TILE_MAP;
-unsigned char *map_ptr_offset;
-unsigned char map_width;
-unsigned char map_height;
-unsigned int map_layer_size;
-int tile_off_x;
-int tile_off_y;
-char tilemap[TILE_MAP_SZ];
+uint8_t *map_ptr = (uint8_t *)tilemap;
+uint8_t *map_ptr_offset;
+uint8_t map_width;
+uint8_t map_height;
+uint16_t map_layer_size;
+int16_t tile_off_x;
+int16_t tile_off_y;
+uint8_t tilemap[TILE_MAP_SZ];
 
-unsigned char room_exit = 0;
+BOOL room_exit = FALSE;
 
-int char_y, char_x;
+int16_t char_y, char_x;
 
 
 void set_map(mapdef_t *map);
-void set_offset(int x, int y);
+void set_offset(int16_t x, int16_t y);
 
-unsigned char get_tile_at(unsigned char layer, signed char x, signed char y) {
-	signed int xx = tile_off_x + x;
-	signed int yy = tile_off_y + y;
+uint8_t get_tile_at(uint8_t layer, int8_t x, int8_t y) {
+	int16_t xx = tile_off_x + x;
+	int16_t yy = tile_off_y + y;
 	
 	if (xx < 0 || xx >= map_width)
 		return 0;
 	if (yy < 0 || yy >= map_height)
 		return 0;
-	return *(unsigned char *)(map_ptr_offset + (y * map_width) + x + (layer * map_height * map_width));
+	return *(uint8_t *)(map_ptr_offset + (y * map_width) + x + (layer * map_height * map_width));
 }
 
 
-unsigned char getbltcon() {
+uint8_t getbltcon() {
 	return RD8_CS_BLIT_BLITCON();
 }
 
 
 // calculate address of front tile sprite #A in addresses A/B
-void front_spr_addr(unsigned char tileno)
+void front_spr_addr(uint8_t tileno)
 {
-	unsigned int a;
+	uint16_t a;
 
-	WR8_CS_BLIT_ADDR_B_BANK(DMA_FRONT_SPR >> 16);
-	WR8_CS_BLIT_ADDR_A_BANK(DMA_FRONT_SPR >> 16);
+	WR8_CS_BLIT_ADDR_B_BANK(((uint32_t)DMA_FRONT_SPR) >> 16);
+	WR8_CS_BLIT_ADDR_A_BANK(((uint32_t)DMA_FRONT_SPR) >> 16);
 
-	a = ((unsigned int)FRONT_SPR_SZ)*((unsigned int)tileno);
+	a = ((uint16_t)FRONT_SPR_SZ)*((uint16_t)tileno);
 	WR16_CS_BLIT_ADDR_B(a);
 	a+= FRONT_SPR_MO; 
 	WR16_CS_BLIT_ADDR_A(a);
@@ -102,32 +103,32 @@ void front_spr_addr(unsigned char tileno)
 }
 
 // calculate address of front tile sprite #A in addresses A/B
-void coll_spr_addr(unsigned char tileno)
+void coll_spr_addr(uint8_t tileno)
 {
-	unsigned int a = ((unsigned int)COLL_SPR_SZ)*((unsigned int)tileno);
+	uint16_t a = ((uint16_t)COLL_SPR_SZ)*((uint16_t)tileno);
 	WR16_CS_BLIT_ADDR_B(a);
 	a+= FRONT_SPR_MO;
 	WR16_CS_BLIT_ADDR_A(a);
 	//Assume all tiles in single bank
-	WR8_CS_BLIT_ADDR_B_BANK(DMA_COLL_SPR >> 16);
-	WR8_CS_BLIT_ADDR_A_BANK(DMA_COLL_SPR >> 16);
+	WR8_CS_BLIT_ADDR_B_BANK(((uint32_t)DMA_COLL_SPR) >> 16);
+	WR8_CS_BLIT_ADDR_A_BANK(((uint32_t)DMA_COLL_SPR) >> 16);
 
 }
 
 //flags & 0x01 to draw "nocollide"
 //flags & 0x02 to draw others
 
-static unsigned char nocollide;
-static unsigned char *tile_ptr;	//pointer to current "front" tile
-static unsigned char *coll_ptr;	//pointer to current "front" tile
-static unsigned char j, i;
-static unsigned int scr_addr16;
-static unsigned char tileno;
-static unsigned char coll;
+static uint8_t nocollide;
+static uint8_t *tile_ptr;	//pointer to current "front" tile
+static uint8_t *coll_ptr;	//pointer to current "front" tile
+static uint8_t j, i;
+static uint16_t scr_addr16;
+static uint8_t tileno;
+static uint8_t coll;
 
-void draw_front_nosave(unsigned char flags) {
+void draw_front_nosave(uint8_t flags) {
 
-	scr_addr16 = XY_to_dma_scr_adr(0,0);
+	scr_addr16 = XY_to_dma_scr_adr16(0,0);
 
 	WR8_CS_BLIT_SHIFT_A(0);
 	WR8_CS_BLIT_MASK_FIRST(0xFF);
@@ -136,7 +137,7 @@ void draw_front_nosave(unsigned char flags) {
 	WR16_CS_BLIT_STRIDE_A(TILE_X_SZ >> 3);
 	WR16_CS_BLIT_STRIDE_B(TILE_X_SZ >> 1);
 
-	tile_ptr = (unsigned char *)(map_ptr_offset + map_layer_size);
+	tile_ptr = (uint8_t *)(map_ptr_offset + map_layer_size);
 	coll_ptr = tile_ptr + map_layer_size;
 
 	j = ROOM_SZ_Y;
@@ -164,10 +165,10 @@ void draw_front_nosave(unsigned char flags) {
 	} while (--j);	
 }
 
-void draw_front(unsigned char flags) {
+void draw_front(uint8_t flags) {
 	// specialised sprite plot - no bounds checking, all x are even
 
-	scr_addr16 = XY_to_dma_scr_adr(0,0);
+	scr_addr16 = XY_to_dma_scr_adr16(0,0);
 
 	WR8_CS_BLIT_SHIFT_A(0);
 	WR8_CS_BLIT_MASK_FIRST(0xFF);
@@ -206,9 +207,9 @@ void draw_front(unsigned char flags) {
 }
 
 
-void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, unsigned char colourB) {
+void draw_front_collide(uint8_t x, uint8_t y, uint8_t tileno, uint8_t colourB) {
 
-	scr_addr16 = XY_to_dma_scr_adr(x *TILE_X_SZ, y * TILE_Y_SZ);
+	scr_addr16 = XY_to_dma_scr_adr16(x *TILE_X_SZ, y * TILE_Y_SZ);
 	WR8_CS_BLIT_SHIFT_A(0);
 	WR8_CS_BLIT_MASK_FIRST(0xFF);
 	WR8_CS_BLIT_MASK_LAST(0xFF);
@@ -223,26 +224,26 @@ void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, 
 
 struct mapdef_object *cur_obj;
 
-unsigned char colcheck(
-	unsigned char charspr_ix, 
-	signed char x, 
-	signed char y, 
-	signed char offsx, 
-	signed char offsy) {
+uint8_t colcheck(
+	uint8_t charspr_ix, 
+	int8_t x, 
+	int8_t y, 
+	int8_t offsx, 
+	int8_t offsy) {
 
 	coll = get_tile_at(LAYER_COLL,x,y) & 0x7F;
 	if (coll) {
 
 
-//		unsigned int ch_addr = (DMA_CHARAC_SPR & 0xFFFF) + ((unsigned int)charspr_ix*(unsigned int)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
-		unsigned int ch_addr = (DMA_CHARAC_SPR & 0xFFFF) + ((unsigned int)16*(unsigned int)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
-		unsigned int coll_addr = (DMA_COLL_SPR & 0xFFFF) + ((unsigned int)COLL_SPR_SZ*((unsigned int)coll-1)) + COLL_SPR_MO;
-		unsigned char h = COL_Y_MAX;
-		unsigned char bw = COLL_SPR_MASK_BYTES_PER_LINE;
-		unsigned char shiftA = 0;
-		unsigned char shiftB = 0;
-		unsigned char mask_first = 0xFF;
-		unsigned char mask_last = 0xFF;
+//		uint16_t ch_addr = ((uint16_t)DMA_CHARAC_SPR) + ((uint16_t)charspr_ix*(uint16_t)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
+		uint16_t ch_addr = ((uint16_t)((uint32_t)DMA_CHARAC_SPR & 0xFFFF)) + ((uint16_t)16*(uint16_t)CHARAC_SPR_SZ) + CHARAC_SPR_MO; // address of character mask
+		uint16_t coll_addr = ((uint16_t)((uint32_t)DMA_COLL_SPR & 0xFFFF)) + ((uint16_t)COLL_SPR_SZ*((uint16_t)coll-1)) + COLL_SPR_MO;
+		uint8_t h = COL_Y_MAX;
+		uint8_t bw = COLL_SPR_MASK_BYTES_PER_LINE;
+		uint8_t shiftA = 0;
+		uint8_t shiftB = 0;
+		uint8_t mask_first = 0xFF;
+		uint8_t mask_last = 0xFF;
 
 		while (offsy > 0) {
 
@@ -297,10 +298,10 @@ unsigned char colcheck(
 		WR8_CS_BLIT_MASK_LAST(mask_last);
 
 
-		WR8_CS_BLIT_ADDR_A_BANK(DMA_CHARAC_SPR >> 16);
+		WR8_CS_BLIT_ADDR_A_BANK((uint32_t)DMA_CHARAC_SPR >> 16);
 		WR16_CS_BLIT_ADDR_A(ch_addr);
 
-		WR8_CS_BLIT_ADDR_B_BANK(DMA_COLL_SPR >> 16);
+		WR8_CS_BLIT_ADDR_B_BANK((uint32_t)DMA_COLL_SPR >> 16);
 		WR16_CS_BLIT_ADDR_B(coll_addr);
 
 		WR8_CS_BLIT_WIDTH(bw-1);
@@ -346,14 +347,14 @@ unsigned char colcheck(
 
 //x in map coordinates
 //y in map coordinates
-unsigned colcheck_at(signed old_x, signed old_y, signed new_x, signed new_y)
+uint16_t colcheck_at(int16_t old_x, int16_t old_y, int16_t new_x, int16_t new_y)
 {
 	//check for collision with tiles
-	unsigned char col = 0;
-	unsigned char x = new_x / TILE_X_SZ;
-	unsigned char y = new_y / TILE_Y_SZ;
-	unsigned char xx = new_x % TILE_X_SZ;
-	unsigned char yy = new_y % TILE_Y_SZ;
+	uint8_t col = 0;
+	uint8_t x = new_x / TILE_X_SZ;
+	uint8_t y = new_y / TILE_Y_SZ;
+	uint8_t xx = new_x % TILE_X_SZ;
+	uint8_t yy = new_y % TILE_Y_SZ;
 
 	
 	col = colcheck(CHARAC_COL,x,y,xx,yy);
@@ -386,12 +387,12 @@ void set_map(mapdef_t *map) {
 	map_layer_size = map_width * map_height;
 
 	//get map from DMA to tiles buffer
-	dma_copy_block(1,DMA_TILE_MAP + (unsigned long)map->binary_offs, tilemap, 3*map_layer_size);
+	dma_copy_block(1,(void *)((uint32_t)DMA_TILE_MAP + (uint32_t)map->binary_offs), tilemap, 3*map_layer_size);
 
 }
 
 
-void set_offset(int x, int y) {
+void set_offset(int16_t x, int16_t y) {
 
 	if (x >= map_width)
 	{
@@ -418,6 +419,7 @@ void set_offset(int x, int y) {
 	tile_off_x = x;
 	tile_off_y = y;
 
-	map_ptr_offset = (unsigned char *)((unsigned int)map_ptr + (unsigned int)tile_off_x + (map_width*(unsigned int)tile_off_y));
+	map_ptr_offset = (uint8_t *)((uint32_t)map_ptr + (uint16_t)tile_off_x + (map_width*(uint16_t)tile_off_y));
+	printf("O:%lX", (long)map_ptr_offset);
 }
 

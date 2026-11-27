@@ -23,8 +23,6 @@
 ; SOFTWARE.
 
 
-			.import _tilemap
-
 
 DMA_BACK_SPR		:=	$010000
 DMA_FRONT_SPR		:=	$020000
@@ -57,45 +55,6 @@ ROOM_SZ_X		:=	10
 
 TILE_MAP_LAYER_SZ	:=	(TILE_MAP_STRIDE*TILE_MAP_HEIGHT)
 TILE_MAP_SZ		:=	(2*TILE_MAP_LAYER_SZ)
-A_TILE_MAP		:=	_tilemap
 
-.MACRO		SET_DMA_WORD	addr, val
-		lda	#>val
-		sta	addr
-		lda	#<val
-		sta	addr+1
-.ENDMACRO
-
-.MACRO		SET_DMA_ADDR	addr,val
-		lda	#val / 0x10000
-		sta	addr
-		lda	#>(val & 0xFFFF)
-		sta	addr+1
-		lda	#<(val & 0xFFFF)
-		sta	addr+2
-.ENDMACRO
-
-
-.MACRO		SET_DMA_BYTE	addr,val
-		lda	#val
-		sta	addr
-.ENDMACRO
-
-
-.MACRO		SET_LE_DMA_WORD	addr, val
-		lda	#<val
-		sta	addr
-		lda	#>val
-		sta	addr+1
-.ENDMACRO
-
-.MACRO		SET_LE_DMA_ADDR	addr,val
-		lda	#<(val & 0xFFFF)
-		sta	addr
-		lda	#>(val & 0xFFFF)
-		sta	addr+1
-		lda	#val / 0x10000
-		sta	addr+2
-.ENDMACRO
 
 

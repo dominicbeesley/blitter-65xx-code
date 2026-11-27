@@ -36,19 +36,26 @@ SOFTWARE.
 #include "sprite.h"
 #include "screenmaths.h"
 #include "text.h"
-//#include "tile_map.h"
-//
-//#include "mapdef.h"
-//#include "all_maps.h"
+#include "tile_map.h"
+
+#include "mapdef.h"
+#include "all_maps.h"
 
 
-// 		setdp	0
 
-// 		org	$70				; zero page - basic compat
-// zp_dm_ct_x	equ	$70
-// zp_dm_ct_y	equ	$71
-// zp_spr_save_pt	equ	$72				; points at entry in save area
-// zp_spr_save_ram	equ	$74				; points at chip ram containing the save (only ls 2 bytes!)
+///TODO: move this to a library
+size_t __write(int h, const char *p, size_t l) {
+        size_t i = 0;
+        while (i < l) {
+                char c = *p++;
+                if (c == '\n')
+                        xos_newl();
+                else
+                        xos_wrch(c);
+                i++;
+        }
+        return i;
+}
 
 
 uint16_t framectr;
@@ -228,6 +235,8 @@ uint8_t prev_cfs_to;
 
 int main(void) {
 
+	setvbuf(stdout, NULL, _IONBF, 0);
+
 	xos_wrch(22);
 	xos_wrch(2);
 
@@ -244,16 +253,16 @@ int main(void) {
 
 	dma_clear(DMA_SCR_SHADOW, 0, 0x5000-1);
 
-//	set_map(&home_def);
-//	set_offset(0,0);
-//
-//
-//	dma_copy_block(1, DMA_TILE_MAP, 0x000000L + (long)A_TILE_MAP, TILE_MAP_SZ);
+	dma_copy_block(1, DMA_TILE_MAP, tilemap, TILE_MAP_SZ);
+
+	set_map(&home_def);
+	set_offset(0,0);
+
 
 	spr_init();
-//	// draw background
-//	draw_map(map_ptr_offset);
-//	draw_front_nosave(0x03);
+	// draw background
+	draw_map(map_ptr_offset);
+	//draw_front_nosave(0x03);
 
 
 	// clear restore

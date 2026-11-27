@@ -26,27 +26,29 @@ SOFTWARE.
 #ifndef _TILE_MAP_H
 #define _TILE_MAP_H
 
+#include <stdint.h>
+
 #include "mapdef.h"
 
-extern unsigned char get_tile_at(unsigned char layer, unsigned char x, unsigned char y);
-extern void draw_front(unsigned char flags);
-extern void draw_front_nosave(unsigned char flags);
-extern void draw_front_collide(unsigned char x, unsigned char y, unsigned char tileno, unsigned char colourB);
-extern unsigned colcheck_at(signed old_x, signed old_y, signed new_x, signed new_y);
+extern uint8_t get_tile_at(uint8_t layer, int8_t x, int8_t y);
+extern void draw_front(uint8_t flags);
+extern void draw_front_nosave(uint8_t flags);
+extern void draw_front_collide(uint8_t x, uint8_t y, uint8_t tileno, uint8_t colourB);
+extern uint16_t colcheck_at(int16_t old_x, int16_t old_y, int16_t new_x, int16_t new_y);
 
-extern void draw_map(void *addr);
-extern void set_offset(int x, int y);
+extern void draw_map(uint8_t *map);
+extern void set_offset(int16_t x, int16_t y);
 extern void set_map(mapdef_t *map);
 
 
-extern int tile_off_x;
-extern int tile_off_y;
+extern int16_t tile_off_x;
+extern int16_t tile_off_y;
 
-extern unsigned char *map_ptr;
-extern unsigned char *map_ptr_offset;
-extern unsigned char map_width;
-extern unsigned char map_height;
+extern uint8_t *map_ptr;
+extern uint8_t *map_ptr_offset;
+extern uint8_t map_width;
+extern uint8_t map_height;
 
-extern unsigned char room_exit;
+extern uint8_t room_exit;
 
 #endif
